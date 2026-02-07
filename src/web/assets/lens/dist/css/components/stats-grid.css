@@ -1,0 +1,18 @@
+/**
+ * Stats Grid Component
+ * Shared across bulk processing and statistics pages.
+ */
+
+.lens-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.lens-bulk-actions {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}

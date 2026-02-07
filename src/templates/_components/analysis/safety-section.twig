@@ -1,0 +1,131 @@
+{#
+ # Content Safety Section
+ # NSFW, watermark, brands, people detection with dismissable flags.
+ #
+ # Expected variables: analysis, static, isProcessing
+ #}
+{% set isProcessing = isProcessing ?? false %}
+
+{# People Detection #}
+{% if analysis.containsPeople %}
+    <div class="lens-detection-item">
+        <div>
+            <div class="flex items-center gap-s">
+                <span class="status on"></span>
+                <strong>
+                    {% if analysis.faceCount == 1 %}
+                        {{ '1 face detected'|t('lens') }}
+                    {% elseif analysis.faceCount > 1 %}
+                        {{ '{count} faces detected'|t('lens', {count: analysis.faceCount}) }}
+                    {% else %}
+                        {{ 'People detected (no visible faces)'|t('lens') }}
+                    {% endif %}
+                </strong>
+            </div>
+            <p class="smalltext light" style="margin: 4px 0 0">
+                {% if analysis.faceCount > 0 %}
+                    {{ 'May require model releases for commercial use'|t('lens') }}
+                {% else %}
+                    {{ 'People visible but faces obscured. May still require releases for commercial use.'|t('lens') }}
+                {% endif %}
+            </p>
+            {% if not static and not isProcessing %}
+                <button type="button" class="lens-flag-dismiss" data-field="containsPeople" data-analysis-id="{{ analysis.id }}">
+                    {{ 'Dismiss'|t('lens') }}
+                </button>
+            {% endif %}
+        </div>
+    </div>
+{% endif %}
+
+{# NSFW Detection #}
+{% if analysis.isFlaggedNsfw %}
+    <div class="lens-detection-item lens-alert-section lens-alert-section--error" style="padding: 10px; border-radius: var(--small-border-radius)">
+        <div style="width: 100%">
+            <div class="flex items-center gap-s mb-xs">
+                <span class="smalltext" style="text-transform:uppercase;font-weight:600">{{ 'Content Warning'|t('lens') }}</span>
+                <span class="lens-badge lens-badge--error-solid">{{ (analysis.nsfwScore * 100)|round }}%</span>
+            </div>
+            {% if analysis.nsfwCategories|length %}
+                <div class="chips">
+                    {% for cat in analysis.nsfwCategories %}
+                        <div class="chip lens-nsfw-chip">
+                            <div class="chip-content">
+                                <span class="chip-label">{{ cat.category }}</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            {% if not static and not isProcessing %}
+                <button type="button" class="lens-flag-dismiss" data-field="nsfwScore" data-value="0" data-analysis-id="{{ analysis.id }}">
+                    {{ 'Clear flag'|t('lens') }}
+                </button>
+            {% endif %}
+        </div>
+    </div>
+{% elseif analysis.nsfwScore is defined and analysis.nsfwScore > 0 %}
+    <div class="lens-detection-item">
+        <div class="flex items-center gap-s">
+            <span class="status on"></span>
+            {{ 'NSFW Score: {score}%'|t('lens', {score: (analysis.nsfwScore * 100)|round}) }}
+        </div>
+    </div>
+{% endif %}
+
+{# Watermark Detection #}
+{% if analysis.hasWatermark %}
+    <div class="lens-detection-item lens-alert-section lens-alert-section--warning" style="padding: 10px; border-radius: var(--small-border-radius)">
+        <div style="width: 100%">
+            <div class="flex items-center gap-s mb-xs">
+                <span class="smalltext" style="text-transform:uppercase;font-weight:600">{{ 'Watermark Detected'|t('lens') }}</span>
+                {% if analysis.watermarkConfidence %}
+                    <span class="badge">{{ (analysis.watermarkConfidence * 100)|round }}%</span>
+                {% endif %}
+            </div>
+            <div class="lens-watermark-info">
+                {% set watermarkTypes = {
+                    'stock': 'Stock Photo'|t('lens'),
+                    'logo': 'Logo'|t('lens'),
+                    'text': 'Text'|t('lens'),
+                    'copyright': 'Copyright'|t('lens'),
+                    'unknown': 'Unknown'|t('lens')
+                } %}
+                <span class="lens-watermark-type">{{ watermarkTypes[analysis.watermarkType] ?? analysis.watermarkType|capitalize }}</span>
+                {% if analysis.watermarkType == 'stock' and analysis.watermarkDetails.stockProvider is defined %}
+                    <span class="lens-badge lens-badge--amber">{{ analysis.watermarkDetails.stockProvider }}</span>
+                {% endif %}
+            </div>
+            {% if not static and not isProcessing %}
+                <button type="button" class="lens-flag-dismiss" data-field="hasWatermark" data-value="0" data-analysis-id="{{ analysis.id }}">
+                    {{ 'Clear flag'|t('lens') }}
+                </button>
+            {% endif %}
+        </div>
+    </div>
+{% endif %}
+
+{# Brand Detection #}
+{% if analysis.containsBrandLogo and analysis.detectedBrands|length %}
+    <div class="lens-detection-item">
+        <div>
+            <div class="flex items-center gap-s mb-xs">
+                <span class="smalltext" style="text-transform:uppercase;font-weight:600">{{ 'Detected Brands'|t('lens') }}</span>
+            </div>
+            <div class="chips">
+                {% for brand in analysis.detectedBrands %}
+                    <div class="chip" title="{{ (brand.confidence * 100)|round }}% confidence">
+                        <div class="chip-content">
+                            <span class="chip-label">{{ brand.brand }}</span>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            {% if not static and not isProcessing %}
+                <button type="button" class="lens-flag-dismiss" data-field="containsBrandLogo" data-value="0" data-analysis-id="{{ analysis.id }}">
+                    {{ 'Dismiss'|t('lens') }}
+                </button>
+            {% endif %}
+        </div>
+    </div>
+{% endif %}

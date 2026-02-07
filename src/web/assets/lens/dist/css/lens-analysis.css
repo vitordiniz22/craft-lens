@@ -1,0 +1,741 @@
+/**
+ * Analysis Panel & Asset Sidebar
+ * Collapsible sections, inline editing, tag/color editors, quality, safety, metadata.
+ */
+
+/* ==========================================================================
+   Asset Sidebar (setup guidance panel in metadata section)
+   ========================================================================== */
+
+.lens-asset-sidebar .lens-inline-notice + .lens-inline-notice {
+  margin-top: 12px;
+}
+
+.lens-provider-icon {
+  opacity: 0.6;
+}
+
+.lens-model-name {
+  opacity: 0.7;
+  margin-left: 2px;
+}
+
+/* ==========================================================================
+   Analysis Panel Container
+   ========================================================================== */
+
+.lens-analysis-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* ==========================================================================
+   Panel Header (always visible)
+   ========================================================================== */
+
+.lens-panel-heading {
+  border-bottom: 1px solid var(--hairline-color);
+}
+
+.lens-panel-heading .heading {
+  margin-bottom: 0;
+}
+
+.lens-panel-meta {
+  font-size: 12px;
+  color: var(--medium-text-color);
+  margin-top: 4px;
+}
+
+/* ==========================================================================
+   Sections
+   ========================================================================== */
+
+.lens-section {
+  border-bottom: 1px solid var(--hairline-color);
+}
+
+.lens-section:last-child {
+  border-bottom: none;
+}
+
+.lens-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 12px 0 4px;
+  color: var(--text-color);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.lens-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lens-section-body {
+  padding-bottom: 16px;
+}
+
+/* Pending review notice */
+.lens-pending-notice {
+  margin-bottom: 16px;
+}
+
+.lens-pending-notice-content {
+  width: 100%;
+}
+
+.lens-pending-icon {
+  flex-shrink: 0;
+  color: var(--amber-600, #d97706);
+}
+
+.lens-pending-notice strong {
+  color: var(--amber-900, #78350f);
+  font-size: 13px;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+}
+
+.lens-pending-notice p {
+  color: var(--amber-800, #92400e);
+  line-height: 1.5;
+}
+
+/* ==========================================================================
+   Processing Banner
+   ========================================================================== */
+
+.lens-processing-banner {
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  background: var(--gray-050, #f9fafb);
+  border: 1px solid var(--hairline-color);
+  border-radius: var(--medium-border-radius);
+}
+
+.lens-processing-banner-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.lens-processing-spinner {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.lens-spinner-icon {
+  color: var(--ui-control-color);
+  animation: lens-spin 1s linear infinite;
+}
+
+@keyframes lens-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.lens-processing-text strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 4px;
+}
+
+.lens-processing-text p {
+  margin: 0;
+  color: var(--medium-text-color);
+  line-height: 1.5;
+}
+
+/* ==========================================================================
+   Editable Fields (inline edit pattern)
+   ========================================================================== */
+
+.lens-editable-field {
+  position: relative;
+  width: 100%;
+}
+
+.lens-editable-field + .lens-editable-field {
+  margin-top: 16px;
+}
+
+.lens-field-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.lens-field-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--medium-text-color);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.lens-edit-trigger {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 2px 4px;
+  font-size: 13px;
+  color: var(--link-color);
+  line-height: 1;
+  border-radius: var(--small-border-radius);
+}
+
+.lens-edit-trigger:hover {
+  background: var(--gray-100);
+}
+
+.lens-editable-field:hover .lens-edit-trigger {
+  opacity: 1;
+}
+
+.lens-field-display {
+  width: 100%;
+}
+
+.lens-field-display p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-color);
+  line-height: 1.5;
+}
+
+.lens-field-display .lens-panel-title {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* Edit mode */
+.lens-field-edit {
+  width: 100%;
+}
+
+.lens-field-edit[hidden] {
+  display: none;
+}
+
+.lens-field-edit input,
+.lens-field-edit textarea {
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.lens-field-edit textarea {
+  min-height: 60px;
+  resize: vertical;
+}
+
+.lens-field-actions {
+  display: flex;
+  gap: 6px;
+}
+
+/* Provenance indicators */
+.lens-lock-icon {
+  font-size: 11px;
+  line-height: 1;
+  opacity: 0.6;
+}
+
+.lens-edit-meta {
+  font-size: 12px;
+  color: var(--medium-text-color);
+  margin-top: 4px;
+}
+
+.lens-ai-suggestion {
+  font-size: 12px;
+  font-style: italic;
+  color: var(--medium-text-color);
+  margin-top: 2px;
+}
+
+.lens-revert-trigger {
+  color: var(--link-color);
+  cursor: pointer;
+  text-decoration: underline;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 12px;
+  font-style: normal;
+}
+
+.lens-revert-trigger:hover {
+  color: var(--link-hover-color, var(--link-color));
+}
+
+/* Apply button row */
+.lens-apply-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.lens-applied-indicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+}
+
+/* ==========================================================================
+   Featured Sections (Title, Focal Point)
+   ========================================================================== */
+
+.lens-panel-featured {
+  background: var(--gray-050);
+  padding: 14px;
+  border-radius: var(--medium-border-radius);
+}
+
+/* ==========================================================================
+   Tag Editor
+   ========================================================================== */
+
+.lens-tag-editor {
+  width: 100%;
+}
+
+.lens-tag-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.lens-tag-chips .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.lens-tag-chips .chip--ai {
+  border-style: dashed;
+}
+
+.lens-tag-remove {
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0 2px;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--medium-text-color);
+  opacity: 0.6;
+}
+
+.lens-tag-remove:hover {
+  opacity: 1;
+  color: var(--error-color, #dc2626);
+}
+
+.lens-tag-input-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  position: relative;
+}
+
+.lens-tag-input {
+  flex: 1;
+  min-width: 80px;
+}
+
+.lens-tag-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--white);
+  border: 1px solid var(--hairline-color);
+  border-radius: var(--small-border-radius);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  max-height: 180px;
+  overflow-y: auto;
+  display: none;
+}
+
+.lens-tag-suggestions.is-visible {
+  display: block;
+}
+
+.lens-tag-suggestion {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.lens-tag-suggestion:hover,
+.lens-tag-suggestion.is-active {
+  background: var(--gray-050);
+}
+
+.lens-tag-suggestion-count {
+  font-size: 11px;
+  color: var(--medium-text-color);
+}
+
+/* ==========================================================================
+   Color Editor
+   ========================================================================== */
+
+.lens-color-editor {
+  width: 100%;
+}
+
+.lens-color-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.lens-color-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border: 1px solid var(--hairline-color);
+  border-radius: var(--small-border-radius);
+  font-size: 12px;
+  font-family: var(--mono-font-family, monospace);
+}
+
+.lens-color-item--ai {
+  border-style: dashed;
+}
+
+.lens-color-remove {
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0 2px;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--medium-text-color);
+  opacity: 0.6;
+}
+
+.lens-color-remove:hover {
+  opacity: 1;
+  color: var(--error-color, #dc2626);
+}
+
+.lens-color-add-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.lens-color-picker {
+  width: 32px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--hairline-color);
+  border-radius: var(--small-border-radius);
+  cursor: pointer;
+  background: none;
+}
+
+/* Shared save row for taxonomy */
+.lens-taxonomy-save {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--hairline-color);
+}
+
+/* ==========================================================================
+   Swatch (inline color preview)
+   ========================================================================== */
+
+.lens-swatch {
+  display: inline-block;
+  border-radius: 3px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  vertical-align: middle;
+}
+
+.lens-swatch--sm {
+  width: 14px;
+  height: 14px;
+}
+
+/* ==========================================================================
+   Image Quality Section
+   ========================================================================== */
+
+.lens-quality-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.lens-quality-metric {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lens-metric-label {
+  font-size: 12px;
+  color: var(--medium-text-color);
+  min-width: 70px;
+}
+
+.lens-metric-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--gray-200);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.lens-metric-fill {
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--red-500, #ef4444) 0%,
+    var(--amber-400, #f59e0b) 40%,
+    var(--green-500, #22c55e) 80%
+  );
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+/* ==========================================================================
+   Content Safety & Detection Sections
+   ========================================================================== */
+
+.lens-nsfw-chip {
+  background: var(--red-100, #fee2e2);
+  color: var(--red-800, #991b1b);
+}
+
+.lens-watermark-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.lens-watermark-type {
+  font-weight: 600;
+  color: var(--amber-800, #92400e);
+}
+
+.lens-detection-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 0;
+}
+
+.lens-detection-item + .lens-detection-item {
+  border-top: 1px solid var(--hairline-color);
+}
+
+.lens-flag-dismiss {
+  font-size: 12px;
+  color: var(--link-color);
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  text-decoration: underline;
+  margin-top: 4px;
+}
+
+/* ==========================================================================
+   Technical / EXIF Section
+   ========================================================================== */
+
+.lens-exif-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  font-size: 13px;
+  width: 100%;
+}
+
+.lens-exif-label {
+  color: var(--medium-text-color);
+  font-weight: 500;
+}
+
+.lens-exif-value {
+  color: var(--text-color);
+}
+
+/* ==========================================================================
+   Relationships Section
+   ========================================================================== */
+
+.lens-similar-strip {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 0;
+}
+
+.lens-similar-thumb {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--small-border-radius);
+  object-fit: cover;
+  border: 1px solid var(--hairline-color);
+  flex-shrink: 0;
+}
+
+.lens-similar-thumb:hover {
+  border-color: var(--link-color);
+}
+
+/* ==========================================================================
+   Analytics Panel (kept from legacy)
+   ========================================================================== */
+
+.lens-analytics-stat {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lens-stat-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.lens-analytics-chart {
+  margin: 16px 0;
+}
+
+.lens-sparkline-svg {
+  width: 100%;
+  height: 50px;
+  border-radius: 4px;
+}
+
+.lens-analytics-breakdown {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--hairline-color);
+}
+
+/* ==========================================================================
+   Error Notice (Analysis Failures)
+   ========================================================================== */
+
+.lens-error-notice {
+  padding: 16px;
+  border-radius: var(--medium-border-radius, 6px);
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  margin: 16px 0;
+}
+
+.lens-error-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  color: #991b1b;
+}
+
+.lens-error-icon {
+  flex-shrink: 0;
+  color: #dc2626;
+}
+
+.lens-error-header strong {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.lens-error-message {
+  margin: 8px 0;
+  color: #991b1b;
+  line-height: 1.5;
+  font-size: 13px;
+}
+
+.lens-error-suggestion {
+  margin-top: 12px;
+  padding: 12px;
+  background: #fffbeb;
+  border-left: 3px solid #f59e0b;
+  border-radius: var(--small-border-radius, 4px);
+}
+
+.lens-error-suggestion strong {
+  display: block;
+  margin-bottom: 6px;
+  color: #92400e;
+  font-size: 13px;
+}
+
+.lens-error-suggestion ul {
+  margin: 8px 0 0 20px;
+  padding: 0;
+  list-style: disc;
+}
+
+.lens-error-suggestion li {
+  margin: 4px 0;
+  color: #78350f;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.lens-error-suggestion a {
+  color: var(--link-color);
+  text-decoration: underline;
+}
+
+.lens-error-suggestion a:hover {
+  color: var(--link-hover-color);
+}
+
+.lens-error-actions {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #fecaca;
+}
+
+.lens-error-actions .btn {
+  background: white;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+.lens-error-actions .btn:hover {
+  background: #fef2f2;
+  border-color: #fca5a5;
+}

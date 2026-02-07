@@ -1,0 +1,53 @@
+{# Section 3: Library Health - always visible #}
+<div class="lens-section lens-health-section pane">
+    <h2 class="lens-section-title">{{ 'Library Health'|t('lens') }}</h2>
+
+    <div class="lens-health-metrics">
+        {# Alt Text Coverage #}
+        <div class="lens-health-metric">
+            <div class="lens-metric-header">
+                <span class="lens-metric-label">{{ 'Alt text coverage'|t('lens') }}</span>
+                <span class="lens-metric-value {{ altTextCoverage.percentage >= 80 ? 'lens-metric--good' : (altTextCoverage.percentage >= 50 ? '' : 'lens-metric--warning') }}">
+                    {{ altTextCoverage.percentage }}%
+                </span>
+            </div>
+            <div class="lens-metric-detail">
+                <span class="lens-metric-counts">({{ altTextCoverage.withAltText }} {{ 'of'|t('lens') }} {{ altTextCoverage.total }})</span>
+                {% if altTextCoverage.total - altTextCoverage.withAltText > 0 %}
+                    <a href="{{ cpUrl('lens/search', {missingAltText: 1}) }}" class="lens-metric-link">
+                        {{ 'View missing'|t('lens') }} &rarr;
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+
+        {# Tagged Assets #}
+        <div class="lens-health-metric">
+            <div class="lens-metric-header">
+                <span class="lens-metric-label">{{ 'With tags'|t('lens') }}</span>
+                <span class="lens-metric-value">{{ taggedPercentage.percentage }}%</span>
+            </div>
+            <div class="lens-metric-detail">
+                <span class="lens-metric-counts">({{ taggedPercentage.withTags }} {{ 'of'|t('lens') }} {{ taggedPercentage.total }})</span>
+            </div>
+        </div>
+
+        {# High Quality #}
+        <div class="lens-health-metric">
+            <div class="lens-metric-header">
+                <span class="lens-metric-label">{{ 'High quality'|t('lens') }}</span>
+                <span class="lens-metric-value {{ highQualityPercentage.percentage >= 70 ? 'lens-metric--good' : (highQualityPercentage.percentage >= 40 ? '' : 'lens-metric--warning') }}">
+                    {{ highQualityPercentage.percentage }}%
+                </span>
+            </div>
+            <div class="lens-metric-detail">
+                <span class="lens-metric-counts">({{ highQualityPercentage.highQuality }} {{ 'of'|t('lens') }} {{ highQualityPercentage.total }})</span>
+                {% if highQualityPercentage.total - highQualityPercentage.highQuality > 0 %}
+                    <a href="{{ cpUrl('lens/search', {qualityBelow: '0.7'}) }}" class="lens-metric-link">
+                        {{ 'View low quality'|t('lens') }} &rarr;
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,39 @@
+{# Section 5: Quick Insights - only shows when data exists #}
+{% if topTags|length or dominantColors|length %}
+<div class="lens-section lens-insights-section pane">
+    <h2 class="lens-section-title">{{ 'Quick Insights'|t('lens') }}</h2>
+
+    <div class="lens-insights-grid">
+        {# Top Tags - compact inline list #}
+        {% if topTags|length %}
+        <div class="lens-insight-block">
+            <h3 class="lens-insight-label">{{ 'Top Tags'|t('lens') }}</h3>
+            <div class="lens-tags-inline">
+                {% for item in topTags %}
+                    <a href="{{ cpUrl('lens/search', {tags: item.tag}) }}" class="lens-tag-pill">
+                        {{ item.tag }} <span class="lens-tag-count">({{ item.count }})</span>
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {# Dominant Colors - 5 small swatches #}
+        {% if dominantColors|length %}
+        <div class="lens-insight-block">
+            <h3 class="lens-insight-label">{{ 'Dominant Colors'|t('lens') }}</h3>
+            <div class="lens-colors-compact">
+                {% for color in dominantColors %}
+                    <a href="{{ cpUrl('lens/search', {color: color.hex}) }}"
+                       class="lens-swatch lens-swatch--md lens-swatch--interactive"
+                       style="background-color: {{ color.hex }}"
+                       title="{{ color.hex }} ({{ color.count }} {{ color.count == 1 ? 'asset'|t('lens') : 'assets'|t('lens') }})">
+                        <span class="visually-hidden">{{ color.hex }}</span>
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}

@@ -1,0 +1,91 @@
+{#
+ # Reusable Inline Editable Field
+ #
+ # Expected variables:
+ #   fieldName    - string, the field key (e.g. 'suggestedTitle')
+ #   label        - string|null (optional), display label
+ #   value        - string|null, current value
+ #   aiValue      - string|null, original AI value
+ #   confidence   - float|null, AI confidence (0-1)
+ #   editedBy     - int|null, user ID who edited
+ #   editedAt     - DateTime|null, when edited
+ #   inputType    - string, 'text' or 'textarea' (default: 'text')
+ #   featured     - bool, use featured styling (default: false)
+ #   static       - bool, disable editing (default: false)
+ #   analysisId   - int, the analysis record ID
+ #   isProcessing - bool, disable editing during processing (default: false)
+ #}
+
+{% set isEdited = editedBy is not null %}
+{% set inputType = inputType ?? 'text' %}
+{% set featured = featured ?? false %}
+{% set isProcessing = isProcessing ?? false %}
+
+<div class="lens-editable-field{% if featured %} lens-panel-featured{% endif %}"
+     data-field="{{ fieldName }}"
+     data-analysis-id="{{ analysisId }}">
+
+    <div class="lens-field-header">
+        {% if isEdited %}
+            <span class="lens-lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
+        {% endif %}
+        {% if label is defined %}
+            <span class="lens-field-label">{{ label }}</span>
+        {% endif %}
+        {% if not isEdited and confidence %}
+            <span class="badge">{{ (confidence * 100)|round }}%</span>
+        {% endif %}
+        {% if not static and value and not isProcessing %}
+            <button type="button" class="lens-edit-trigger" title="{{ 'Edit'|t('lens') }}">&#9998;</button>
+        {% endif %}
+    </div>
+
+    {# Display mode #}
+    <div class="lens-field-display">
+        {% if value %}
+            {% if inputType == 'text' and featured %}
+                <p class="lens-panel-title">{{ value }}</p>
+            {% else %}
+                <p>{{ value }}</p>
+            {% endif %}
+        {% else %}
+            <p class="light">{{ 'Not available'|t('lens') }}</p>
+        {% endif %}
+    </div>
+
+    {# Edit mode (hidden by default) #}
+    {% if not static and value and not isProcessing %}
+        <div class="lens-field-edit" hidden>
+            {% if inputType == 'textarea' %}
+                <textarea class="text fullwidth" rows="3">{{ value }}</textarea>
+            {% else %}
+                <input type="text" class="text fullwidth" value="{{ value }}">
+            {% endif %}
+            <div class="lens-field-actions">
+                <button type="button" class="btn small submit lens-field-save">{{ 'Save'|t('lens') }}</button>
+                <button type="button" class="btn small lens-field-cancel">{{ 'Cancel'|t('lens') }}</button>
+            </div>
+        </div>
+    {% endif %}
+
+    {# Provenance meta #}
+    {% if isEdited %}
+        <div class="lens-edit-meta">
+            {% set editor = craft.users.id(editedBy).one() %}
+            {{ 'Edited by {user} on {date}'|t('lens', {
+                user: editor ? editor.friendlyName : 'Unknown',
+                date: editedAt|date('short')
+            }) }}
+        </div>
+        {% if aiValue and aiValue != value %}
+            <div class="lens-ai-suggestion">
+                {{ 'AI suggested: "{value}"'|t('lens', {value: aiValue|truncate(100)}) }}
+                {% if not static and not isProcessing %}
+                    <button type="button" class="lens-revert-trigger" data-field="{{ fieldName }}" data-analysis-id="{{ analysisId }}">
+                        {{ 'Revert to AI'|t('lens') }}
+                    </button>
+                {% endif %}
+            </div>
+        {% endif %}
+    {% endif %}
+</div>

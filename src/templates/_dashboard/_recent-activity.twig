@@ -1,0 +1,25 @@
+{# Section 6: Recent Activity #}
+{% if recentActivity|length %}
+<div class="lens-section lens-activity-section pane">
+    <h2 class="lens-section-title">{{ 'Recent Activity'|t('lens') }}</h2>
+
+    <ul class="lens-activity-feed">
+        {% for activity in recentActivity %}
+            <li class="lens-activity-item lens-activity-{{ activity.type }}">
+                <span class="lens-activity-time">{{ activity.timeAgo }}</span>
+                <span class="lens-activity-separator">&mdash;</span>
+                {% if activity.assetUrl %}
+                    <a href="{{ activity.assetUrl }}" class="lens-activity-link">
+                        {{ activity.assetFilename }}
+                    </a>
+                {% else %}
+                    <span class="lens-activity-filename">{{ activity.assetFilename|default('Unknown asset'|t('lens')) }}</span>
+                {% endif %}
+                <span class="lens-activity-action">
+                    {{ activity.type == 'failed' ? 'failed'|t('lens') : 'analyzed'|t('lens') }}
+                </span>
+            </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}

@@ -1,0 +1,52 @@
+{#
+ # Inline Notice component - Contextual notices for warnings, errors, info, tips
+ # Usage: {% include 'lens/_components/inline-notice' with {type: 'warning', message: 'Message', cta: {label: 'Action', url: 'path'}} %}
+ #
+ # Parameters:
+ #   - type: 'error', 'warning', 'info', or 'tip' (required)
+ #   - title: (optional) Notice title/heading
+ #   - message: Notice message text (required)
+ #   - cta: (optional) Object with 'label' and 'url' for call-to-action button
+ #   - dismissible: (optional) Whether notice can be dismissed, defaults to false
+ #   - dismissKey: (optional) Unique key for storing dismissed state in localStorage
+ #}
+
+{% set iconMap = {
+    'error': '&#10060;',
+    'warning': '&#9888;',
+    'info': '&#8505;',
+    'tip': '&#10004;'
+} %}
+
+{% set titleMap = {
+    'error': 'Configuration required'|t('lens'),
+    'warning': 'Attention needed'|t('lens'),
+    'info': 'Information'|t('lens'),
+    'tip': 'Tip'|t('lens')
+} %}
+
+<div class="lens-inline-notice lens-inline-notice--{{ type }}"
+     {% if dismissible ?? false %}data-lens-dismissible="{{ dismissKey ?? '' }}"{% endif %}>
+    <div class="lens-notice-header">
+        <span class="lens-notice-icon">{{ iconMap[type]|raw }}</span>
+        <h4 class="lens-notice-title">{{ title ?? titleMap[type] }}</h4>
+    </div>
+
+    <div class="lens-notice-content">
+        {{ message }}
+    </div>
+
+    {% if cta ?? false %}
+        <div class="lens-notice-action">
+            <a href="{{ cpUrl(cta.url) }}" class="btn small {{ type == 'error' ? 'submit' : '' }}">
+                {{ cta.label }}
+            </a>
+        </div>
+    {% endif %}
+
+    {% if dismissible ?? false %}
+        <button type="button" class="lens-notice-dismiss" data-lens-dismiss>
+            &#10005;
+        </button>
+    {% endif %}
+</div>

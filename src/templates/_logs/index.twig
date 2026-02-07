@@ -1,0 +1,216 @@
+{% extends '_layouts/cp' %}
+
+{% set title = 'Logs'|t('lens') %}
+{% set selectedSubnavItem = 'logs' %}
+
+{% block content %}
+    {# Filters #}
+    <div class="lens-log-filters" style="display: flex; gap: 8px; align-items: center; margin-bottom: 24px; flex-wrap: wrap;">
+        <form method="get" action="{{ cpUrl('lens/logs') }}" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <div class="select">
+                <select name="level">
+                    <option value="">{{ 'All Levels'|t('lens') }}</option>
+                    {% for lvl in levels %}
+                        <option value="{{ lvl }}" {{ filters.level == lvl ? 'selected' }}>{{ lvl|capitalize }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="select">
+                <select name="category">
+                    <option value="">{{ 'All Categories'|t('lens') }}</option>
+                    {% for cat in categories %}
+                        <option value="{{ cat }}" {{ filters.category == cat ? 'selected' }}>{{ cat|replace({'_': ' '})|title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <input type="text" name="assetId" class="text" value="{{ filters.assetId }}" placeholder="{{ 'Asset ID'|t('lens') }}" size="10">
+
+            <button type="submit" class="btn submit">{{ 'Filter'|t('lens') }}</button>
+            <a href="{{ cpUrl('lens/logs') }}" class="btn">{{ 'Reset'|t('lens') }}</a>
+        </form>
+
+        <div style="margin-left: auto;">
+            <form method="post">
+                {{ csrfInput() }}
+                {{ actionInput('lens/log/delete-all') }}
+                <button type="submit" class="btn" onclick="return confirm('{{ 'Are you sure you want to delete all logs?'|t('lens')|e('js') }}')">
+                    {{ 'Delete All'|t('lens') }}
+                </button>
+            </form>
+        </div>
+    </div>
+
+    {# Summary #}
+    <div style="margin-bottom: 16px; color: var(--gray-500);">
+        {{ '{total} log entries'|t('lens', {total: total}) }}
+        {% if filters.level or filters.category or filters.assetId %}
+            <span>({{ 'filtered'|t('lens') }})</span>
+        {% endif %}
+    </div>
+
+    {% if logs|length %}
+        <table class="data fullwidth">
+            <thead>
+                <tr>
+                    <th>{{ 'Date'|t('lens') }}</th>
+                    <th>{{ 'Level'|t('lens') }}</th>
+                    <th>{{ 'Category'|t('lens') }}</th>
+                    <th>{{ 'Message'|t('lens') }}</th>
+                    <th>{{ 'Asset'|t('lens') }}</th>
+                    <th>{{ 'Provider'|t('lens') }}</th>
+                    {% if isDevMode %}
+                        <th>{{ 'HTTP'|t('lens') }}</th>
+                        <th>{{ 'Time'|t('lens') }}</th>
+                        <th>{{ 'Tokens'|t('lens') }}</th>
+                    {% endif %}
+                    <th>{{ 'Actions'|t('lens') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                    {% set levelColors = {
+                        info: '#3b82f6',
+                        warning: '#f59e0b',
+                        error: '#ef4444',
+                        critical: '#dc2626',
+                    } %}
+                    <tr class="lens-log-row" data-log-id="{{ log.id }}">
+                        <td style="white-space: nowrap; font-size: 12px; color: var(--gray-500);">
+                            {{ log.dateCreated|date('Y-m-d H:i:s') }}
+                        </td>
+                        <td>
+                            <span class="status" style="background-color: {{ levelColors[log.level] ?? '#6b7280' }};"></span>
+                            <span style="font-size: 12px; font-weight: 600; text-transform: uppercase;">{{ log.level }}</span>
+                        </td>
+                        <td>
+                            <span style="font-size: 12px;">{{ log.category|replace({'_': ' '})|title }}</span>
+                        </td>
+                        <td style="max-width: 400px;">
+                            <span style="font-size: 13px;">{{ log.message|truncate(200) }}</span>
+                        </td>
+                        <td>
+                            {% if log.assetId %}
+                                {% set asset = craft.assets.id(log.assetId).one() %}
+                                {% if asset %}
+                                    <a href="{{ asset.cpEditUrl }}">{{ asset.filename|truncate(20) }}</a>
+                                {% else %}
+                                    <span style="color: var(--gray-400);">#{{ log.assetId }}</span>
+                                {% endif %}
+                            {% else %}
+                                <span style="color: var(--gray-300);">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if log.provider %}
+                                <span style="font-size: 12px;">{{ log.provider }}</span>
+                            {% else %}
+                                <span style="color: var(--gray-300);">—</span>
+                            {% endif %}
+                        </td>
+                        {% if isDevMode %}
+                            <td>
+                                {% if log.httpStatusCode %}
+                                    <code style="font-size: 11px;">{{ log.httpStatusCode }}</code>
+                                {% else %}
+                                    <span style="color: var(--gray-300);">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if log.responseTimeMs %}
+                                    <span style="font-size: 12px;">{{ log.responseTimeMs }}ms</span>
+                                {% else %}
+                                    <span style="color: var(--gray-300);">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if log.inputTokens or log.outputTokens %}
+                                    <span style="font-size: 11px;" title="{{ 'In: {input}, Out: {output}'|t('lens', {input: log.inputTokens ?? 0, output: log.outputTokens ?? 0}) }}">
+                                        {{ (log.inputTokens ?? 0) + (log.outputTokens ?? 0) }}
+                                    </span>
+                                {% else %}
+                                    <span style="color: var(--gray-300);">—</span>
+                                {% endif %}
+                            </td>
+                        {% endif %}
+                        <td style="white-space: nowrap;">
+                            {% if log.stackTrace or log.context or (isDevMode and (log.requestPayload or log.responsePayload)) %}
+                                <button type="button" class="btn small lens-toggle-detail" data-target="lens-detail-{{ log.id }}">
+                                    {{ 'Details'|t('lens') }}
+                                </button>
+                            {% endif %}
+                            {% if log.isRetryable %}
+                                <form method="post" style="display: inline;">
+                                    {{ csrfInput() }}
+                                    {{ actionInput('lens/log/retry') }}
+                                    {{ hiddenInput('logId', log.id) }}
+                                    <button type="submit" class="btn small submit">{{ 'Retry'|t('lens') }}</button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% if log.stackTrace or log.context or (isDevMode and (log.requestPayload or log.responsePayload)) %}
+                        <tr id="lens-detail-{{ log.id }}" class="lens-log-detail" style="display: none;">
+                            <td colspan="{{ isDevMode ? 10 : 7 }}" style="padding: 16px; background: var(--gray-050);">
+                                {% if log.stackTrace %}
+                                    <div style="margin-bottom: 12px;">
+                                        <strong>{{ 'Stack Trace'|t('lens') }}</strong>
+                                        <pre style="font-size: 11px; max-height: 200px; overflow: auto; margin-top: 4px; padding: 8px; background: var(--gray-100); border-radius: 4px;">{{ log.stackTrace }}</pre>
+                                    </div>
+                                {% endif %}
+                                {% if log.requestPayload %}
+                                    <div style="margin-bottom: 12px;">
+                                        <strong>{{ 'Request Payload'|t('lens') }}</strong>
+                                        <pre style="font-size: 11px; max-height: 300px; overflow: auto; margin-top: 4px; padding: 8px; background: var(--gray-100); border-radius: 4px;">{{ log.requestPayload|json_encode(constant('JSON_PRETTY_PRINT') b-or constant('JSON_UNESCAPED_SLASHES')) }}</pre>
+                                    </div>
+                                {% endif %}
+                                {% if log.responsePayload %}
+                                    <div style="margin-bottom: 12px;">
+                                        <strong>{{ 'Response Payload'|t('lens') }}</strong>
+                                        <pre style="font-size: 11px; max-height: 300px; overflow: auto; margin-top: 4px; padding: 8px; background: var(--gray-100); border-radius: 4px;">{{ log.responsePayload|json_encode(constant('JSON_PRETTY_PRINT') b-or constant('JSON_UNESCAPED_SLASHES')) }}</pre>
+                                    </div>
+                                {% endif %}
+                                {% if log.context %}
+                                    <div>
+                                        <strong>{{ 'Context'|t('lens') }}</strong>
+                                        <pre style="font-size: 11px; max-height: 200px; overflow: auto; margin-top: 4px; padding: 8px; background: var(--gray-100); border-radius: 4px;">{{ log.context|json_encode(constant('JSON_PRETTY_PRINT') b-or constant('JSON_UNESCAPED_SLASHES')) }}</pre>
+                                    </div>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {# Pagination #}
+        {% if pageInfo.totalPages > 1 %}
+            {% include '_includes/pagination' with {
+                pageInfo: pageInfo,
+                itemLabel: 'log entry'|t('lens'),
+                itemsLabel: 'log entries'|t('lens'),
+            } %}
+        {% endif %}
+    {% else %}
+        {% include 'lens/_components/empty-state' with {
+            heading: 'No Log Entries'|t('lens'),
+            description: 'Log entries will appear here as the plugin processes assets, makes API calls, and handles jobs.'|t('lens'),
+            cta: {
+                label: 'Go to Dashboard'|t('lens'),
+                url: 'lens/dashboard'
+            }
+        } %}
+    {% endif %}
+{% endblock %}
+
+{% js %}
+document.querySelectorAll('.lens-toggle-detail').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        var target = document.getElementById(this.dataset.target);
+        if (target) {
+            target.style.display = target.style.display === 'none' ? '' : 'none';
+        }
+    });
+});
+{% endjs %}

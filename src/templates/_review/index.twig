@@ -1,0 +1,173 @@
+{% extends '_layouts/cp' %}
+
+{% set title = 'Review AI Suggestions'|t('lens') %}
+{% set selectedSubnavItem = 'review' %}
+
+{% block content %}
+    {% if pendingCount > 0 %}
+        {# ===== Toolbar ===== #}
+        <div class="lens-review-toolbar">
+            <div class="lens-review-toolbar-left">
+                <span class="lens-review-counter" id="lens-review-counter">
+                    {{ '{count} pending'|t('lens', {count: pendingCount}) }}
+                </span>
+                <div class="lens-review-mode-toggle btngroup" id="lens-mode-toggle">
+                    <button type="button" class="btn small active" data-mode="browse">
+                        {{ 'Browse'|t('lens') }}
+                    </button>
+                    <button type="button" class="btn small" data-mode="single">
+                        {{ 'Focus View'|t('lens') }}
+                    </button>
+                    <button type="button" class="btn small" data-mode="grid">
+                        {{ 'Bulk Actions'|t('lens') }}
+                    </button>
+                </div>
+            </div>
+            <div class="lens-review-toolbar-right">
+                <div class="lens-kbd-hints" id="lens-kbd-hints" style="display: none;">
+                    <span><kbd>A</kbd> {{ 'Approve'|t('lens') }}</span>
+                    <span><kbd>S</kbd> {{ 'Skip'|t('lens') }}</span>
+                    <span><kbd>R</kbd> {{ 'Reject'|t('lens') }}</span>
+                    <span><kbd>&larr;</kbd><kbd>&rarr;</kbd> {{ 'Navigate'|t('lens') }}</span>
+                </div>
+            </div>
+        </div>
+
+        {# ===== Browse Mode (default) ===== #}
+        <div class="lens-review-browse-mode active" id="lens-browse-mode">
+            <div class="lens-review-grid-container" id="lens-browse-container"></div>
+            <div class="lens-browse-pagination" id="lens-browse-pagination"></div>
+        </div>
+
+        {# ===== Single Review Mode ===== #}
+        <div class="lens-review-single-mode hidden" id="lens-single-mode">
+            <div class="lens-review-loading" id="lens-review-loading">
+                <span class="visually-hidden">{{ 'Loading...'|t('lens') }}</span>
+            </div>
+
+            <div class="lens-review-panels" id="lens-review-panels" style="display: none;">
+                {# Left Panel - Image #}
+                <div class="lens-review-left">
+                    <div class="lens-review-image-container" id="lens-image-container">
+                        <img id="lens-review-image" src="" alt="">
+                        <div class="lens-review-focal-marker" id="lens-focal-marker" style="display: none;"></div>
+                    </div>
+
+                    <div class="lens-review-zoom-controls">
+                        <button type="button" class="btn small" id="lens-zoom-out" title="{{ 'Zoom Out'|t('lens') }}">&minus;</button>
+                        <span class="lens-review-zoom-level" id="lens-zoom-level">100%</span>
+                        <button type="button" class="btn small" id="lens-zoom-fit" title="{{ 'Fit'|t('lens') }}">{{ 'Fit'|t('lens') }}</button>
+                        <button type="button" class="btn small" id="lens-zoom-in" title="{{ 'Zoom In'|t('lens') }}">&plus;</button>
+                    </div>
+
+                    <div class="lens-review-similar" id="lens-similar-section" style="display: none;">
+                        <h4>{{ 'Similar Images'|t('lens') }}</h4>
+                        <div class="lens-review-similar-list" id="lens-similar-list"></div>
+                    </div>
+                </div>
+
+                {# Right Panel - Details #}
+                <div class="lens-review-right" id="lens-review-right">
+                    {# Asset header #}
+                    <div class="lens-review-asset-header" id="lens-asset-header"></div>
+
+                    {# Content Section (Editable) #}
+                    <details class="lens-review-section" id="lens-section-content" open>
+                        <summary>
+                            {{ 'Content'|t('lens') }}
+                            <span class="lens-badge lens-badge--muted">{{ 'Editable'|t('lens') }}</span>
+                        </summary>
+                        <div class="lens-review-section-content" id="lens-content-fields"></div>
+                    </details>
+
+                    {# Detection Section (Review Only) #}
+                    <details class="lens-review-section" id="lens-section-detection" open>
+                        <summary>
+                            {{ 'Detection'|t('lens') }}
+                            <span class="lens-badge lens-badge--muted">{{ 'Review Only'|t('lens') }}</span>
+                        </summary>
+                        <div class="lens-review-section-content" id="lens-detection-fields"></div>
+                    </details>
+
+                    {# Metadata Section (Read Only) #}
+                    <details class="lens-review-section" id="lens-section-metadata">
+                        <summary>
+                            {{ 'Metadata'|t('lens') }}
+                            <span class="lens-badge lens-badge--muted">{{ 'Read Only'|t('lens') }}</span>
+                        </summary>
+                        <div class="lens-review-section-content" id="lens-metadata-fields"></div>
+                    </details>
+                </div>
+            </div>
+
+            {# Action Bar #}
+            <div class="lens-review-action-bar" id="lens-action-bar" style="display: none;">
+                <button type="button" class="btn" id="lens-prev-btn" disabled>
+                    {{ '&larr; Previous'|t('lens')|raw }}
+                </button>
+                <button type="button" class="btn submit" id="lens-approve-btn">
+                    {{ 'Approve & Next'|t('lens') }} <kbd>A</kbd>
+                </button>
+                <button type="button" class="btn" id="lens-skip-btn">
+                    {{ 'Skip'|t('lens') }} <kbd>S</kbd>
+                </button>
+                <button type="button" class="btn" id="lens-reject-btn">
+                    {{ 'Reject'|t('lens') }} <kbd>R</kbd>
+                </button>
+                <button type="button" class="btn" id="lens-next-btn" disabled>
+                    {{ 'Next &rarr;'|t('lens')|raw }}
+                </button>
+            </div>
+        </div>
+
+        {# ===== Grid / Bulk Mode ===== #}
+        <div class="lens-review-grid-mode" id="lens-grid-mode">
+            <div class="lens-grid-actions">
+                <button type="button" class="btn small" id="lens-grid-select-all">
+                    {{ 'Select All'|t('lens') }}
+                </button>
+                <button type="button" class="btn small" id="lens-grid-select-high">
+                    {{ 'Select High Confidence (>80%)'|t('lens') }}
+                </button>
+                <span class="lens-grid-selected-count" id="lens-grid-selected-count"></span>
+                <button type="button" class="btn small submit" id="lens-grid-approve" disabled>
+                    {{ 'Approve Selected'|t('lens') }}
+                </button>
+                <button type="button" class="btn small" id="lens-grid-reject" disabled>
+                    {{ 'Reject Selected'|t('lens') }}
+                </button>
+            </div>
+
+            <div class="lens-review-grid-container" id="lens-grid-container">
+                <div class="lens-review-loading" id="lens-grid-loading">
+                    <span class="visually-hidden">{{ 'Loading...'|t('lens') }}</span>
+                </div>
+            </div>
+        </div>
+
+        {# ===== Bootstrap Data ===== #}
+        {% js %}
+            window.__lensReviewData = {
+                queueIds: {{ queueIds|json_encode|raw }},
+                pendingCount: {{ pendingCount }},
+                firstAnalysisId: {{ queueIds|first ?: 'null' }},
+                startMode: 'browse'
+            };
+        {% endjs %}
+
+    {% else %}
+        {# ===== Empty State ===== #}
+        {% include 'lens/_components/empty-state' with {
+            heading: 'No Pending Reviews'|t('lens'),
+            description: 'All AI suggestions have been reviewed. Process more assets to generate new suggestions.'|t('lens'),
+            cta: {
+                label: 'Process Assets'|t('lens'),
+                url: 'lens/bulk'
+            },
+            secondaryCta: {
+                label: 'Go to Dashboard'|t('lens'),
+                url: 'lens/dashboard'
+            }
+        } %}
+    {% endif %}
+{% endblock %}

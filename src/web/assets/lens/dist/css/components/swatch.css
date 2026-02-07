@@ -1,0 +1,49 @@
+/**
+ * Swatch Component
+ * Unified color swatch replacing 4 separate size implementations.
+ *
+ * Usage: <span class="lens-swatch lens-swatch--sm" style="background:#ff0"></span>
+ *        <a class="lens-swatch lens-swatch--lg lens-swatch--interactive" ...></a>
+ */
+
+.lens-swatch {
+  border-radius: var(--small-border-radius);
+  border: 1px solid var(--hairline-color);
+  display: block;
+}
+
+/* Size modifiers */
+.lens-swatch--xs {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.lens-swatch--sm {
+  width: 16px;
+  height: 16px;
+}
+
+.lens-swatch--md {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+}
+
+.lens-swatch--lg {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+}
+
+/* Interactive modifier (hover transform for clickable swatches) */
+.lens-swatch--interactive {
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.lens-swatch--interactive:hover {
+  transform: scale(1.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 1;
+}

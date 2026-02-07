@@ -1,0 +1,263 @@
+/**
+ * Bulk Processing Page
+ * Progress states, counters, complete/all-done states.
+ */
+
+.lens-bulk-page {
+  max-width: 800px;
+}
+
+/* Bulk Summary */
+.lens-bulk-summary {
+  margin-bottom: 20px;
+}
+
+.lens-bulk-summary p {
+  margin: 8px 0;
+}
+
+/* Estimated Cost Display */
+.lens-estimated-cost {
+  background: var(--gray-050);
+  padding: 12px 16px;
+  border-radius: var(--medium-border-radius);
+  margin: 16px 0;
+}
+
+.lens-cost-label {
+  margin-right: 4px;
+}
+
+.lens-estimated-cost .light {
+  font-size: 12px;
+  color: var(--medium-text-color);
+  margin-left: 8px;
+}
+
+/* Progress Bar */
+.lens-progress-section {
+  margin: 24px 0;
+}
+
+.lens-progress-bar-container {
+  height: 24px;
+  background: var(--gray-100);
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+}
+
+.lens-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--link-color) 0%, #27ae60 100%);
+  border-radius: 12px;
+  transition: width 0.3s ease-out;
+  position: relative;
+}
+
+.lens-progress-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    transparent 100%
+  );
+  animation: lens-progress-shimmer 1.5s infinite;
+}
+
+@keyframes lens-progress-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.lens-progress-text {
+  text-align: center;
+  margin-top: 8px;
+  font-size: 14px;
+  color: var(--medium-text-color);
+}
+
+/* Progress Counters */
+.lens-progress-counters {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  margin: 24px 0;
+}
+
+.lens-counter {
+  text-align: center;
+}
+
+.lens-counter-value {
+  display: block;
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.lens-counter-success .lens-counter-value {
+  color: var(--success-color);
+}
+
+.lens-counter-error .lens-counter-value {
+  color: var(--error-color);
+}
+
+.lens-counter-label {
+  display: block;
+  font-size: 12px;
+  color: var(--medium-text-color);
+  margin-top: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.lens-progress-details {
+  text-align: center;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--hairline-color);
+}
+
+.lens-progress-details p {
+  margin: 4px 0;
+}
+
+/* Complete State */
+#lens-state-complete.lens-state-complete {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border-color: var(--success-color);
+}
+
+.lens-complete-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.lens-complete-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: var(--success-color);
+  color: white;
+  border-radius: 50%;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.lens-complete-icon::before {
+  content: '\2713';
+}
+
+.lens-complete-header h2 {
+  margin: 0;
+  color: var(--success-color);
+}
+
+.lens-summary-grid {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 16px;
+}
+
+.lens-summary-item {
+  flex: 1;
+  text-align: center;
+  padding: 16px;
+  background: white;
+  border-radius: var(--medium-border-radius);
+}
+
+.lens-summary-value {
+  display: block;
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--success-color);
+}
+
+.lens-summary-warning .lens-summary-value {
+  color: var(--warning-color);
+}
+
+.lens-summary-label {
+  display: block;
+  font-size: 12px;
+  color: var(--medium-text-color);
+  margin-top: 4px;
+}
+
+.lens-total-cost {
+  text-align: center;
+  font-size: 16px;
+  margin: 16px 0;
+}
+
+.lens-complete-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+/* All Done State */
+.lens-all-done {
+  text-align: center;
+  padding: 24px 0;
+}
+
+.lens-all-done-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: var(--success-color);
+  color: white;
+  border-radius: 50%;
+  font-size: 24px;
+  margin-bottom: 16px;
+}
+
+.lens-all-done-icon::before {
+  content: '\2713';
+}
+
+.lens-all-done h2 {
+  margin: 0 0 8px 0;
+  color: var(--success-color);
+}
+
+.lens-all-done p {
+  margin: 0;
+  color: var(--medium-text-color);
+}
+
+@media (max-width: 600px) {
+  .lens-progress-counters {
+    gap: 16px;
+  }
+
+  .lens-counter-value {
+    font-size: 24px;
+  }
+
+  .lens-summary-grid {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .lens-complete-actions {
+    flex-direction: column;
+  }
+}

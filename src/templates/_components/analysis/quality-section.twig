@@ -1,0 +1,89 @@
+{#
+ # Focal Point & Quality Section
+ # Focal point coordinates with Apply button + quality metric bars.
+ #
+ # Expected variables: analysis, asset, static, isProcessing
+ #}
+{% set isProcessing = isProcessing ?? false %}
+
+{# Focal Point #}
+{% if analysis.focalPointX is not null and analysis.focalPointY is not null %}
+    {% set currentFp = asset.getFocalPoint() %}
+    {% set fpAlreadyApplied = currentFp and (currentFp.x|round(4) == analysis.focalPointX|round(4)) and (currentFp.y|round(4) == analysis.focalPointY|round(4)) %}
+    {% set fpEdited = analysis.focalPointEditedBy is not null %}
+
+    <div class="lens-panel-featured mb-m">
+        <div class="flex items-center gap-s">
+            {% if fpEdited %}
+                <span class="lens-lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
+            {% endif %}
+            <span class="lens-field-label">{{ 'Focal Point'|t('lens') }}</span>
+            {% if not fpEdited and analysis.focalPointConfidence %}
+                <span class="badge">{{ (analysis.focalPointConfidence * 100)|round }}%</span>
+            {% endif %}
+        </div>
+
+        <p style="margin: 4px 0; font-size: 14px; font-weight: 600">
+            {{ 'X: {x}, Y: {y}'|t('lens', {
+                x: (analysis.focalPointX * 100)|round ~ '%',
+                y: (analysis.focalPointY * 100)|round ~ '%'
+            }) }}
+        </p>
+
+        <div class="lens-apply-row">
+            {% if fpAlreadyApplied %}
+                <div class="lens-applied-indicator">
+                    <span class="status on"></span>
+                    <span class="smalltext">{{ 'Applied'|t('lens') }}</span>
+                </div>
+            {% elseif not static and not isProcessing %}
+                <button type="button" class="btn small submit" data-lens-apply-focal-point="{{ asset.id }}">
+                    {{ 'Apply to Asset'|t('lens') }}
+                </button>
+                {% if asset.getHasFocalPoint() %}
+                    <span class="smalltext light">{{ 'Will replace current focal point'|t('lens') }}</span>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+{% endif %}
+
+{# Quality Metrics #}
+{% if analysis.overallQualityScore is not null %}
+    <div class="flex items-center gap-s mb-xs">
+        <span class="lens-field-label">{{ 'Image Quality'|t('lens') }}</span>
+        <span class="lens-badge lens-badge--{{ analysis.overallQualityScore >= 0.7 ? 'success' : (analysis.overallQualityScore >= 0.4 ? 'warning' : 'error') }}">
+            {{ (analysis.overallQualityScore * 100)|round }}%
+        </span>
+    </div>
+
+    <div class="lens-quality-metrics">
+        {% if analysis.sharpnessScore is not null %}
+            <div class="lens-quality-metric">
+                <span class="lens-metric-label">{{ 'Sharpness'|t('lens') }}</span>
+                <div class="lens-metric-bar">
+                    <div class="lens-metric-fill" style="width: {{ analysis.sharpnessScore * 100 }}%"></div>
+                </div>
+                <span class="smalltext light" style="min-width:32px;text-align:right">{{ (analysis.sharpnessScore * 100)|round }}%</span>
+            </div>
+        {% endif %}
+        {% if analysis.exposureScore is not null %}
+            <div class="lens-quality-metric">
+                <span class="lens-metric-label">{{ 'Exposure'|t('lens') }}</span>
+                <div class="lens-metric-bar">
+                    <div class="lens-metric-fill" style="width: {{ analysis.exposureScore * 100 }}%"></div>
+                </div>
+                <span class="smalltext light" style="min-width:32px;text-align:right">{{ (analysis.exposureScore * 100)|round }}%</span>
+            </div>
+        {% endif %}
+        {% if analysis.noiseScore is not null %}
+            <div class="lens-quality-metric">
+                <span class="lens-metric-label">{{ 'Clarity'|t('lens') }}</span>
+                <div class="lens-metric-bar">
+                    <div class="lens-metric-fill" style="width: {{ analysis.noiseScore * 100 }}%"></div>
+                </div>
+                <span class="smalltext light" style="min-width:32px;text-align:right">{{ (analysis.noiseScore * 100)|round }}%</span>
+            </div>
+        {% endif %}
+    </div>
+{% endif %}

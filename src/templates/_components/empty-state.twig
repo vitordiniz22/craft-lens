@@ -1,0 +1,45 @@
+{#
+ # Empty State component - Generic empty state for list views and features
+ # Usage: {% include 'lens/_components/empty-state' with {heading: 'Title', description: 'Text', cta: {label: 'Action', url: 'path'}} %}
+ #
+ # Parameters:
+ #   - icon: (optional) SVG icon content or HTML entity
+ #   - heading: Main heading text (required)
+ #   - description: (optional) Secondary description text
+ #   - cta: (optional) Primary action object with 'label' and 'url'
+ #   - secondaryCta: (optional) Secondary action object with 'label' and 'url'
+ #   - compact: (optional) Use compact styling, defaults to false
+ #}
+
+{% set defaultIcon %}
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m6 4.125l2.25 2.25m0 0l2.25 2.25M12 13.875l2.25-2.25M12 13.875l-2.25 2.25M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+</svg>
+{% endset %}
+
+<div class="lens-empty-state {{ compact ?? false ? 'lens-empty-state--compact' : '' }}">
+    <div class="lens-empty-icon">
+        {{ icon ?? defaultIcon|raw }}
+    </div>
+
+    <h3 class="lens-empty-heading">{{ heading }}</h3>
+
+    {% if description ?? false %}
+        <p class="lens-empty-description">{{ description }}</p>
+    {% endif %}
+
+    {% if (cta ?? false) or (secondaryCta ?? false) %}
+        <div class="lens-empty-actions">
+            {% if cta ?? false %}
+                <a href="{{ cpUrl(cta.url) }}" class="btn {{ cta.style ?? 'submit' }}">
+                    {{ cta.label }}
+                </a>
+            {% endif %}
+            {% if secondaryCta ?? false %}
+                <a href="{{ cpUrl(secondaryCta.url) }}" class="btn">
+                    {{ secondaryCta.label }}
+                </a>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>

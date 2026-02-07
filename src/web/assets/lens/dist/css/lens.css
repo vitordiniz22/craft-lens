@@ -1,0 +1,21 @@
+/**
+ * Lens Plugin
+ * AI Asset Intelligence for Craft CMS
+ *
+ * Base overrides for native Craft CMS styles.
+ * Component and page-specific styles are in separate files.
+ */
+
+/* ==========================================================================
+   Native Craft CMS styles
+   ========================================================================== */
+
+a.chip {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+a.chip:hover {
+  opacity: 0.9;
+}

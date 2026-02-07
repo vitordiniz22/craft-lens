@@ -1,0 +1,47 @@
+{
+  "name": "vitordiniz22/craft-lens",
+  "description": "Lens uses AI to automatically analyze and tag your assets, generate alt text, extract colors, detect text and faces, and organize your media library. Includes smart filtering, custom sources, and visual similarity search to find images that look alike.",
+  "type": "craft-plugin",
+  "license": "proprietary",
+  "support": {
+    "email": "vitordiniz22@gmail.com",
+    "issues": "https://github.com/vitordiniz22/craft-lens/issues?state=open",
+    "source": "https://github.com/vitordiniz22/craft-lens",
+    "docs": "https://github.com/vitordiniz22/craft-lens",
+    "rss": "https://github.com/vitordiniz22/craft-lens/releases.atom"
+  },
+  "require": {
+    "php": ">=8.3",
+    "craftcms/cms": "^5.8.0"
+  },
+  "require-dev": {
+    "craftcms/ecs": "dev-main",
+    "craftcms/phpstan": "dev-main"
+  },
+  "autoload": {
+    "psr-4": {
+      "vitordiniz22\\craftlens\\": "src/"
+    }
+  },
+  "extra": {
+    "handle": "lens",
+    "name": "lens",
+    "developer": "Vitor Diniz",
+    "documentationUrl": "https://github.com/vitordiniz22/craft-lens"
+  },
+  "scripts": {
+    "check-cs": "ecs check --ansi",
+    "fix-cs": "ecs check --ansi --fix",
+    "phpstan": "phpstan --memory-limit=1G"
+  },
+  "config": {
+    "sort-packages": true,
+    "platform": {
+      "php": "8.3"
+    },
+    "allow-plugins": {
+      "yiisoft/yii2-composer": true,
+      "craftcms/plugin-installer": true
+    }
+  }
+}

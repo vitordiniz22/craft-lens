@@ -1,0 +1,79 @@
+/**
+ * Empty State Component
+ * Generic empty state for list views.
+ * Used by: _components/empty-state.twig, review, logs, bulk
+ */
+
+.lens-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 48px 24px;
+}
+
+.lens-empty-state--compact {
+  padding: 24px 16px;
+}
+
+.lens-empty-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 16px;
+  background: var(--gray-100);
+  border-radius: 50%;
+  color: var(--medium-text-color);
+}
+
+.lens-empty-state--compact .lens-empty-icon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 12px;
+}
+
+.lens-empty-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+.lens-empty-state--compact .lens-empty-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.lens-empty-heading {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.lens-empty-state--compact .lens-empty-heading {
+  font-size: 15px;
+  margin-bottom: 6px;
+}
+
+.lens-empty-description {
+  margin: 0 0 20px 0;
+  font-size: 14px;
+  color: var(--medium-text-color);
+  max-width: 360px;
+  line-height: 1.5;
+}
+
+.lens-empty-state--compact .lens-empty-description {
+  font-size: 13px;
+  margin-bottom: 16px;
+  max-width: 280px;
+}
+
+.lens-empty-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}

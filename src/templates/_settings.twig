@@ -1,0 +1,59 @@
+{# @var plugin \vitordiniz22\craftlens\Plugin #}
+{# @var settings \vitordiniz22\craftlens\models\Settings #}
+
+{% import '_includes/forms.twig' as forms %}
+
+<h2>{{ 'API Configuration'|t('lens') }}</h2>
+
+{{ forms.autosuggestField({
+    label: 'OpenAI API Key'|t('lens'),
+    instructions: 'Your OpenAI API key. Supports environment variables like `$OPENAI_API_KEY`.'|t('lens'),
+    id: 'openaiApiKey',
+    name: 'openaiApiKey',
+    value: settings.openaiApiKey,
+    suggestEnvVars: true,
+    required: true,
+    errors: settings.getErrors('openaiApiKey'),
+}) }}
+
+{{ forms.selectField({
+    label: 'AI Model'|t('lens'),
+    instructions: 'Select the OpenAI model to use for image analysis.'|t('lens'),
+    id: 'openaiModel',
+    name: 'openaiModel',
+    value: settings.openaiModel,
+    options: [
+        {label: 'GPT-4o (Recommended)', value: 'gpt-4o'},
+        {label: 'GPT-4o Mini (Faster, cheaper)', value: 'gpt-4o-mini'},
+        {label: 'GPT-4 Turbo', value: 'gpt-4-turbo'},
+    ],
+    errors: settings.getErrors('openaiModel'),
+}) }}
+
+<hr>
+
+<h2>{{ 'Processing Options'|t('lens') }}</h2>
+
+{{ forms.lightswitchField({
+    label: 'Auto-Process on Upload'|t('lens'),
+    instructions: 'Automatically analyze images when they are uploaded.'|t('lens'),
+    id: 'autoProcessOnUpload',
+    name: 'autoProcessOnUpload',
+    on: settings.autoProcessOnUpload,
+}) }}
+
+{{ forms.lightswitchField({
+    label: 'Reprocess on File Replace'|t('lens'),
+    instructions: 'Automatically re-analyze assets when their file is replaced or edited (crop, rotate, etc.).'|t('lens'),
+    id: 'reprocessOnFileReplace',
+    name: 'reprocessOnFileReplace',
+    on: settings.reprocessOnFileReplace,
+}) }}
+
+{{ forms.lightswitchField({
+    label: 'Require Review Before Apply'|t('lens'),
+    instructions: 'AI suggestions must be approved before being applied to assets.'|t('lens'),
+    id: 'requireReviewBeforeApply',
+    name: 'requireReviewBeforeApply',
+    on: settings.requireReviewBeforeApply,
+}) }}

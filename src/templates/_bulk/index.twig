@@ -1,0 +1,199 @@
+{% extends '_layouts/cp' %}
+
+{% set title = 'Bulk Processing'|t('lens') %}
+{% set selectedSubnavItem = 'bulk' %}
+
+{% block content %}
+    <div class="lens-bulk-page" id="lens-bulk-container"
+         data-initial-state="{{ initialState }}">
+
+        {# Show setup banner if AI provider not configured #}
+        {% if lens.hasCriticalIssues() %}
+            {% include 'lens/_components/setup-banner' with {
+                checks: lens.getSetupStatus(),
+                title: 'Setup Required'|t('lens'),
+                description: 'Configure Lens before processing assets.'|t('lens')
+            } %}
+        {% else %}
+            {# Stats Grid - Always visible #}
+            <div class="lens-stats-grid" id="lens-stats-grid">
+                <div class="lens-stat-card">
+                    <div class="lens-stat-value" data-stat="totalImages">{{ stats.totalImages }}</div>
+                    <div class="lens-stat-label">{{ 'Total Images'|t('lens') }}</div>
+                </div>
+                <div class="lens-stat-card lens-stat-success">
+                    <div class="lens-stat-value" data-stat="analyzed">{{ stats.analyzed }}</div>
+                    <div class="lens-stat-label">{{ 'Analyzed'|t('lens') }}</div>
+                </div>
+                <div class="lens-stat-card lens-stat-warning">
+                    <div class="lens-stat-value" data-stat="unprocessed">{{ stats.unprocessed }}</div>
+                    <div class="lens-stat-label">{{ 'Unprocessed'|t('lens') }}</div>
+                </div>
+                <div class="lens-stat-card">
+                    <div class="lens-stat-value" data-stat="pendingReview">{{ stats.pendingReview }}</div>
+                    <div class="lens-stat-label">{{ 'Pending Review'|t('lens') }}</div>
+                </div>
+                <div class="lens-stat-card lens-stat-error">
+                    <div class="lens-stat-value" data-stat="failed">{{ stats.failed }}</div>
+                    <div class="lens-stat-label">{{ 'Failed'|t('lens') }}</div>
+                </div>
+            </div>
+
+            {# ===== STATE: READY ===== #}
+            <div class="pane lens-bulk-state" id="lens-state-ready"
+                 style="margin-top: 24px;{% if initialState != 'ready' %} display: none;{% endif %}">
+
+                {% if stats.unprocessed == 0 and stats.failed == 0 %}
+                    {# All assets analyzed - success message #}
+                    <div class="lens-all-done">
+                        <span class="lens-all-done-icon"></span>
+                        <h2>{{ 'All Assets Analyzed'|t('lens') }}</h2>
+                        <p>{{ '{count} images have been analyzed.'|t('lens', {count: stats.analyzed}) }}</p>
+                    </div>
+                {% else %}
+                    <h2>{{ 'Process Assets'|t('lens') }}</h2>
+
+                    <div class="lens-bulk-summary">
+                        {% if stats.unprocessed > 0 %}
+                            <p>
+                                <strong data-stat="unprocessed">{{ stats.unprocessed }}</strong>
+                                {{ 'images ready for analysis.'|t('lens') }}
+                            </p>
+
+                            {% if estimatedCost > 0 %}
+                                <div class="lens-estimated-cost">
+                                    <span class="lens-cost-label">{{ 'Estimated cost:'|t('lens') }}</span>
+                                    <strong>${{ estimatedCost|number_format(4) }}</strong>
+                                    <span class="light">{{ '(based on current provider settings)'|t('lens') }}</span>
+                                </div>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+
+                    <form method="post" id="lens-process-form">
+                        {{ csrfInput() }}
+                        {{ actionInput('lens/bulk/process') }}
+
+                        <div class="field">
+                            <div class="heading">
+                                <label for="volumeId">{{ 'Volume'|t('lens') }}</label>
+                            </div>
+                            <div class="input">
+                                <select name="volumeId" id="volumeId" class="text">
+                                    <option value="">{{ 'All Volumes'|t('lens') }}</option>
+                                    {% for volume in volumes %}
+                                        <option value="{{ volume.id }}">{{ volume.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="lens-bulk-actions">
+                            <button type="submit" class="btn submit" id="lens-start-btn"
+                                    {% if stats.unprocessed == 0 %}disabled{% endif %}>
+                                {{ 'Start Processing'|t('lens') }}
+                            </button>
+
+                            {% if stats.failed > 0 %}
+                                <button type="button" class="btn" id="lens-retry-btn">
+                                    {{ 'Retry {count} Failed'|t('lens', {count: stats.failed}) }}
+                                </button>
+                            {% endif %}
+                        </div>
+                    </form>
+                {% endif %}
+            </div>
+
+            {# ===== STATE: PROCESSING ===== #}
+            <div class="pane lens-bulk-state" id="lens-state-processing"
+                 style="margin-top: 24px;{% if initialState != 'processing' %} display: none;{% endif %}">
+                <h2>{{ 'Processing in Progress'|t('lens') }}</h2>
+
+                <div class="lens-progress-section">
+                    <div class="lens-progress-bar-container">
+                        <div class="lens-progress-bar" id="lens-progress-bar" style="width: 0%"></div>
+                    </div>
+                    <div class="lens-progress-text" id="lens-progress-text">
+                        {{ 'Starting...'|t('lens') }}
+                    </div>
+                </div>
+
+                <div class="lens-progress-counters">
+                    <div class="lens-counter lens-counter-success">
+                        <span class="lens-counter-value" id="lens-completed-count">0</span>
+                        <span class="lens-counter-label">{{ 'Completed'|t('lens') }}</span>
+                    </div>
+                    <div class="lens-counter lens-counter-error">
+                        <span class="lens-counter-value" id="lens-failed-count">0</span>
+                        <span class="lens-counter-label">{{ 'Failed'|t('lens') }}</span>
+                    </div>
+                    <div class="lens-counter">
+                        <span class="lens-counter-value" id="lens-remaining-count">0</span>
+                        <span class="lens-counter-label">{{ 'Remaining'|t('lens') }}</span>
+                    </div>
+                </div>
+
+                <div class="lens-progress-details light">
+                    <p id="lens-job-description">{{ 'Analyzing assets...'|t('lens') }}</p>
+                    <p>{{ 'Cost so far:'|t('lens') }} <strong id="lens-current-cost">$0.0000</strong></p>
+                </div>
+
+                <div class="lens-progress-actions" style="text-align: center; margin-top: 20px;">
+                    <button type="button" class="btn" id="lens-cancel-btn">
+                        {{ 'Cancel Processing'|t('lens') }}
+                    </button>
+                </div>
+            </div>
+
+            {# ===== STATE: COMPLETE ===== #}
+            <div class="pane lens-bulk-state lens-state-complete" id="lens-state-complete"
+                 style="margin-top: 24px;{% if initialState != 'complete' %} display: none;{% endif %}">
+                <div class="lens-complete-header">
+                    <span class="lens-complete-icon"></span>
+                    <h2>{{ 'Processing Complete'|t('lens') }}</h2>
+                </div>
+
+                <div class="lens-complete-summary">
+                    <div class="lens-summary-grid">
+                        <div class="lens-summary-item">
+                            <span class="lens-summary-value" id="lens-summary-analyzed">{{ stats.analyzed }}</span>
+                            <span class="lens-summary-label">{{ 'Analyzed'|t('lens') }}</span>
+                        </div>
+                        <div class="lens-summary-item lens-summary-warning">
+                            <span class="lens-summary-value" id="lens-summary-failed">{{ stats.failed }}</span>
+                            <span class="lens-summary-label">{{ 'Failed'|t('lens') }}</span>
+                        </div>
+                        <div class="lens-summary-item">
+                            <span class="lens-summary-value" id="lens-summary-review">{{ stats.pendingReview }}</span>
+                            <span class="lens-summary-label">{{ 'Pending Review'|t('lens') }}</span>
+                        </div>
+                    </div>
+
+                    <p class="lens-total-cost">
+                        {{ 'Total cost for this run:'|t('lens') }} <strong id="lens-summary-cost">$0.0000</strong>
+                    </p>
+                </div>
+
+                <div class="lens-complete-actions">
+                    {% if stats.pendingReview > 0 %}
+                        <a href="{{ cpUrl('lens/review') }}" class="btn submit">
+                            {{ 'View Review Queue'|t('lens') }}
+                        </a>
+                    {% endif %}
+
+                    <button type="button" class="btn" id="lens-retry-complete-btn" style="display: none;">
+                        {{ 'Retry Failed'|t('lens') }}
+                    </button>
+
+                    <button type="button" class="btn" id="lens-dismiss-complete">
+                        {{ 'Process More'|t('lens') }}
+                    </button>
+
+                    <a href="{{ cpUrl('lens/search') }}" class="btn">
+                        {{ 'Browse Assets'|t('lens') }}
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

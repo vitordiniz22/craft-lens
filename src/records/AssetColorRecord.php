@@ -1,0 +1,51 @@
+<?php
+
+declare(strict_types=1);
+
+namespace vitordiniz22\craftlens\records;
+
+use craft\db\ActiveRecord;
+use vitordiniz22\craftlens\migrations\Install;
+use yii\db\ActiveQueryInterface;
+
+/**
+ * Asset Color record.
+ *
+ * Stores dominant colors detected in asset analyses for efficient querying.
+ * Colors can be AI-generated (isAi=true) or user-added (isAi=false).
+ * On reprocess, only AI colors are replaced; user colors are preserved.
+ *
+ * @property int $id
+ * @property int $assetId
+ * @property int $analysisId
+ * @property string $hex Hex color value (#RRGGBB)
+ * @property float|null $percentage Color prevalence percentage (0.0-1.0)
+ * @property bool $isAi Whether the color was AI-detected (true) or user-added (false)
+ * @property \DateTime $dateCreated
+ * @property \DateTime $dateUpdated
+ * @property string $uid
+ * @property-read AssetAnalysisRecord $analysis
+ */
+class AssetColorRecord extends ActiveRecord
+{
+    public static function tableName(): string
+    {
+        return Install::TABLE_ASSET_COLORS;
+    }
+
+    public function getAnalysis(): ActiveQueryInterface
+    {
+        return $this->hasOne(AssetAnalysisRecord::class, ['id' => 'analysisId']);
+    }
+
+    public function rules(): array
+    {
+        return [
+            [['assetId', 'analysisId', 'hex'], 'required'],
+            [['hex'], 'string', 'max' => 7],
+            [['hex'], 'match', 'pattern' => '/^#[0-9A-Fa-f]{6}$/'],
+            [['percentage'], 'number', 'min' => 0, 'max' => 1],
+            [['isAi'], 'boolean'],
+        ];
+    }
+}

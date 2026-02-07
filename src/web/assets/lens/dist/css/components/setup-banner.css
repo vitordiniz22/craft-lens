@@ -1,0 +1,142 @@
+/**
+ * Setup Banner Component
+ * Setup checklist with status indicators.
+ * Used by: _components/setup-banner.twig, dashboard, bulk, search
+ */
+
+.lens-setup-banner {
+  background: var(--gray-050);
+  border: 1px solid var(--hairline-color);
+  border-radius: var(--large-border-radius);
+  padding: 20px 24px;
+  margin-bottom: 24px;
+}
+
+.lens-setup-banner--critical {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.lens-setup-banner--warning {
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+
+.lens-setup-banner--info {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.lens-setup-banner-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.lens-banner-dismiss {
+  margin-left: auto;
+  padding: 4px 8px;
+  background: transparent;
+  border: none;
+  color: var(--medium-text-color);
+  font-size: 16px;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.15s ease;
+}
+
+.lens-banner-dismiss:hover {
+  opacity: 1;
+}
+
+.lens-setup-banner-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--error-color, #ef4444);
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.lens-setup-banner--warning .lens-setup-banner-icon {
+  background: var(--warning-color, #f59e0b);
+}
+
+.lens-setup-banner--info .lens-setup-banner-icon {
+  background: var(--link-color, #2563eb);
+}
+
+.lens-setup-banner-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.lens-setup-banner-description {
+  margin: 0 0 16px 0;
+  color: var(--medium-text-color);
+  font-size: 14px;
+}
+
+.lens-setup-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lens-setup-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--white);
+  border-radius: var(--medium-border-radius);
+  border: 1px solid var(--hairline-color);
+}
+
+.lens-setup-item--complete {
+  opacity: 0.7;
+}
+
+.lens-setup-item-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.lens-setup-item-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.lens-setup-item-status .status {
+  margin: 0;
+}
+
+.lens-setup-item-text {
+  font-size: 14px;
+  color: var(--text-color);
+}
+
+.lens-setup-item--complete .lens-setup-item-text {
+  text-decoration: line-through;
+  color: var(--medium-text-color);
+}
+
+.lens-setup-item-action {
+  flex-shrink: 0;
+}

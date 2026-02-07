@@ -1,0 +1,33 @@
+/**
+ * Stat Card Component
+ * Stat value/label pattern used in bulk, statistics, dashboard.
+ */
+
+.lens-stat-card {
+  background: var(--gray-050);
+  border-radius: var(--medium-border-radius);
+  padding: 20px;
+  text-align: center;
+}
+
+.lens-stat-value {
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.lens-stat-label {
+  font-size: 13px;
+  color: var(--medium-text-color);
+  margin-top: 4px;
+}
+
+.lens-stat-success .lens-stat-value {
+  color: var(--success-color);
+}
+.lens-stat-warning .lens-stat-value {
+  color: var(--warning-color);
+}
+.lens-stat-error .lens-stat-value {
+  color: var(--error-color);
+}

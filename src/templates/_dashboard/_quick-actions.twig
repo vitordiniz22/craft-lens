@@ -1,0 +1,24 @@
+{# Section 4: Quick Actions #}
+<div class="lens-section lens-actions-section">
+    <div class="lens-quick-actions">
+        {% if unprocessedCount > 0 %}
+            <form method="post" action="{{ actionUrl('lens/bulk/process') }}" class="lens-action-form">
+                {{ csrfInput() }}
+                <button type="submit" class="btn submit">
+                    {{ 'Analyze All Unprocessed'|t('lens') }}
+                </button>
+            </form>
+        {% endif %}
+
+        <a href="{{ cpUrl('lens/review') }}" class="btn">
+            {{ 'Review Queue'|t('lens') }}
+            {% if pendingReviewCount > 0 %}
+                <span class="lens-badge lens-badge--error-solid">{{ pendingReviewCount }}</span>
+            {% endif %}
+        </a>
+
+        <a href="{{ cpUrl('lens/search') }}" class="btn">
+            {{ 'Search Assets'|t('lens') }}
+        </a>
+    </div>
+</div>

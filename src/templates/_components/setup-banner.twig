@@ -1,0 +1,84 @@
+{#
+ # Setup Banner component - Shows setup status and configuration requirements
+ # Usage: {% include 'lens/_components/setup-banner' with {checks: checks, title: title, description: description} %}
+ #
+ # Parameters:
+ #   - checks: array of setup check objects from SetupStatusService
+ #   - title: (optional) Banner title, defaults to "Setup Required"
+ #   - description: (optional) Banner description
+ #   - showCompleted: (optional) Whether to show completed items, defaults to false
+ #   - dismissible: (optional) Whether banner can be dismissed, defaults to true for non-critical
+ #   - dismissKey: (optional) Unique key for storing dismissed state, defaults to 'setup-banner'
+ #}
+
+{% set unresolvedChecks = checks|filter(c => not c.isResolved) %}
+{% set resolvedChecks = checks|filter(c => c.isResolved) %}
+{% set hasCritical = unresolvedChecks|filter(c => c.severity == 'critical')|length > 0 %}
+{% set hasWarning = unresolvedChecks|filter(c => c.severity == 'warning')|length > 0 %}
+{% set hasInfo = unresolvedChecks|filter(c => c.severity == 'info')|length > 0 %}
+
+{# Critical issues should not be dismissible - they block core functionality #}
+{% set canDismiss = (dismissible ?? true) and not hasCritical %}
+{% set bannerDismissKey = dismissKey ?? 'setup-banner' %}
+
+{% if unresolvedChecks|length > 0 or (showCompleted ?? false and resolvedChecks|length > 0) %}
+<div class="lens-setup-banner {{ hasCritical ? 'lens-setup-banner--critical' : (hasWarning ? 'lens-setup-banner--warning' : (hasInfo ? 'lens-setup-banner--info' : '')) }}"
+     {% if canDismiss %}data-lens-dismissible="{{ bannerDismissKey }}"{% endif %}>
+    <div class="lens-setup-banner-header">
+        <div class="lens-setup-banner-icon">!</div>
+        <h3 class="lens-setup-banner-title">{{ title ?? 'Setup Required'|t('lens') }}</h3>
+        {% if canDismiss %}
+            <button type="button" class="lens-banner-dismiss" data-lens-dismiss title="{{ 'Dismiss'|t('lens') }}">
+                &#10005;
+            </button>
+        {% endif %}
+    </div>
+
+    {% if description ?? false %}
+        <p class="lens-setup-banner-description">{{ description }}</p>
+    {% else %}
+        <p class="lens-setup-banner-description">
+            {{ 'Complete the following steps to enable all Lens features.'|t('lens') }}
+        </p>
+    {% endif %}
+
+    <div class="lens-setup-checklist">
+        {# Show unresolved items first #}
+        {% for check in unresolvedChecks %}
+            <div class="lens-setup-item">
+                <div class="lens-setup-item-content">
+                    <div class="lens-setup-item-status">
+                        {% if check.severity == 'critical' %}
+                            <span class="status off"></span>
+                        {% elseif check.severity == 'warning' %}
+                            <span class="status pending"></span>
+                        {% else %}
+                            <span class="status"></span>
+                        {% endif %}
+                    </div>
+                    <span class="lens-setup-item-text">{{ check.message }}</span>
+                </div>
+                <div class="lens-setup-item-action">
+                    <a href="{{ cpUrl(check.actionUrl) }}" class="btn small">
+                        {{ check.actionLabel }}
+                    </a>
+                </div>
+            </div>
+        {% endfor %}
+
+        {# Show resolved items if requested #}
+        {% if showCompleted ?? false %}
+            {% for check in resolvedChecks %}
+                <div class="lens-setup-item lens-setup-item--complete">
+                    <div class="lens-setup-item-content">
+                        <div class="lens-setup-item-status">
+                            <span class="status on"></span>
+                        </div>
+                        <span class="lens-setup-item-text">{{ check.message }}</span>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+</div>
+{% endif %}

@@ -1,0 +1,34 @@
+{#
+ # Asset Sidebar - Plugin setup guidance
+ # Shows only when UI component (LensAnalysisElement) is NOT added to field layout
+ # Rendered inside metadata section via EVENT_DEFINE_METADATA
+ #}
+
+<div class="lens-asset-sidebar">
+    {# Primary message: Add the UI component #}
+    {% include 'lens/_components/inline-notice' with {
+        type: 'info',
+        title: 'Analysis Panel Not Added'|t('lens'),
+        message: 'Add it to this volume\'s field layout to view AI-generated alt text, tags, and more.'|t('lens'),
+        cta: {
+            label: 'Edit Volume'|t('lens'),
+            url: 'settings/assets/volumes/' ~ asset.volume.id
+        }
+    } %}
+
+    {# Configuration issues (if any) #}
+    {% if lens.hasCriticalIssues() %}
+        {% set criticalIssues = lens.getCriticalIssues() %}
+        {% for issue in criticalIssues|slice(0, 2) %}
+            {% include 'lens/_components/inline-notice' with {
+                type: 'error',
+                title: issue.category == 'ai_provider' ? 'API Not Configured'|t('lens') : 'Setup Required'|t('lens'),
+                message: issue.message,
+                cta: {
+                    label: issue.actionLabel,
+                    url: issue.actionUrl
+                }
+            } %}
+        {% endfor %}
+    {% endif %}
+</div>

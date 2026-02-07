@@ -1,0 +1,190 @@
+/**
+ * Search Page
+ * Search input, filters, results grid, result cards, welcome state.
+ */
+
+.lens-search-page {
+  max-width: 1400px;
+}
+
+/* Search input with icon */
+.lens-search-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.lens-search-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--medium-text-color);
+  pointer-events: none;
+}
+
+.lens-search-input-wrap input {
+  padding-left: 40px;
+  padding-right: 36px;
+}
+
+.lens-clear-search {
+  position: absolute;
+  right: 8px;
+  background: none;
+  border: none;
+  color: var(--medium-text-color);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lens-clear-search:hover {
+  color: var(--text-color);
+}
+
+/* Results grid */
+.lens-results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+/* Result cards (use .card for base styling) */
+.lens-result-card {
+  position: relative;
+  overflow: hidden;
+  transition:
+    box-shadow 0.2s,
+    transform 0.2s;
+}
+
+.lens-result-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+/* Image preview container (4:3 aspect ratio) */
+.lens-result-preview {
+  display: block;
+  aspect-ratio: 4/3;
+  position: relative;
+  background: var(--gray-100);
+  overflow: hidden;
+}
+
+.lens-result-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lens-result-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--medium-text-color);
+}
+
+/* Overlay badges on images */
+.lens-result-overlay {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 4px;
+}
+
+.lens-duplicate-badge {
+  background: rgba(180, 80, 0, 0.85);
+  color: white;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  text-decoration: none;
+}
+
+.lens-duplicate-badge:hover {
+  background: rgba(200, 90, 0, 0.95);
+  color: white;
+  text-decoration: none;
+}
+
+/* Card info section */
+.lens-result-info {
+  padding: 12px;
+}
+
+.lens-result-title {
+  display: block;
+  font-weight: 500;
+  color: var(--text-color);
+  text-decoration: none;
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lens-result-title:hover {
+  color: var(--link-color);
+}
+
+.lens-result-alt {
+  font-size: 12px;
+  color: var(--medium-text-color);
+  margin: 0 0 8px 0;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.lens-result-colors {
+  display: flex;
+  gap: 4px;
+}
+
+/* Welcome state */
+.lens-search-welcome {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.lens-welcome-icon {
+  margin-bottom: 16px;
+}
+
+.lens-search-welcome h2 {
+  margin: 0 0 8px 0;
+  font-size: 20px;
+}
+
+.lens-search-welcome p {
+  color: var(--medium-text-color);
+  margin: 0;
+}
+
+/* Keyboard focus */
+.lens-result-card:focus {
+  outline: 2px solid var(--focus-ring-color, #0066cc);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(0, 102, 204, 0.2);
+}
+
+.lens-result-card:focus-visible {
+  outline: 2px solid var(--focus-ring-color, #0066cc);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .lens-results-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  }
+}

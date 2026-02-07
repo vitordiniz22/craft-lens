@@ -1,0 +1,106 @@
+/**
+ * Inline Notice Component
+ * Contextual messages (error/warning/info/tip).
+ * Used by: _components/inline-notice.twig, _components/asset-sidebar.twig
+ */
+
+.lens-inline-notice {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  padding-right: 32px;
+  border-radius: var(--medium-border-radius);
+  margin-bottom: 12px;
+}
+
+.lens-inline-notice--error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+}
+
+.lens-inline-notice--warning {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+}
+
+.lens-inline-notice--info {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+}
+
+.lens-inline-notice--tip {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+}
+
+.lens-notice-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lens-notice-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  font-size: 14px;
+}
+
+.lens-inline-notice--error .lens-notice-icon {
+  color: #dc2626;
+}
+
+.lens-inline-notice--warning .lens-notice-icon {
+  color: #d97706;
+}
+
+.lens-inline-notice--info .lens-notice-icon {
+  color: #2563eb;
+}
+
+.lens-inline-notice--tip .lens-notice-icon {
+  color: #16a34a;
+}
+
+.lens-notice-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.lens-notice-content {
+  font-size: 13px;
+  color: var(--medium-text-color);
+  line-height: 1.5;
+}
+
+.lens-notice-action {
+  margin-top: 4px;
+}
+
+.lens-notice-action .btn {
+  font-size: 12px;
+}
+
+.lens-notice-dismiss {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  color: var(--medium-text-color);
+  cursor: pointer;
+  padding: 4px;
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+
+.lens-notice-dismiss:hover {
+  opacity: 1;
+}

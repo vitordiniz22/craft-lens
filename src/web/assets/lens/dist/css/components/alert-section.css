@@ -1,0 +1,25 @@
+/**
+ * Alert Section Component
+ * Colored container for contextual sections (NSFW, watermark, quality).
+ *
+ * Usage: <div class="lens-alert-section lens-alert-section--error">...</div>
+ */
+
+.lens-alert-section {
+  padding: 12px;
+  border-radius: var(--medium-border-radius);
+}
+
+.lens-alert-section--error {
+  background: var(--bg-error, #fef2f2);
+  border: 1px solid var(--red-200, #fecaca);
+}
+
+.lens-alert-section--warning {
+  background: var(--bg-warning, #fffbeb);
+  border: 1px solid var(--amber-300, #fcd34d);
+}
+
+.lens-alert-section--neutral {
+  background: var(--gray-050);
+}

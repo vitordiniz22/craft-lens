@@ -1,0 +1,671 @@
+/**
+ * Review Page
+ * Review queue list view + single-review two-panel layout + grid/browse mode.
+ */
+
+/* ==========================================================================
+   Review Queue
+   ========================================================================== */
+
+.lens-review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.lens-review-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.lens-review-item {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  background: var(--ui-control-bg-color);
+  border-radius: var(--large-border-radius);
+  border: 1px solid var(--hairline-color);
+}
+
+.lens-review-checkbox {
+  display: flex;
+  align-items: flex-start;
+  padding-top: 8px;
+}
+
+.lens-review-preview {
+  flex-shrink: 0;
+  width: 150px;
+}
+
+.lens-review-preview img {
+  width: 100%;
+  height: auto;
+  border-radius: var(--small-border-radius);
+}
+
+.lens-review-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.lens-review-details h3 {
+  margin: 0 0 12px 0;
+}
+
+.lens-confidence {
+  font-size: 12px;
+  color: var(--medium-text-color);
+  margin-left: 8px;
+}
+
+.lens-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--medium-text-color);
+}
+
+.lens-review-actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 8px;
+}
+
+.lens-field-hint {
+  font-size: 11px;
+  margin-top: 4px;
+}
+
+/* ==========================================================================
+   Single Review - Two-Panel Layout
+   ========================================================================== */
+
+/* Toolbar */
+.lens-review-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--hairline-color);
+}
+
+.lens-review-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lens-review-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lens-review-counter {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-color);
+  white-space: nowrap;
+}
+
+.lens-review-mode-toggle .btn {
+  min-width: auto;
+}
+
+.lens-review-mode-toggle .btn.active {
+  background: var(--link-color);
+  color: white;
+}
+
+.lens-kbd-hints {
+  display: flex;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--medium-text-color);
+}
+
+.lens-kbd-hints kbd {
+  display: inline-block;
+  padding: 2px 6px;
+  background: var(--gray-100);
+  border: 1px solid var(--gray-200, #d1d5db);
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--medium-text-color);
+}
+
+/* Two-panel layout */
+.lens-review-panels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  min-height: 400px;
+}
+
+/* Left panel - Image */
+.lens-review-left {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.lens-review-image-container {
+  position: relative;
+  background: var(--gray-100);
+  border-radius: var(--medium-border-radius);
+  overflow: hidden;
+  cursor: crosshair;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+}
+
+.lens-review-image-container img {
+  max-width: 100%;
+  max-height: 70vh;
+  display: block;
+  transition: transform 0.2s ease;
+  transform-origin: center center;
+}
+
+.lens-review-focal-marker {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border: 3px solid #ef4444;
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8);
+  z-index: 5;
+  transition: left 0.15s, top 0.15s;
+}
+
+.lens-review-focal-marker::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  background: #ef4444;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.lens-review-zoom-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.lens-review-zoom-controls .btn {
+  min-width: 36px;
+  text-align: center;
+  padding: 4px 8px;
+}
+
+.lens-review-zoom-level {
+  font-size: 12px;
+  color: var(--medium-text-color);
+  min-width: 40px;
+  text-align: center;
+}
+
+/* Similar images */
+.lens-review-similar {
+  padding: 12px;
+  background: var(--gray-050);
+  border-radius: var(--medium-border-radius);
+}
+
+.lens-review-similar h4 {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--medium-text-color);
+}
+
+.lens-review-similar-list {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.lens-review-similar-item {
+  flex-shrink: 0;
+  width: 80px;
+  text-align: center;
+  text-decoration: none;
+}
+
+.lens-review-similar-item img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: var(--small-border-radius);
+  border: 1px solid var(--hairline-color);
+}
+
+.lens-review-similar-score {
+  font-size: 10px;
+  color: var(--medium-text-color);
+  margin-top: 4px;
+}
+
+.lens-review-similar-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--link-color);
+  text-decoration: none;
+  min-width: 60px;
+}
+
+/* Right panel - Details */
+.lens-review-right {
+  overflow-y: auto;
+  max-height: calc(100vh - 250px);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Asset header */
+.lens-review-asset-header {
+  padding-bottom: 12px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--hairline-color);
+}
+
+.lens-review-asset-header h3 {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+}
+
+.lens-review-asset-header h3 a {
+  color: var(--link-color);
+  text-decoration: none;
+}
+
+.lens-review-asset-header h3 a:hover {
+  text-decoration: underline;
+}
+
+.lens-review-asset-meta {
+  font-size: 12px;
+  color: var(--medium-text-color);
+}
+
+/* Sections using details/summary */
+.lens-review-section {
+  border-bottom: 1px solid var(--hairline-color);
+}
+
+.lens-review-section:last-child {
+  border-bottom: none;
+}
+
+.lens-review-section summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 0;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-color);
+  list-style: none;
+  user-select: none;
+}
+
+.lens-review-section summary::-webkit-details-marker {
+  display: none;
+}
+
+.lens-review-section summary::before {
+  content: '\25B6';
+  font-size: 10px;
+  color: var(--medium-text-color);
+  transition: transform 0.15s;
+}
+
+.lens-review-section[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.lens-review-section-content {
+  padding: 0 0 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Fields inside review sections */
+.lens-review-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.lens-review-field-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--medium-text-color);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Long description expandable */
+.lens-review-desc-preview {
+  max-height: 3.5em;
+  overflow: hidden;
+  position: relative;
+}
+
+.lens-review-desc-preview.expanded {
+  max-height: none;
+}
+
+.lens-review-desc-toggle {
+  font-size: 12px;
+  color: var(--link-color);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* Detection items */
+.lens-detection-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--gray-050);
+  border-radius: var(--small-border-radius);
+}
+
+.lens-detection-label {
+  font-size: 13px;
+  color: var(--text-color);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lens-detection-value {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.lens-detection-action {
+  font-size: 11px;
+  color: var(--link-color);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
+.lens-detection-action:hover {
+  text-decoration: underline;
+}
+
+/* Action bar (sticky bottom) */
+.lens-review-action-bar {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 0;
+  margin-top: 16px;
+  background: var(--white, #fff);
+  border-top: 1px solid var(--hairline-color);
+  z-index: 10;
+}
+
+.lens-review-action-bar .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lens-review-action-bar kbd {
+  display: inline-block;
+  padding: 1px 5px;
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: 10px;
+  line-height: 1.4;
+  color: inherit;
+  opacity: 0.7;
+}
+
+/* Grid / Bulk mode */
+.lens-review-grid-mode {
+  display: none;
+}
+
+.lens-review-grid-mode.active {
+  display: block;
+}
+
+.lens-review-single-mode.hidden {
+  display: none;
+}
+
+.lens-grid-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.lens-grid-selected-count {
+  font-size: 13px;
+  color: var(--medium-text-color);
+  margin-left: 8px;
+}
+
+.lens-review-grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.lens-grid-item {
+  position: relative;
+  border-radius: var(--medium-border-radius);
+  border: 2px solid transparent;
+  overflow: hidden;
+  background: var(--white);
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.lens-grid-item:hover {
+  border-color: var(--gray-300, #d1d5db);
+}
+
+.lens-grid-item.selected {
+  border-color: var(--link-color);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+.lens-grid-item-image {
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: var(--gray-100);
+}
+
+.lens-grid-item-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lens-grid-item-checkbox {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 5;
+}
+
+.lens-grid-item-checkbox input {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--link-color);
+}
+
+.lens-grid-item-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.lens-grid-item-info {
+  padding: 8px;
+}
+
+.lens-grid-item-title {
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-color);
+}
+
+.lens-grid-item-meta {
+  font-size: 11px;
+  color: var(--medium-text-color);
+  margin-top: 2px;
+}
+
+/* Loading state */
+.lens-review-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  color: var(--medium-text-color);
+}
+
+.lens-review-loading::after {
+  content: '';
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--gray-200, #e5e7eb);
+  border-top-color: var(--link-color);
+  border-radius: 50%;
+  animation: lens-spin 0.6s linear infinite;
+}
+
+@keyframes lens-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .lens-review-panels {
+    grid-template-columns: 1fr;
+  }
+
+  .lens-review-right {
+    max-height: none;
+  }
+
+  .lens-review-image-container img {
+    max-height: 50vh;
+  }
+}
+
+/* Browse mode */
+.lens-review-browse-mode {
+  display: none;
+}
+
+.lens-review-browse-mode.active {
+  display: block;
+}
+
+.lens-browse-card {
+  position: relative;
+  border-radius: var(--medium-border-radius);
+  border: 2px solid transparent;
+  overflow: hidden;
+  background: var(--white);
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+}
+
+.lens-browse-card:hover {
+  border-color: var(--link-color);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.lens-browse-card:focus {
+  outline: 2px solid var(--focus-ring-color, #0066cc);
+  outline-offset: 2px;
+}
+
+.lens-browse-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--hairline-color);
+}
+
+.lens-browse-pagination .lens-page-info {
+  color: var(--medium-text-color);
+  font-size: 14px;
+}
+
+@media (max-width: 768px) {
+  .lens-review-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .lens-kbd-hints {
+    display: none;
+  }
+
+  .lens-review-action-bar {
+    flex-wrap: wrap;
+  }
+
+  .lens-review-grid-container {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+}

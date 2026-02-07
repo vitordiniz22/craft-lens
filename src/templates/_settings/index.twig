@@ -1,0 +1,154 @@
+{% extends '_layouts/cp' %}
+
+{% set title = 'Settings'|t('lens') %}
+{% set selectedSubnavItem = 'settings' %}
+{% set fullPageForm = true %}
+
+{% import '_includes/forms.twig' as forms %}
+
+{% block content %}
+    {{ actionInput('lens/settings/save') }}
+    {{ redirectInput('lens/settings') }}
+
+    {# ==================== SECTION: AI Provider ==================== #}
+    <h2>{{ 'AI Provider'|t('lens') }}</h2>
+    <p>{{ 'Select which AI service powers Lens. All three providers support the full feature set.'|t('lens') }}</p>
+
+    {{ forms.radioGroupField({
+        first: true,
+        label: 'Select a Provider'|t('lens'),
+        id: 'aiProvider',
+        name: 'settings[aiProvider]',
+        value: settings.aiProvider,
+        options: [
+            {label: 'OpenAI'|t('lens'), value: 'openai'},
+            {label: 'Google Gemini'|t('lens'), value: 'gemini'},
+            {label: 'Anthropic Claude'|t('lens'), value: 'claude'},
+        ],
+        toggle: true,
+        targetPrefix: '#aiProvider--',
+        errors: settings.getErrors('aiProvider'),
+    }) }}
+
+    <h3>{{ 'API Configuration'|t('lens') }}</h3>
+    <p>{{ 'Enter your API credentials and choose a model. Keys can be stored as environment variables for security.'|t('lens') }}</p>
+
+    {# --- OpenAI Settings --- #}
+    <div id="aiProvider--openai" class="nested-fields{% if settings.aiProvider != 'openai' %} hidden{% endif %}">
+        {{ forms.autosuggestField({
+            label: 'OpenAI API Key'|t('lens'),
+            instructions: 'Your OpenAI API key. Supports environment variables (e.g., `$OPENAI_API_KEY`). Get your key at [platform.openai.com](https://platform.openai.com/api-keys).'|t('lens'),
+            id: 'openaiApiKey',
+            name: 'settings[openaiApiKey]',
+            value: settings.openaiApiKey,
+            suggestEnvVars: true,
+            required: true,
+            errors: settings.getErrors('openaiApiKey'),
+        }) }}
+
+        {{ forms.selectField({
+            label: 'OpenAI Model'|t('lens'),
+            instructions: 'GPT-5.2 offers the best vision quality at $1.75/1M input tokens. GPT-5 Mini balances cost and quality at $0.25/1M. GPT-5 Nano is cheapest at $0.05/1M.'|t('lens'),
+            id: 'openaiModel',
+            name: 'settings[openaiModel]',
+            value: settings.openaiModel,
+            options: [
+                {label: 'GPT-5.2 (recommended)'|t('lens'), value: 'gpt-5.2'},
+                {label: 'GPT-5 Mini (fast, low cost)'|t('lens'), value: 'gpt-5-mini'},
+                {label: 'GPT-5 Nano (fastest, cheapest)'|t('lens'), value: 'gpt-5-nano'},
+            ],
+            errors: settings.getErrors('openaiModel'),
+        }) }}
+    </div>
+
+    {# --- Google Gemini Settings --- #}
+    <div id="aiProvider--gemini" class="nested-fields{% if settings.aiProvider != 'gemini' %} hidden{% endif %}">
+        {{ forms.autosuggestField({
+            label: 'Gemini API Key'|t('lens'),
+            instructions: 'Your Google AI Studio API key. Supports environment variables (e.g., `$GEMINI_API_KEY`). Get your key at [aistudio.google.com](https://aistudio.google.com/app/apikey).'|t('lens'),
+            id: 'geminiApiKey',
+            name: 'settings[geminiApiKey]',
+            value: settings.geminiApiKey,
+            suggestEnvVars: true,
+            required: true,
+            errors: settings.getErrors('geminiApiKey'),
+        }) }}
+
+        {{ forms.selectField({
+            label: 'Gemini Model'|t('lens'),
+            instructions: 'Flash offers great value at $0.30/1M input tokens. Flash Lite is cheapest at $0.10/1M. Pro provides highest quality at $1.25/1M.'|t('lens'),
+            id: 'geminiModel',
+            name: 'settings[geminiModel]',
+            value: settings.geminiModel,
+            options: [
+                {label: 'Gemini 2.5 Flash (recommended)'|t('lens'), value: 'gemini-2.5-flash'},
+                {label: 'Gemini 2.5 Flash Lite (fastest, cheapest)'|t('lens'), value: 'gemini-2.5-flash-lite'},
+                {label: 'Gemini 2.5 Pro (highest quality)'|t('lens'), value: 'gemini-2.5-pro'},
+            ],
+            errors: settings.getErrors('geminiModel'),
+        }) }}
+    </div>
+
+    {# --- Claude (Anthropic) Settings --- #}
+    <div id="aiProvider--claude" class="nested-fields{% if settings.aiProvider != 'claude' %} hidden{% endif %}">
+        {{ forms.autosuggestField({
+            label: 'Claude API Key'|t('lens'),
+            instructions: 'Your Anthropic API key. Supports environment variables (e.g., `$ANTHROPIC_API_KEY`). Get your key at [console.anthropic.com](https://console.anthropic.com/).'|t('lens'),
+            id: 'claudeApiKey',
+            name: 'settings[claudeApiKey]',
+            value: settings.claudeApiKey,
+            suggestEnvVars: true,
+            required: true,
+            errors: settings.getErrors('claudeApiKey'),
+        }) }}
+
+        {{ forms.selectField({
+            label: 'Claude Model'|t('lens'),
+            instructions: 'Sonnet 4 offers the best balance at $3/1M input tokens. Haiku 3.5 is faster and cheaper at $0.80/1M. Opus 4 provides highest quality at $15/1M.'|t('lens'),
+            id: 'claudeModel',
+            name: 'settings[claudeModel]',
+            value: settings.claudeModel,
+            options: [
+                {label: 'Claude Sonnet 4.5 (recommended)'|t('lens'), value: 'claude-sonnet-4-5-20250929'},
+                {label: 'Claude Haiku 4.5 (faster, lower cost)'|t('lens'), value: 'claude-haiku-4-5-20251001'},
+                {label: 'Claude Opus 4.5 (highest quality)'|t('lens'), value: 'claude-opus-4-5-20251101'},
+            ],
+            errors: settings.getErrors('claudeModel'),
+        }) }}
+    </div>
+
+    <hr>
+
+    {# ==================== SECTION: Asset Processing ==================== #}
+    <h2>{{ 'Asset Processing'|t('lens') }}</h2>
+    <p>{{ 'Configure how Lens processes assets. Processing runs in the background via Craft\'s queue system — uploads complete instantly and are never delayed.'|t('lens') }}</p>
+
+    {{ forms.lightswitchField({
+        first: true,
+        label: 'Auto-Process on Upload'|t('lens'),
+        instructions: 'Automatically queue new uploads for AI analysis.'|t('lens'),
+        id: 'autoProcessOnUpload',
+        name: 'settings[autoProcessOnUpload]',
+        on: settings.autoProcessOnUpload,
+    }) }}
+
+    {{ forms.lightswitchField({
+        label: 'Require Review Before Apply'|t('lens'),
+        instructions: 'When enabled, AI results are held for human review before being written to asset fields. Pending assets appear in the Review Queue.'|t('lens'),
+        id: 'requireReviewBeforeApply',
+        name: 'settings[requireReviewBeforeApply]',
+        on: settings.requireReviewBeforeApply,
+    }) }}
+
+    {{ forms.checkboxSelectField({
+        label: 'Volumes to Process'|t('lens'),
+        instructions: 'Select which asset volumes Lens should process. Deselect volumes containing assets that don\'t need AI analysis (e.g., icons, system files).'|t('lens'),
+        id: 'enabledVolumes',
+        name: 'settings[enabledVolumes]',
+        values: settings.enabledVolumes,
+        options: volumeOptions,
+        showAllOption: true,
+        errors: settings.getErrors('enabledVolumes'),
+    }) }}
+
+{% endblock %}

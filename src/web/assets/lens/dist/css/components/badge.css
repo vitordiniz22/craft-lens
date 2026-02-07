@@ -1,0 +1,68 @@
+/**
+ * Badge Component
+ * Unified badge system replacing 10+ separate badge implementations.
+ *
+ * Usage: <span class="lens-badge lens-badge--success">Good</span>
+ *        <span class="lens-badge lens-badge--small lens-badge--error">Low</span>
+ */
+
+.lens-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Semantic color modifiers */
+.lens-badge--success {
+  background: var(--bg-success, #dcfce7);
+  color: var(--fg-success, #166534);
+}
+
+.lens-badge--warning {
+  background: var(--bg-warning, #fef9c3);
+  color: var(--fg-warning, #854d0e);
+}
+
+.lens-badge--error {
+  background: var(--bg-error, #fee2e2);
+  color: var(--fg-error, #991b1b);
+}
+
+.lens-badge--error-solid {
+  background: var(--red-500, #ef4444);
+  color: white;
+}
+
+.lens-badge--info {
+  background: var(--link-color);
+  color: white;
+}
+
+.lens-badge--dark {
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+}
+
+.lens-badge--amber {
+  background: var(--amber-100, #fef3c7);
+  color: var(--amber-800, #92400e);
+  text-transform: capitalize;
+}
+
+.lens-badge--muted {
+  font-weight: 500;
+  background: var(--gray-100);
+  color: var(--medium-text-color);
+}
+
+/* Size modifier */
+.lens-badge--small {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 8px;
+}

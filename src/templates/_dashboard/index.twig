@@ -1,0 +1,42 @@
+{% extends '_layouts/cp' %}
+
+{% set title = 'Dashboard'|t('lens') %}
+{% set selectedSubnavItem = 'dashboard' %}
+
+{% block content %}
+<div class="lens-dashboard-page">
+    {# Setup Status Banner (shows when configuration is incomplete) #}
+    {% if hasUnresolvedIssues %}
+        {% include 'lens/_components/setup-banner' with {
+            checks: setupStatus,
+            title: hasCriticalIssues ? 'Setup Required'|t('lens') : 'Configuration Tips'|t('lens'),
+            description: hasCriticalIssues
+                ? 'Lens needs configuration before it can analyze your assets.'|t('lens')
+                : 'Complete these optional steps to get the most out of Lens.'|t('lens'),
+            showCompleted: false
+        } %}
+    {% endif %}
+
+    {# Section 1: Needs Attention (conditional) #}
+    {% include 'lens/_dashboard/_attention' %}
+
+    {# Section 2: Processing Status (always visible) #}
+    {% include 'lens/_dashboard/_processing-status' %}
+
+    {# Section 3: Library Health (always visible) #}
+    {% include 'lens/_dashboard/_library-health' %}
+
+    {# Section 4: Quick Actions #}
+    {% include 'lens/_dashboard/_quick-actions' %}
+
+    {# Section 5: Quick Insights (conditional) #}
+    {% include 'lens/_dashboard/_quick-insights' %}
+
+    {# Section 6: Recent Activity #}
+    {% include 'lens/_dashboard/_recent-activity' %}
+
+    {# Section 7: Usage (collapsed) #}
+    {% include 'lens/_dashboard/_usage' %}
+</div>
+
+{% endblock %}
