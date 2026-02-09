@@ -56,7 +56,7 @@
   font-size: 48px;
   font-weight: 700;
   line-height: 1;
-  color: var(--warning-color, #b45309);
+  color: var(--warning-color);
 }
 
 .lens-orphaned-label {
@@ -76,12 +76,12 @@
 }
 
 .lens-orphaned-success {
-  color: var(--success-color, #15803d);
+  color: var(--success-color);
   margin: 0;
 }
 
 .lens-orphaned-count:has(+ .lens-orphaned-label ~ .lens-orphaned-success) {
-  color: var(--success-color, #15803d);
+  color: var(--success-color);
 }
 
 /* ==========================================================================

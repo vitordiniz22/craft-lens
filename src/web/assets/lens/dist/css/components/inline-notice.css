@@ -16,23 +16,23 @@
 }
 
 .lens-inline-notice--error {
-  background: #fef2f2;
-  border: 1px solid #fecaca;
+  background: var(--red-050);
+  border: 1px solid var(--red-200);
 }
 
 .lens-inline-notice--warning {
-  background: #fffbeb;
-  border: 1px solid #fde68a;
+  background: var(--amber-050);
+  border: 1px solid var(--amber-200);
 }
 
 .lens-inline-notice--info {
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
+  background: var(--blue-050);
+  border: 1px solid var(--blue-200);
 }
 
 .lens-inline-notice--tip {
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
+  background: var(--green-050);
+  border: 1px solid var(--green-200);
 }
 
 .lens-notice-header {
@@ -52,19 +52,19 @@
 }
 
 .lens-inline-notice--error .lens-notice-icon {
-  color: #dc2626;
+  color: var(--red-600);
 }
 
 .lens-inline-notice--warning .lens-notice-icon {
-  color: #d97706;
+  color: var(--amber-600);
 }
 
 .lens-inline-notice--info .lens-notice-icon {
-  color: #2563eb;
+  color: var(--blue-600);
 }
 
 .lens-inline-notice--tip .lens-notice-icon {
-  color: #16a34a;
+  color: var(--green-600);
 }
 
 .lens-notice-title {

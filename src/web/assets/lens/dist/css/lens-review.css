@@ -57,7 +57,7 @@
   display: inline-block;
   padding: 2px 6px;
   background: var(--gray-100);
-  border: 1px solid var(--gray-200, #d1d5db);
+  border: 1px solid var(--gray-200);
   border-radius: 3px;
   font-family: inherit;
   font-size: 11px;
@@ -105,7 +105,7 @@
   position: absolute;
   width: 24px;
   height: 24px;
-  border: 3px solid #ef4444;
+  border: 3px solid var(--red-500);
   border-radius: 50%;
   pointer-events: none;
   transform: translate(-50%, -50%);
@@ -121,7 +121,7 @@
   left: 50%;
   width: 6px;
   height: 6px;
-  background: #ef4444;
+  background: var(--red-500);
   border-radius: 50%;
   transform: translate(-50%, -50%);
 }
@@ -323,7 +323,7 @@
   gap: 8px;
   padding: 16px 0;
   margin-top: 16px;
-  background: var(--white, #fff);
+  background: var(--white);
   border-top: 1px solid var(--hairline-color);
   z-index: 10;
 }
@@ -378,7 +378,7 @@
 }
 
 .lens-browse-card:focus {
-  outline: 2px solid var(--focus-ring-color, #0066cc);
+  outline: 2px solid var(--focus-ring-color);
   outline-offset: 2px;
 }
 
@@ -482,18 +482,18 @@
 }
 
 .lens-confidence-badge.lens-confidence-high {
-  background: #d1fae5;
-  color: #065f46;
+  background: var(--emerald-100);
+  color: var(--emerald-900);
 }
 
 .lens-confidence-badge.lens-confidence-medium {
-  background: #fef3c7;
-  color: #92400e;
+  background: var(--amber-100);
+  color: var(--amber-900);
 }
 
 .lens-confidence-badge.lens-confidence-low {
-  background: #fee2e2;
-  color: #991b1b;
+  background: var(--red-100);
+  color: var(--red-800);
 }
 
 .lens-tag-count {

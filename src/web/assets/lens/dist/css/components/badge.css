@@ -19,22 +19,22 @@
 
 /* Semantic color modifiers */
 .lens-badge--success {
-  background: var(--bg-success, #dcfce7);
-  color: var(--fg-success, #166534);
+  background: var(--bg-success);
+  color: var(--fg-success);
 }
 
 .lens-badge--warning {
-  background: var(--bg-warning, #fef9c3);
-  color: var(--fg-warning, #854d0e);
+  background: var(--bg-warning);
+  color: var(--fg-warning);
 }
 
 .lens-badge--error {
-  background: var(--bg-error, #fee2e2);
-  color: var(--fg-error, #991b1b);
+  background: var(--bg-error);
+  color: var(--fg-error);
 }
 
 .lens-badge--error-solid {
-  background: var(--red-500, #ef4444);
+  background: var(--red-500);
   color: white;
 }
 
@@ -49,8 +49,8 @@
 }
 
 .lens-badge--amber {
-  background: var(--amber-100, #fef3c7);
-  color: var(--amber-800, #92400e);
+  background: var(--amber-100);
+  color: var(--amber-800);
   text-transform: capitalize;
 }
 

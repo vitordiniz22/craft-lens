@@ -11,7 +11,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  background: linear-gradient(135deg, var(--success-color), #27ae60);
+  background: linear-gradient(135deg, var(--success-color), var(--green-600));
   color: white;
   padding: 16px 24px;
   border-radius: var(--large-border-radius);
@@ -249,7 +249,7 @@
 .lens-cost-banner {
   display: flex;
   gap: 32px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--indigo-500) 0%, var(--purple-600) 100%);
   color: white;
   padding: 16px 24px;
   border-radius: var(--large-border-radius);
@@ -272,7 +272,7 @@
 }
 
 .lens-cost-chart .lens-cost-bar {
-  background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(180deg, var(--indigo-500) 0%, var(--purple-600) 100%);
 }
 
 .lens-token-pane h2 {
