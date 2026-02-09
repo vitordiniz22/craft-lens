@@ -186,7 +186,7 @@
   font-weight: 600;
   color: var(--medium-text-color);
   text-transform: uppercase;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.5px;
 }
 
 .lens-edit-trigger {

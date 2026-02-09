@@ -495,7 +495,7 @@
 
             // Tags
             html += '<div class="lens-review-field">';
-            html += '<div class="lens-review-field-label">' + Craft.t('lens', 'Tags') + '</div>';
+            html += '<div class="lens-field-label">' + Craft.t('lens', 'Tags') + '</div>';
             html += '<div class="lens-tag-editor" id="lens-review-tag-editor" data-field="tags">';
             if (d.tags && d.tags.length) {
                 d.tags.forEach(function(tag) {
@@ -514,7 +514,7 @@
 
             // Colors
             html += '<div class="lens-review-field">';
-            html += '<div class="lens-review-field-label">' + Craft.t('lens', 'Dominant Colors') + '</div>';
+            html += '<div class="lens-field-label">' + Craft.t('lens', 'Dominant Colors') + '</div>';
             html += '<div class="lens-color-editor" id="lens-review-color-editor" data-field="dominantColors">';
             if (d.colors && d.colors.length) {
                 d.colors.forEach(function(color) {
@@ -541,7 +541,7 @@
             // Focal point indicator
             if (d.focalPointX !== null && d.focalPointY !== null) {
                 html += '<div class="lens-review-field">';
-                html += '<div class="lens-review-field-label">' + Craft.t('lens', 'Focal Point') +
+                html += '<div class="lens-field-label">' + Craft.t('lens', 'Focal Point') +
                     (d.focalPointConfidence !== null && d.focalPointConfidence < this.HIGH_CONFIDENCE_THRESHOLD
                         ? ' ' + this.renderConfidenceBadge(d.focalPointConfidence) : '') +
                     '</div>';
@@ -566,7 +566,7 @@
 
         renderEditableField: function(name, label, value, type, confidence) {
             var html = '<div class="lens-review-field">';
-            html += '<div class="lens-review-field-label">' + Craft.t('lens', label);
+            html += '<div class="lens-field-label">' + Craft.t('lens', label);
             if (confidence !== null && confidence !== undefined && confidence < this.HIGH_CONFIDENCE_THRESHOLD) {
                 html += ' ' + this.renderConfidenceBadge(confidence);
             }
@@ -603,7 +603,7 @@
 
             // In review mode: simplified version - just radio buttons, no display/edit toggle
             var html = '<div class="lens-review-field">';
-            html += '<div class="lens-review-field-label">' + Craft.t('lens', 'People Detection') + '</div>';
+            html += '<div class="lens-field-label">' + Craft.t('lens', 'People Detection') + '</div>';
             html += '<div class="lens-people-detection lens-editable-field"' +
                 ' data-analysis-id="' + analysisId + '"' +
                 ' data-contains-people="' + (containsPeople ? '1' : '0') + '"' +
