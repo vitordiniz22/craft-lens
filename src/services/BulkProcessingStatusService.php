@@ -416,13 +416,7 @@ class BulkProcessingStatusService extends Component
         $query = AssetAnalysisRecord::find()
             ->where(['in', 'status', AnalysisStatus::analyzedValues()]);
 
-        if ($volumeId !== null) {
-            $assetIds = $this->getAssetIdsForVolume($volumeId);
-            if (empty($assetIds)) {
-                return 0;
-            }
-            $query->andWhere(['in', 'assetId', $assetIds]);
-        }
+        $this->applyVolumeFilter($query, $volumeId);
 
         return (int) $query->count();
     }
@@ -454,13 +448,7 @@ class BulkProcessingStatusService extends Component
         $query = AssetAnalysisRecord::find()
             ->where(['status' => AnalysisStatus::Failed->value]);
 
-        if ($volumeId !== null) {
-            $assetIds = $this->getAssetIdsForVolume($volumeId);
-            if (empty($assetIds)) {
-                return 0;
-            }
-            $query->andWhere(['in', 'assetId', $assetIds]);
-        }
+        $this->applyVolumeFilter($query, $volumeId);
 
         return (int) $query->count();
     }
@@ -470,13 +458,7 @@ class BulkProcessingStatusService extends Component
         $query = AssetAnalysisRecord::find()
             ->where(['status' => AnalysisStatus::Processing->value]);
 
-        if ($volumeId !== null) {
-            $assetIds = $this->getAssetIdsForVolume($volumeId);
-            if (empty($assetIds)) {
-                return 0;
-            }
-            $query->andWhere(['in', 'assetId', $assetIds]);
-        }
+        $this->applyVolumeFilter($query, $volumeId);
 
         return (int) $query->count();
     }
@@ -486,13 +468,7 @@ class BulkProcessingStatusService extends Component
         $query = AssetAnalysisRecord::find()
             ->where(['status' => AnalysisStatus::PendingReview->value]);
 
-        if ($volumeId !== null) {
-            $assetIds = $this->getAssetIdsForVolume($volumeId);
-            if (empty($assetIds)) {
-                return 0;
-            }
-            $query->andWhere(['in', 'assetId', $assetIds]);
-        }
+        $this->applyVolumeFilter($query, $volumeId);
 
         return (int) $query->count();
     }
@@ -552,5 +528,27 @@ class BulkProcessingStatusService extends Component
         }
 
         return $cancelled;
+    }
+
+    /**
+     * Apply volume filter to a query by filtering asset IDs.
+     *
+     * @param \yii\db\ActiveQuery $query The query to filter
+     * @param int|null $volumeId Volume ID to filter by (null = no filter)
+     */
+    private function applyVolumeFilter($query, ?int $volumeId): void
+    {
+        if ($volumeId === null) {
+            return;
+        }
+
+        $assetIds = $this->getAssetIdsForVolume($volumeId);
+
+        if (empty($assetIds)) {
+            $query->andWhere('1 = 0');
+            return;
+        }
+
+        $query->andWhere(['in', 'assetId', $assetIds]);
     }
 }

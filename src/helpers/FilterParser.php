@@ -14,12 +14,12 @@ class FilterParser
 {
     /** @var string[] Filter keys that indicate active filtering. */
     private const FILTER_KEYS = [
-        'query', 'tags', 'status', 'containsPeople',
+        'query', 'tags', 'tagOperator', 'status', 'containsPeople',
         'faceCountPreset',
         'confidenceMin', 'confidenceMax',
         'nsfwScoreMin', 'nsfwScoreMax',
         'processedFrom', 'processedTo',
-        'colorFamily', 'hasDuplicates', 'quickFilter',
+        'colorFamily', 'colorTolerance', 'hasDuplicates', 'quickFilter',
         'hasWatermark', 'watermarkType', 'containsBrandLogo',
         'qualityPreset', 'hasGps', 'hasFocalPoint',
     ];
@@ -120,29 +120,31 @@ class FilterParser
 
     private static function parseRangeFilters(Request $request, array &$filters): void
     {
-        // Confidence
-        $confidenceMin = $request->getQueryParam('confidenceMin');
+        $rangeFilters = [
+            'confidence' => [
+                'min' => 'confidenceMin',
+                'max' => 'confidenceMax',
+                'transform' => fn($v) => (float) $v
+            ],
+            'nsfwScore' => [
+                'min' => 'nsfwScoreMin',
+                'max' => 'nsfwScoreMax',
+                'transform' => fn($v) => max(0, min(100, (int) $v)) / 100
+            ],
+        ];
 
-        if ($confidenceMin !== null && is_numeric($confidenceMin)) {
-            $filters['confidenceMin'] = (float) $confidenceMin;
-        }
+        foreach ($rangeFilters as $config) {
+            $min = $request->getQueryParam($config['min']);
 
-        $confidenceMax = $request->getQueryParam('confidenceMax');
+            if ($min !== null && is_numeric($min)) {
+                $filters[$config['min']] = $config['transform']($min);
+            }
 
-        if ($confidenceMax !== null && is_numeric($confidenceMax)) {
-            $filters['confidenceMax'] = (float) $confidenceMax;
-        }
+            $max = $request->getQueryParam($config['max']);
 
-        // NSFW
-        $nsfwScoreMin = $request->getQueryParam('nsfwScoreMin');
-        $nsfwScoreMax = $request->getQueryParam('nsfwScoreMax');
-
-        if ($nsfwScoreMin !== null && is_numeric($nsfwScoreMin)) {
-            $filters['nsfwScoreMin'] = max(0, min(100, (int) $nsfwScoreMin)) / 100;
-        }
-
-        if ($nsfwScoreMax !== null && is_numeric($nsfwScoreMax)) {
-            $filters['nsfwScoreMax'] = max(0, min(100, (int) $nsfwScoreMax)) / 100;
+            if ($max !== null && is_numeric($max)) {
+                $filters[$config['max']] = $config['transform']($max);
+            }
         }
     }
 
@@ -184,34 +186,17 @@ class FilterParser
 
     private static function parseBooleanFilters(Request $request, array &$filters): void
     {
-        $hasDuplicates = $request->getQueryParam('hasDuplicates');
+        $booleanFilterKeys = [
+            'hasDuplicates', 'hasWatermark', 'containsBrandLogo',
+            'hasGps', 'hasFocalPoint'
+        ];
 
-        if ($hasDuplicates !== null && $hasDuplicates !== '') {
-            $filters['hasDuplicates'] = filter_var($hasDuplicates, FILTER_VALIDATE_BOOLEAN);
-        }
+        foreach ($booleanFilterKeys as $key) {
+            $value = $request->getQueryParam($key);
 
-        $hasWatermark = $request->getQueryParam('hasWatermark');
-
-        if ($hasWatermark !== null && $hasWatermark !== '') {
-            $filters['hasWatermark'] = filter_var($hasWatermark, FILTER_VALIDATE_BOOLEAN);
-        }
-
-        $containsBrandLogo = $request->getQueryParam('containsBrandLogo');
-
-        if ($containsBrandLogo !== null && $containsBrandLogo !== '') {
-            $filters['containsBrandLogo'] = filter_var($containsBrandLogo, FILTER_VALIDATE_BOOLEAN);
-        }
-
-        $hasGps = $request->getQueryParam('hasGps');
-
-        if ($hasGps !== null && $hasGps !== '') {
-            $filters['hasGps'] = filter_var($hasGps, FILTER_VALIDATE_BOOLEAN);
-        }
-
-        $hasFocalPoint = $request->getQueryParam('hasFocalPoint');
-
-        if ($hasFocalPoint !== null && $hasFocalPoint !== '') {
-            $filters['hasFocalPoint'] = filter_var($hasFocalPoint, FILTER_VALIDATE_BOOLEAN);
+            if ($value !== null && $value !== '') {
+                $filters[$key] = filter_var($value, FILTER_VALIDATE_BOOLEAN);
+            }
         }
     }
 

@@ -87,8 +87,7 @@ class PerceptualHashHelper
 
         for ($i = 0, $len = strlen($hash1); $i < $len; $i++) {
             $xor = hexdec($hash1[$i]) ^ hexdec($hash2[$i]);
-            // Popcount for 4-bit value
-            $distance += ($xor & 1) + (($xor >> 1) & 1) + (($xor >> 2) & 1) + (($xor >> 3) & 1);
+            $distance += substr_count(decbin($xor), '1');
         }
 
         return $distance;

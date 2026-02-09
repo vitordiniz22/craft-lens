@@ -69,6 +69,12 @@ class SearchController extends Controller
             throw $e;
         }
 
+        $assetIds = array_map(fn($asset) => $asset->id, $results['assets']);
+
+        if (!empty($assetIds)) {
+            $results['assets'] = \craft\elements\Asset::find()->id($assetIds)->with('volume')->all();
+        }
+
         $output = fopen('php://temp', 'r+');
 
         fputcsv($output, [
@@ -90,7 +96,6 @@ class SearchController extends Controller
             'Processed At',
         ]);
 
-        $assetIds = array_map(fn($asset) => $asset->id, $results['assets']);
         $analysisMap = [];
 
         if (!empty($assetIds)) {
@@ -110,8 +115,16 @@ class SearchController extends Controller
 
         foreach ($results['assets'] as $asset) {
             $analysis = $analysisMap[$asset->id] ?? null;
-            $tags = '';
 
+            if ($analysis === null && !empty($assetIds)) {
+                Logger::warning(
+                    LogCategory::AssetProcessing,
+                    'Asset missing from analysis map during CSV export',
+                    assetId: $asset->id
+                );
+            }
+
+            $tags = '';
             if ($analysis !== null) {
                 $tags = implode(', ', $tagsByAnalysis[$analysis->id] ?? []);
             }

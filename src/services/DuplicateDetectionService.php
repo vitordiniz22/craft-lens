@@ -40,18 +40,7 @@ class DuplicateDetectionService extends Component
             ->andWhere(['!=', 'assetId', $assetId])
             ->all();
 
-        $existingPairs = [];
-        $existingPairsQuery = DuplicateGroupRecord::find()
-            ->where(['or',
-                ['canonicalAssetId' => $assetId],
-                ['duplicateAssetId' => $assetId],
-            ])
-            ->all();
-
-        foreach ($existingPairsQuery as $pair) {
-            $key = $pair->canonicalAssetId . '_' . $pair->duplicateAssetId;
-            $existingPairs[$key] = $pair;
-        }
+        $existingPairs = $this->loadExistingPairs([$assetId]);
 
         $matches = [];
         $transaction = Craft::$app->getDb()->beginTransaction();
@@ -108,16 +97,7 @@ class DuplicateDetectionService extends Component
             return 0;
         }
 
-        $existingPairs = [];
-        $existingPairsQuery = DuplicateGroupRecord::find()
-            ->where(['canonicalAssetId' => $assetIds])
-            ->andWhere(['duplicateAssetId' => $assetIds])
-            ->all();
-
-        foreach ($existingPairsQuery as $pair) {
-            $key = $pair->canonicalAssetId . '_' . $pair->duplicateAssetId;
-            $existingPairs[$key] = $pair;
-        }
+        $existingPairs = $this->loadExistingPairs($assetIds);
 
         $pairsFound = 0;
         $transaction = Craft::$app->getDb()->beginTransaction();
@@ -162,14 +142,7 @@ class DuplicateDetectionService extends Component
             ->orderBy(['assetId' => SORT_ASC])
             ->all();
 
-        $existingPairRows = DuplicateGroupRecord::find()
-            ->select(['canonicalAssetId', 'duplicateAssetId'])
-            ->asArray()
-            ->all();
-        $existingPairs = [];
-        foreach ($existingPairRows as $row) {
-            $existingPairs[$row['canonicalAssetId'] . '_' . $row['duplicateAssetId']] = true;
-        }
+        $existingPairs = $this->loadExistingPairs();
 
         $newPairs = 0;
         $transaction = Craft::$app->getDb()->beginTransaction();
@@ -315,5 +288,33 @@ class DuplicateDetectionService extends Component
         }
 
         return $saved;
+    }
+
+    /**
+     * Load existing duplicate pairs for given asset IDs.
+     * If no asset IDs provided, loads all pairs.
+     *
+     * @param array $assetIds Asset IDs to filter by (empty = load all)
+     * @return array Map of "canonicalId_duplicateId" => DuplicateGroupRecord|true
+     */
+    private function loadExistingPairs(array $assetIds = []): array
+    {
+        $query = DuplicateGroupRecord::find();
+
+        if (!empty($assetIds)) {
+            $query->where(['or',
+                ['canonicalAssetId' => $assetIds],
+                ['duplicateAssetId' => $assetIds],
+            ]);
+        }
+
+        $pairs = [];
+
+        foreach ($query->all() as $pair) {
+            $key = $pair->canonicalAssetId . '_' . $pair->duplicateAssetId;
+            $pairs[$key] = $pair;
+        }
+
+        return $pairs;
     }
 }

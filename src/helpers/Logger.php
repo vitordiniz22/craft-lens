@@ -20,6 +20,16 @@ use vitordiniz22\craftlens\services\LogService;
  */
 class Logger
 {
+    private static ?LogService $instance = null;
+
+    /**
+     * Set a custom LogService instance (primarily for testing).
+     */
+    public static function setInstance(?LogService $service): void
+    {
+        self::$instance = $service;
+    }
+
     public static function info(LogCategory $category, string $message, ?int $assetId = null, ?array $context = null): void
     {
         self::service()->info($category->value, $message, $assetId, $context);
@@ -65,6 +75,9 @@ class Logger
 
     private static function service(): LogService
     {
-        return Plugin::getInstance()->log;
+        if (self::$instance === null) {
+            self::$instance = Plugin::getInstance()->log;
+        }
+        return self::$instance;
     }
 }

@@ -24,17 +24,34 @@ class StatisticsService extends Component
      */
     public function getOverviewStats(): array
     {
+        $result = AssetAnalysisRecord::find()
+            ->select([
+                'COUNT(*) as total',
+                'SUM(CASE WHEN status IN (\'' . implode("','", AnalysisStatus::analyzedValues()) . '\') THEN 1 ELSE 0 END) as analyzed',
+                'SUM(CASE WHEN status = \'' . AnalysisStatus::Approved->value . '\' THEN 1 ELSE 0 END) as approved',
+                'SUM(CASE WHEN status = \'' . AnalysisStatus::Rejected->value . '\' THEN 1 ELSE 0 END) as rejected',
+                'SUM(CASE WHEN status = \'' . AnalysisStatus::PendingReview->value . '\' THEN 1 ELSE 0 END) as pendingReview',
+                'SUM(CASE WHEN status = \'' . AnalysisStatus::Failed->value . '\' THEN 1 ELSE 0 END) as failed',
+                'SUM(CASE WHEN status IN (\'' . implode("','", AnalysisStatus::analyzedValues()) . '\') AND (altText IS NULL OR altText = \'\') THEN 1 ELSE 0 END) as missingAltText',
+                'SUM(actualCost) as totalCost',
+            ])
+            ->asArray()
+            ->one();
+
+        $analyzed = (int) ($result['analyzed'] ?? 0);
+        $totalCost = (float) ($result['totalCost'] ?? 0.0);
+
         return [
             'totalImages' => $this->getTotalImageCount(),
-            'analyzed' => $this->getAnalyzedCount(),
+            'analyzed' => $analyzed,
             'unprocessed' => $this->getUnprocessedCount(),
-            'pendingReview' => $this->getPendingReviewCount(),
-            'approved' => $this->getApprovedCount(),
-            'rejected' => $this->getRejectedCount(),
-            'failed' => $this->getFailedCount(),
-            'missingAltText' => $this->getMissingAltTextCount(),
-            'totalCost' => $this->getTotalCost(),
-            'avgCostPerAsset' => $this->getAverageCostPerAsset(),
+            'pendingReview' => (int) ($result['pendingReview'] ?? 0),
+            'approved' => (int) ($result['approved'] ?? 0),
+            'rejected' => (int) ($result['rejected'] ?? 0),
+            'failed' => (int) ($result['failed'] ?? 0),
+            'missingAltText' => (int) ($result['missingAltText'] ?? 0),
+            'totalCost' => $totalCost,
+            'avgCostPerAsset' => $analyzed > 0 ? round($totalCost / $analyzed, 4) : 0.0,
         ];
     }
 

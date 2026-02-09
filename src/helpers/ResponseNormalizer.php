@@ -14,6 +14,7 @@ final class ResponseNormalizer
 {
     private const VALID_NSFW_CATEGORIES = ['adult', 'violence', 'hate', 'self-harm', 'sexual-minors', 'drugs'];
     private const VALID_WATERMARK_TYPES = ['stock', 'logo', 'text', 'copyright', 'unknown'];
+    private const CONTROL_CHARS = [...range(0, 31), 127];
     /**
      * Normalize tags from API response.
      *
@@ -24,34 +25,17 @@ final class ResponseNormalizer
      */
     public static function normalizeTags(array $tags, string $providerName): array
     {
-        $normalized = [];
-
-        foreach ($tags as $index => $tag) {
-            if (!is_array($tag)) {
-                throw AnalysisException::invalidResponse(
-                    $providerName,
-                    null,
-                    "Tag at index {$index} is not an array: " . gettype($tag)
-                );
-            }
-
-            if (!isset($tag['tag'])) {
-                throw AnalysisException::invalidResponse(
-                    $providerName,
-                    null,
-                    "Tag at index {$index} missing 'tag' field"
-                );
-            }
-
-            $normalized[] = [
+        return self::normalizeItems(
+            $tags,
+            $providerName,
+            'Tag',
+            'tag',
+            'confidence',
+            fn($tag) => [
                 'tag' => strtolower(trim((string) $tag['tag'])),
                 'confidence' => self::clampConfidence($tag['confidence'] ?? 0.5),
-            ];
-        }
-
-        usort($normalized, fn($a, $b) => $b['confidence'] <=> $a['confidence']);
-
-        return $normalized;
+            ]
+        );
     }
 
     /**
@@ -64,37 +48,25 @@ final class ResponseNormalizer
      */
     public static function normalizeColors(array $colors, string $providerName): array
     {
-        $normalized = [];
+        $normalized = self::normalizeItems(
+            $colors,
+            $providerName,
+            'Color',
+            'hex',
+            'percentage',
+            function ($color) {
+                $hex = $color['hex'];
 
-        foreach ($colors as $index => $color) {
-            if (!is_array($color)) {
-                throw AnalysisException::invalidResponse(
-                    $providerName,
-                    null,
-                    "Color at index {$index} is not an array: " . gettype($color)
-                );
+                if (!str_starts_with($hex, '#')) {
+                    $hex = '#' . $hex;
+                }
+
+                return [
+                    'hex' => strtoupper($hex),
+                    'percentage' => self::clampConfidence($color['percentage'] ?? 0.0),
+                ];
             }
-
-            if (!isset($color['hex'])) {
-                throw AnalysisException::invalidResponse(
-                    $providerName,
-                    null,
-                    "Color at index {$index} missing 'hex' field"
-                );
-            }
-
-            $hex = $color['hex'];
-            if (!str_starts_with($hex, '#')) {
-                $hex = '#' . $hex;
-            }
-
-            $normalized[] = [
-                'hex' => strtoupper($hex),
-                'percentage' => self::clampConfidence($color['percentage'] ?? 0.0),
-            ];
-        }
-
-        usort($normalized, fn($a, $b) => $b['percentage'] <=> $a['percentage']);
+        );
 
         return array_slice($normalized, 0, 5);
     }
@@ -109,44 +81,29 @@ final class ResponseNormalizer
      */
     public static function normalizeNsfwCategories(array $categories, string $providerName): array
     {
-        $normalized = [];
+        return self::normalizeItems(
+            $categories,
+            $providerName,
+            'NSFW category',
+            'category',
+            'confidence',
+            function ($cat) use ($providerName) {
+                $category = strtolower(trim((string) $cat['category']));
 
-        foreach ($categories as $index => $cat) {
-            if (!is_array($cat)) {
-                throw AnalysisException::invalidResponse(
-                    $providerName,
-                    null,
-                    "NSFW category at index {$index} is not an array: " . gettype($cat)
-                );
+                if (!in_array($category, self::VALID_NSFW_CATEGORIES, true)) {
+                    throw AnalysisException::invalidResponse(
+                        $providerName,
+                        null,
+                        "NSFW category has invalid category: '{$category}'"
+                    );
+                }
+
+                return [
+                    'category' => $category,
+                    'confidence' => self::clampConfidence($cat['confidence'] ?? 0.0),
+                ];
             }
-
-            if (!isset($cat['category'])) {
-                throw AnalysisException::invalidResponse(
-                    $providerName,
-                    null,
-                    "NSFW category at index {$index} missing 'category' field"
-                );
-            }
-
-            $category = strtolower(trim((string) $cat['category']));
-
-            if (!in_array($category, self::VALID_NSFW_CATEGORIES, true)) {
-                throw AnalysisException::invalidResponse(
-                    $providerName,
-                    null,
-                    "NSFW category at index {$index} has invalid category: '{$category}'"
-                );
-            }
-
-            $normalized[] = [
-                'category' => $category,
-                'confidence' => self::clampConfidence($cat['confidence'] ?? 0.0),
-            ];
-        }
-
-        usort($normalized, fn($a, $b) => $b['confidence'] <=> $a['confidence']);
-
-        return $normalized;
+        );
     }
 
     /**
@@ -159,37 +116,18 @@ final class ResponseNormalizer
      */
     public static function normalizeDetectedBrands(array $brands, string $providerName): array
     {
-        $normalized = [];
-
-        foreach ($brands as $index => $brand) {
-            if (!is_array($brand)) {
-                throw AnalysisException::invalidResponse(
-                    $providerName,
-                    null,
-                    "Brand at index {$index} is not an array: " . gettype($brand)
-                );
-            }
-
-            if (!isset($brand['brand'])) {
-                throw AnalysisException::invalidResponse(
-                    $providerName,
-                    null,
-                    "Brand at index {$index} missing 'brand' field"
-                );
-            }
-
-            $confidence = self::clampConfidence($brand['confidence'] ?? 0.5);
-
-            $normalized[] = [
+        return self::normalizeItems(
+            $brands,
+            $providerName,
+            'Brand',
+            'brand',
+            'confidence',
+            fn($brand) => [
                 'brand' => trim((string) $brand['brand']),
-                'confidence' => $confidence,
+                'confidence' => self::clampConfidence($brand['confidence'] ?? 0.5),
                 'position' => trim((string) ($brand['position'] ?? 'unknown')),
-            ];
-        }
-
-        usort($normalized, fn($a, $b) => $b['confidence'] <=> $a['confidence']);
-
-        return $normalized;
+            ]
+        );
     }
 
     /**
@@ -211,9 +149,9 @@ final class ResponseNormalizer
      *
      * @return array{position?: string, detectedText?: string, stockProvider?: string, isObtrusive?: bool}
      */
-    public static function normalizeWatermarkDetails(array $details): array
+    public static function normalizeWatermarkDetails(?array $details = null): array
     {
-        if (empty($details)) {
+        if ($details === null || !is_array($details) || empty($details)) {
             return [];
         }
 
@@ -252,8 +190,7 @@ final class ResponseNormalizer
             return $data;
         }
 
-        $controlChars = array_map('chr', [...range(0, 31), 127]);
-        $sanitized = str_replace($controlChars, '', $content);
+        $sanitized = str_replace(array_map('chr', self::CONTROL_CHARS), '', $content);
         $data = json_decode($sanitized, true);
 
         if (json_last_error() === JSON_ERROR_NONE && is_array($data)) {
@@ -281,6 +218,10 @@ final class ResponseNormalizer
         $content = preg_replace('/^```json\s*/', '', $content);
         $content = preg_replace('/\s*```$/', '', $content);
 
+        if ($content === null) {
+            throw new \RuntimeException('Failed to strip markdown code blocks');
+        }
+
         return $content;
     }
 
@@ -290,5 +231,52 @@ final class ResponseNormalizer
     public static function clampConfidence(mixed $value): float
     {
         return min(1.0, max(0.0, (float) $value));
+    }
+
+    /**
+     * Generic normalizer for array-based items with confidence/percentage scores.
+     *
+     * @param array $items Raw items from API
+     * @param string $providerName Provider name for error messages
+     * @param string $itemName Human-readable item name (e.g., "Tag", "Color")
+     * @param string $requiredField Field name that must exist in each item
+     * @param string $scoreField Field name used for sorting (e.g., "confidence", "percentage")
+     * @param callable $transformer Callback to transform each item
+     * @return array Normalized and sorted items
+     * @throws AnalysisException If item structure is invalid
+     */
+    private static function normalizeItems(
+        array $items,
+        string $providerName,
+        string $itemName,
+        string $requiredField,
+        string $scoreField,
+        callable $transformer
+    ): array {
+        $normalized = [];
+
+        foreach ($items as $index => $item) {
+            if (!is_array($item)) {
+                throw AnalysisException::invalidResponse(
+                    $providerName,
+                    null,
+                    "{$itemName} at index {$index} is not an array: " . gettype($item)
+                );
+            }
+
+            if (!isset($item[$requiredField])) {
+                throw AnalysisException::invalidResponse(
+                    $providerName,
+                    null,
+                    "{$itemName} at index {$index} missing '{$requiredField}' field"
+                );
+            }
+
+            $normalized[] = $transformer($item);
+        }
+
+        usort($normalized, fn($a, $b) => $b[$scoreField] <=> $a[$scoreField]);
+
+        return $normalized;
     }
 }

@@ -107,7 +107,7 @@ class BulkController extends Controller
         $this->requirePermission('accessPlugin-lens');
 
         $volumeId = $this->request->getBodyParam('volumeId');
-        $volumeId = $volumeId !== null && $volumeId !== '' ? (int) $volumeId : null;
+        $volumeId = $volumeId ? (int) $volumeId : null;
 
         // Start session tracking
         $statusService = Plugin::getInstance()->bulkProcessingStatus;

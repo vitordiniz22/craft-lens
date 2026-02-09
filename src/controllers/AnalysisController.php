@@ -27,17 +27,7 @@ class AnalysisController extends Controller
         $this->requirePostRequest();
         $this->requirePermission('accessPlugin-lens');
 
-        $assetId = (int) $this->request->getRequiredBodyParam('assetId');
-
-        if ($assetId < 1) {
-            throw new BadRequestHttpException('Invalid asset ID');
-        }
-
-        $asset = Asset::find()->id($assetId)->one();
-
-        if ($asset === null) {
-            throw new NotFoundHttpException('Asset not found');
-        }
+        $asset = $this->getRequiredAsset();
 
         Plugin::getInstance()->assetAnalysis->reprocessAsset($asset);
 
@@ -68,19 +58,9 @@ class AnalysisController extends Controller
         $this->requirePostRequest();
         $this->requirePermission('accessPlugin-lens');
 
-        $assetId = (int) $this->request->getRequiredBodyParam('assetId');
+        $asset = $this->getRequiredAsset();
 
-        if ($assetId < 1) {
-            throw new BadRequestHttpException('Invalid asset ID');
-        }
-
-        $asset = Asset::find()->id($assetId)->one();
-
-        if ($asset === null) {
-            throw new NotFoundHttpException('Asset not found');
-        }
-
-        $analysis = Plugin::getInstance()->assetAnalysis->getAnalysis($assetId);
+        $analysis = Plugin::getInstance()->assetAnalysis->getAnalysis($asset->id);
 
         if ($analysis === null || empty($analysis->suggestedTitle)) {
             throw new BadRequestHttpException('No suggested title available');
@@ -112,19 +92,9 @@ class AnalysisController extends Controller
         $this->requirePostRequest();
         $this->requirePermission('accessPlugin-lens');
 
-        $assetId = (int) $this->request->getRequiredBodyParam('assetId');
+        $asset = $this->getRequiredAsset();
 
-        if ($assetId < 1) {
-            throw new BadRequestHttpException('Invalid asset ID');
-        }
-
-        $asset = Asset::find()->id($assetId)->one();
-
-        if ($asset === null) {
-            throw new NotFoundHttpException('Asset not found');
-        }
-
-        $analysis = Plugin::getInstance()->assetAnalysis->getAnalysis($assetId);
+        $analysis = Plugin::getInstance()->assetAnalysis->getAnalysis($asset->id);
 
         if ($analysis === null || $analysis->focalPointX === null || $analysis->focalPointY === null) {
             throw new BadRequestHttpException('No suggested focal point available');
@@ -155,28 +125,30 @@ class AnalysisController extends Controller
      */
     public function actionGetStatus(): Response
     {
+        $this->requireCpRequest();
+        $this->requirePermission('accessPlugin-lens');
+
+        $assetId = $this->request->getQueryParam('assetId');
+
+        if ($assetId === null || $assetId === '') {
+            $this->response->setStatusCode(400);
+            return $this->asJson([
+                'error' => 'Missing assetId parameter',
+                'status' => 'error',
+            ]);
+        }
+
+        $assetId = (int) $assetId;
+
+        if ($assetId < 1) {
+            $this->response->setStatusCode(400);
+            return $this->asJson([
+                'error' => 'Invalid asset ID',
+                'status' => 'error',
+            ]);
+        }
+
         try {
-            $this->requireCpRequest();
-            $this->requirePermission('accessPlugin-lens');
-
-            $assetId = $this->request->getQueryParam('assetId');
-
-            if ($assetId === null || $assetId === '') {
-                return $this->asJson([
-                    'error' => 'Missing assetId parameter',
-                    'status' => 'error',
-                ], 400);
-            }
-
-            $assetId = (int) $assetId;
-
-            if ($assetId < 1) {
-                return $this->asJson([
-                    'error' => 'Invalid asset ID',
-                    'status' => 'error',
-                ], 400);
-            }
-
             $analysis = Plugin::getInstance()->assetAnalysis->getAnalysis($assetId);
 
             if (!$analysis) {
@@ -196,13 +168,14 @@ class AnalysisController extends Controller
             Logger::error(
                 LogCategory::AssetProcessing,
                 'Error in actionGetStatus: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine(),
-                assetId: isset($assetId) ? $assetId : null
+                assetId: $assetId
             );
 
+            $this->response->setStatusCode(500);
             return $this->asJson([
                 'error' => 'Internal error: ' . $e->getMessage(),
                 'status' => 'error',
-            ], 500);
+            ]);
         }
     }
 
@@ -212,17 +185,7 @@ class AnalysisController extends Controller
         $this->requirePostRequest();
         $this->requirePermission('accessPlugin-lens');
 
-        $assetId = (int) $this->request->getRequiredBodyParam('assetId');
-
-        if ($assetId < 1) {
-            throw new BadRequestHttpException('Invalid asset ID');
-        }
-
-        $asset = Asset::find()->id($assetId)->one();
-
-        if ($asset === null) {
-            throw new NotFoundHttpException('Asset not found');
-        }
+        $asset = $this->getRequiredAsset();
 
         Plugin::getInstance()->assetAnalysis->reprocessAsset($asset);
 
@@ -301,9 +264,7 @@ class AnalysisController extends Controller
             throw new BadRequestHttpException('Invalid analysis ID');
         }
 
-        if (is_string($tags)) {
-            $tags = json_decode($tags, true) ?? [];
-        }
+        $tags = $this->decodeJsonParam($tags);
 
         try {
             $result = Plugin::getInstance()->analysisEdit->updateTags($analysisId, $tags);
@@ -329,9 +290,7 @@ class AnalysisController extends Controller
             throw new BadRequestHttpException('Invalid analysis ID');
         }
 
-        if (is_string($colors)) {
-            $colors = json_decode($colors, true) ?? [];
-        }
+        $colors = $this->decodeJsonParam($colors);
 
         try {
             $result = Plugin::getInstance()->analysisEdit->updateColors($analysisId, $colors);
@@ -354,5 +313,35 @@ class AnalysisController extends Controller
         $tags = Plugin::getInstance()->tagAggregation->searchTags($query);
 
         return $this->asJson(['success' => true, 'tags' => $tags]);
+    }
+
+    /**
+     * Get required asset from request body parameter.
+     */
+    private function getRequiredAsset(): Asset
+    {
+        $assetId = (int) $this->request->getRequiredBodyParam('assetId');
+
+        if ($assetId < 1) {
+            throw new BadRequestHttpException('Invalid asset ID');
+        }
+
+        $asset = Asset::find()->id($assetId)->one();
+
+        if ($asset === null) {
+            throw new NotFoundHttpException('Asset not found');
+        }
+
+        return $asset;
+    }
+
+    /**
+     * Decode JSON parameter to array.
+     */
+    private function decodeJsonParam($value): array
+    {
+        return is_string($value)
+            ? (json_decode($value, true) ?? [])
+            : (array) $value;
     }
 }

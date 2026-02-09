@@ -42,50 +42,10 @@ class ReviewController extends Controller
         }
 
         $pendingReviews = $reviewService->getPendingReviews($perPage, $offset);
-        $assetIds = array_map(fn($a) => $a->assetId, $pendingReviews);
-        $analysisIds = array_map(fn($a) => $a->id, $pendingReviews);
-
-        $assets = Asset::find()->id($assetIds)->indexBy('id')->all();
-
-        $tagCounts = [];
-
-        if (!empty($analysisIds)) {
-            $tagCountRows = AssetTagRecord::find()
-                ->select(['analysisId', 'COUNT(*) AS cnt'])
-                ->where(['analysisId' => $analysisIds])
-                ->groupBy(['analysisId'])
-                ->asArray()
-                ->all();
-            foreach ($tagCountRows as $row) {
-                $tagCounts[(int) $row['analysisId']] = (int) $row['cnt'];
-            }
-        }
-
-        $items = [];
-
-        foreach ($pendingReviews as $analysis) {
-            $asset = $assets[$analysis->assetId] ?? null;
-            if ($asset === null) {
-                continue;
-            }
-
-            $avgConfidence = 0;
-            $confFields = [$analysis->titleConfidence, $analysis->altTextConfidence, $analysis->longDescriptionConfidence];
-            $confFields = array_filter($confFields, fn($v) => $v !== null);
-
-            if (!empty($confFields)) {
-                $avgConfidence = array_sum($confFields) / count($confFields);
-            }
-
-            $items[] = [
-                'analysisId' => $analysis->id,
-                'thumbnailUrl' => Craft::$app->getAssets()->getThumbUrl($asset, 200, 200),
-                'filename' => $asset->filename,
-                'suggestedTitle' => $analysis->suggestedTitle,
-                'avgConfidence' => round($avgConfidence, 2),
-                'tagCount' => $tagCounts[$analysis->id] ?? 0,
-            ];
-        }
+        $ids = $this->extractIdsFromAnalyses($pendingReviews);
+        $assets = Asset::find()->id($ids['assetIds'])->indexBy('id')->all();
+        $tagCounts = $this->getTagCounts($ids['analysisIds']);
+        $items = $this->buildReviewItems($pendingReviews, $assets, $tagCounts);
 
         return $this->renderTemplate('lens/_review/browse', [
             'items' => $items,
@@ -201,11 +161,26 @@ class ReviewController extends Controller
             }
         }
 
-        // Boolean/numeric fields
-        foreach (['faceCount', 'containsPeople', 'nsfwScore', 'hasWatermark', 'containsBrandLogo'] as $field) {
+        // Numeric fields
+        foreach (['faceCount'] as $field) {
             $value = $this->request->getBodyParam($field);
             if ($value !== null) {
-                $modifications[$field] = $value;
+                $modifications[$field] = (int) $value;
+            }
+        }
+
+        foreach (['nsfwScore'] as $field) {
+            $value = $this->request->getBodyParam($field);
+            if ($value !== null) {
+                $modifications[$field] = (float) $value;
+            }
+        }
+
+        // Boolean fields
+        foreach (['containsPeople', 'hasWatermark', 'containsBrandLogo'] as $field) {
+            $value = $this->request->getBodyParam($field);
+            if ($value !== null) {
+                $modifications[$field] = (bool) $value;
             }
         }
 
@@ -213,8 +188,8 @@ class ReviewController extends Controller
         $focalX = $this->request->getBodyParam('focalPointX');
         $focalY = $this->request->getBodyParam('focalPointY');
         if ($focalX !== null && $focalY !== null) {
-            $modifications['focalPointX'] = $focalX;
-            $modifications['focalPointY'] = $focalY;
+            $modifications['focalPointX'] = (float) $focalX;
+            $modifications['focalPointY'] = (float) $focalY;
         }
 
         $userId = Craft::$app->getUser()->getId();
@@ -235,18 +210,7 @@ class ReviewController extends Controller
             return $this->asJson(['success' => true]);
         }
 
-        // Redirect to next analysis or back to browse
-        $queueIds = $reviewService->getPendingReviewIds();
-
-        if (!empty($queueIds)) {
-            $nextId = $queueIds[0];
-            Craft::$app->getSession()->setNotice(Craft::t('lens', 'Analysis approved.'));
-            return $this->redirect("lens/review/{$nextId}");
-        }
-
-        // Queue empty
-        Craft::$app->getSession()->setNotice(Craft::t('lens', 'All reviews complete!'));
-        return $this->redirect('lens/review');
+        return $this->redirectToNextOrBrowse('Analysis approved.');
     }
 
     public function actionReject(): Response
@@ -276,18 +240,7 @@ class ReviewController extends Controller
             return $this->asJson(['success' => true]);
         }
 
-        // Redirect to next analysis or back to browse
-        $queueIds = $reviewService->getPendingReviewIds();
-
-        if (!empty($queueIds)) {
-            $nextId = $queueIds[0];
-            Craft::$app->getSession()->setNotice(Craft::t('lens', 'Analysis rejected.'));
-            return $this->redirect("lens/review/{$nextId}");
-        }
-
-        // Queue empty
-        Craft::$app->getSession()->setNotice(Craft::t('lens', 'All reviews complete!'));
-        return $this->redirect('lens/review');
+        return $this->redirectToNextOrBrowse('Analysis rejected.');
     }
 
     public function actionBulkApprove(): Response
@@ -299,11 +252,7 @@ class ReviewController extends Controller
         $ids = $this->request->getRequiredBodyParam('ids');
         $userId = Craft::$app->getUser()->getId();
 
-        if (!is_array($ids)) {
-            $ids = [$ids];
-        }
-
-        $ids = array_filter(array_map('intval', $ids), fn($id) => $id > 0);
+        $ids = $this->validateAndCastIds($ids);
 
         if (empty($ids)) {
             throw new BadRequestHttpException('No valid IDs provided');
@@ -336,11 +285,7 @@ class ReviewController extends Controller
         $ids = $this->request->getRequiredBodyParam('ids');
         $userId = Craft::$app->getUser()->getId();
 
-        if (!is_array($ids)) {
-            $ids = [$ids];
-        }
-
-        $ids = array_filter(array_map('intval', $ids), fn($id) => $id > 0);
+        $ids = $this->validateAndCastIds($ids);
 
         if (empty($ids)) {
             throw new BadRequestHttpException('No valid IDs provided');
@@ -464,5 +409,109 @@ class ReviewController extends Controller
             'items' => $items,
             'totalCount' => $totalCount,
         ]);
+    }
+
+    /**
+     * Extract asset IDs and analysis IDs from analysis records.
+     */
+    private function extractIdsFromAnalyses(array $analyses): array
+    {
+        return [
+            'assetIds' => array_map(fn($a) => $a->assetId, $analyses),
+            'analysisIds' => array_map(fn($a) => $a->id, $analyses),
+        ];
+    }
+
+    /**
+     * Get tag counts for the given analysis IDs.
+     */
+    private function getTagCounts(array $analysisIds): array
+    {
+        $tagCounts = [];
+
+        if (empty($analysisIds)) {
+            return $tagCounts;
+        }
+
+        $rows = AssetTagRecord::find()
+            ->select(['analysisId', 'COUNT(*) AS cnt'])
+            ->where(['analysisId' => $analysisIds])
+            ->groupBy(['analysisId'])
+            ->asArray()
+            ->all();
+
+        foreach ($rows as $row) {
+            $tagCounts[(int) $row['analysisId']] = (int) $row['cnt'];
+        }
+
+        return $tagCounts;
+    }
+
+    /**
+     * Build review items array from pending reviews, assets, and tag counts.
+     */
+    private function buildReviewItems(array $pendingReviews, array $assets, array $tagCounts): array
+    {
+        $items = [];
+
+        foreach ($pendingReviews as $analysis) {
+            $asset = $assets[$analysis->assetId] ?? null;
+
+            if ($asset === null) {
+                continue;
+            }
+
+            $items[] = [
+                'analysisId' => $analysis->id,
+                'thumbnailUrl' => Craft::$app->getAssets()->getThumbUrl($asset, 200, 200),
+                'filename' => $asset->filename,
+                'suggestedTitle' => $analysis->suggestedTitle,
+                'avgConfidence' => $this->calculateAverageConfidence(
+                    $analysis->titleConfidence,
+                    $analysis->altTextConfidence,
+                    $analysis->longDescriptionConfidence
+                ),
+                'tagCount' => $tagCounts[$analysis->id] ?? 0,
+            ];
+        }
+
+        return $items;
+    }
+
+    /**
+     * Calculate average confidence from multiple confidence values.
+     */
+    private function calculateAverageConfidence(?float ...$values): float
+    {
+        $filtered = array_filter($values, fn($v) => $v !== null);
+        return empty($filtered) ? 0 : round(array_sum($filtered) / count($filtered), 2);
+    }
+
+    /**
+     * Validate and cast IDs to integers, filtering out invalid values.
+     */
+    private function validateAndCastIds($ids): array
+    {
+        if (!is_array($ids)) {
+            $ids = [$ids];
+        }
+
+        return array_filter(array_map('intval', $ids), fn($id) => $id > 0);
+    }
+
+    /**
+     * Redirect to next review or browse page with appropriate message.
+     */
+    private function redirectToNextOrBrowse(string $successMessage): Response
+    {
+        $queueIds = Plugin::getInstance()->review->getPendingReviewIds();
+
+        if (!empty($queueIds)) {
+            Craft::$app->getSession()->setNotice(Craft::t('lens', $successMessage));
+            return $this->redirect("lens/review/{$queueIds[0]}");
+        }
+
+        Craft::$app->getSession()->setNotice(Craft::t('lens', 'All reviews complete!'));
+        return $this->redirect('lens/review');
     }
 }
