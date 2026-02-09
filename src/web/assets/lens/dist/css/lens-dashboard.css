@@ -32,6 +32,22 @@
     flex-wrap: wrap;
     gap: 12px;
 }
+.lens-attention-card {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: var(--gray-050);
+    border-left: 3px solid var(--link-color);
+    text-decoration: none;
+    border-radius: var(--medium-border-radius);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.lens-attention-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    text-decoration: none;
+}
 .lens-attention-icon {
     color: var(--medium-text-color);
 }
