@@ -267,6 +267,7 @@ class Plugin extends BasePlugin
                 $template = $event->template;
                 if (str_starts_with($template, 'lens/_review')) {
                     $view->registerAssetBundle(LensReviewAsset::class);
+                    $view->registerAssetBundle(LensAssetActionsAsset::class);
                 } elseif (str_starts_with($template, 'lens/_search')) {
                     $view->registerAssetBundle(LensSearchAsset::class);
                 } elseif (str_starts_with($template, 'lens/_bulk')) {

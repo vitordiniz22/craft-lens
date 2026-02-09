@@ -78,6 +78,47 @@
 
                 LensAnalysisPanel.revertField(field);
             });
+
+            // People Detection - Enter edit mode
+            document.addEventListener('click', function(e) {
+                var trigger = e.target.closest('[data-action="people-edit"]');
+                if (!trigger) return;
+
+                var field = trigger.closest('.lens-people-detection');
+                if (!field) return;
+
+                LensAnalysisPanel.enterPeopleEditMode(field);
+            });
+
+            // People Detection - Save
+            document.addEventListener('click', function(e) {
+                var saveBtn = e.target.closest('[data-action="people-save"]');
+                if (!saveBtn) return;
+
+                var field = saveBtn.closest('.lens-people-detection');
+                if (!field) return;
+
+                LensAnalysisPanel.savePeopleDetection(field);
+            });
+
+            // People Detection - Cancel
+            document.addEventListener('click', function(e) {
+                var cancelBtn = e.target.closest('[data-action="people-cancel"]');
+                if (!cancelBtn) return;
+
+                var field = cancelBtn.closest('.lens-people-detection');
+                if (!field) return;
+
+                LensAnalysisPanel.cancelPeopleEdit(field);
+            });
+
+            // People Detection - Revert
+            document.addEventListener('click', function(e) {
+                var revertBtn = e.target.closest('[data-action="people-revert"]');
+                if (!revertBtn) return;
+
+                LensAnalysisPanel.revertPeopleDetection(revertBtn.dataset.analysisId);
+            });
         },
 
         enterEditMode: function(fieldEl) {
@@ -246,6 +287,260 @@
 
                 fieldEl.appendChild(aiDiv);
             }
+        },
+
+        // ======================================================================
+        // People Detection Editor
+        // ======================================================================
+
+        enterPeopleEditMode: function(fieldEl) {
+            var display = fieldEl.querySelector('.lens-field-display');
+            var edit = fieldEl.querySelector('.lens-people-edit-panel');
+            if (!display || !edit) return;
+
+            // Get current values
+            var containsPeople = fieldEl.dataset.containsPeople === '1';
+            var faceCount = parseInt(fieldEl.dataset.faceCount, 10) || 0;
+
+            // Select appropriate radio button based on DAM tiers
+            var radios = edit.querySelectorAll('[data-control="people-mode"]');
+            var selectedValue;
+
+            if (!containsPeople) {
+                selectedValue = 'none';
+            } else if (faceCount === 0) {
+                selectedValue = 'no-faces';
+            } else if (faceCount === 1) {
+                selectedValue = '1';
+            } else if (faceCount === 2) {
+                selectedValue = '2';
+            } else if (faceCount >= 3 && faceCount <= 5) {
+                selectedValue = '3-5';
+            } else if (faceCount >= 6) {
+                selectedValue = '6+';
+            }
+
+            radios.forEach(function(radio) {
+                radio.checked = (radio.value === selectedValue);
+            });
+
+            display.style.display = 'none';
+            edit.hidden = false;
+        },
+
+        cancelPeopleEdit: function(fieldEl) {
+            var display = fieldEl.querySelector('.lens-field-display');
+            var edit = fieldEl.querySelector('.lens-people-edit-panel');
+            if (!display || !edit) return;
+
+            display.style.display = '';
+            edit.hidden = true;
+        },
+
+        savePeopleDetection: function(fieldEl) {
+            var analysisId = fieldEl.dataset.analysisId;
+            var edit = fieldEl.querySelector('.lens-people-edit-panel');
+            if (!edit) return;
+
+            // Get selected mode
+            var selectedRadio = edit.querySelector('[data-control="people-mode"]:checked');
+            if (!selectedRadio) {
+                Craft.cp.displayError(Craft.t('lens', 'Please select an option'));
+                return;
+            }
+
+            var mode = selectedRadio.value;
+            var containsPeople, faceCount;
+
+            // Map DAM tier values to face counts
+            switch (mode) {
+                case 'none':
+                    containsPeople = false;
+                    faceCount = 0;
+                    break;
+                case 'no-faces':
+                    containsPeople = true;
+                    faceCount = 0;
+                    break;
+                case '1':
+                    containsPeople = true;
+                    faceCount = 1;
+                    break;
+                case '2':
+                    containsPeople = true;
+                    faceCount = 2;
+                    break;
+                case '3-5':
+                    containsPeople = true;
+                    faceCount = 4; // Midpoint of range
+                    break;
+                case '6+':
+                    containsPeople = true;
+                    faceCount = 6; // Minimum of "6 or more"
+                    break;
+                default:
+                    Craft.cp.displayError(Craft.t('lens', 'Invalid selection'));
+                    return;
+            }
+
+            var saveBtn = edit.querySelector('[data-action="people-save"]');
+            if (saveBtn) {
+                saveBtn.disabled = true;
+                saveBtn.textContent = Craft.t('lens', 'Saving...');
+            }
+
+            // Save both fields (Promise.all ensures atomicity)
+            var promises = [
+                Craft.sendActionRequest('POST', 'lens/analysis/update-field', {
+                    data: { analysisId: analysisId, field: 'containsPeople', value: containsPeople }
+                }),
+                Craft.sendActionRequest('POST', 'lens/analysis/update-field', {
+                    data: { analysisId: analysisId, field: 'faceCount', value: faceCount }
+                })
+            ];
+
+            Promise.all(promises).then(function(responses) {
+                // Update data attributes
+                fieldEl.dataset.containsPeople = containsPeople ? '1' : '0';
+                fieldEl.dataset.faceCount = faceCount;
+
+                // Update display structure based on new state
+                var display = fieldEl.querySelector('.lens-field-display');
+                if (display) {
+                    var newHtml = '';
+
+                    if (containsPeople) {
+                        // People detected - show tier with status on
+                        newHtml += '<div class="lens-detection-item"><div>';
+                        newHtml += '<div class="flex items-center gap-s">';
+                        newHtml += '<span class="status on"></span>';
+                        newHtml += '<strong class="lens-people-display-text">';
+
+                        if (faceCount === 0) {
+                            newHtml += Craft.t('lens', 'People detected (no visible faces)');
+                        } else if (faceCount === 1) {
+                            newHtml += Craft.t('lens', 'Individual (1 person)');
+                        } else if (faceCount === 2) {
+                            newHtml += Craft.t('lens', 'Duo (2 people)');
+                        } else if (faceCount >= 3 && faceCount <= 5) {
+                            newHtml += Craft.t('lens', 'Small group (3-5 people)');
+                        } else if (faceCount >= 6) {
+                            newHtml += Craft.t('lens', 'Large group (6+ people)');
+                        }
+
+                        newHtml += '</strong></div>';
+                        newHtml += '<p class="smalltext light lens-people-help-text" style="margin: 4px 0 0">';
+                        if (faceCount > 0) {
+                            newHtml += Craft.t('lens', 'May require model releases for commercial use');
+                        } else {
+                            newHtml += Craft.t('lens', 'People visible but faces obscured. May still require releases for commercial use.');
+                        }
+                        newHtml += '</p>';
+                        newHtml += '</div></div>';
+                    } else {
+                        // No people detected - show empty state with status off
+                        newHtml += '<div class="lens-detection-item lens-detection-empty">';
+                        newHtml += '<div class="flex items-center gap-s">';
+                        newHtml += '<span class="status off"></span>';
+                        newHtml += '<span class="lens-people-display-text">' + Craft.t('lens', 'No people detected') + '</span>';
+                        newHtml += '</div></div>';
+                    }
+
+                    display.innerHTML = newHtml;
+                }
+
+                // Show lock icon if not already present
+                var header = fieldEl.querySelector('.lens-field-header');
+                if (header && !header.querySelector('.lens-lock-icon')) {
+                    var lock = document.createElement('span');
+                    lock.className = 'lens-lock-icon';
+                    lock.title = Craft.t('lens', 'Protected from reprocessing');
+                    lock.innerHTML = '&#128274;';
+                    header.insertBefore(lock, header.firstChild);
+                }
+
+                // Update edit meta with most recent response (faceCount)
+                var faceCountResponse = responses[1].data;
+                if (faceCountResponse.editedBy) {
+                    var existing = fieldEl.querySelector('.lens-edit-meta');
+                    if (existing) existing.remove();
+
+                    var meta = document.createElement('div');
+                    meta.className = 'lens-edit-meta';
+                    meta.textContent = Craft.t('lens', 'Edited by {user} on {date}', {
+                        user: faceCountResponse.editedBy,
+                        date: faceCountResponse.editedAt
+                    });
+                    fieldEl.appendChild(meta);
+                }
+
+                // Check if AI suggestion should be shown
+                var containsPeopleAi = fieldEl.dataset.containsPeopleAi === '1';
+                var faceCountAi = parseInt(fieldEl.dataset.faceCountAi) || 0;
+                var aiDiffers = (containsPeopleAi !== containsPeople) || (faceCountAi !== faceCount);
+
+                // Remove existing AI suggestion
+                var existingSuggestion = fieldEl.querySelector('.lens-ai-suggestion');
+                if (existingSuggestion) existingSuggestion.remove();
+
+                // Show AI suggestion if values differ
+                if (aiDiffers) {
+                    var suggestion = document.createElement('div');
+                    suggestion.className = 'lens-ai-suggestion';
+
+                    var aiText = Lens.utils.formatPeopleDetectionText(containsPeopleAi, faceCountAi);
+                    var suggestionText = Craft.t('lens', 'AI suggested: "{text}"', {text: aiText});
+
+                    suggestion.innerHTML = suggestionText +
+                        ' <button type="button" data-action="people-revert" data-analysis-id="' + analysisId + '">' +
+                        Craft.t('lens', 'Revert to AI') +
+                        '</button>';
+
+                    fieldEl.appendChild(suggestion);
+                }
+
+                // Exit edit mode
+                var display = fieldEl.querySelector('.lens-field-display');
+                var editPanel = fieldEl.querySelector('.lens-people-edit-panel');
+                if (display) display.style.display = '';
+                if (editPanel) editPanel.hidden = true;
+
+                // Dispatch custom event for review area to update currentData
+                document.dispatchEvent(new CustomEvent('lens:peopleDetectionUpdated', {
+                    detail: {
+                        analysisId: analysisId,
+                        containsPeople: containsPeople,
+                        faceCount: faceCount
+                    }
+                }));
+
+                Craft.cp.displayNotice(Craft.t('lens', 'People detection updated.'));
+            }).catch(function() {
+                Craft.cp.displayError(Craft.t('lens', 'Failed to update people detection.'));
+            }).finally(function() {
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = Craft.t('lens', 'Save');
+                }
+            });
+        },
+
+        revertPeopleDetection: function(analysisId) {
+            var promises = [
+                Craft.sendActionRequest('POST', 'lens/analysis/revert-field', {
+                    data: { analysisId: analysisId, field: 'containsPeople' }
+                }),
+                Craft.sendActionRequest('POST', 'lens/analysis/revert-field', {
+                    data: { analysisId: analysisId, field: 'faceCount' }
+                })
+            ];
+
+            Promise.all(promises).then(function() {
+                Craft.cp.displayNotice(Craft.t('lens', 'Reverted to AI values. Refreshing...'));
+                setTimeout(function() { window.location.reload(); }, 500);
+            }).catch(function() {
+                Craft.cp.displayError(Craft.t('lens', 'Failed to revert people detection.'));
+            });
         },
 
         // ======================================================================

@@ -6,37 +6,12 @@
  #}
 {% set isProcessing = isProcessing ?? false %}
 
-{# People Detection #}
-{% if analysis.containsPeople %}
-    <div class="lens-detection-item">
-        <div>
-            <div class="flex items-center gap-s">
-                <span class="status on"></span>
-                <strong>
-                    {% if analysis.faceCount == 1 %}
-                        {{ '1 face detected'|t('lens') }}
-                    {% elseif analysis.faceCount > 1 %}
-                        {{ '{count} faces detected'|t('lens', {count: analysis.faceCount}) }}
-                    {% else %}
-                        {{ 'People detected (no visible faces)'|t('lens') }}
-                    {% endif %}
-                </strong>
-            </div>
-            <p class="smalltext light" style="margin: 4px 0 0">
-                {% if analysis.faceCount > 0 %}
-                    {{ 'May require model releases for commercial use'|t('lens') }}
-                {% else %}
-                    {{ 'People visible but faces obscured. May still require releases for commercial use.'|t('lens') }}
-                {% endif %}
-            </p>
-            {% if not static and not isProcessing %}
-                <button type="button" class="lens-flag-dismiss" data-field="containsPeople" data-analysis-id="{{ analysis.id }}">
-                    {{ 'Dismiss'|t('lens') }}
-                </button>
-            {% endif %}
-        </div>
-    </div>
-{% endif %}
+{# People Detection - Editable inline component #}
+{% include 'lens/_components/analysis/people-detection-field' with {
+    analysis: analysis,
+    static: static,
+    isProcessing: isProcessing
+} only %}
 
 {# NSFW Detection #}
 {% if analysis.isFlaggedNsfw %}

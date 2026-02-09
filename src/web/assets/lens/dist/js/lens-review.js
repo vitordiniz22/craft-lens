@@ -307,6 +307,14 @@
 
             // Keyboard shortcuts
             document.addEventListener('keydown', function(e) { self.handleKeydown(e); });
+
+            // Listen for people detection updates to sync currentData
+            document.addEventListener('lens:peopleDetectionUpdated', function(e) {
+                if (self.currentData && self.currentData.id == e.detail.analysisId) {
+                    self.currentData.containsPeople = e.detail.containsPeople;
+                    self.currentData.faceCount = e.detail.faceCount;
+                }
+            });
         },
 
         // ==================================================================
@@ -545,11 +553,15 @@
                 html += '</div>';
             }
 
+            // People Detection (editable in review)
+            html += this.renderPeopleDetectionField(d);
+
             el.innerHTML = html;
 
-            // Re-init tag and color editors for this new content
+            // Re-init tag, color, and people editors for this new content
             this.initReviewTagEditor();
             this.initReviewColorEditor();
+            this.initReviewPeopleEditor();
         },
 
         renderEditableField: function(name, label, value, type, confidence) {
@@ -582,22 +594,88 @@
             return Lens.utils.renderConfidenceBadge(confidence);
         },
 
+        renderPeopleDetectionField: function(d) {
+            var containsPeople = d.containsPeople || false;
+            var faceCount = d.faceCount || 0;
+            var containsPeopleAi = d.containsPeopleAi || false;
+            var faceCountAi = d.faceCountAi || 0;
+            var analysisId = d.analysisId || d.id || '';
+
+            // In review mode: simplified version - just radio buttons, no display/edit toggle
+            var html = '<div class="lens-review-field">';
+            html += '<div class="lens-review-field-label">' + Craft.t('lens', 'People Detection') + '</div>';
+            html += '<div class="lens-people-detection lens-editable-field"' +
+                ' data-analysis-id="' + analysisId + '"' +
+                ' data-contains-people="' + (containsPeople ? '1' : '0') + '"' +
+                ' data-face-count="' + faceCount + '"' +
+                ' data-contains-people-ai="' + (containsPeopleAi ? '1' : '0') + '"' +
+                ' data-face-count-ai="' + faceCountAi + '"' +
+                ' data-context="review">';
+
+            // Radio buttons - always visible in review mode
+            html += '<div class="lens-people-edit-options">';
+
+            html += '<label class="lens-people-option">';
+            html += '<input type="radio" name="people-mode-' + analysisId + '" value="none" data-control="people-mode-review"';
+            if (!containsPeople) html += ' checked';
+            html += '>';
+            html += '<span>' + Craft.t('lens', 'No people present') + '</span>';
+            html += '</label>';
+
+            html += '<label class="lens-people-option">';
+            html += '<input type="radio" name="people-mode-' + analysisId + '" value="no-faces" data-control="people-mode-review"';
+            if (containsPeople && faceCount === 0) html += ' checked';
+            html += '>';
+            html += '<span>' + Craft.t('lens', 'People present, no visible faces') + '</span>';
+            html += '</label>';
+
+            html += '<label class="lens-people-option">';
+            html += '<input type="radio" name="people-mode-' + analysisId + '" value="1" data-control="people-mode-review"';
+            if (containsPeople && faceCount === 1) html += ' checked';
+            html += '>';
+            html += '<span>' + Craft.t('lens', 'Individual (1 person)') + '</span>';
+            html += '</label>';
+
+            html += '<label class="lens-people-option">';
+            html += '<input type="radio" name="people-mode-' + analysisId + '" value="2" data-control="people-mode-review"';
+            if (containsPeople && faceCount === 2) html += ' checked';
+            html += '>';
+            html += '<span>' + Craft.t('lens', 'Duo (2 people)') + '</span>';
+            html += '</label>';
+
+            html += '<label class="lens-people-option">';
+            html += '<input type="radio" name="people-mode-' + analysisId + '" value="3-5" data-control="people-mode-review"';
+            if (containsPeople && faceCount >= 3 && faceCount <= 5) html += ' checked';
+            html += '>';
+            html += '<span>' + Craft.t('lens', 'Small group (3-5 people)') + '</span>';
+            html += '</label>';
+
+            html += '<label class="lens-people-option">';
+            html += '<input type="radio" name="people-mode-' + analysisId + '" value="6+" data-control="people-mode-review"';
+            if (containsPeople && faceCount >= 6) html += ' checked';
+            html += '>';
+            html += '<span>' + Craft.t('lens', 'Large group (6+ people)') + '</span>';
+            html += '</label>';
+
+            html += '</div>'; // end lens-people-edit-options
+
+            // AI suggestion - always show in review mode
+            html += '<div class="lens-ai-suggestion" style="margin-top: 12px;">';
+            var aiSuggestionText = Lens.utils.formatPeopleDetectionText(containsPeopleAi, faceCountAi);
+            html += Craft.t('lens', 'AI suggested: "{text}"', {text: aiSuggestionText});
+            html += '</div>'; // end lens-ai-suggestion
+
+            html += '</div>'; // end lens-people-detection
+            html += '</div>'; // end lens-review-field
+            return html;
+        },
+
         renderDetectionSection: function(d) {
             var el = document.getElementById('lens-detection-fields');
             if (!el) return;
 
             var html = '';
             var hasContent = false;
-
-            // People
-            if (d.containsPeople) {
-                hasContent = true;
-                html += '<div class="lens-detection-item">';
-                html += '<span class="lens-detection-label"><span class="status on"></span>' +
-                    Craft.t('lens', '{count} people detected', {count: d.faceCount || 0}) + '</span>';
-                html += '<button type="button" class="lens-detection-action" data-clear-field="faces">' + Craft.t('lens', 'Mark as incorrect') + '</button>';
-                html += '</div>';
-            }
 
             // NSFW
             if (d.isFlaggedNsfw) {
@@ -845,6 +923,51 @@
             });
         },
 
+        initReviewPeopleEditor: function() {
+            var editor = document.querySelector('.lens-people-detection[data-context="review"]');
+            if (!editor) return;
+
+            // Listen for radio button changes
+            editor.addEventListener('change', function(e) {
+                if (e.target.matches('[data-control="people-mode-review"]')) {
+                    var value = e.target.value;
+                    var containsPeople, faceCount;
+
+                    // Map radio value to field values
+                    switch (value) {
+                        case 'none':
+                            containsPeople = false;
+                            faceCount = 0;
+                            break;
+                        case 'no-faces':
+                            containsPeople = true;
+                            faceCount = 0;
+                            break;
+                        case '1':
+                            containsPeople = true;
+                            faceCount = 1;
+                            break;
+                        case '2':
+                            containsPeople = true;
+                            faceCount = 2;
+                            break;
+                        case '3-5':
+                            containsPeople = true;
+                            faceCount = 4; // middle of range
+                            break;
+                        case '6+':
+                            containsPeople = true;
+                            faceCount = 6;
+                            break;
+                    }
+
+                    // Update data attributes for currentData sync
+                    editor.dataset.containsPeople = containsPeople ? '1' : '0';
+                    editor.dataset.faceCount = faceCount;
+                }
+            });
+        },
+
         // ==================================================================
         // Collect Modifications
         // ==================================================================
@@ -892,6 +1015,20 @@
             if (this.focalPointChanged && this.focalX !== null && this.focalY !== null) {
                 mods.focalPointX = this.focalX;
                 mods.focalPointY = this.focalY;
+            }
+
+            // People detection
+            var peopleEditor = document.querySelector('.lens-people-detection[data-context="review"]');
+            if (peopleEditor) {
+                var containsPeople = peopleEditor.dataset.containsPeople === '1';
+                var faceCount = parseInt(peopleEditor.dataset.faceCount) || 0;
+
+                // Only include if changed from original values
+                if (containsPeople !== (this.currentData.containsPeople || false) ||
+                    faceCount !== (this.currentData.faceCount || 0)) {
+                    mods.containsPeople = containsPeople;
+                    mods.faceCount = faceCount;
+                }
             }
 
             return mods;
@@ -967,10 +1104,6 @@
             if (!field || !this.currentData) return;
 
             switch (field) {
-                case 'faces':
-                    this.currentData.faceCount = 0;
-                    this.currentData.containsPeople = false;
-                    break;
                 case 'nsfw':
                     this.currentData.nsfwScore = 0;
                     this.currentData.isFlaggedNsfw = false;
@@ -983,7 +1116,6 @@
                     break;
             }
 
-            // Re-render detection section
             this.renderDetectionSection(this.currentData);
         },
 

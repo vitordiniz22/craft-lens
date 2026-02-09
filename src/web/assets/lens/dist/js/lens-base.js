@@ -45,6 +45,32 @@
             if (confidence >= 0.8) cls = 'lens-badge--success';
             else if (confidence >= 0.5) cls = 'lens-badge--warning';
             return '<span class="lens-badge lens-badge--small ' + cls + '">' + pct + '%</span>';
+        },
+
+        /**
+         * Format people detection text for AI suggestions
+         * Centralized to keep Twig and JS in sync
+         * @param {boolean} containsPeople
+         * @param {number} faceCount
+         * @returns {string} Formatted text (e.g., "People present, no visible faces")
+         */
+        formatPeopleDetectionText: function(containsPeople, faceCount) {
+            if (!containsPeople) {
+                return Craft.t('lens', 'No people present');
+            }
+
+            if (faceCount === 0) {
+                return Craft.t('lens', 'People present, no visible faces');
+            } else if (faceCount === 1) {
+                return Craft.t('lens', 'Individual (1 person)');
+            } else if (faceCount === 2) {
+                return Craft.t('lens', 'Duo (2 people)');
+            } else if (faceCount >= 3 && faceCount <= 5) {
+                return Craft.t('lens', 'Small group (3-5 people)');
+            } else if (faceCount >= 6) {
+                return Craft.t('lens', 'Large group (6+ people)');
+            }
+            return '';
         }
     };
 

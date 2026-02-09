@@ -235,7 +235,10 @@
   display: none;
 }
 
-.lens-field-edit input,
+.lens-field-edit input[type="text"],
+.lens-field-edit input[type="number"],
+.lens-field-edit input[type="email"],
+.lens-field-edit input[type="url"],
 .lens-field-edit textarea {
   width: 100%;
   margin-bottom: 8px;
@@ -571,6 +574,80 @@
   padding: 0;
   text-decoration: underline;
   margin-top: 4px;
+}
+
+/* ==========================================================================
+   People Detection Editor
+   ========================================================================== */
+
+.lens-people-detection {
+  /* Inherits from .lens-editable-field */
+  transition: opacity 0.3s ease;
+}
+
+.lens-people-edit-panel {
+  margin-top: 12px;
+}
+
+.lens-people-edit-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.lens-people-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--hairline-color);
+  border-radius: var(--small-border-radius);
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.lens-people-option:hover {
+  background-color: var(--gray-050, #f9fafb);
+  border-color: var(--gray-300, #d1d5db);
+}
+
+.lens-people-option input[type="radio"] {
+  margin: 0;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.lens-people-option span {
+  color: var(--text-color);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+/* Highlight selected option */
+.lens-people-option:has(input[type="radio"]:checked) {
+  background-color: var(--blue-050, #eff6ff);
+  border-color: var(--blue-300, #93c5fd);
+}
+
+/* Pending review notice */
+.lens-pending-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 8px 10px;
+  margin-top: 8px;
+  background-color: var(--gray-050, #f9fafb);
+  border: 1px solid var(--hairline-color);
+  border-radius: var(--small-border-radius);
+  font-size: 12px;
+  color: var(--medium-text-color);
+}
+
+.lens-info-icon {
+  font-size: 14px;
+  line-height: 1;
+  opacity: 0.7;
 }
 
 /* ==========================================================================

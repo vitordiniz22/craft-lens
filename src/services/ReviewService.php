@@ -410,9 +410,19 @@ class ReviewService extends Component
             'focalPointConfidence' => $record->focalPointConfidence,
             'focalPointEditedBy' => $record->focalPointEditedBy,
 
-            // Detection fields (read-only display)
+            // Detection fields (editable in review area)
             'faceCount' => $record->faceCount,
+            'faceCountAi' => $record->faceCountAi,
+            'faceCountEditedBy' => $record->faceCountEditedBy,
+            'faceCountEditedAt' => $record->faceCountEditedAt,
+            'faceCountEditedByName' => $record->faceCountEditedBy ? Craft::$app->getUsers()->getUserById($record->faceCountEditedBy)?->friendlyName : null,
+            'faceCountEditedAtFormatted' => $record->faceCountEditedAt ? DateTimeHelper::toDateTime($record->faceCountEditedAt)?->format('M j, Y') : null,
             'containsPeople' => (bool)$record->containsPeople,
+            'containsPeopleAi' => (bool)$record->containsPeopleAi,
+            'containsPeopleEditedBy' => $record->containsPeopleEditedBy,
+            'containsPeopleEditedAt' => $record->containsPeopleEditedAt,
+            'containsPeopleEditedByName' => $record->containsPeopleEditedBy ? Craft::$app->getUsers()->getUserById($record->containsPeopleEditedBy)?->friendlyName : null,
+            'containsPeopleEditedAtFormatted' => $record->containsPeopleEditedAt ? DateTimeHelper::toDateTime($record->containsPeopleEditedAt)?->format('M j, Y') : null,
             'nsfwScore' => $record->nsfwScore,
             'nsfwCategories' => $record->nsfwCategories,
             'isFlaggedNsfw' => (bool)$record->isFlaggedNsfw,
