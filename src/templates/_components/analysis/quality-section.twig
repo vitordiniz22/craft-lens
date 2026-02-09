@@ -2,14 +2,17 @@
  # Focal Point & Quality Section
  # Focal point coordinates with Apply button + quality metric bars.
  #
- # Expected variables: analysis, asset, static, isProcessing
+ # Expected variables: analysis, asset (optional in review mode), static, isProcessing, mode
  #}
 {% set isProcessing = isProcessing ?? false %}
+{% set mode = mode ?? 'asset-edit' %}
 
 {# Focal Point #}
 {% if analysis.focalPointX is not null and analysis.focalPointY is not null %}
-    {% set currentFp = asset.getFocalPoint() %}
-    {% set fpAlreadyApplied = currentFp and (currentFp.x|round(4) == analysis.focalPointX|round(4)) and (currentFp.y|round(4) == analysis.focalPointY|round(4)) %}
+    {% if mode != 'review' %}
+        {% set currentFp = asset.getFocalPoint() %}
+        {% set fpAlreadyApplied = currentFp and (currentFp.x|round(4) == analysis.focalPointX|round(4)) and (currentFp.y|round(4) == analysis.focalPointY|round(4)) %}
+    {% endif %}
     {% set fpEdited = analysis.focalPointEditedBy is not null %}
 
     <div class="lens-panel-featured mb-m">
@@ -30,21 +33,24 @@
             }) }}
         </p>
 
-        <div class="lens-apply-row">
-            {% if fpAlreadyApplied %}
-                <div class="lens-applied-indicator">
-                    <span class="status on"></span>
-                    <span class="smalltext">{{ 'Applied'|t('lens') }}</span>
-                </div>
-            {% elseif not static and not isProcessing %}
-                <button type="button" class="btn small submit" data-lens-apply-focal-point="{{ asset.id }}">
-                    {{ 'Apply to Asset'|t('lens') }}
-                </button>
-                {% if asset.getHasFocalPoint() %}
-                    <span class="smalltext light">{{ 'Will replace current focal point'|t('lens') }}</span>
+        {# Apply to asset row - only in asset-edit mode #}
+        {% if mode != 'review' %}
+            <div class="lens-apply-row">
+                {% if fpAlreadyApplied %}
+                    <div class="lens-applied-indicator">
+                        <span class="status on"></span>
+                        <span class="smalltext">{{ 'Applied'|t('lens') }}</span>
+                    </div>
+                {% elseif not static and not isProcessing %}
+                    <button type="button" class="btn small submit" data-lens-apply-focal-point="{{ asset.id }}">
+                        {{ 'Apply to Asset'|t('lens') }}
+                    </button>
+                    {% if asset.getHasFocalPoint() %}
+                        <span class="smalltext light">{{ 'Will replace current focal point'|t('lens') }}</span>
+                    {% endif %}
                 {% endif %}
-            {% endif %}
-        </div>
+            </div>
+        {% endif %}
     </div>
 {% endif %}
 

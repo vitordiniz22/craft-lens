@@ -28,13 +28,129 @@ class ReviewController extends Controller
         $this->requirePermission('accessPlugin-lens');
 
         $reviewService = Plugin::getInstance()->review;
-        $queueIds = $reviewService->getPendingReviewIds();
-        $pendingCount = count($queueIds);
+        $page = max(1, (int) ($this->request->getParam('page') ?? 1));
+        $perPage = 24;
+        $offset = ($page - 1) * $perPage;
 
-        return $this->renderTemplate('lens/_review/index', [
-            'queueIds' => $queueIds,
-            'pendingCount' => $pendingCount,
+        $totalCount = $reviewService->getPendingReviewCount();
+        $totalPages = max(1, (int) ceil($totalCount / $perPage));
+
+        if ($totalCount === 0) {
+            return $this->renderTemplate('lens/_review/browse', [
+                'pendingCount' => 0,
+            ]);
+        }
+
+        $pendingReviews = $reviewService->getPendingReviews($perPage, $offset);
+        $assetIds = array_map(fn($a) => $a->assetId, $pendingReviews);
+        $analysisIds = array_map(fn($a) => $a->id, $pendingReviews);
+
+        $assets = Asset::find()->id($assetIds)->indexBy('id')->all();
+
+        $tagCounts = [];
+
+        if (!empty($analysisIds)) {
+            $tagCountRows = AssetTagRecord::find()
+                ->select(['analysisId', 'COUNT(*) AS cnt'])
+                ->where(['analysisId' => $analysisIds])
+                ->groupBy(['analysisId'])
+                ->asArray()
+                ->all();
+            foreach ($tagCountRows as $row) {
+                $tagCounts[(int) $row['analysisId']] = (int) $row['cnt'];
+            }
+        }
+
+        $items = [];
+
+        foreach ($pendingReviews as $analysis) {
+            $asset = $assets[$analysis->assetId] ?? null;
+            if ($asset === null) {
+                continue;
+            }
+
+            $avgConfidence = 0;
+            $confFields = [$analysis->titleConfidence, $analysis->altTextConfidence, $analysis->longDescriptionConfidence];
+            $confFields = array_filter($confFields, fn($v) => $v !== null);
+
+            if (!empty($confFields)) {
+                $avgConfidence = array_sum($confFields) / count($confFields);
+            }
+
+            $items[] = [
+                'analysisId' => $analysis->id,
+                'thumbnailUrl' => Craft::$app->getAssets()->getThumbUrl($asset, 200, 200),
+                'filename' => $asset->filename,
+                'suggestedTitle' => $analysis->suggestedTitle,
+                'avgConfidence' => round($avgConfidence, 2),
+                'tagCount' => $tagCounts[$analysis->id] ?? 0,
+            ];
+        }
+
+        return $this->renderTemplate('lens/_review/browse', [
+            'items' => $items,
+            'page' => $page,
+            'totalPages' => $totalPages,
+            'totalCount' => $totalCount,
+            'pendingCount' => $totalCount,
         ]);
+    }
+
+    /**
+     * Single review view for a specific analysis
+     */
+    public function actionView(int $analysisId): Response
+    {
+        $this->requireCpRequest();
+        $this->requirePermission('accessPlugin-lens');
+
+        $reviewService = Plugin::getInstance()->review;
+        $data = $reviewService->getFullAnalysis($analysisId);
+
+        if ($data === null || $data['status'] !== AnalysisStatus::PendingReview->value) {
+            Craft::$app->getSession()->setError(
+                Craft::t('lens', 'Analysis not found or already reviewed.')
+            );
+            return $this->redirect('lens/review');
+        }
+
+        // Get queue context for navigation
+        $queueIds = $reviewService->getPendingReviewIds();
+        $currentIndex = array_search($analysisId, $queueIds, true);
+
+        $prevId = ($currentIndex !== false && $currentIndex > 0) ? $queueIds[$currentIndex - 1] : null;
+        $nextId = ($currentIndex !== false && $currentIndex < count($queueIds) - 1) ? $queueIds[$currentIndex + 1] : null;
+
+        // Normalize: add 'id' field for component compatibility (components expect analysis.id)
+        $data['id'] = $data['analysisId'];
+
+        return $this->renderTemplate('lens/_review/view', [
+            'analysis' => $data,
+            'prevId' => $prevId,
+            'nextId' => $nextId,
+            'currentIndex' => $currentIndex !== false ? $currentIndex + 1 : 1,
+            'totalCount' => count($queueIds),
+        ]);
+    }
+
+    /**
+     * Focus view - redirects to first pending review or browse if queue is empty
+     */
+    public function actionFocus(): Response
+    {
+        $this->requireCpRequest();
+        $this->requirePermission('accessPlugin-lens');
+
+        $reviewService = Plugin::getInstance()->review;
+        $queueIds = $reviewService->getPendingReviewIds();
+
+        if (!empty($queueIds)) {
+            // Redirect to first pending review
+            return $this->redirect("lens/review/{$queueIds[0]}");
+        }
+
+        // Queue empty - redirect to browse
+        return $this->redirect('lens/review');
     }
 
     public function actionApprove(): Response
@@ -119,9 +235,18 @@ class ReviewController extends Controller
             return $this->asJson(['success' => true]);
         }
 
-        Craft::$app->getSession()->setNotice(Craft::t('lens', 'Analysis approved.'));
+        // Redirect to next analysis or back to browse
+        $queueIds = $reviewService->getPendingReviewIds();
 
-        return $this->redirectToPostedUrl();
+        if (!empty($queueIds)) {
+            $nextId = $queueIds[0];
+            Craft::$app->getSession()->setNotice(Craft::t('lens', 'Analysis approved.'));
+            return $this->redirect("lens/review/{$nextId}");
+        }
+
+        // Queue empty
+        Craft::$app->getSession()->setNotice(Craft::t('lens', 'All reviews complete!'));
+        return $this->redirect('lens/review');
     }
 
     public function actionReject(): Response
@@ -138,8 +263,10 @@ class ReviewController extends Controller
 
         $userId = Craft::$app->getUser()->getId();
 
+        $reviewService = Plugin::getInstance()->review;
+
         try {
-            Plugin::getInstance()->review->reject($analysisId, $userId);
+            $reviewService->reject($analysisId, $userId);
         } catch (\Throwable $e) {
             Logger::error(LogCategory::Review, "Reject failed for analysis {$analysisId}", exception: $e);
             throw $e;
@@ -149,9 +276,18 @@ class ReviewController extends Controller
             return $this->asJson(['success' => true]);
         }
 
-        Craft::$app->getSession()->setNotice(Craft::t('lens', 'Analysis rejected.'));
+        // Redirect to next analysis or back to browse
+        $queueIds = $reviewService->getPendingReviewIds();
 
-        return $this->redirectToPostedUrl();
+        if (!empty($queueIds)) {
+            $nextId = $queueIds[0];
+            Craft::$app->getSession()->setNotice(Craft::t('lens', 'Analysis rejected.'));
+            return $this->redirect("lens/review/{$nextId}");
+        }
+
+        // Queue empty
+        Craft::$app->getSession()->setNotice(Craft::t('lens', 'All reviews complete!'));
+        return $this->redirect('lens/review');
     }
 
     public function actionBulkApprove(): Response
@@ -228,102 +364,65 @@ class ReviewController extends Controller
         return $this->redirectToPostedUrl();
     }
 
-    /**
-     * Accept the AI value for a specific field, clearing the user edit.
-     */
-    public function actionAcceptAiValue(): Response
+    public function actionSkip(): Response
     {
         $this->requireCpRequest();
         $this->requirePostRequest();
         $this->requirePermission('accessPlugin-lens');
 
         $analysisId = (int) $this->request->getRequiredBodyParam('analysisId');
-        $fieldName = $this->request->getRequiredBodyParam('fieldName');
-
-        if ($analysisId < 1) {
-            throw new BadRequestHttpException('Invalid analysis ID');
-        }
-
-        try {
-            Plugin::getInstance()->review->acceptAiValue($analysisId, $fieldName);
-        } catch (\Throwable $e) {
-            Logger::error(LogCategory::Review, "Accept AI value failed for analysis {$analysisId}, field {$fieldName}", exception: $e);
-            throw $e;
-        }
-
-        return $this->asJson(['success' => true]);
-    }
-
-    /**
-     * AJAX endpoint: get full analysis data for the single-review panel.
-     */
-    public function actionGetAnalysis(): Response
-    {
-        $this->requireCpRequest();
-        $this->requireAcceptsJson();
-        $this->requirePermission('accessPlugin-lens');
-
-        $analysisId = (int) $this->request->getRequiredParam('analysisId');
 
         if ($analysisId < 1) {
             throw new BadRequestHttpException('Invalid analysis ID');
         }
 
         $reviewService = Plugin::getInstance()->review;
-        $data = $reviewService->getFullAnalysis($analysisId);
 
-        if ($data === null || $data['status'] !== AnalysisStatus::PendingReview->value) {
-            return $this->asJson([
-                'success' => false,
-                'error' => 'not_found',
-                'message' => Craft::t('lens', 'Analysis not found or already reviewed.'),
+        $reviewService->skip($analysisId);
+
+        if ($this->request->getAcceptsJson()) {
+            return $this->asJson(['success' => true]);
+        }
+
+        // Redirect to next analysis or back to browse
+        $queueIds = $reviewService->getPendingReviewIds();
+
+        if (!empty($queueIds)) {
+            $nextId = $queueIds[0];
+            Craft::$app->getSession()->setNotice(Craft::t('lens', 'Analysis skipped.'));
+            return $this->redirect("lens/review/{$nextId}");
+        }
+
+        // Queue empty
+        Craft::$app->getSession()->setNotice(Craft::t('lens', 'All reviews complete!'));
+        return $this->redirect('lens/review');
+    }
+
+    /**
+     * Bulk review mode - grid view with checkboxes
+     */
+    public function actionBulk(): Response
+    {
+        $this->requireCpRequest();
+        $this->requirePermission('accessPlugin-lens');
+
+        $reviewService = Plugin::getInstance()->review;
+        $totalCount = $reviewService->getPendingReviewCount();
+
+        if ($totalCount === 0) {
+            return $this->renderTemplate('lens/_review/bulk', [
+                'totalCount' => 0,
             ]);
         }
 
-        // Add queue navigation context
-        $queueIds = $reviewService->getPendingReviewIds();
-        $currentIndex = array_search($analysisId, $queueIds);
-
-        $data['queue'] = [
-            'currentIndex' => $currentIndex !== false ? $currentIndex : 0,
-            'totalCount' => count($queueIds),
-            'prevId' => ($currentIndex !== false && $currentIndex > 0) ? $queueIds[$currentIndex - 1] : null,
-            'nextId' => ($currentIndex !== false && $currentIndex < count($queueIds) - 1) ? $queueIds[$currentIndex + 1] : null,
-            'ids' => $queueIds,
-        ];
-
-        return $this->asJson([
-            'success' => true,
-            'data' => $data,
-        ]);
-    }
-
-    /**
-     * AJAX endpoint: get queue summary for grid/bulk mode.
-     */
-    public function actionGetQueue(): Response
-    {
-        $this->requireCpRequest();
-        $this->requireAcceptsJson();
-        $this->requirePermission('accessPlugin-lens');
-
-        $reviewService = Plugin::getInstance()->review;
-
-        $page = max(1, (int) ($this->request->getParam('page') ?? 1));
-        $perPage = max(1, min(100, (int) ($this->request->getParam('perPage') ?? 24)));
-        $offset = ($page - 1) * $perPage;
-
-        $totalCount = $reviewService->getPendingReviewCount();
-        $totalPages = max(1, (int) ceil($totalCount / $perPage));
-        $pendingReviews = $reviewService->getPendingReviews($perPage, $offset);
-
+        // Load all pending reviews for bulk mode (up to 100)
+        $pendingReviews = $reviewService->getPendingReviews(100, 0);
         $assetIds = array_map(fn($a) => $a->assetId, $pendingReviews);
         $analysisIds = array_map(fn($a) => $a->id, $pendingReviews);
 
         $assets = Asset::find()->id($assetIds)->indexBy('id')->all();
 
         $tagCounts = [];
-
         if (!empty($analysisIds)) {
             $tagCountRows = AssetTagRecord::find()
                 ->select(['analysisId', 'COUNT(*) AS cnt'])
@@ -337,10 +436,8 @@ class ReviewController extends Controller
         }
 
         $items = [];
-
         foreach ($pendingReviews as $analysis) {
             $asset = $assets[$analysis->assetId] ?? null;
-
             if ($asset === null) {
                 continue;
             }
@@ -355,7 +452,6 @@ class ReviewController extends Controller
 
             $items[] = [
                 'analysisId' => $analysis->id,
-                'assetId' => $analysis->assetId,
                 'thumbnailUrl' => Craft::$app->getAssets()->getThumbUrl($asset, 200, 200),
                 'filename' => $asset->filename,
                 'suggestedTitle' => $analysis->suggestedTitle,
@@ -364,34 +460,9 @@ class ReviewController extends Controller
             ];
         }
 
-        return $this->asJson([
-            'success' => true,
+        return $this->renderTemplate('lens/_review/bulk', [
             'items' => $items,
             'totalCount' => $totalCount,
-            'page' => $page,
-            'perPage' => $perPage,
-            'totalPages' => $totalPages,
         ]);
-    }
-
-    public function actionSkip(): Response
-    {
-        $this->requireCpRequest();
-        $this->requirePostRequest();
-        $this->requirePermission('accessPlugin-lens');
-
-        $analysisId = (int) $this->request->getRequiredBodyParam('analysisId');
-
-        if ($analysisId < 1) {
-            throw new BadRequestHttpException('Invalid analysis ID');
-        }
-
-        Plugin::getInstance()->review->skip($analysisId);
-
-        if ($this->request->getAcceptsJson()) {
-            return $this->asJson(['success' => true]);
-        }
-
-        return $this->redirectToPostedUrl();
     }
 }

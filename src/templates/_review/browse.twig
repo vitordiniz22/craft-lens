@@ -1,0 +1,59 @@
+{% extends '_layouts/cp' %}
+
+{% set title = 'Review AI Suggestions'|t('lens') %}
+{% set selectedSubnavItem = 'review' %}
+
+{% block content %}
+    {% if pendingCount > 0 %}
+        {% include 'lens/_review/_toolbar' with {
+            currentMode: 'browse',
+            totalCount: totalCount
+        } %}
+
+        <div class="lens-browse-grid">
+            {% for item in items %}
+                <a href="{{ cpUrl('lens/review/' ~ item.analysisId) }}" class="lens-browse-card">
+                    <div class="lens-browse-card-image">
+                        <img src="{{ item.thumbnailUrl }}" alt="{{ item.filename }}">
+                    </div>
+                    <div class="lens-browse-card-info">
+                        <div class="lens-browse-card-title">{{ item.suggestedTitle ?: item.filename }}</div>
+                        <div class="lens-browse-card-meta">
+                            {% if item.avgConfidence >= 0.8 %}
+                                <span class="lens-confidence-badge lens-confidence-high">{{ (item.avgConfidence * 100)|round }}%</span>
+                            {% elseif item.avgConfidence >= 0.5 %}
+                                <span class="lens-confidence-badge lens-confidence-medium">{{ (item.avgConfidence * 100)|round }}%</span>
+                            {% else %}
+                                <span class="lens-confidence-badge lens-confidence-low">{{ (item.avgConfidence * 100)|round }}%</span>
+                            {% endif %}
+                            <span class="lens-tag-count">{{ item.tagCount }} {{ 'tags'|t('lens') }}</span>
+                        </div>
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+
+        {% if totalPages > 1 %}
+            <div class="lens-browse-pagination">
+                {% if page > 1 %}
+                    <a href="{{ cpUrl('lens/review', {page: page - 1}) }}" class="btn small">
+                        &larr; {{ 'Previous'|t('lens') }}
+                    </a>
+                {% endif %}
+                <span class="lens-pagination-info">
+                    {{ 'Page {page} of {total}'|t('lens', {page: page, total: totalPages}) }}
+                </span>
+                {% if page < totalPages %}
+                    <a href="{{ cpUrl('lens/review', {page: page + 1}) }}" class="btn small">
+                        {{ 'Next'|t('lens') }} &rarr;
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    {% else %}
+        {% include 'lens/_components/empty-state' with {
+            heading: 'No Pending Reviews'|t('lens'),
+            description: 'All AI suggestions have been reviewed.'|t('lens')
+        } %}
+    {% endif %}
+{% endblock %}

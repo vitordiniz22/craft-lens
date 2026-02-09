@@ -1,0 +1,127 @@
+{% extends '_layouts/cp' %}
+
+{% set title = 'Bulk Review Actions'|t('lens') %}
+{% set selectedSubnavItem = 'review' %}
+
+{% block content %}
+    {% if totalCount > 0 %}
+        {% include 'lens/_review/_toolbar' with {
+            currentMode: 'bulk',
+            totalCount: totalCount
+        } %}
+
+        <form method="post" action="" accept-charset="UTF-8" id="lens-bulk-form">
+            {{ csrfInput() }}
+            {{ actionInput('lens/review/bulk-approve') }}
+
+            <div class="lens-bulk-actions">
+                <button type="button" class="btn small" id="lens-select-all">{{ 'Select All'|t('lens') }}</button>
+                <button type="button" class="btn small" id="lens-select-high">{{ 'Select High Confidence (>80%)'|t('lens') }}</button>
+                <button type="button" class="btn small" id="lens-deselect-all">{{ 'Deselect All'|t('lens') }}</button>
+                <span class="lens-selection-count" id="lens-selection-count">{{ '0 selected'|t('lens') }}</span>
+                <div class="lens-bulk-buttons">
+                    <button type="submit" class="btn small submit" disabled id="lens-bulk-approve-btn">
+                        {{ 'Approve Selected'|t('lens') }}
+                    </button>
+                    <button type="submit" class="btn small"
+                            formaction="{{ actionUrl('lens/review/bulk-reject') }}"
+                            disabled id="lens-bulk-reject-btn">
+                        {{ 'Reject Selected'|t('lens') }}
+                    </button>
+                </div>
+            </div>
+
+            <div class="lens-bulk-grid">
+                {% for item in items %}
+                    <label class="lens-bulk-item" data-confidence="{{ item.avgConfidence }}">
+                        <input type="checkbox" name="ids[]" value="{{ item.analysisId }}" class="lens-bulk-checkbox">
+                        <div class="lens-bulk-item-image">
+                            <img src="{{ item.thumbnailUrl }}" alt="{{ item.filename }}">
+                            <div class="lens-bulk-item-overlay">
+                                <span class="lens-bulk-checkmark">✓</span>
+                            </div>
+                        </div>
+                        <div class="lens-bulk-item-info">
+                            <div class="lens-bulk-item-title">{{ item.suggestedTitle ?: item.filename }}</div>
+                            <div class="lens-bulk-item-meta">
+                                {% if item.avgConfidence >= 0.8 %}
+                                    <span class="lens-confidence-badge lens-confidence-high">{{ (item.avgConfidence * 100)|round }}%</span>
+                                {% elseif item.avgConfidence >= 0.5 %}
+                                    <span class="lens-confidence-badge lens-confidence-medium">{{ (item.avgConfidence * 100)|round }}%</span>
+                                {% else %}
+                                    <span class="lens-confidence-badge lens-confidence-low">{{ (item.avgConfidence * 100)|round }}%</span>
+                                {% endif %}
+                                <span class="lens-tag-count">{{ item.tagCount }} {{ 'tags'|t('lens') }}</span>
+                            </div>
+                        </div>
+                    </label>
+                {% endfor %}
+            </div>
+        </form>
+    {% else %}
+        {% include 'lens/_components/empty-state' with {
+            heading: 'No Pending Reviews'|t('lens'),
+            description: 'All AI suggestions have been reviewed.'|t('lens')
+        } %}
+    {% endif %}
+{% endblock %}
+
+{% js %}
+    // Bulk selection logic
+    (function() {
+        var form = document.getElementById('lens-bulk-form');
+        if (!form) return;
+
+        var checkboxes = document.querySelectorAll('.lens-bulk-checkbox');
+        var approveBtn = document.getElementById('lens-bulk-approve-btn');
+        var rejectBtn = document.getElementById('lens-bulk-reject-btn');
+        var countSpan = document.getElementById('lens-selection-count');
+
+        function updateSelectionCount() {
+            var count = document.querySelectorAll('.lens-bulk-checkbox:checked').length;
+            countSpan.textContent = Craft.t('lens', '{count} selected', {count: count});
+            approveBtn.disabled = count === 0;
+            rejectBtn.disabled = count === 0;
+        }
+
+        checkboxes.forEach(function(cb) {
+            cb.addEventListener('change', updateSelectionCount);
+        });
+
+        document.getElementById('lens-select-all').addEventListener('click', function() {
+            checkboxes.forEach(function(cb) {
+                cb.checked = true;
+            });
+            updateSelectionCount();
+        });
+
+        document.getElementById('lens-deselect-all').addEventListener('click', function() {
+            checkboxes.forEach(function(cb) {
+                cb.checked = false;
+            });
+            updateSelectionCount();
+        });
+
+        document.getElementById('lens-select-high').addEventListener('click', function() {
+            checkboxes.forEach(function(cb) {
+                var item = cb.closest('.lens-bulk-item');
+                var confidence = parseFloat(item.getAttribute('data-confidence'));
+                cb.checked = confidence >= 0.8;
+            });
+            updateSelectionCount();
+        });
+
+        // Confirm before bulk actions
+        form.addEventListener('submit', function(e) {
+            var count = document.querySelectorAll('.lens-bulk-checkbox:checked').length;
+            var action = e.submitter.textContent.trim();
+
+            if (!confirm(Craft.t('lens', 'Are you sure you want to {action} {count} analyses?', {
+                action: action.toLowerCase(),
+                count: count
+            }))) {
+                e.preventDefault();
+            }
+        });
+    })();
+{% endjs %}

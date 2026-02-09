@@ -1,0 +1,161 @@
+{% extends '_layouts/cp' %}
+
+{% set title = 'Review: ' ~ analysis.filename %}
+{% set selectedSubnavItem = 'review' %}
+
+{% block content %}
+    {% include 'lens/_review/_toolbar' with {
+        currentMode: 'focus',
+        totalCount: totalCount,
+        currentIndex: currentIndex
+    } %}
+
+    <form method="post" action="" accept-charset="UTF-8" id="lens-review-form">
+        {{ csrfInput() }}
+        {{ actionInput('lens/review/approve') }}
+        {{ hiddenInput('analysisId', analysis.analysisId) }}
+
+        {# Hidden inputs for modifications - populated by JavaScript #}
+        <input type="hidden" name="suggestedTitle" id="field-suggestedTitle">
+        <input type="hidden" name="altText" id="field-altText">
+        <input type="hidden" name="longDescription" id="field-longDescription">
+        <input type="hidden" name="tags" id="field-tags">
+        <input type="hidden" name="dominantColors" id="field-colors">
+        <input type="hidden" name="focalPointX" id="focal-x-input">
+        <input type="hidden" name="focalPointY" id="focal-y-input">
+        <input type="hidden" name="containsPeople" id="field-containsPeople">
+        <input type="hidden" name="faceCount" id="field-faceCount">
+
+        <div class="lens-review-panels" id="lens-review-view">
+            {# Left Panel - Image #}
+            <div class="lens-review-left">
+                <div class="lens-review-image-container" id="lens-image-container">
+                    <img id="lens-review-image"
+                         src="{{ analysis.previewUrl }}"
+                         alt="{{ analysis.filename }}">
+
+                    {% if analysis.focalPointX %}
+                        <div class="lens-review-focal-marker" id="lens-focal-marker"
+                             style="left: {{ (analysis.focalPointX * 100)|round(2) }}%;
+                                    top: {{ (analysis.focalPointY * 100)|round(2) }}%;"></div>
+                    {% endif %}
+                </div>
+
+                <div class="lens-review-zoom-controls">
+                    <button type="button" class="btn small" id="lens-zoom-out">&minus;</button>
+                    <span id="lens-zoom-level">100%</span>
+                    <button type="button" class="btn small" id="lens-zoom-fit">{{ 'Fit'|t('lens') }}</button>
+                    <button type="button" class="btn small" id="lens-zoom-in">&plus;</button>
+                </div>
+
+                {% if analysis.similarImages is not empty %}
+                    <div class="lens-review-similar">
+                        <h4>{{ 'Similar Images'|t('lens') }}</h4>
+                        <div class="lens-review-similar-list">
+                            {% for similar in analysis.similarImages %}
+                                <a href="{{ similar.editUrl }}">
+                                    <img src="{{ similar.thumbnailUrl }}" alt="{{ similar.filename }}">
+                                    <span>{{ (similar.similarity * 100)|round }}%</span>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            {# Right Panel - Reuse analysis components #}
+            <div class="lens-review-right">
+                <div class="lens-review-asset-header">
+                    <h3>{{ analysis.filename }}</h3>
+                    <div class="lens-review-meta">
+                        {{ analysis.fileSize|filesize }} &bull;
+                        {{ analysis.uploadDate|datetime('short') }}
+                    </div>
+                </div>
+
+                <div class="lens-review-section">
+                    <h4>{{ 'Content'|t('lens') }}</h4>
+                    {% include 'lens/_components/analysis/content-section' with {
+                        analysis: analysis,
+                        mode: 'review',
+                        static: false,
+                        isProcessing: false
+                    } %}
+                </div>
+
+                <div class="lens-review-section">
+                    <h4>{{ 'Tags & Colors'|t('lens') }}</h4>
+                    {% include 'lens/_components/analysis/taxonomy-section' with {
+                        analysis: analysis,
+                        analysisTags: analysis.tags,
+                        analysisColors: analysis.colors,
+                        mode: 'review',
+                        static: false
+                    } %}
+                </div>
+
+                <div class="lens-review-section">
+                    <h4>{{ 'Quality & People'|t('lens') }}</h4>
+                    {% include 'lens/_components/analysis/quality-section' with {
+                        analysis: analysis,
+                        mode: 'review',
+                        static: false,
+                        isProcessing: false
+                    } %}
+                </div>
+
+                <div class="lens-review-section">
+                    <h4>{{ 'Safety & Detection'|t('lens') }}</h4>
+                    {% include 'lens/_components/analysis/safety-section' with {
+                        analysis: analysis,
+                        mode: 'review',
+                        static: false,
+                        isProcessing: false
+                    } %}
+                </div>
+
+                {% if analysis.exif %}
+                    <div class="lens-review-section">
+                        <h4>{{ 'Metadata'|t('lens') }}</h4>
+                        {% include 'lens/_components/analysis/technical-section' with {
+                            analysis: analysis,
+                            exifData: analysis.exif
+                        } %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="lens-review-action-bar">
+            {% if prevId %}
+                <a href="{{ cpUrl('lens/review/' ~ prevId) }}" class="btn">
+                    &larr; {{ 'Previous'|t('lens') }}
+                </a>
+            {% else %}
+                <button type="button" class="btn" disabled>&larr; {{ 'Previous'|t('lens') }}</button>
+            {% endif %}
+
+            <button type="submit" class="btn submit">
+                {{ 'Approve & Next'|t('lens') }} <kbd>A</kbd>
+            </button>
+
+            <button type="submit" class="btn"
+                    formaction="{{ actionUrl('lens/review/skip') }}">
+                {{ 'Skip'|t('lens') }} <kbd>S</kbd>
+            </button>
+
+            <button type="submit" class="btn"
+                    formaction="{{ actionUrl('lens/review/reject') }}">
+                {{ 'Reject'|t('lens') }} <kbd>R</kbd>
+            </button>
+
+            {% if nextId %}
+                <a href="{{ cpUrl('lens/review/' ~ nextId) }}" class="btn">
+                    {{ 'Next'|t('lens') }} &rarr;
+                </a>
+            {% else %}
+                <button type="button" class="btn" disabled>{{ 'Next'|t('lens') }} &rarr;</button>
+            {% endif %}
+        </div>
+    </form>
+{% endblock %}

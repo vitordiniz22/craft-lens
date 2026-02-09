@@ -192,16 +192,6 @@ class ReviewService extends Component
     }
 
     /**
-     * Accept the AI value for a specific field, clearing the user edit.
-     *
-     * Copies the *Ai value back to the main column and clears *EditedBy/*EditedAt.
-     */
-    public function acceptAiValue(int $analysisId, string $fieldName, ?int $userId = null): void
-    {
-        Plugin::getInstance()->analysisEdit->revertField($analysisId, $fieldName);
-    }
-
-    /**
      * Get pending reviews.
      *
      * @return AssetAnalysisRecord[]

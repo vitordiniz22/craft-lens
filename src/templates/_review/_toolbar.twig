@@ -1,0 +1,51 @@
+{#
+ # Shared Review Toolbar
+ # Provides tab navigation and keyboard hints
+ #
+ # Expected variables:
+ #   currentMode  - string, 'browse', 'focus', or 'bulk'
+ #   totalCount   - int, number of pending reviews
+ #   currentIndex - int|null, current position in queue (focus mode only)
+ #}
+
+{% set currentMode = currentMode ?? 'browse' %}
+{% set totalCount = totalCount ?? 0 %}
+
+<div class="lens-review-toolbar">
+    <div class="lens-review-toolbar-left">
+        <span class="lens-review-counter">
+            {{ '{count} pending'|t('lens', {count: totalCount}) }}
+            {% if currentMode == 'focus' and currentIndex is defined %}
+                &bull; {{ 'Reviewing {current} of {total}'|t('lens', {
+                    current: currentIndex,
+                    total: totalCount
+                }) }}
+            {% endif %}
+        </span>
+        <div class="lens-review-mode-toggle btngroup">
+            <a href="{{ cpUrl('lens/review') }}"
+               class="btn small {{ currentMode == 'browse' ? 'active' : '' }}">
+                {{ 'Browse'|t('lens') }}
+            </a>
+            <a href="{{ cpUrl('lens/review/focus') }}"
+               class="btn small {{ currentMode == 'focus' ? 'active' : '' }}">
+                {{ 'Focus View'|t('lens') }}
+            </a>
+            <a href="{{ cpUrl('lens/review/bulk') }}"
+               class="btn small {{ currentMode == 'bulk' ? 'active' : '' }}">
+                {{ 'Bulk Actions'|t('lens') }}
+            </a>
+        </div>
+    </div>
+
+    {% if currentMode == 'focus' %}
+        <div class="lens-review-toolbar-right">
+            <div class="lens-kbd-hints">
+                <span><kbd>A</kbd> {{ 'Approve'|t('lens') }}</span>
+                <span><kbd>S</kbd> {{ 'Skip'|t('lens') }}</span>
+                <span><kbd>R</kbd> {{ 'Reject'|t('lens') }}</span>
+                <span><kbd>&larr;</kbd><kbd>&rarr;</kbd> {{ 'Navigate'|t('lens') }}</span>
+            </div>
+        </div>
+    {% endif %}
+</div>

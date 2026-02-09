@@ -14,47 +14,76 @@
  #   static       - bool, disable editing (default: false)
  #   analysisId   - int, the analysis record ID
  #   isProcessing - bool, disable editing during processing (default: false)
+ #   mode         - string, 'asset-edit' or 'review' (default: 'asset-edit')
  #}
 
 {% set isEdited = editedBy is not null %}
 {% set inputType = inputType ?? 'text' %}
 {% set featured = featured ?? false %}
 {% set isProcessing = isProcessing ?? false %}
+{% set mode = mode ?? 'asset-edit' %}
+{% set isReviewMode = mode == 'review' %}
 
 <div class="lens-editable-field{% if featured %} lens-panel-featured{% endif %}"
      data-field="{{ fieldName }}"
      data-analysis-id="{{ analysisId }}">
 
     <div class="lens-field-header">
-        {% if isEdited %}
+        {% if isEdited and not isReviewMode %}
             <span class="lens-lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
         {% endif %}
         {% if label is defined %}
             <span class="lens-field-label">{{ label }}</span>
         {% endif %}
-        {% if not isEdited and confidence %}
+        {% if not isEdited and confidence and not isReviewMode %}
             <span class="badge">{{ (confidence * 100)|round }}%</span>
         {% endif %}
-        {% if not static and value and not isProcessing %}
+        {% if not static and value and not isProcessing and not isReviewMode %}
             <button type="button" class="lens-edit-trigger" title="{{ 'Edit'|t('lens') }}">&#9998;</button>
         {% endif %}
     </div>
 
     {# Display mode #}
     <div class="lens-field-display">
-        {% if value %}
-            {% if inputType == 'text' and featured %}
-                <p class="lens-panel-title">{{ value }}</p>
+        {% if isReviewMode %}
+            {# Review mode: always editable, no toggle needed #}
+            {% if inputType == 'textarea' %}
+                <textarea class="text fullwidth lens-review-editable"
+                          data-field="{{ fieldName }}" rows="2">{{ value }}</textarea>
             {% else %}
-                <p>{{ value }}</p>
+                <input type="text" class="text fullwidth lens-review-editable"
+                       data-field="{{ fieldName }}" value="{{ value }}">
+            {% endif %}
+
+            {# AI suggestion always visible inline #}
+            {% if aiValue and aiValue != value %}
+                <div class="lens-ai-suggestion-inline">
+                    {{ 'AI: "{value}"'|t('lens', {value: aiValue|truncate(60)}) }}
+                </div>
+            {% endif %}
+
+            {# Confidence badge for low confidence #}
+            {% if confidence and confidence < 0.8 %}
+                <span class="lens-confidence-badge lens-confidence-{{ (confidence * 100)|round >= 50 ? 'medium' : 'low' }}">
+                    {{ (confidence * 100)|round }}%
+                </span>
             {% endif %}
         {% else %}
-            <p class="light">{{ 'Not available'|t('lens') }}</p>
+            {# Asset edit mode: display text #}
+            {% if value %}
+                {% if inputType == 'text' and featured %}
+                    <p class="lens-panel-title">{{ value }}</p>
+                {% else %}
+                    <p>{{ value }}</p>
+                {% endif %}
+            {% else %}
+                <p class="light">{{ 'Not available'|t('lens') }}</p>
+            {% endif %}
         {% endif %}
     </div>
 
-    {# Edit mode (hidden by default) #}
-    {% if not static and value and not isProcessing %}
+    {# Edit mode (hidden by default) - only for asset-edit mode #}
+    {% if not isReviewMode and not static and value and not isProcessing %}
         <div class="lens-field-edit" hidden>
             {% if inputType == 'textarea' %}
                 <textarea class="text fullwidth" rows="3">{{ value }}</textarea>
@@ -68,8 +97,8 @@
         </div>
     {% endif %}
 
-    {# Provenance meta #}
-    {% if isEdited %}
+    {# Provenance meta - only for asset-edit mode #}
+    {% if not isReviewMode and isEdited %}
         <div class="lens-edit-meta">
             {% set editor = craft.users.id(editedBy).one() %}
             {{ 'Edited by {user} on {date}'|t('lens', {

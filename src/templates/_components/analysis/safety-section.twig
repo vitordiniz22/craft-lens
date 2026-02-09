@@ -2,15 +2,17 @@
  # Content Safety Section
  # NSFW, watermark, brands, people detection with dismissable flags.
  #
- # Expected variables: analysis, static, isProcessing
+ # Expected variables: analysis, static, isProcessing, mode
  #}
 {% set isProcessing = isProcessing ?? false %}
+{% set mode = mode ?? 'asset-edit' %}
 
 {# People Detection - Editable inline component #}
 {% include 'lens/_components/analysis/people-detection-field' with {
     analysis: analysis,
     static: static,
-    isProcessing: isProcessing
+    isProcessing: isProcessing,
+    mode: mode
 } only %}
 
 {# NSFW Detection #}

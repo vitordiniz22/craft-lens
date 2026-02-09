@@ -452,12 +452,13 @@ class Plugin extends BasePlugin
                 $event->rules['lens'] = 'lens/dashboard/index';
                 $event->rules['lens/dashboard'] = 'lens/dashboard/index';
                 $event->rules['lens/review'] = 'lens/review/index';
+                $event->rules['lens/review/focus'] = 'lens/review/focus';
+                $event->rules['lens/review/bulk'] = 'lens/review/bulk';
+                $event->rules['lens/review/<analysisId:\d+>'] = 'lens/review/view';
                 $event->rules['lens/review/approve'] = 'lens/review/approve';
                 $event->rules['lens/review/reject'] = 'lens/review/reject';
                 $event->rules['lens/review/bulk-approve'] = 'lens/review/bulk-approve';
                 $event->rules['lens/review/bulk-reject'] = 'lens/review/bulk-reject';
-                $event->rules['lens/review/get-analysis'] = 'lens/review/get-analysis';
-                $event->rules['lens/review/get-queue'] = 'lens/review/get-queue';
                 $event->rules['lens/analysis/reprocess'] = 'lens/analysis/reprocess';
                 $event->rules['lens/analysis/update-field'] = 'lens/analysis/update-field';
                 $event->rules['lens/analysis/revert-field'] = 'lens/analysis/revert-field';
