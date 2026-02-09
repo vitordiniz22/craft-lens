@@ -17,7 +17,7 @@
         results: [],
 
         init: function() {
-            var form = document.getElementById('lens-search-form');
+            var form = document.querySelector('[data-lens-target="search-form"]');
             if (!form) return;
 
             this.form = form;
@@ -35,8 +35,8 @@
         // =====================================================================
 
         initFilterToggle: function() {
-            var toggleBtn = document.getElementById('lens-toggle-filters');
-            var filtersPanel = document.getElementById('lens-filters-panel');
+            var toggleBtn = document.querySelector('[data-lens-action="toggle-filters"]');
+            var filtersPanel = document.querySelector('[data-lens-target="filters-panel"]');
 
             if (toggleBtn && filtersPanel) {
                 toggleBtn.addEventListener('click', function() {
@@ -82,7 +82,7 @@
         },
 
         initSearchEnterKey: function(form) {
-            var searchInput = document.getElementById('lens-search-query');
+            var searchInput = document.querySelector('[data-lens-control="search-query"]');
             if (searchInput) {
                 searchInput.addEventListener('keydown', function(e) {
                     if (e.key === 'Enter') {
@@ -111,7 +111,7 @@
                             this.classList.add('active');
                             this.setAttribute('aria-pressed', 'true');
                             if (hiddenInput) {
-                                hiddenInput.value = this.dataset.value;
+                                hiddenInput.value = this.dataset.lensValue;
                             }
                         } else {
                             if (hiddenInput) {
@@ -124,8 +124,8 @@
         },
 
         initColorToleranceSlider: function() {
-            var toleranceSlider = document.getElementById('lens-color-tolerance');
-            var toleranceValue = document.getElementById('lens-tolerance-value');
+            var toleranceSlider = document.querySelector('[data-lens-control="color-tolerance"]');
+            var toleranceValue = document.querySelector('[data-lens-target="tolerance-value"]');
             if (toleranceSlider && toleranceValue) {
                 toleranceSlider.addEventListener('input', function() {
                     toleranceValue.textContent = this.value;
@@ -134,8 +134,8 @@
         },
 
         initDatePickers: function() {
-            var dateFromInput = document.getElementById('lens-processed-from');
-            var dateToInput = document.getElementById('lens-processed-to');
+            var dateFromInput = document.querySelector('[data-lens-control="date-from"]');
+            var dateToInput = document.querySelector('[data-lens-control="date-to"]');
 
             if (typeof Craft !== 'undefined' && Craft.datepickerOptions) {
                 if (dateFromInput) {
@@ -152,7 +152,7 @@
         // =====================================================================
 
         initKeyboardNavigation: function() {
-            this.results = Array.from(document.querySelectorAll('.lens-result-card'));
+            this.results = Array.from(document.querySelectorAll('[data-lens-target="result-card"]'));
 
             this.results.forEach(function(card, i) {
                 card.setAttribute('tabindex', '0');
@@ -169,14 +169,14 @@
             // "/" - Focus search (when not in input)
             if (e.key === '/' && !isInput) {
                 e.preventDefault();
-                var searchInput = document.getElementById('lens-search-query');
+                var searchInput = document.querySelector('[data-lens-control="search-query"]');
                 if (searchInput) searchInput.focus();
                 return;
             }
 
             // Escape - Clear/blur
             if (e.key === 'Escape') {
-                var searchInput = document.getElementById('lens-search-query');
+                var searchInput = document.querySelector('[data-lens-control="search-query"]');
                 if (document.activeElement === searchInput) {
                     searchInput.value = '';
                     searchInput.blur();
@@ -219,10 +219,10 @@
 
     var LensDuplicates = {
         init: function() {
-            document.querySelectorAll('[data-lens-resolve]').forEach(function(btn) {
+            document.querySelectorAll('[data-lens-action="resolve-duplicate"]').forEach(function(btn) {
                 btn.addEventListener('click', function() {
-                    var groupId = this.dataset.lensResolve;
-                    var resolution = this.dataset.resolution;
+                    var groupId = this.dataset.lensGroupId;
+                    var resolution = this.dataset.lensResolution;
                     var card = this.closest('.lens-duplicate-card');
 
                     btn.disabled = true;

@@ -293,7 +293,7 @@
 }
 
 .lens-revert-trigger:hover {
-  color: var(--link-hover-color));
+  color: var(--link-hover-color);
 }
 
 /* Apply button row */
@@ -611,7 +611,9 @@
   border: 1px solid var(--hairline-color);
   border-radius: var(--small-border-radius);
   cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .lens-people-option:hover {

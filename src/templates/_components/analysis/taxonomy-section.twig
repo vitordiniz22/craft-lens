@@ -7,22 +7,22 @@
 {% set isProcessing = isProcessing ?? false %}
 
 {# Tags #}
-<div class="lens-tag-editor" data-analysis-id="{{ analysis.id }}">
+<div class="lens-tag-editor" data-lens-target="tag-editor" data-lens-analysis-id="{{ analysis.id }}">
     <div class="flex items-center gap-s mb-xs">
         <span class="lens-field-label">{{ 'Tags'|t('lens') }} ({{ analysisTags|length }})</span>
     </div>
 
     {% if analysisTags|length %}
-        <div class="lens-tag-chips">
+        <div class="lens-tag-chips" data-lens-target="tag-chips">
             {% for tag in analysisTags %}
-                <div class="chip{% if tag.isAi %} chip--ai{% endif %}" data-tag="{{ tag.tag }}" data-is-ai="{{ tag.isAi ? '1' : '0' }}" data-confidence="{{ tag.confidence }}">
+                <div class="chip{% if tag.isAi %} chip--ai{% endif %}" data-lens-tag="{{ tag.tag }}" data-lens-is-ai="{{ tag.isAi ? '1' : '0' }}" data-lens-confidence="{{ tag.confidence }}">
                     <div class="chip-content">
                         <a href="{{ cpUrl('lens/search', {tags: tag.tag}) }}" class="chip-label">{{ tag.tag }}</a>
                         {% if tag.confidence %}
                             <span class="badge">{{ (tag.confidence * 100)|round }}%</span>
                         {% endif %}
                         {% if not static and not isProcessing %}
-                            <button type="button" class="lens-tag-remove" title="{{ 'Remove'|t('lens') }}">&times;</button>
+                            <button type="button" class="lens-tag-remove" data-lens-action="tag-remove" title="{{ 'Remove'|t('lens') }}">&times;</button>
                         {% endif %}
                     </div>
                 </div>
@@ -34,30 +34,30 @@
 
     {% if not static and not isProcessing %}
         <div class="lens-tag-input-row">
-            <input type="text" class="text small lens-tag-input" placeholder="{{ 'Add tag...'|t('lens') }}">
-            <button type="button" class="btn small lens-tag-add">{{ 'Add'|t('lens') }}</button>
-            <div class="lens-tag-suggestions"></div>
+            <input type="text" class="text small lens-tag-input" data-lens-control="tag-input" placeholder="{{ 'Add tag...'|t('lens') }}">
+            <button type="button" class="btn small lens-tag-add" data-lens-action="tag-add">{{ 'Add'|t('lens') }}</button>
+            <div class="lens-tag-suggestions" data-lens-target="tag-suggestions"></div>
         </div>
     {% endif %}
 </div>
 
 {# Colors #}
-<div class="lens-color-editor mt-m" data-analysis-id="{{ analysis.id }}">
+<div class="lens-color-editor mt-m" data-lens-target="color-editor" data-lens-analysis-id="{{ analysis.id }}">
     <div class="flex items-center gap-s mb-xs">
         <span class="lens-field-label">{{ 'Colors'|t('lens') }}</span>
     </div>
 
     {% if analysisColors|length %}
-        <div class="lens-color-swatches">
+        <div class="lens-color-swatches" data-lens-target="color-swatches">
             {% for color in analysisColors %}
-                <div class="lens-color-item{% if color.isAi %} lens-color-item--ai{% endif %}" data-hex="{{ color.hex }}" data-is-ai="{{ color.isAi ? '1' : '0' }}" data-percentage="{{ color.percentage }}">
+                <div class="lens-color-item{% if color.isAi %} lens-color-item--ai{% endif %}" data-lens-target="color-item" data-lens-hex="{{ color.hex }}" data-lens-is-ai="{{ color.isAi ? '1' : '0' }}" data-lens-percentage="{{ color.percentage }}">
                     <span class="lens-swatch lens-swatch--sm" style="background-color: {{ color.hex }}"></span>
                     <a href="{{ cpUrl('lens/search', {colorFamily: color.hex}) }}">{{ color.hex }}</a>
                     {% if color.percentage %}
                         <span class="badge">{{ (color.percentage * 100)|round }}%</span>
                     {% endif %}
                     {% if not static and not isProcessing %}
-                        <button type="button" class="lens-color-remove" title="{{ 'Remove'|t('lens') }}">&times;</button>
+                        <button type="button" class="lens-color-remove" data-lens-action="color-remove" title="{{ 'Remove'|t('lens') }}">&times;</button>
                     {% endif %}
                 </div>
             {% endfor %}
@@ -68,8 +68,8 @@
 
     {% if not static and not isProcessing %}
         <div class="lens-color-add-row">
-            <input type="color" class="lens-color-picker" value="#000000" title="{{ 'Pick color'|t('lens') }}">
-            <button type="button" class="btn small lens-color-add">{{ 'Add'|t('lens') }}</button>
+            <input type="color" class="lens-color-picker" data-lens-control="color-picker" value="#000000" title="{{ 'Pick color'|t('lens') }}">
+            <button type="button" class="btn small lens-color-add" data-lens-action="color-add">{{ 'Add'|t('lens') }}</button>
         </div>
     {% endif %}
 </div>
@@ -77,9 +77,9 @@
 {# Save changes button (tags + colors) #}
 {% if not static and not isProcessing %}
     <div class="lens-taxonomy-save">
-        <button type="button" class="btn small submit lens-taxonomy-save-btn" data-analysis-id="{{ analysis.id }}" disabled>
+        <button type="button" class="btn small submit lens-taxonomy-save-btn" data-lens-action="taxonomy-save" data-lens-analysis-id="{{ analysis.id }}" disabled>
             {{ 'Save Changes'|t('lens') }}
         </button>
-        <span class="lens-taxonomy-status smalltext light" style="margin-left: 8px"></span>
+        <span class="lens-taxonomy-status" data-lens-target="taxonomy-status" class="smalltext light" style="margin-left: 8px"></span>
     </div>
 {% endif %}

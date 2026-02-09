@@ -37,10 +37,10 @@
         initInlineEditing: function() {
             // Enter edit mode
             document.addEventListener('click', function(e) {
-                var trigger = e.target.closest('.lens-edit-trigger');
+                var trigger = e.target.closest('[data-lens-action="field-edit"]');
                 if (!trigger) return;
 
-                var field = trigger.closest('.lens-editable-field');
+                var field = trigger.closest('[data-lens-target="editable-field"]');
                 if (!field) return;
 
                 LensAnalysisPanel.enterEditMode(field);
@@ -48,10 +48,10 @@
 
             // Save field
             document.addEventListener('click', function(e) {
-                var saveBtn = e.target.closest('.lens-field-save');
+                var saveBtn = e.target.closest('[data-lens-action="field-save"]');
                 if (!saveBtn) return;
 
-                var field = saveBtn.closest('.lens-editable-field');
+                var field = saveBtn.closest('[data-lens-target="editable-field"]');
                 if (!field) return;
 
                 LensAnalysisPanel.saveField(field);
@@ -59,10 +59,10 @@
 
             // Cancel edit
             document.addEventListener('click', function(e) {
-                var cancelBtn = e.target.closest('.lens-field-cancel');
+                var cancelBtn = e.target.closest('[data-lens-action="field-cancel"]');
                 if (!cancelBtn) return;
 
-                var field = cancelBtn.closest('.lens-editable-field');
+                var field = cancelBtn.closest('[data-lens-target="editable-field"]');
                 if (!field) return;
 
                 LensAnalysisPanel.cancelEdit(field);
@@ -70,10 +70,10 @@
 
             // Revert to AI
             document.addEventListener('click', function(e) {
-                var revertBtn = e.target.closest('.lens-revert-trigger');
+                var revertBtn = e.target.closest('[data-lens-action="field-revert"]');
                 if (!revertBtn) return;
 
-                var field = revertBtn.closest('.lens-editable-field');
+                var field = revertBtn.closest('[data-lens-target="editable-field"]');
                 if (!field) return;
 
                 LensAnalysisPanel.revertField(field);
@@ -81,10 +81,10 @@
 
             // People Detection - Enter edit mode
             document.addEventListener('click', function(e) {
-                var trigger = e.target.closest('[data-action="people-edit"]');
+                var trigger = e.target.closest('[data-lens-action="people-edit"]');
                 if (!trigger) return;
 
-                var field = trigger.closest('.lens-people-detection');
+                var field = trigger.closest('[data-lens-target="people-detection"]');
                 if (!field) return;
 
                 LensAnalysisPanel.enterPeopleEditMode(field);
@@ -92,10 +92,10 @@
 
             // People Detection - Save
             document.addEventListener('click', function(e) {
-                var saveBtn = e.target.closest('[data-action="people-save"]');
+                var saveBtn = e.target.closest('[data-lens-action="people-save"]');
                 if (!saveBtn) return;
 
-                var field = saveBtn.closest('.lens-people-detection');
+                var field = saveBtn.closest('[data-lens-target="people-detection"]');
                 if (!field) return;
 
                 LensAnalysisPanel.savePeopleDetection(field);
@@ -103,10 +103,10 @@
 
             // People Detection - Cancel
             document.addEventListener('click', function(e) {
-                var cancelBtn = e.target.closest('[data-action="people-cancel"]');
+                var cancelBtn = e.target.closest('[data-lens-action="people-cancel"]');
                 if (!cancelBtn) return;
 
-                var field = cancelBtn.closest('.lens-people-detection');
+                var field = cancelBtn.closest('[data-lens-target="people-detection"]');
                 if (!field) return;
 
                 LensAnalysisPanel.cancelPeopleEdit(field);
@@ -114,16 +114,16 @@
 
             // People Detection - Revert
             document.addEventListener('click', function(e) {
-                var revertBtn = e.target.closest('[data-action="people-revert"]');
+                var revertBtn = e.target.closest('[data-lens-action="people-revert"]');
                 if (!revertBtn) return;
 
-                LensAnalysisPanel.revertPeopleDetection(revertBtn.dataset.analysisId);
+                LensAnalysisPanel.revertPeopleDetection(revertBtn.dataset.lensAnalysisId);
             });
         },
 
         enterEditMode: function(fieldEl) {
-            var display = fieldEl.querySelector('.lens-field-display');
-            var edit = fieldEl.querySelector('.lens-field-edit');
+            var display = fieldEl.querySelector('[data-lens-target="field-display"]');
+            var edit = fieldEl.querySelector('[data-lens-target="field-edit"]');
             if (!display || !edit) return;
 
             display.style.display = 'none';
@@ -137,12 +137,12 @@
         },
 
         cancelEdit: function(fieldEl) {
-            var display = fieldEl.querySelector('.lens-field-display');
-            var edit = fieldEl.querySelector('.lens-field-edit');
+            var display = fieldEl.querySelector('[data-lens-target="field-display"]');
+            var edit = fieldEl.querySelector('[data-lens-target="field-edit"]');
             if (!display || !edit) return;
 
             // Restore original value from display
-            var displayText = fieldEl.querySelector('.lens-field-display p');
+            var displayText = fieldEl.querySelector('[data-lens-target="field-display"] p');
             var input = edit.querySelector('input, textarea');
             if (displayText && input) {
                 input.value = displayText.textContent;
@@ -153,13 +153,13 @@
         },
 
         saveField: function(fieldEl) {
-            var analysisId = fieldEl.dataset.analysisId;
-            var fieldName = fieldEl.dataset.field;
-            var input = fieldEl.querySelector('.lens-field-edit input, .lens-field-edit textarea');
+            var analysisId = fieldEl.dataset.lensAnalysisId;
+            var fieldName = fieldEl.dataset.lensField;
+            var input = fieldEl.querySelector('[data-lens-target="field-edit"] input, [data-lens-target="field-edit"] textarea');
             if (!input) return;
 
             var value = input.value;
-            var saveBtn = fieldEl.querySelector('.lens-field-save');
+            var saveBtn = fieldEl.querySelector('[data-lens-action="field-save"]');
             if (saveBtn) {
                 saveBtn.disabled = true;
                 saveBtn.textContent = Craft.t('lens', 'Saving...');
@@ -170,7 +170,7 @@
             }).then(function(response) {
                 if (response.data.success) {
                     // Update display text
-                    var displayP = fieldEl.querySelector('.lens-field-display p');
+                    var displayP = fieldEl.querySelector('[data-lens-target="field-display"] p');
                     if (displayP) {
                         displayP.textContent = response.data.value;
                     }
@@ -193,8 +193,8 @@
                     LensAnalysisPanel.updateEditMeta(fieldEl, response.data);
 
                     // Exit edit mode
-                    var display = fieldEl.querySelector('.lens-field-display');
-                    var edit = fieldEl.querySelector('.lens-field-edit');
+                    var display = fieldEl.querySelector('[data-lens-target="field-display"]');
+                    var edit = fieldEl.querySelector('[data-lens-target="field-edit"]');
                     if (display) display.style.display = '';
                     if (edit) edit.hidden = true;
 
@@ -211,21 +211,21 @@
         },
 
         revertField: function(fieldEl) {
-            var analysisId = fieldEl.dataset.analysisId;
-            var fieldName = fieldEl.dataset.field;
+            var analysisId = fieldEl.dataset.lensAnalysisId;
+            var fieldName = fieldEl.dataset.lensField;
 
             Craft.sendActionRequest('POST', 'lens/analysis/revert-field', {
                 data: { analysisId: analysisId, field: fieldName }
             }).then(function(response) {
                 if (response.data.success) {
                     // Update display text
-                    var displayP = fieldEl.querySelector('.lens-field-display p');
+                    var displayP = fieldEl.querySelector('[data-lens-target="field-display"] p');
                     if (displayP) {
                         displayP.textContent = response.data.value;
                     }
 
                     // Update edit input too
-                    var input = fieldEl.querySelector('.lens-field-edit input, .lens-field-edit textarea');
+                    var input = fieldEl.querySelector('[data-lens-target="field-edit"] input, [data-lens-target="field-edit"] textarea');
                     if (input) {
                         input.value = response.data.value;
                     }
@@ -280,8 +280,8 @@
                 var revertBtn = document.createElement('button');
                 revertBtn.type = 'button';
                 revertBtn.className = 'lens-revert-trigger';
-                revertBtn.dataset.field = fieldEl.dataset.field;
-                revertBtn.dataset.analysisId = fieldEl.dataset.analysisId;
+                revertBtn.dataset.field = fieldEl.dataset.lensField;
+                revertBtn.dataset.lensAnalysisId = fieldEl.dataset.lensAnalysisId;
                 revertBtn.textContent = Craft.t('lens', 'Revert to AI');
                 aiDiv.appendChild(revertBtn);
 
@@ -294,16 +294,16 @@
         // ======================================================================
 
         enterPeopleEditMode: function(fieldEl) {
-            var display = fieldEl.querySelector('.lens-field-display');
-            var edit = fieldEl.querySelector('.lens-people-edit-panel');
+            var display = fieldEl.querySelector('[data-lens-target="field-display"]');
+            var edit = fieldEl.querySelector('[data-lens-target="people-edit-panel"]');
             if (!display || !edit) return;
 
             // Get current values
-            var containsPeople = fieldEl.dataset.containsPeople === '1';
-            var faceCount = parseInt(fieldEl.dataset.faceCount, 10) || 0;
+            var containsPeople = fieldEl.dataset.lensContainsPeople === '1';
+            var faceCount = parseInt(fieldEl.dataset.lensFaceCount, 10) || 0;
 
             // Select appropriate radio button based on DAM tiers
-            var radios = edit.querySelectorAll('[data-control="people-mode"]');
+            var radios = edit.querySelectorAll('[data-lens-control="people-mode"]');
             var selectedValue;
 
             if (!containsPeople) {
@@ -329,8 +329,8 @@
         },
 
         cancelPeopleEdit: function(fieldEl) {
-            var display = fieldEl.querySelector('.lens-field-display');
-            var edit = fieldEl.querySelector('.lens-people-edit-panel');
+            var display = fieldEl.querySelector('[data-lens-target="field-display"]');
+            var edit = fieldEl.querySelector('[data-lens-target="people-edit-panel"]');
             if (!display || !edit) return;
 
             display.style.display = '';
@@ -338,12 +338,12 @@
         },
 
         savePeopleDetection: function(fieldEl) {
-            var analysisId = fieldEl.dataset.analysisId;
-            var edit = fieldEl.querySelector('.lens-people-edit-panel');
+            var analysisId = fieldEl.dataset.lensAnalysisId;
+            var edit = fieldEl.querySelector('[data-lens-target="people-edit-panel"]');
             if (!edit) return;
 
             // Get selected mode
-            var selectedRadio = edit.querySelector('[data-control="people-mode"]:checked');
+            var selectedRadio = edit.querySelector('[data-lens-control="people-mode"]:checked');
             if (!selectedRadio) {
                 Craft.cp.displayError(Craft.t('lens', 'Please select an option'));
                 return;
@@ -383,7 +383,7 @@
                     return;
             }
 
-            var saveBtn = edit.querySelector('[data-action="people-save"]');
+            var saveBtn = edit.querySelector('[data-lens-action="people-save"]');
             if (saveBtn) {
                 saveBtn.disabled = true;
                 saveBtn.textContent = Craft.t('lens', 'Saving...');
@@ -401,11 +401,11 @@
 
             Promise.all(promises).then(function(responses) {
                 // Update data attributes
-                fieldEl.dataset.containsPeople = containsPeople ? '1' : '0';
-                fieldEl.dataset.faceCount = faceCount;
+                fieldEl.dataset.lensContainsPeople = containsPeople ? '1' : '0';
+                fieldEl.dataset.lensFaceCount = faceCount;
 
                 // Update display structure based on new state
-                var display = fieldEl.querySelector('.lens-field-display');
+                var display = fieldEl.querySelector('[data-lens-target="field-display"]');
                 if (display) {
                     var newHtml = '';
 
@@ -475,8 +475,8 @@
                 }
 
                 // Check if AI suggestion should be shown
-                var containsPeopleAi = fieldEl.dataset.containsPeopleAi === '1';
-                var faceCountAi = parseInt(fieldEl.dataset.faceCountAi) || 0;
+                var containsPeopleAi = fieldEl.dataset.lensContainsPeopleAi === '1';
+                var faceCountAi = parseInt(fieldEl.dataset.lensFaceCountAi) || 0;
                 var aiDiffers = (containsPeopleAi !== containsPeople) || (faceCountAi !== faceCount);
 
                 // Remove existing AI suggestion
@@ -492,7 +492,7 @@
                     var suggestionText = Craft.t('lens', 'AI suggested: "{text}"', {text: aiText});
 
                     suggestion.innerHTML = suggestionText +
-                        ' <button type="button" data-action="people-revert" data-analysis-id="' + analysisId + '">' +
+                        ' <button type="button" data-lens-action="people-revert" data-lens-analysis-id="' + analysisId + '">' +
                         Craft.t('lens', 'Revert to AI') +
                         '</button>';
 
@@ -500,8 +500,8 @@
                 }
 
                 // Exit edit mode
-                var display = fieldEl.querySelector('.lens-field-display');
-                var editPanel = fieldEl.querySelector('.lens-people-edit-panel');
+                var display = fieldEl.querySelector('[data-lens-target="field-display"]');
+                var editPanel = fieldEl.querySelector('[data-lens-target="people-edit-panel"]');
                 if (display) display.style.display = '';
                 if (editPanel) editPanel.hidden = true;
 
@@ -550,10 +550,10 @@
         initTagEditor: function() {
             // Add tag via button or Enter key
             document.addEventListener('click', function(e) {
-                var addBtn = e.target.closest('.lens-tag-add');
+                var addBtn = e.target.closest('[data-lens-action="tag-add"]');
                 if (!addBtn) return;
 
-                var editor = addBtn.closest('.lens-tag-editor');
+                var editor = addBtn.closest('[data-lens-target="tag-editor"]');
                 if (!editor) return;
 
                 LensAnalysisPanel.addTagFromInput(editor);
@@ -561,14 +561,14 @@
 
             document.addEventListener('keydown', function(e) {
                 if (e.key !== 'Enter') return;
-                var input = e.target.closest('.lens-tag-input');
+                var input = e.target.closest('[data-lens-control="tag-input"]');
                 if (!input) return;
 
                 e.preventDefault();
 
                 // Check if a suggestion is active
-                var editor = input.closest('.lens-tag-editor');
-                var activeSuggestion = editor ? editor.querySelector('.lens-tag-suggestion.is-active') : null;
+                var editor = input.closest('[data-lens-target="tag-editor"]');
+                var activeSuggestion = editor ? editor.querySelector('[data-lens-target="tag-suggestion-item"].is-active') : null;
                 if (activeSuggestion) {
                     LensAnalysisPanel.selectTagSuggestion(editor, activeSuggestion);
                 } else {
@@ -578,7 +578,7 @@
 
             // Remove tag
             document.addEventListener('click', function(e) {
-                var removeBtn = e.target.closest('.lens-tag-remove');
+                var removeBtn = e.target.closest('[data-lens-action="tag-remove"]');
                 if (!removeBtn) return;
 
                 var chip = removeBtn.closest('.chip');
@@ -590,11 +590,11 @@
 
             // Tag autocomplete
             document.addEventListener('input', function(e) {
-                var input = e.target.closest('.lens-tag-input');
+                var input = e.target.closest('[data-lens-control="tag-input"]');
                 if (!input) return;
 
                 var query = input.value.trim();
-                var editor = input.closest('.lens-tag-editor');
+                var editor = input.closest('[data-lens-target="tag-editor"]');
                 if (!editor) return;
 
                 if (query.length < 2) {
@@ -607,10 +607,10 @@
 
             // Click on suggestion
             document.addEventListener('click', function(e) {
-                var suggestion = e.target.closest('.lens-tag-suggestion');
+                var suggestion = e.target.closest('[data-lens-target="tag-suggestion-item"]');
                 if (!suggestion) return;
 
-                var editor = suggestion.closest('.lens-tag-editor');
+                var editor = suggestion.closest('[data-lens-target="tag-editor"]');
                 if (!editor) return;
 
                 LensAnalysisPanel.selectTagSuggestion(editor, suggestion);
@@ -619,16 +619,16 @@
             // Navigate suggestions with arrow keys
             document.addEventListener('keydown', function(e) {
                 if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
-                var input = e.target.closest('.lens-tag-input');
+                var input = e.target.closest('[data-lens-control="tag-input"]');
                 if (!input) return;
 
-                var editor = input.closest('.lens-tag-editor');
-                var suggestionsEl = editor ? editor.querySelector('.lens-tag-suggestions') : null;
+                var editor = input.closest('[data-lens-target="tag-editor"]');
+                var suggestionsEl = editor ? editor.querySelector('[data-lens-target="tag-suggestions"]') : null;
                 if (!suggestionsEl || !suggestionsEl.classList.contains('is-visible')) return;
 
                 e.preventDefault();
-                var items = suggestionsEl.querySelectorAll('.lens-tag-suggestion');
-                var active = suggestionsEl.querySelector('.lens-tag-suggestion.is-active');
+                var items = suggestionsEl.querySelectorAll('[data-lens-target="tag-suggestion-item"]');
+                var active = suggestionsEl.querySelector('[data-lens-target="tag-suggestion-item"].is-active');
                 var idx = active ? Array.prototype.indexOf.call(items, active) : -1;
 
                 if (active) active.classList.remove('is-active');
@@ -644,18 +644,18 @@
 
             // Hide suggestions on blur (with delay for click)
             document.addEventListener('focusout', function(e) {
-                var input = e.target.closest('.lens-tag-input');
+                var input = e.target.closest('[data-lens-control="tag-input"]');
                 if (!input) return;
 
                 setTimeout(function() {
-                    var editor = input.closest('.lens-tag-editor');
+                    var editor = input.closest('[data-lens-target="tag-editor"]');
                     if (editor) LensAnalysisPanel.hideTagSuggestions(editor);
                 }, 200);
             });
         },
 
         addTagFromInput: function(editor) {
-            var input = editor.querySelector('.lens-tag-input');
+            var input = editor.querySelector('[data-lens-control="tag-input"]');
             if (!input) return;
 
             var tagName = input.value.trim();
@@ -664,7 +664,7 @@
             // Check for duplicates
             var existing = editor.querySelectorAll('.chip');
             for (var i = 0; i < existing.length; i++) {
-                if (existing[i].dataset.tag.toLowerCase() === tagName.toLowerCase()) {
+                if (existing[i].dataset.lensTag.toLowerCase() === tagName.toLowerCase()) {
                     input.value = '';
                     return;
                 }
@@ -677,7 +677,7 @@
         },
 
         addTagChip: function(editor, tagName, isAi) {
-            var chips = editor.querySelector('.lens-tag-chips');
+            var chips = editor.querySelector('[data-lens-target="tag-chips"]');
             if (!chips) {
                 // Create chips container if it doesn't exist (was showing "No tags")
                 var noTags = editor.querySelector('p.light');
@@ -693,9 +693,9 @@
 
             var chip = document.createElement('div');
             chip.className = 'chip' + (isAi ? ' chip--ai' : '');
-            chip.dataset.tag = tagName;
-            chip.dataset.isAi = isAi ? '1' : '0';
-            chip.dataset.confidence = isAi ? '' : '1';
+            chip.dataset.lensTag = tagName;
+            chip.dataset.lensIsAi = isAi ? '1' : '0';
+            chip.dataset.lensConfidence = isAi ? '' : '1';
             chip.innerHTML =
                 '<div class="chip-content">' +
                     '<span class="chip-label">' + Craft.escapeHtml(tagName) + '</span>' +
@@ -706,14 +706,14 @@
         },
 
         selectTagSuggestion: function(editor, suggestion) {
-            var tagName = suggestion.dataset.tag;
-            var input = editor.querySelector('.lens-tag-input');
+            var tagName = suggestion.dataset.lensTag;
+            var input = editor.querySelector('[data-lens-control="tag-input"]');
             if (input) input.value = '';
 
             // Check for duplicates
             var existing = editor.querySelectorAll('.chip');
             for (var i = 0; i < existing.length; i++) {
-                if (existing[i].dataset.tag.toLowerCase() === tagName.toLowerCase()) {
+                if (existing[i].dataset.lensTag.toLowerCase() === tagName.toLowerCase()) {
                     this.hideTagSuggestions(editor);
                     return;
                 }
@@ -738,7 +738,7 @@
         },
 
         showTagSuggestions: function(editor, tags) {
-            var suggestionsEl = editor.querySelector('.lens-tag-suggestions');
+            var suggestionsEl = editor.querySelector('[data-lens-target="tag-suggestions"]');
             if (!suggestionsEl) return;
 
             if (!tags.length) {
@@ -750,7 +750,8 @@
             for (var i = 0; i < tags.length; i++) {
                 var item = document.createElement('div');
                 item.className = 'lens-tag-suggestion';
-                item.dataset.tag = tags[i].tag;
+                item.dataset.lensTarget = 'tag-suggestion-item';
+                item.dataset.lensTag = tags[i].tag;
                 item.innerHTML =
                     '<span>' + Craft.escapeHtml(tags[i].tag) + '</span>' +
                     '<span class="lens-tag-suggestion-count">' + tags[i].count + '</span>';
@@ -760,7 +761,7 @@
         },
 
         hideTagSuggestions: function(editor) {
-            var suggestionsEl = editor.querySelector('.lens-tag-suggestions');
+            var suggestionsEl = editor.querySelector('[data-lens-target="tag-suggestions"]');
             if (suggestionsEl) suggestionsEl.classList.remove('is-visible');
         },
 
@@ -771,13 +772,13 @@
         initColorEditor: function() {
             // Add color
             document.addEventListener('click', function(e) {
-                var addBtn = e.target.closest('.lens-color-add');
+                var addBtn = e.target.closest('[data-lens-action="color-add"]');
                 if (!addBtn) return;
 
-                var editor = addBtn.closest('.lens-color-editor');
+                var editor = addBtn.closest('[data-lens-target="color-editor"]');
                 if (!editor) return;
 
-                var picker = editor.querySelector('.lens-color-picker');
+                var picker = editor.querySelector('[data-lens-control="color-picker"]');
                 if (!picker) return;
 
                 var hex = picker.value;
@@ -787,10 +788,10 @@
 
             // Remove color
             document.addEventListener('click', function(e) {
-                var removeBtn = e.target.closest('.lens-color-remove');
+                var removeBtn = e.target.closest('[data-lens-action="color-remove"]');
                 if (!removeBtn) return;
 
-                var item = removeBtn.closest('.lens-color-item');
+                var item = removeBtn.closest('[data-lens-target="color-item"]');
                 if (!item) return;
 
                 item.remove();
@@ -803,12 +804,12 @@
             if (!/^#[0-9A-Fa-f]{6}$/.test(hex)) return;
 
             // Check for duplicates
-            var existing = editor.querySelectorAll('.lens-color-item');
+            var existing = editor.querySelectorAll('[data-lens-target="color-item"]');
             for (var i = 0; i < existing.length; i++) {
-                if (existing[i].dataset.hex.toLowerCase() === hex.toLowerCase()) return;
+                if (existing[i].dataset.lensHex.toLowerCase() === hex.toLowerCase()) return;
             }
 
-            var swatches = editor.querySelector('.lens-color-swatches');
+            var swatches = editor.querySelector('[data-lens-target="color-swatches"]');
             if (!swatches) {
                 var noColors = editor.querySelector('p.light');
                 if (noColors) noColors.remove();
@@ -823,9 +824,9 @@
 
             var item = document.createElement('div');
             item.className = 'lens-color-item';
-            item.dataset.hex = hex;
-            item.dataset.isAi = '0';
-            item.dataset.percentage = '';
+            item.dataset.lensHex = hex;
+            item.dataset.lensIsAi = '0';
+            item.dataset.lensPercentage = '';
             item.innerHTML =
                 '<span class="lens-swatch lens-swatch--sm" style="background-color: ' + hex + '"></span>' +
                 '<span>' + hex + '</span>' +
@@ -842,20 +843,20 @@
             var section = el.closest('.lens-section');
             if (!section) return;
 
-            var saveBtn = section.querySelector('.lens-taxonomy-save-btn');
+            var saveBtn = section.querySelector('[data-lens-action="taxonomy-save"]');
             if (saveBtn) {
                 saveBtn.disabled = false;
-                var status = section.querySelector('.lens-taxonomy-status');
+                var status = section.querySelector('[data-lens-target="taxonomy-status"]');
                 if (status) status.textContent = Craft.t('lens', 'Unsaved changes');
             }
         },
 
         initTaxonomySave: function() {
             document.addEventListener('click', function(e) {
-                var saveBtn = e.target.closest('.lens-taxonomy-save-btn');
+                var saveBtn = e.target.closest('[data-lens-action="taxonomy-save"]');
                 if (!saveBtn || saveBtn.disabled) return;
 
-                var analysisId = saveBtn.dataset.analysisId;
+                var analysisId = saveBtn.dataset.lensAnalysisId;
                 var section = saveBtn.closest('.lens-section');
                 if (!section) return;
 
@@ -864,23 +865,23 @@
 
                 // Collect tags
                 var tags = [];
-                var tagChips = section.querySelectorAll('.lens-tag-chips .chip');
+                var tagChips = section.querySelectorAll('[data-lens-target="tag-chips"] .chip');
                 for (var i = 0; i < tagChips.length; i++) {
                     tags.push({
-                        tag: tagChips[i].dataset.tag,
-                        isAi: tagChips[i].dataset.isAi === '1',
-                        confidence: tagChips[i].dataset.confidence ? parseFloat(tagChips[i].dataset.confidence) : null
+                        tag: tagChips[i].dataset.lensTag,
+                        isAi: tagChips[i].dataset.lensIsAi === '1',
+                        confidence: tagChips[i].dataset.lensConfidence ? parseFloat(tagChips[i].dataset.lensConfidence) : null
                     });
                 }
 
                 // Collect colors
                 var colors = [];
-                var colorItems = section.querySelectorAll('.lens-color-item');
+                var colorItems = section.querySelectorAll('[data-lens-target="color-item"]');
                 for (var j = 0; j < colorItems.length; j++) {
                     colors.push({
-                        hex: colorItems[j].dataset.hex,
-                        isAi: colorItems[j].dataset.isAi === '1',
-                        percentage: colorItems[j].dataset.percentage ? parseFloat(colorItems[j].dataset.percentage) : null
+                        hex: colorItems[j].dataset.lensHex,
+                        isAi: colorItems[j].dataset.lensIsAi === '1',
+                        percentage: colorItems[j].dataset.lensPercentage ? parseFloat(colorItems[j].dataset.lensPercentage) : null
                     });
                 }
 
@@ -895,7 +896,7 @@
 
                 Promise.all([tagPromise, colorPromise]).then(function() {
                     Craft.cp.displayNotice(Craft.t('lens', 'Taxonomy saved.'));
-                    var status = section.querySelector('.lens-taxonomy-status');
+                    var status = section.querySelector('[data-lens-target="taxonomy-status"]');
                     if (status) status.textContent = '';
                     saveBtn.textContent = Craft.t('lens', 'Save Changes');
                 }).catch(function() {
@@ -912,12 +913,12 @@
 
         initFlagDismissal: function() {
             document.addEventListener('click', function(e) {
-                var dismissBtn = e.target.closest('.lens-flag-dismiss');
+                var dismissBtn = e.target.closest('[data-lens-action="flag-dismiss"]');
                 if (!dismissBtn) return;
 
-                var analysisId = dismissBtn.dataset.analysisId;
-                var field = dismissBtn.dataset.field;
-                var value = dismissBtn.dataset.value;
+                var analysisId = dismissBtn.dataset.lensAnalysisId;
+                var field = dismissBtn.dataset.lensField;
+                var value = dismissBtn.dataset.lensValue;
 
                 // For boolean fields, use update-field; for scores, set to 0
                 var sendValue = value !== undefined ? value : false;
@@ -952,10 +953,10 @@
         initAssetActions: function() {
             // Analyze / Reprocess
             document.addEventListener('click', function(e) {
-                var btn = e.target.closest('[data-lens-analyze], [data-lens-reprocess]');
+                var btn = e.target.closest('[data-lens-action="analyze"], [data-lens-action="reprocess"]');
                 if (!btn || btn.disabled) return;
 
-                var assetId = btn.dataset.lensAnalyze || btn.dataset.lensReprocess;
+                var assetId = btn.dataset.lensAssetId;
                 var originalText = btn.textContent;
 
                 btn.disabled = true;
@@ -983,10 +984,10 @@
 
             // Apply Title
             document.addEventListener('click', function(e) {
-                var btn = e.target.closest('[data-lens-apply-title]');
+                var btn = e.target.closest('[data-lens-action="apply-title"]');
                 if (!btn || btn.disabled) return;
 
-                var assetId = btn.dataset.lensApplyTitle;
+                var assetId = btn.dataset.lensAssetId;
                 var originalText = btn.textContent;
 
                 btn.disabled = true;
@@ -1008,10 +1009,10 @@
 
             // Apply Focal Point
             document.addEventListener('click', function(e) {
-                var btn = e.target.closest('[data-lens-apply-focal-point]');
+                var btn = e.target.closest('[data-lens-action="apply-focal-point"]');
                 if (!btn || btn.disabled) return;
 
-                var assetId = btn.dataset.lensApplyFocalPoint;
+                var assetId = btn.dataset.lensAssetId;
                 var originalText = btn.textContent;
 
                 btn.disabled = true;
@@ -1033,10 +1034,10 @@
 
             // Find Similar
             document.addEventListener('click', function(e) {
-                var btn = e.target.closest('[data-lens-find-similar]');
+                var btn = e.target.closest('[data-lens-action="find-similar"]');
                 if (!btn) return;
 
-                var assetId = btn.dataset.lensFindSimilar;
+                var assetId = btn.dataset.lensAssetId;
                 window.location.href = Craft.getCpUrl('lens/search', { duplicateOf: assetId });
             });
         },
@@ -1048,8 +1049,8 @@
             var panel = document.querySelector('.lens-analysis-panel');
             if (!panel) return;
 
-            var status = panel.dataset.analysisStatus;
-            var assetId = panel.dataset.assetId;
+            var status = panel.dataset.lensAnalysisStatus;
+            var assetId = panel.dataset.lensAssetId;
 
             // If analysis is pending or processing, start polling
             if (status === 'pending' || status === 'processing') {

@@ -35,7 +35,7 @@
                 </div>
             {% endif %}
             {% if not static and not isProcessing %}
-                <button type="button" class="lens-flag-dismiss" data-field="nsfwScore" data-value="0" data-analysis-id="{{ analysis.id }}">
+                <button type="button" class="lens-flag-dismiss" data-lens-action="flag-dismiss" data-lens-field="nsfwScore" data-lens-value="0" data-lens-analysis-id="{{ analysis.id }}">
                     {{ 'Clear flag'|t('lens') }}
                 </button>
             {% endif %}
@@ -74,7 +74,7 @@
                 {% endif %}
             </div>
             {% if not static and not isProcessing %}
-                <button type="button" class="lens-flag-dismiss" data-field="hasWatermark" data-value="0" data-analysis-id="{{ analysis.id }}">
+                <button type="button" class="lens-flag-dismiss" data-lens-action="flag-dismiss" data-lens-field="hasWatermark" data-lens-value="0" data-lens-analysis-id="{{ analysis.id }}">
                     {{ 'Clear flag'|t('lens') }}
                 </button>
             {% endif %}
@@ -99,7 +99,7 @@
                 {% endfor %}
             </div>
             {% if not static and not isProcessing %}
-                <button type="button" class="lens-flag-dismiss" data-field="containsBrandLogo" data-value="0" data-analysis-id="{{ analysis.id }}">
+                <button type="button" class="lens-flag-dismiss" data-lens-action="flag-dismiss" data-lens-field="containsBrandLogo" data-lens-value="0" data-lens-analysis-id="{{ analysis.id }}">
                     {{ 'Dismiss'|t('lens') }}
                 </button>
             {% endif %}

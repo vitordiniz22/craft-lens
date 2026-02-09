@@ -23,7 +23,7 @@
 {# Find Similar button #}
 {% if not (static ?? false) and not isProcessing %}
     <div class="mt-m">
-        <button type="button" class="btn small" data-lens-find-similar="{{ asset.id }}">
+        <button type="button" class="btn small" data-lens-action="find-similar" data-lens-asset-id="{{ asset.id }}">
             {{ 'Find Similar Assets'|t('lens') }}
         </button>
     </div>

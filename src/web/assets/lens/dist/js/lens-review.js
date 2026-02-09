@@ -16,7 +16,7 @@
         ZOOM_STEPS: [1, 1.25, 1.5, 2, 2.5, 3, 4],
 
         init: function() {
-            if (!document.getElementById('lens-review-view')) {
+            if (!document.querySelector('[data-lens-target="review-view"]')) {
                 return; // Not on review view page
             }
 
@@ -62,7 +62,7 @@
 
         // Focal point clicking on image
         bindFocalPointClick: function() {
-            var imgContainer = document.getElementById('lens-image-container');
+            var imgContainer = document.querySelector('[data-lens-target="image-container"]');
             if (!imgContainer) return;
 
             var self = this;
@@ -79,13 +79,13 @@
                 y = Math.max(0, Math.min(1, y));
 
                 // Update hidden inputs
-                var focalXInput = document.getElementById('focal-x-input');
-                var focalYInput = document.getElementById('focal-y-input');
+                var focalXInput = document.querySelector('[data-lens-control="focal-x"]');
+                var focalYInput = document.querySelector('[data-lens-control="focal-y"]');
                 if (focalXInput) focalXInput.value = x.toFixed(4);
                 if (focalYInput) focalYInput.value = y.toFixed(4);
 
                 // Update marker position
-                var marker = document.getElementById('lens-focal-marker');
+                var marker = document.querySelector('[data-lens-target="focal-marker"]');
                 if (marker) {
                     marker.style.left = (x * 100) + '%';
                     marker.style.top = (y * 100) + '%';
@@ -97,9 +97,9 @@
         // Zoom controls
         bindZoomControls: function() {
             var self = this;
-            var zoomInBtn = document.getElementById('lens-zoom-in');
-            var zoomOutBtn = document.getElementById('lens-zoom-out');
-            var zoomFitBtn = document.getElementById('lens-zoom-fit');
+            var zoomInBtn = document.querySelector('[data-lens-action="zoom-in"]');
+            var zoomOutBtn = document.querySelector('[data-lens-action="zoom-out"]');
+            var zoomFitBtn = document.querySelector('[data-lens-action="zoom-fit"]');
 
             if (!zoomInBtn || !zoomOutBtn || !zoomFitBtn) return;
 
@@ -121,8 +121,8 @@
 
         applyZoom: function() {
             var scale = this.ZOOM_STEPS[this.zoomLevel];
-            var img = document.getElementById('lens-review-image');
-            var zoomLevelSpan = document.getElementById('lens-zoom-level');
+            var img = document.querySelector('[data-lens-target="review-image"]');
+            var zoomLevelSpan = document.querySelector('[data-lens-target="zoom-level"]');
 
             if (img) {
                 img.style.transform = scale === 1 ? '' : 'scale(' + scale + ')';
@@ -136,7 +136,7 @@
 
         // People detection radio buttons
         initPeopleDetectionEditor: function() {
-            var peopleRadios = document.querySelectorAll('input[data-control="people-mode-review"]');
+            var peopleRadios = document.querySelectorAll('input[data-lens-control="people-mode-review"]');
             if (peopleRadios.length === 0) return;
 
             var self = this;
@@ -177,8 +177,8 @@
                     }
 
                     // Update hidden inputs
-                    var containsPeopleInput = document.getElementById('field-containsPeople');
-                    var faceCountInput = document.getElementById('field-faceCount');
+                    var containsPeopleInput = document.querySelector('[data-lens-control="field-containsPeople"]');
+                    var faceCountInput = document.querySelector('[data-lens-control="field-faceCount"]');
                     if (containsPeopleInput) containsPeopleInput.value = containsPeople ? '1' : '0';
                     if (faceCountInput) faceCountInput.value = faceCount.toString();
                 });
@@ -187,17 +187,17 @@
 
         // Form submission - collect all field values
         bindFormSubmit: function() {
-            var form = document.getElementById('lens-review-form');
+            var form = document.querySelector('[data-lens-target="review-form"]');
             if (!form) return;
 
             form.addEventListener('submit', function(e) {
                 // Collect text field values
-                var textFields = document.querySelectorAll('.lens-review-editable');
+                var textFields = document.querySelectorAll('[data-lens-control="review-field"]');
                 textFields.forEach(function(field) {
-                    var fieldName = field.getAttribute('data-field');
+                    var fieldName = field.getAttribute('data-lens-field');
                     if (!fieldName) return;
 
-                    var hiddenInput = document.getElementById('field-' + fieldName);
+                    var hiddenInput = document.querySelector('[data-lens-control="field-' + fieldName + '"]');
                     if (hiddenInput) {
                         hiddenInput.value = field.value;
                     }

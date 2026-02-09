@@ -36,12 +36,13 @@
 
 {# Always show component - allows correcting AI false negatives #}
 <div class="lens-people-detection lens-editable-field"
-     data-analysis-id="{{ analysis.id }}"
-     data-contains-people="{{ analysis.containsPeople ? '1' : '0' }}"
-     data-face-count="{{ analysis.faceCount }}"
-     data-contains-people-ai="{{ analysis.containsPeopleAi ? '1' : '0' }}"
-     data-face-count-ai="{{ analysis.faceCountAi }}"
-     data-context="{{ isReviewMode ? 'review' : 'asset-edit' }}">
+     data-lens-target="people-detection"
+     data-lens-analysis-id="{{ analysis.id }}"
+     data-lens-contains-people="{{ analysis.containsPeople ? '1' : '0' }}"
+     data-lens-face-count="{{ analysis.faceCount }}"
+     data-lens-contains-people-ai="{{ analysis.containsPeopleAi ? '1' : '0' }}"
+     data-lens-face-count-ai="{{ analysis.faceCountAi }}"
+     data-lens-context="{{ isReviewMode ? 'review' : 'asset-edit' }}">
 
     <div class="lens-field-header">
         {% if isEdited and not isReviewMode %}
@@ -51,7 +52,7 @@
         <span class="lens-field-label">{{ 'People Detection'|t('lens') }}</span>
 
         {% if not readOnly and not isReviewMode %}
-            <button type="button" class="lens-edit-trigger" data-action="people-edit" title="{{ 'Edit'|t('lens') }}">&#9998;</button>
+            <button type="button" class="lens-edit-trigger" data-lens-action="people-edit" title="{{ 'Edit'|t('lens') }}">&#9998;</button>
         {% endif %}
     </div>
 
@@ -60,42 +61,42 @@
         <div class="lens-people-edit-options">
             {# Option 1: No people #}
             <label class="lens-people-option">
-                <input type="radio" name="people-{{ analysis.id }}" value="none" data-control="people-mode-review"
+                <input type="radio" name="people-{{ analysis.id }}" value="none" data-lens-control="people-mode-review"
                        {% if not analysis.containsPeople %}checked{% endif %}>
                 <span>{{ 'No people present'|t('lens') }}</span>
             </label>
 
             {# Option 2: People without faces #}
             <label class="lens-people-option">
-                <input type="radio" name="people-{{ analysis.id }}" value="no-faces" data-control="people-mode-review"
+                <input type="radio" name="people-{{ analysis.id }}" value="no-faces" data-lens-control="people-mode-review"
                        {% if analysis.containsPeople and analysis.faceCount == 0 %}checked{% endif %}>
                 <span>{{ 'People present, no visible faces'|t('lens') }}</span>
             </label>
 
             {# Option 3: Individual (1 person) #}
             <label class="lens-people-option">
-                <input type="radio" name="people-{{ analysis.id }}" value="1" data-control="people-mode-review"
+                <input type="radio" name="people-{{ analysis.id }}" value="1" data-lens-control="people-mode-review"
                        {% if analysis.containsPeople and analysis.faceCount == 1 %}checked{% endif %}>
                 <span>{{ 'Individual (1 person)'|t('lens') }}</span>
             </label>
 
             {# Option 4: Duo (2 people) #}
             <label class="lens-people-option">
-                <input type="radio" name="people-{{ analysis.id }}" value="2" data-control="people-mode-review"
+                <input type="radio" name="people-{{ analysis.id }}" value="2" data-lens-control="people-mode-review"
                        {% if analysis.containsPeople and analysis.faceCount == 2 %}checked{% endif %}>
                 <span>{{ 'Duo (2 people)'|t('lens') }}</span>
             </label>
 
             {# Option 5: Small group (3-5 people) #}
             <label class="lens-people-option">
-                <input type="radio" name="people-{{ analysis.id }}" value="3-5" data-control="people-mode-review"
+                <input type="radio" name="people-{{ analysis.id }}" value="3-5" data-lens-control="people-mode-review"
                        {% if analysis.containsPeople and analysis.faceCount >= 3 and analysis.faceCount <= 5 %}checked{% endif %}>
                 <span>{{ 'Small group (3-5 people)'|t('lens') }}</span>
             </label>
 
             {# Option 6: Large group (6+ people) #}
             <label class="lens-people-option">
-                <input type="radio" name="people-{{ analysis.id }}" value="6+" data-control="people-mode-review"
+                <input type="radio" name="people-{{ analysis.id }}" value="6+" data-lens-control="people-mode-review"
                        {% if analysis.containsPeople and analysis.faceCount >= 6 %}checked{% endif %}>
                 <span>{{ 'Large group (6+ people)'|t('lens') }}</span>
             </label>
@@ -142,49 +143,49 @@
 
         {# Edit mode (hidden by default) - only if NOT locked #}
         {% if not readOnly %}
-        <div class="lens-field-edit lens-people-edit-panel" hidden>
+        <div class="lens-field-edit lens-people-edit-panel" data-lens-target="people-edit-panel" hidden>
             <div class="lens-people-edit-options">
                 {# Option 1: No people #}
                 <label class="lens-people-option">
-                    <input type="radio" name="people-mode-{{ analysis.id }}" value="none" data-control="people-mode">
+                    <input type="radio" name="people-mode-{{ analysis.id }}" value="none" data-lens-control="people-mode">
                     <span>{{ 'No people present'|t('lens') }}</span>
                 </label>
 
                 {# Option 2: People without faces #}
                 <label class="lens-people-option">
-                    <input type="radio" name="people-mode-{{ analysis.id }}" value="no-faces" data-control="people-mode">
+                    <input type="radio" name="people-mode-{{ analysis.id }}" value="no-faces" data-lens-control="people-mode">
                     <span>{{ 'People present, no visible faces'|t('lens') }}</span>
                 </label>
 
                 {# Option 3: Individual (1 person) #}
                 <label class="lens-people-option">
-                    <input type="radio" name="people-mode-{{ analysis.id }}" value="1" data-control="people-mode">
+                    <input type="radio" name="people-mode-{{ analysis.id }}" value="1" data-lens-control="people-mode">
                     <span>{{ 'Individual (1 person)'|t('lens') }}</span>
                 </label>
 
                 {# Option 4: Duo (2 people) #}
                 <label class="lens-people-option">
-                    <input type="radio" name="people-mode-{{ analysis.id }}" value="2" data-control="people-mode">
+                    <input type="radio" name="people-mode-{{ analysis.id }}" value="2" data-lens-control="people-mode">
                     <span>{{ 'Duo (2 people)'|t('lens') }}</span>
                 </label>
 
                 {# Option 5: Small group (3-5 people) #}
                 <label class="lens-people-option">
-                    <input type="radio" name="people-mode-{{ analysis.id }}" value="3-5" data-control="people-mode">
+                    <input type="radio" name="people-mode-{{ analysis.id }}" value="3-5" data-lens-control="people-mode">
                     <span>{{ 'Small group (3-5 people)'|t('lens') }}</span>
                 </label>
 
                 {# Option 6: Large group (6+ people) #}
                 <label class="lens-people-option">
-                    <input type="radio" name="people-mode-{{ analysis.id }}" value="6+" data-control="people-mode">
+                    <input type="radio" name="people-mode-{{ analysis.id }}" value="6+" data-lens-control="people-mode">
                     <span>{{ 'Large group (6+ people)'|t('lens') }}</span>
                 </label>
             </div>
 
             {# Save/Cancel buttons #}
             <div class="lens-field-actions">
-                <button type="button" class="btn small submit" data-action="people-save">{{ 'Save'|t('lens') }}</button>
-                <button type="button" class="btn small" data-action="people-cancel">{{ 'Cancel'|t('lens') }}</button>
+                <button type="button" class="btn small submit" data-lens-action="people-save">{{ 'Save'|t('lens') }}</button>
+                <button type="button" class="btn small" data-lens-action="people-cancel">{{ 'Cancel'|t('lens') }}</button>
             </div>
         </div>
         {% endif %}
@@ -224,7 +225,7 @@
                 {{ 'AI suggested: "{text}"'|t('lens', {
                     text: _self.peopleDetectionText(analysis.containsPeopleAi, analysis.faceCountAi)
                 }) }}
-                <button type="button" data-action="people-revert" data-analysis-id="{{ analysis.id }}">
+                <button type="button" data-lens-action="people-revert" data-lens-analysis-id="{{ analysis.id }}">
                     {{ 'Revert to AI'|t('lens') }}
                 </button>
             </div>

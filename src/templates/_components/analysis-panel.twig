@@ -77,7 +77,7 @@
                 {% endif %}
 
                 <div class="lens-error-actions">
-                    <button type="button" class="btn small" data-lens-analyze="{{ asset.id }}">
+                    <button type="button" class="btn small" data-lens-action="analyze" data-lens-asset-id="{{ asset.id }}">
                         {{ 'Try Again'|t('lens') }}
                     </button>
                 </div>
@@ -254,7 +254,7 @@
         {% else %}
             <p class="light">{{ 'This image has not been analyzed yet.'|t('lens') }}</p>
             {% if not static %}
-                <button type="button" class="btn submit" data-lens-analyze="{{ asset.id }}">
+                <button type="button" class="btn submit" data-lens-action="analyze" data-lens-asset-id="{{ asset.id }}">
                     {{ 'Analyze Now'|t('lens') }}
                 </button>
             {% endif %}

@@ -10,42 +10,42 @@
         currentIndex: currentIndex
     } %}
 
-    <form method="post" action="" accept-charset="UTF-8" id="lens-review-form">
+    <form method="post" action="" accept-charset="UTF-8" data-lens-target="review-form">
         {{ csrfInput() }}
         {{ actionInput('lens/review/approve') }}
         {{ hiddenInput('analysisId', analysis.analysisId) }}
 
         {# Hidden inputs for modifications - populated by JavaScript #}
-        <input type="hidden" name="suggestedTitle" id="field-suggestedTitle">
-        <input type="hidden" name="altText" id="field-altText">
-        <input type="hidden" name="longDescription" id="field-longDescription">
-        <input type="hidden" name="tags" id="field-tags">
-        <input type="hidden" name="dominantColors" id="field-colors">
-        <input type="hidden" name="focalPointX" id="focal-x-input">
-        <input type="hidden" name="focalPointY" id="focal-y-input">
-        <input type="hidden" name="containsPeople" id="field-containsPeople">
-        <input type="hidden" name="faceCount" id="field-faceCount">
+        <input type="hidden" name="suggestedTitle" data-lens-control="field-suggestedTitle">
+        <input type="hidden" name="altText" data-lens-control="field-altText">
+        <input type="hidden" name="longDescription" data-lens-control="field-longDescription">
+        <input type="hidden" name="tags" data-lens-control="field-tags">
+        <input type="hidden" name="dominantColors" data-lens-control="field-colors">
+        <input type="hidden" name="focalPointX" data-lens-control="focal-x">
+        <input type="hidden" name="focalPointY" data-lens-control="focal-y">
+        <input type="hidden" name="containsPeople" data-lens-control="field-containsPeople">
+        <input type="hidden" name="faceCount" data-lens-control="field-faceCount">
 
-        <div class="lens-review-panels" id="lens-review-view">
+        <div class="lens-review-panels" data-lens-target="review-view">
             {# Left Panel - Image #}
             <div class="lens-review-left">
-                <div class="lens-review-image-container" id="lens-image-container">
-                    <img id="lens-review-image"
+                <div class="lens-review-image-container" data-lens-target="image-container">
+                    <img data-lens-target="review-image"
                          src="{{ analysis.previewUrl }}"
                          alt="{{ analysis.filename }}">
 
                     {% if analysis.focalPointX %}
-                        <div class="lens-review-focal-marker" id="lens-focal-marker"
+                        <div class="lens-review-focal-marker" data-lens-target="focal-marker"
                              style="left: {{ (analysis.focalPointX * 100)|round(2) }}%;
                                     top: {{ (analysis.focalPointY * 100)|round(2) }}%;"></div>
                     {% endif %}
                 </div>
 
                 <div class="lens-review-zoom-controls">
-                    <button type="button" class="btn small" id="lens-zoom-out">&minus;</button>
-                    <span id="lens-zoom-level">100%</span>
-                    <button type="button" class="btn small" id="lens-zoom-fit">{{ 'Fit'|t('lens') }}</button>
-                    <button type="button" class="btn small" id="lens-zoom-in">&plus;</button>
+                    <button type="button" class="btn small" data-lens-action="zoom-out">&minus;</button>
+                    <span data-lens-target="zoom-level">100%</span>
+                    <button type="button" class="btn small" data-lens-action="zoom-fit">{{ 'Fit'|t('lens') }}</button>
+                    <button type="button" class="btn small" data-lens-action="zoom-in">&plus;</button>
                 </div>
 
                 {% if analysis.similarImages is not empty %}

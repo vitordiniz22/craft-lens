@@ -17,10 +17,10 @@
         pollInterval: null,
 
         init: function() {
-            this.container = document.getElementById('lens-bulk-container');
+            this.container = document.querySelector('[data-lens-target="bulk-container"]');
             if (!this.container) return;
 
-            this.currentState = this.container.dataset.initialState || 'ready';
+            this.currentState = this.container.dataset.lensInitialState || 'ready';
 
             this.bindFormHandler();
             this.bindRetryButton();
@@ -36,13 +36,13 @@
         },
 
         getSelectedVolumeId: function() {
-            var select = document.getElementById('volumeId');
+            var select = document.querySelector('[data-lens-control="volume-select"]');
             return select && select.value ? select.value : null;
         },
 
         bindFormHandler: function() {
             var self = this;
-            var form = document.getElementById('lens-process-form');
+            var form = document.querySelector('[data-lens-target="bulk-form"]');
             if (!form) return;
 
             form.addEventListener('submit', function(e) {
@@ -53,14 +53,14 @@
 
         bindRetryButton: function() {
             var self = this;
-            var btn = document.getElementById('lens-retry-btn');
+            var btn = document.querySelector('[data-lens-action="bulk-retry"]');
             if (btn) {
                 btn.addEventListener('click', function() {
                     self.retryFailed();
                 });
             }
 
-            var completeBtn = document.getElementById('lens-retry-complete-btn');
+            var completeBtn = document.querySelector('[data-lens-action="bulk-retry-complete"]');
             if (completeBtn) {
                 completeBtn.addEventListener('click', function() {
                     self.retryFailed();
@@ -70,7 +70,7 @@
 
         bindDismissButton: function() {
             var self = this;
-            var btn = document.getElementById('lens-dismiss-complete');
+            var btn = document.querySelector('[data-lens-action="bulk-dismiss-complete"]');
             if (!btn) return;
 
             btn.addEventListener('click', function() {
@@ -81,7 +81,7 @@
 
         bindVolumeChange: function() {
             var self = this;
-            var select = document.getElementById('volumeId');
+            var select = document.querySelector('[data-lens-control="volume-select"]');
             if (!select) return;
 
             select.addEventListener('change', function() {
@@ -91,7 +91,7 @@
 
         bindCancelButton: function() {
             var self = this;
-            var btn = document.getElementById('lens-cancel-btn');
+            var btn = document.querySelector('[data-lens-action="bulk-cancel"]');
             if (!btn) return;
 
             btn.addEventListener('click', function() {
@@ -121,7 +121,7 @@
                     }
 
                     // Update start button state
-                    var startBtn = document.getElementById('lens-start-btn');
+                    var startBtn = document.querySelector('[data-lens-action="bulk-start"]');
                     if (startBtn) {
                         startBtn.disabled = response.data.stats.unprocessed === 0;
                     }
@@ -133,7 +133,7 @@
 
         cancelProcessing: function() {
             var self = this;
-            var btn = document.getElementById('lens-cancel-btn');
+            var btn = document.querySelector('[data-lens-action="bulk-cancel"]');
             if (!btn) return;
 
             var originalText = btn.textContent;
@@ -159,7 +159,7 @@
 
         startProcessing: function(form) {
             var self = this;
-            var btn = document.getElementById('lens-start-btn');
+            var btn = document.querySelector('[data-lens-action="bulk-start"]');
             var originalText = btn.textContent;
 
             btn.disabled = true;
@@ -184,7 +184,7 @@
 
         retryFailed: function() {
             var self = this;
-            var btn = document.getElementById('lens-retry-btn') || document.getElementById('lens-retry-complete-btn');
+            var btn = document.querySelector('[data-lens-action="bulk-retry"]') || document.querySelector('[data-lens-action="bulk-retry-complete"]');
             if (!btn) return;
 
             var originalText = btn.textContent;
@@ -298,9 +298,9 @@
         },
 
         updateStats: function(stats) {
-            var elements = document.querySelectorAll('[data-stat]');
+            var elements = document.querySelectorAll('[data-lens-stat]');
             elements.forEach(function(el) {
-                var key = el.dataset.stat;
+                var key = el.dataset.lensStat;
                 if (stats[key] !== undefined) {
                     el.textContent = stats[key].toLocaleString();
                 }
@@ -309,13 +309,13 @@
 
         updateProgress: function(progress, session, queueInfo) {
             // Progress bar
-            var bar = document.getElementById('lens-progress-bar');
+            var bar = document.querySelector('[data-lens-target="progress-bar"]');
             if (bar) {
                 bar.style.width = progress.percentComplete + '%';
             }
 
             // Progress text
-            var text = document.getElementById('lens-progress-text');
+            var text = document.querySelector('[data-lens-target="progress-text"]');
             if (text) {
                 text.textContent = progress.completed.toLocaleString() + ' / ' +
                                    progress.total.toLocaleString() + ' (' +
@@ -323,32 +323,32 @@
             }
 
             // Counters
-            this.setElementText('lens-completed-count', progress.completed);
-            this.setElementText('lens-failed-count', progress.failed);
-            this.setElementText('lens-remaining-count', progress.remaining);
+            this.setElementText('completed-count', progress.completed);
+            this.setElementText('failed-count', progress.failed);
+            this.setElementText('remaining-count', progress.remaining);
 
             // Job description
             if (queueInfo && queueInfo.jobDescription) {
-                this.setElementText('lens-job-description', queueInfo.jobDescription);
+                this.setElementText('job-description', queueInfo.jobDescription);
             }
 
             // Current cost
             if (session && session.actualCost !== undefined) {
-                this.setElementText('lens-current-cost', '$' + session.actualCost.toFixed(4));
+                this.setElementText('current-cost', '$' + session.actualCost.toFixed(4));
             }
         },
 
         updateCompleteSummary: function(stats, session) {
-            this.setElementText('lens-summary-analyzed', stats.analyzed);
-            this.setElementText('lens-summary-failed', stats.failed);
-            this.setElementText('lens-summary-review', stats.pendingReview);
+            this.setElementText('summary-analyzed', stats.analyzed);
+            this.setElementText('summary-failed', stats.failed);
+            this.setElementText('summary-review', stats.pendingReview);
 
             if (session && session.actualCost !== undefined) {
-                this.setElementText('lens-summary-cost', '$' + session.actualCost.toFixed(4));
+                this.setElementText('summary-cost', '$' + session.actualCost.toFixed(4));
             }
 
             // Show/hide retry button based on failed count
-            var retryBtn = document.getElementById('lens-retry-complete-btn');
+            var retryBtn = document.querySelector('[data-lens-action="bulk-retry-complete"]');
             if (retryBtn) {
                 retryBtn.style.display = stats.failed > 0 ? 'inline-block' : 'none';
             }
@@ -358,7 +358,7 @@
             var states = ['ready', 'processing', 'complete'];
 
             states.forEach(function(state) {
-                var el = document.getElementById('lens-state-' + state);
+                var el = document.querySelector('[data-lens-target="state-' + state + '"]');
                 if (el) {
                     el.style.display = (state === newState) ? 'block' : 'none';
                 }
@@ -367,8 +367,8 @@
             this.currentState = newState;
         },
 
-        setElementText: function(id, value) {
-            var el = document.getElementById(id);
+        setElementText: function(targetName, value) {
+            var el = document.querySelector('[data-lens-target="' + targetName + '"]');
             if (el) {
                 el.textContent = typeof value === 'number' ? value.toLocaleString() : value;
             }
