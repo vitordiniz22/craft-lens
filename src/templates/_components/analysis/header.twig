@@ -32,8 +32,8 @@
                 {% endswitch %}
             </div>
         {% endif %}
-        {% if analysis and not static %}
-            <button type="button" class="btn small" data-lens-reprocess="{{ asset.id }}"{% if analysis.status == 'processing' %} disabled{% endif %}>
+        {% if analysis and not static and analysis.status != 'processing' %}
+            <button type="button" class="btn small" data-lens-reprocess="{{ asset.id }}">
                 {{ 'Re-analyze'|t('lens') }}
             </button>
         {% endif %}

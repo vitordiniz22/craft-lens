@@ -91,21 +91,19 @@
             <div class="lens-pending-notice lens-alert-section lens-alert-section--warning">
                 <div class="lens-pending-notice-content">
                     <div class="flex items-center gap-s mb-xs">
-                        <svg class="lens-pending-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M8 14A6 6 0 1 0 8 2a6 6 0 0 0 0 12z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M8 5v3M8 11h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
+                        <span class="lens-pending-icon">{{ iconSvg('circle-exclamation') }}</span>
                         <strong>{{ 'Pending Review'|t('lens') }}</strong>
                     </div>
                     <p class="smalltext" style="margin: 0">
                         {{ 'This analysis is awaiting review. All data shown is provisional and may be edited after approval or rejection.'|t('lens') }}
+                        <a href="{{ cpUrl('lens/review/' ~ analysis.id) }}" class="lens-review-link">{{ 'Review now'|t('lens') }}</a>
                     </p>
                 </div>
             </div>
         {% endif %}
 
         {# Section 1: Content Metadata #}
-        {% if (analysis.suggestedTitle or analysis.altText or analysis.longDescription) and analysis.status != 'failed' %}
+        {% if (analysis.suggestedTitle or analysis.altText or analysis.longDescription) and analysis.status not in ['failed', 'processing'] %}
             <div class="lens-section">
                 <div class="lens-section-header">
                     <span class="lens-section-title">{{ 'Content'|t('lens') }}</span>
@@ -121,7 +119,7 @@
         {% endif %}
 
         {# Section 2: Taxonomy #}
-        {% if (analysisTags|length or analysisColors|length or not readOnly) and analysis.status != 'failed' %}
+        {% if (analysisTags|length or analysisColors|length or not readOnly) and analysis.status not in ['failed', 'processing'] %}
             <div class="lens-section">
                 <div class="lens-section-header">
                     <span class="lens-section-title">
@@ -142,7 +140,7 @@
         {% endif %}
 
         {# Section 3: Focal Point & Quality #}
-        {% if ((analysis.focalPointX is not null) or (analysis.overallQualityScore is not null)) and analysis.status != 'failed' %}
+        {% if ((analysis.focalPointX is not null) or (analysis.overallQualityScore is not null)) and analysis.status not in ['failed', 'processing'] %}
             <div class="lens-section">
                 <div class="lens-section-header">
                     <span class="lens-section-title">
@@ -164,7 +162,7 @@
         {% endif %}
 
         {# Section 4: Content Safety #}
-        {% if (hasSafetyFlags or (analysis.nsfwScore is defined and analysis.nsfwScore > 0)) and analysis.status != 'failed' %}
+        {% if (hasSafetyFlags or (analysis.nsfwScore is defined and analysis.nsfwScore > 0)) and analysis.status not in ['failed', 'processing'] %}
             <div class="lens-section">
                 <div class="lens-section-header">
                     <span class="lens-section-title">
@@ -184,7 +182,7 @@
         {% endif %}
 
         {# Section 5: Extracted Text #}
-        {% if analysis.extractedText and analysis.status != 'failed' %}
+        {% if analysis.extractedText and analysis.status not in ['failed', 'processing'] %}
             <div class="lens-section">
                 <div class="lens-section-header">
                     <span class="lens-section-title">{{ 'OCR'|t('lens') }}</span>

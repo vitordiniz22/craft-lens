@@ -8,11 +8,14 @@
         {% if topTags|length %}
         <div class="lens-insight-block">
             <h3 class="lens-insight-label">{{ 'Top Tags'|t('lens') }}</h3>
-            <div class="lens-tags-inline">
+            <div class="inline-chips">
                 {% for item in topTags %}
-                    <a href="{{ cpUrl('lens/search', {tags: item.tag}) }}" class="lens-tag-pill">
-                        {{ item.tag }} <span class="lens-tag-count">({{ item.count }})</span>
-                    </a>
+                <a href="{{ cpUrl('lens/search', {tags: item.tag}) }}" class="chip">
+                    <div class="chip-content">
+                        <span class="chip-label">{{ item.tag }}</span>
+                    </div>
+                    <span class="badge">{{ item.count }}</span>
+                </a>
                 {% endfor %}
             </div>
         </div>

@@ -46,6 +46,7 @@
 .lens-attention-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    text-decoration: none;
 }
 .lens-attention-blue { border-left-color: var(--link-color); }
 .lens-attention-amber { border-left-color: var(--warning-color); }
@@ -231,29 +232,9 @@
     text-transform: uppercase;
     letter-spacing: 0.3px;
 }
-.lens-tags-inline {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-.lens-tag-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 2px;
-    padding: 4px 10px;
-    background: var(--gray-100);
-    border-radius: 12px;
-    font-size: 13px;
-    text-decoration: none;
-    color: var(--text-color);
-    transition: background 0.15s;
-}
-.lens-tag-pill:hover {
-    background: var(--gray-200);
-}
-.lens-tag-count {
-    font-size: 11px;
-    color: var(--medium-text-color);
+/* Badge spacing within chips */
+.inline-chips .chip .badge {
+    margin-left: 4px;
 }
 .lens-colors-compact {
     display: flex;

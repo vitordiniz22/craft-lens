@@ -453,7 +453,7 @@ class StatisticsService extends Component
                 'count' => $overview['failed'],
                 'url' => 'assets?lensStatus=failed',
                 'color' => 'red',
-                'icon' => 'circle-xmark',
+                'icon' => 'triangle-exclamation',
             ];
         }
 
