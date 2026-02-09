@@ -1,5 +1,5 @@
 {# Section 2: Processing Status - always visible #}
-<div class="lens-section lens-processing-section pane">
+<div class="lens-dashboard-section lens-processing-section pane">
     <h2 class="lens-section-title">{{ 'Analysis Progress'|t('lens') }}</h2>
 
     {% set totalImages = processingStats.totalImages %}
@@ -20,7 +20,7 @@
                         ({{ percentComplete|round }}%)
                     </span>
                 </div>
-                <div class="lens-progress-bar">
+                <div class="lens-progress lens-progress--small">
                     <div class="lens-progress-fill" style="width: {{ percentComplete }}%"></div>
                 </div>
                 {% if queueInfo.estimatedMinutes is defined and queueInfo.estimatedMinutes %}
@@ -43,7 +43,7 @@
                         ({{ percentComplete|round }}%)
                     </span>
                 </div>
-                <div class="lens-progress-bar">
+                <div class="lens-progress lens-progress--small">
                     <div class="lens-progress-fill" style="width: {{ percentComplete }}%"></div>
                 </div>
                 <div class="lens-waiting-info">
@@ -63,7 +63,7 @@
                     </span>
                     <span class="lens-processing-complete-icon">{{ iconSvg('check') }}</span>
                 </div>
-                <div class="lens-progress-bar lens-progress-bar--complete">
+                <div class="lens-progress lens-progress--small lens-simple-progress--complete">
                     <div class="lens-progress-fill" style="width: 100%"></div>
                 </div>
             </div>

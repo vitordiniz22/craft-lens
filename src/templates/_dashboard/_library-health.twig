@@ -1,12 +1,12 @@
 {# Section 3: Library Health - always visible #}
-<div class="lens-section lens-health-section pane">
+<div class="lens-dashboard-section lens-health-section pane">
     <h2 class="lens-section-title">{{ 'Library Health'|t('lens') }}</h2>
 
     <div class="lens-health-metrics">
         {# Alt Text Coverage #}
         <div class="lens-health-metric">
             <div class="lens-metric-header">
-                <span class="lens-metric-label">{{ 'Alt text coverage'|t('lens') }}</span>
+                <span class="lens-metric-label lens-metric-label--lg">{{ 'Alt text coverage'|t('lens') }}</span>
                 <span class="lens-metric-value {{ altTextCoverage.percentage >= 80 ? 'lens-metric--good' : (altTextCoverage.percentage >= 50 ? '' : 'lens-metric--warning') }}">
                     {{ altTextCoverage.percentage }}%
                 </span>
@@ -24,7 +24,7 @@
         {# Tagged Assets #}
         <div class="lens-health-metric">
             <div class="lens-metric-header">
-                <span class="lens-metric-label">{{ 'With tags'|t('lens') }}</span>
+                <span class="lens-metric-label lens-metric-label--lg">{{ 'With tags'|t('lens') }}</span>
                 <span class="lens-metric-value">{{ taggedPercentage.percentage }}%</span>
             </div>
             <div class="lens-metric-detail">
@@ -35,7 +35,7 @@
         {# High Quality #}
         <div class="lens-health-metric">
             <div class="lens-metric-header">
-                <span class="lens-metric-label">{{ 'High quality'|t('lens') }}</span>
+                <span class="lens-metric-label lens-metric-label--lg">{{ 'High quality'|t('lens') }}</span>
                 <span class="lens-metric-value {{ highQualityPercentage.percentage >= 70 ? 'lens-metric--good' : (highQualityPercentage.percentage >= 40 ? '' : 'lens-metric--warning') }}">
                     {{ highQualityPercentage.percentage }}%
                 </span>

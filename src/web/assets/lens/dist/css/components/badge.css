@@ -38,26 +38,10 @@
   color: white;
 }
 
-.lens-badge--info {
-  background: var(--link-color);
-  color: white;
-}
-
-.lens-badge--dark {
-  background: rgba(0, 0, 0, 0.7);
-  color: white;
-}
-
 .lens-badge--amber {
   background: var(--amber-100);
   color: var(--amber-800);
   text-transform: capitalize;
-}
-
-.lens-badge--muted {
-  font-weight: 500;
-  background: var(--gray-100);
-  color: var(--medium-text-color);
 }
 
 /* Size modifier */

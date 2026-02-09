@@ -1,0 +1,19 @@
+/**
+ * Asset Card Component
+ * Unified card styling for all asset cards.
+ */
+
+.lens-asset-card {
+  position: relative;
+  border-radius: var(--medium-border-radius);
+  border: 2px solid transparent;
+  overflow: hidden;
+  background: var(--white);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.lens-asset-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: var(--link-color);
+}

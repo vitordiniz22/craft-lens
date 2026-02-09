@@ -50,20 +50,6 @@
   gap: 16px;
 }
 
-/* Result cards (use .card for base styling) */
-.lens-result-card {
-  position: relative;
-  overflow: hidden;
-  transition:
-    box-shadow 0.2s,
-    transform 0.2s;
-}
-
-.lens-result-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transform: translateY(-2px);
-}
-
 /* Image preview container (4:3 aspect ratio) */
 .lens-result-preview {
   display: block;
@@ -172,13 +158,13 @@
 }
 
 /* Keyboard focus */
-.lens-result-card:focus {
+.lens-asset-card:focus {
   outline: 2px solid var(--focus-ring-color);
   outline-offset: 2px;
   box-shadow: 0 0 0 4px rgba(0, 102, 204, 0.2);
 }
 
-.lens-result-card:focus-visible {
+.lens-asset-card:focus-visible {
   outline: 2px solid var(--focus-ring-color);
 }
 

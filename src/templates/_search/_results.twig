@@ -20,7 +20,7 @@
     <div class="lens-results-grid">
         {% for asset in assets %}
             {% set analysis = lens.getAnalysis(asset.id) %}
-            <div class="card lens-result-card" data-asset-id="{{ asset.id }}">
+            <div class="card lens-asset-card" data-asset-id="{{ asset.id }}">
                 <a href="{{ asset.cpEditUrl }}" class="lens-result-preview">
                     {% if asset.kind == 'image' %}
                         <img src="{{ craft.app.assets.getThumbUrl(asset, 200, 200) }}" alt="{{ asset.title }}" loading="lazy">
@@ -91,7 +91,7 @@
                         {% if resultColors|length %}
                             <div class="lens-result-colors">
                                 {% for color in resultColors|slice(0, 5) %}
-                                    <span class="lens-swatch lens-swatch--xs" style="background-color: {{ color.hex }}" title="{{ color.hex }}"></span>
+                                    <span class="lens-swatch lens-swatch--sm" style="background-color: {{ color.hex }}" title="{{ color.hex }}"></span>
                                 {% endfor %}
                             </div>
                         {% endif %}

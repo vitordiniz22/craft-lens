@@ -1,7 +1,7 @@
 {# Section 7: Enhanced Usage #}
 {% set hasUsageData = monthlyUsage.assetsProcessed > 0 or lastMonthUsage.assetsProcessed > 0 %}
 {% if hasUsageData %}
-<div class="lens-section lens-usage-section pane">
+<div class="lens-dashboard-section lens-usage-section pane">
     <h2 class="lens-section-title">{{ 'Usage'|t('lens') }}</h2>
 
     {# Comparison Grid #}

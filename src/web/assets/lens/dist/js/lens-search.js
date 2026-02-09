@@ -192,7 +192,7 @@
             }
 
             // Enter on focused result
-            if (e.key === 'Enter' && document.activeElement && document.activeElement.classList.contains('lens-result-card')) {
+            if (e.key === 'Enter' && document.activeElement && document.activeElement.classList.contains('lens-asset-card')) {
                 e.preventDefault();
                 var link = document.activeElement.querySelector('.lens-result-preview');
                 if (link) link.click();

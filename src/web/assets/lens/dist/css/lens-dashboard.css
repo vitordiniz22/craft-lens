@@ -9,7 +9,7 @@
 }
 
 /* Section Spacing */
-.lens-section {
+.lens-dashboard-section {
     margin-bottom: 24px;
 }
 .lens-section-title {
@@ -32,25 +32,6 @@
     flex-wrap: wrap;
     gap: 12px;
 }
-.lens-attention-card {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 16px;
-    background: var(--gray-050);
-    border-radius: var(--medium-border-radius);
-    border-left: 3px solid var(--gray-300);
-    text-decoration: none;
-    transition: transform 0.15s, box-shadow 0.15s;
-}
-.lens-attention-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    text-decoration: none;
-}
-.lens-attention-blue { border-left-color: var(--link-color); }
-.lens-attention-amber { border-left-color: var(--warning-color); }
-.lens-attention-red { border-left-color: var(--error-color); }
 .lens-attention-icon {
     color: var(--medium-text-color);
 }
@@ -88,24 +69,6 @@
 .lens-progress-text {
     font-size: 14px;
     color: var(--text-color);
-}
-.lens-progress-bar {
-    height: 8px;
-    background: var(--gray-200);
-    border-radius: 4px;
-    overflow: hidden;
-}
-.lens-progress-bar--complete {
-    background: var(--gray-100);
-}
-.lens-progress-fill {
-    height: 100%;
-    background: var(--link-color);
-    border-radius: 4px;
-    transition: width 0.3s ease;
-}
-.lens-progress-bar--complete .lens-progress-fill {
-    background: var(--success-color);
 }
 .lens-progress-estimate {
     font-size: 12px;
@@ -163,8 +126,11 @@
     margin-bottom: 4px;
 }
 .lens-metric-label {
-    font-size: 13px;
+    font-size: 12px;
     color: var(--medium-text-color);
+}
+.lens-metric-label--lg {
+    font-size: 13px;
 }
 .lens-metric-value {
     font-size: 20px;
@@ -353,7 +319,7 @@
     .lens-attention-cards {
         flex-direction: column;
     }
-    .lens-attention-card {
+    .lens-asset-card {
         width: 100%;
     }
     .lens-quick-actions {

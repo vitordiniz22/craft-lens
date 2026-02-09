@@ -1,0 +1,76 @@
+/**
+ * Progress Bar Component
+ * Unified progress bar system with size and style variants.
+ *
+ * Usage:
+ *   <div class="lens-progress lens-progress--small">
+ *     <div class="lens-progress-fill" style="width: 50%"></div>
+ *   </div>
+ *
+ *   <div class="lens-progress lens-progress--large lens-progress--animated">
+ *     <div class="lens-progress-fill" style="width: 75%"></div>
+ *   </div>
+ */
+
+/* Base progress bar container */
+.lens-progress {
+  background: var(--gray-200);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Size variants */
+.lens-progress--small {
+  height: 8px;
+}
+
+.lens-progress--large {
+  height: 24px;
+  border-radius: 12px;
+  background: var(--gray-100);
+}
+
+/* Complete state (success color) */
+.lens-progress--complete {
+  background: var(--gray-100);
+}
+
+.lens-progress--complete .lens-progress-fill {
+  background: var(--success-color);
+}
+
+/* Progress fill bar */
+.lens-progress-fill {
+  height: 100%;
+  background: var(--link-color);
+  border-radius: inherit;
+  transition: width 0.3s ease;
+}
+
+/* Animated variant (gradient + shimmer) */
+.lens-progress--animated .lens-progress-fill {
+  background: linear-gradient(90deg, var(--link-color) 0%, var(--green-600) 100%);
+  position: relative;
+}
+
+.lens-progress--animated .lens-progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    transparent 100%
+  );
+  animation: lens-progress-shimmer 1.5s infinite;
+}
+
+@keyframes lens-progress-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
