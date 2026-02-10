@@ -17,7 +17,6 @@ final class ResponseNormalizer
 {
     private const VALID_NSFW_CATEGORIES = ['adult', 'violence', 'hate', 'self-harm', 'sexual-minors', 'drugs'];
     private const VALID_WATERMARK_TYPES = ['stock', 'logo', 'text', 'copyright', 'unknown'];
-    private const CONTROL_CHARS = [...range(0, 31), 127];
     /**
      * Normalize tags from API response.
      *
@@ -193,7 +192,7 @@ final class ResponseNormalizer
             return $data;
         }
 
-        $sanitized = str_replace(array_map('chr', self::CONTROL_CHARS), '', $content);
+        $sanitized = str_replace(array_map('chr', array_merge(range(0, 31), [127])), '', $content);
         $data = json_decode($sanitized, true);
 
         if (json_last_error() === JSON_ERROR_NONE && is_array($data)) {

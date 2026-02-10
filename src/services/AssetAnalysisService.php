@@ -174,6 +174,22 @@ class AssetAnalysisService extends Component
         $record = $this->getAnalysis($asset->id);
 
         if ($record !== null) {
+            if ($record->status === AnalysisStatus::Pending->value && $record->dateUpdated) {
+                $dateUpdated = $record->dateUpdated instanceof \DateTime
+                    ? $record->dateUpdated
+                    : new \DateTime($record->dateUpdated);
+
+                $minutesStuck = (time() - $dateUpdated->getTimestamp()) / 60;
+
+                if ($minutesStuck > 10) {
+                    Logger::warning(
+                        LogCategory::AssetProcessing,
+                        "Asset {$asset->id} was stuck in pending status for " . round($minutesStuck) . " minutes - resetting",
+                        $asset->id
+                    );
+                }
+            }
+
             $record->status = AnalysisStatus::Pending->value;
             $record->save();
         }

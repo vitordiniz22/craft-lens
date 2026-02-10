@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace vitordiniz22\craftlens\jobs;
 
+use Craft;
 use craft\elements\Asset;
 use craft\queue\BaseJob;
 use vitordiniz22\craftlens\enums\LogCategory;

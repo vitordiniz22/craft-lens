@@ -459,12 +459,17 @@ class Plugin extends BasePlugin
                 $event->rules['lens/review/reject'] = 'lens/review/reject';
                 $event->rules['lens/review/bulk-approve'] = 'lens/review/bulk-approve';
                 $event->rules['lens/review/bulk-reject'] = 'lens/review/bulk-reject';
+                $event->rules['lens/review/skip'] = 'lens/review/skip';
                 $event->rules['lens/analysis/reprocess'] = 'lens/analysis/reprocess';
                 $event->rules['lens/analysis/update-field'] = 'lens/analysis/update-field';
                 $event->rules['lens/analysis/revert-field'] = 'lens/analysis/revert-field';
                 $event->rules['lens/analysis/update-tags'] = 'lens/analysis/update-tags';
                 $event->rules['lens/analysis/update-colors'] = 'lens/analysis/update-colors';
                 $event->rules['lens/analysis/tag-suggestions'] = 'lens/analysis/tag-suggestions';
+                $event->rules['lens/analysis/get-status'] = 'lens/analysis/get-status';
+                $event->rules['lens/analysis/apply-title'] = 'lens/analysis/apply-title';
+                $event->rules['lens/analysis/apply-focal-point'] = 'lens/analysis/apply-focal-point';
+                $event->rules['lens/analysis/regenerate-title'] = 'lens/analysis/regenerate-title';
                 $event->rules['lens/bulk'] = 'lens/bulk/index';
                 $event->rules['lens/bulk/process'] = 'lens/bulk/process';
                 $event->rules['lens/bulk/status'] = 'lens/bulk/status';
@@ -472,6 +477,7 @@ class Plugin extends BasePlugin
                 $event->rules['lens/bulk/cancel'] = 'lens/bulk/cancel';
                 $event->rules['lens/search'] = 'lens/search/index';
                 $event->rules['lens/search/resolve-duplicate'] = 'lens/search/resolve-duplicate';
+                $event->rules['lens/search/export'] = 'lens/search/export';
                 $event->rules['lens/logs'] = 'lens/log/index';
                 $event->rules['lens/logs/retry'] = 'lens/log/retry';
                 $event->rules['lens/logs/delete-all'] = 'lens/log/delete-all';

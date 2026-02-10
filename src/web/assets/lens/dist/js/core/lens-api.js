@@ -191,7 +191,7 @@
          * @returns {Promise} Promise resolving with response data
          */
         applyTitle: function(assetId, analysisId, options) {
-            return this.post('lens/asset-actions/apply-title', {
+            return this.post('lens/analysis/apply-title', {
                 assetId: assetId,
                 analysisId: analysisId
             }, options);
@@ -205,7 +205,7 @@
          * @returns {Promise} Promise resolving with response data
          */
         applyFocalPoint: function(assetId, focalPoint, options) {
-            return this.post('lens/asset-actions/apply-focal-point', {
+            return this.post('lens/analysis/apply-focal-point', {
                 assetId: assetId,
                 focalPoint: focalPoint
             }, options);

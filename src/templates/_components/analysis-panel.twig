@@ -119,7 +119,7 @@
         {% endif %}
 
         {# Section 2: Taxonomy #}
-        {% if (analysisTags|length or analysisColors|length or not readOnly) and analysis.status not in ['failed', 'processing'] %}
+        {% if analysis.status not in ['pending', 'processing', 'failed'] %}
             <div class="lens-section">
                 <div class="lens-section-header">
                     <span class="lens-section-title">
