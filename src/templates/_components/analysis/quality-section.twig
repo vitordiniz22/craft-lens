@@ -42,7 +42,11 @@
                         <span class="smalltext">{{ 'Applied'|t('lens') }}</span>
                     </div>
                 {% elseif not static and not isProcessing %}
-                    <button type="button" class="btn small submit" data-lens-apply-focal-point="{{ asset.id }}">
+                    <button type="button" class="btn small submit"
+                            data-lens-action="apply-focal-point"
+                            data-lens-asset-id="{{ asset.id }}"
+                            data-lens-focal-x="{{ analysis.focalPointX }}"
+                            data-lens-focal-y="{{ analysis.focalPointY }}">
                         {{ 'Apply to Asset'|t('lens') }}
                     </button>
                     {% if asset.getHasFocalPoint() %}
