@@ -161,27 +161,33 @@ class Plugin extends BasePlugin
         }
 
         $item['label'] = Craft::t('lens', 'Lens');
+        $isConfigured = $this->setupStatus->isAiProviderConfigured();
+
         $item['subnav'] = [
             'dashboard' => [
                 'label' => Craft::t('lens', 'Dashboard'),
                 'url' => 'lens/dashboard',
             ],
-            'search' => [
+        ];
+
+        if ($isConfigured) {
+            $item['subnav']['search'] = [
                 'label' => Craft::t('lens', 'Asset Browser'),
                 'url' => 'lens/search',
-            ],
-            'review' => [
+            ];
+            $item['subnav']['review'] = [
                 'label' => Craft::t('lens', 'Review Queue'),
                 'url' => 'lens/review',
-            ],
-            'bulk' => [
+            ];
+            $item['subnav']['bulk'] = [
                 'label' => Craft::t('lens', 'Bulk Processing'),
                 'url' => 'lens/bulk',
-            ],
-            'settings' => [
-                'label' => Craft::t('lens', 'Settings'),
-                'url' => 'lens/settings',
-            ],
+            ];
+        }
+
+        $item['subnav']['settings'] = [
+            'label' => Craft::t('lens', 'Settings'),
+            'url' => 'lens/settings',
         ];
 
         if (self::isDevInstall()) {
@@ -196,11 +202,13 @@ class Plugin extends BasePlugin
             }
         }
 
-        $pendingCount = $this->review->getPendingReviewCount();
+        if ($isConfigured) {
+            $pendingCount = $this->review->getPendingReviewCount();
 
-        if ($pendingCount > 0) {
-            $item['badgeCount'] = $pendingCount;
-            $item['subnav']['review']['badgeCount'] = $pendingCount;
+            if ($pendingCount > 0) {
+                $item['badgeCount'] = $pendingCount;
+                $item['subnav']['review']['badgeCount'] = $pendingCount;
+            }
         }
 
         return $item;

@@ -133,21 +133,11 @@
     </div>
 
 {% else %}
-    {% if lens.hasCriticalIssues() %}
-        {% include 'lens/_components/setup-banner' with {
-            checks: lens.getSetupStatus(),
-            title: 'Setup Required'|t('lens'),
-            description: 'Configure Lens to start analyzing your assets.'|t('lens')
-        } %}
-    {% else %}
-        <div class="lens-search-welcome">
-            <div class="lens-welcome-icon">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor" opacity="0.3">
-                    <path fill-rule="evenodd" d="M10.5 3.75a6.75 6.75 0 100 13.5 6.75 6.75 0 000-13.5zM2.25 10.5a8.25 8.25 0 1114.59 5.28l4.69 4.69a.75.75 0 11-1.06 1.06l-4.69-4.69A8.25 8.25 0 012.25 10.5z" clip-rule="evenodd"/>
-                </svg>
-            </div>
-            <h2>{{ 'Search Your Assets'|t('lens') }}</h2>
-            <p>{{ 'Search by alt text, title, extracted text, or tags. Use filters to narrow down results.'|t('lens') }}</p>
+    <div class="lens-search-welcome">
+        <div class="lens-welcome-icon">
+            {{ iconSvg('magnifying-glass') }}
         </div>
-    {% endif %}
+        <h2>{{ 'Search Your Assets'|t('lens') }}</h2>
+        <p>{{ 'Search by alt text, title, extracted text, or tags. Use filters to narrow down results.'|t('lens') }}</p>
+    </div>
 {% endif %}

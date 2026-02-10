@@ -7,15 +7,7 @@
     <div class="lens-bulk-page" data-lens-target="bulk-container"
          data-lens-initial-state="{{ initialState }}">
 
-        {# Show setup banner if AI provider not configured #}
-        {% if lens.hasCriticalIssues() %}
-            {% include 'lens/_components/setup-banner' with {
-                checks: lens.getSetupStatus(),
-                title: 'Setup Required'|t('lens'),
-                description: 'Configure Lens before processing assets.'|t('lens')
-            } %}
-        {% else %}
-            {# Stats Grid - Always visible #}
+        {# Stats Grid - Always visible #}
             <div class="lens-stats-grid" data-lens-target="stats-grid">
                 <div class="lens-stat-card">
                     <div class="lens-stat-value" data-lens-stat="totalImages">{{ stats.totalImages }}</div>
@@ -194,6 +186,5 @@
                     </a>
                 </div>
             </div>
-        {% endif %}
     </div>
 {% endblock %}

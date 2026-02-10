@@ -23,6 +23,23 @@ class ReviewController extends Controller
 {
     protected array|int|bool $allowAnonymous = false;
 
+    public function beforeAction($action): bool
+    {
+        if (!parent::beforeAction($action)) {
+            return false;
+        }
+
+        if (!Plugin::getInstance()->setupStatus->isAiProviderConfigured()) {
+            Craft::$app->getSession()->setError(
+                Craft::t('lens', 'Please configure an AI provider API key before using this feature.')
+            );
+            $this->redirect(UrlHelper::cpUrl('lens/settings'));
+            return false;
+        }
+
+        return true;
+    }
+
     public function actionIndex(): Response
     {
         $this->requireCpRequest();
