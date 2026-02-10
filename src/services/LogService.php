@@ -262,7 +262,7 @@ class LogService extends Component
         $jobParams = $data['params'] ?? [];
 
         if ($jobClass === null || !in_array($jobClass, self::RETRYABLE_JOB_CLASSES, true)) {
-            Logger::warning(LogCategory::JobFailed->value, "Refused to retry unknown job class: {$jobClass}");
+            Logger::warning(LogCategory::JobFailed, "Refused to retry unknown job class: {$jobClass}");
             return false;
         }
 

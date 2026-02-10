@@ -151,20 +151,28 @@ class BulkController extends Controller
             return $this->redirect('lens/bulk');
         }
 
-        // Reset status to pending
-        AssetAnalysisRecord::updateAll(
-            ['status' => AnalysisStatus::Pending->value],
-            ['status' => AnalysisStatus::Failed->value]
-        );
+        $transaction = Craft::$app->getDb()->beginTransaction();
 
-        // Start session tracking
-        $statusService = Plugin::getInstance()->bulkProcessingStatus;
-        $statusService->startSession();
+        try {
+            // Reset status to pending
+            AssetAnalysisRecord::updateAll(
+                ['status' => AnalysisStatus::Pending->value],
+                ['status' => AnalysisStatus::Failed->value]
+            );
 
-        // Queue for reprocessing with the specific failed asset IDs
-        Craft::$app->getQueue()->push(new BulkAnalyzeAssetsJob([
-            'failedAssetIds' => array_map('intval', $failedAssetIds),
-        ]));
+            // Start session tracking
+            $statusService = Plugin::getInstance()->bulkProcessingStatus;
+            $statusService->startSession();
+
+            // Queue for reprocessing — assets were already reset to Pending above,
+            // so loadData() will pick them up automatically
+            Craft::$app->getQueue()->push(new BulkAnalyzeAssetsJob());
+
+            $transaction->commit();
+        } catch (\Throwable $e) {
+            $transaction->rollBack();
+            throw $e;
+        }
 
         Logger::info(LogCategory::JobStarted, 'Retry failed analyses started from CP', context: ['failedCount' => count($failedAssetIds)]);
 

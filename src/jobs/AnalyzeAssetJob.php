@@ -17,6 +17,7 @@ use vitordiniz22\craftlens\Plugin;
 class AnalyzeAssetJob extends BaseJob
 {
     public int $assetId;
+    public int $ttr = 600;
 
     public function execute($queue): void
     {
