@@ -361,11 +361,10 @@ class ReviewController extends Controller
 
         // Load all pending reviews for bulk mode (up to 100)
         $pendingReviews = $reviewService->getPendingReviews(100, 0);
-        $assetIds = $this->extractIdsFromAnalyses($pendingReviews);
-        $analysisIds = array_map(fn($a) => $a->id, $pendingReviews);
+        $ids = $this->extractIdsFromAnalyses($pendingReviews);
 
-        $assets = Asset::find()->id($assetIds)->indexBy('id')->all();
-        $tagCounts = $this->getTagCounts($analysisIds);
+        $assets = Asset::find()->id($ids['assetIds'])->indexBy('id')->all();
+        $tagCounts = $this->getTagCounts($ids['analysisIds']);
 
         $items = $this->buildReviewItems($pendingReviews, $assets, $tagCounts);
 
