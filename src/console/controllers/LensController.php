@@ -7,14 +7,12 @@ namespace vitordiniz22\craftlens\console\controllers;
 use Craft;
 use craft\console\Controller;
 use craft\helpers\Console;
-use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\exceptions\AnalysisException;
 use vitordiniz22\craftlens\exceptions\ConfigurationException;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\jobs\BulkAnalyzeAssetsJob;
 use vitordiniz22\craftlens\Plugin;
-use vitordiniz22\craftlens\records\AssetAnalysisRecord;
 use yii\console\ExitCode;
 
 /**
@@ -157,28 +155,15 @@ class LensController extends Controller
             return ExitCode::OK;
         } catch (AnalysisException $e) {
             $this->stderr("API Error: {$e->getMessage()}\n", Console::FG_RED);
-            Craft::error([
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-            ], __METHOD__);
+            Logger::error(LogCategory::AssetProcessing, "Validation API error: {$e->getMessage()}", exception: $e);
             return ExitCode::CONFIG;
         } catch (ConfigurationException $e) {
             $this->stderr("Configuration Error: {$e->getMessage()}\n", Console::FG_RED);
-            Craft::error([
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-            ], __METHOD__);
+            Logger::error(LogCategory::Configuration, "Validation config error: {$e->getMessage()}", exception: $e);
             return ExitCode::CONFIG;
         } catch (\Throwable $e) {
             $this->stderr("Unexpected error: {$e->getMessage()}\n", Console::FG_RED);
-            Craft::error([
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString(),
-            ], __METHOD__);
+            Logger::error(LogCategory::Configuration, "Unexpected validation error: {$e->getMessage()}", exception: $e);
             return ExitCode::UNSPECIFIED_ERROR;
         }
     }
@@ -265,30 +250,13 @@ class LensController extends Controller
     {
         $this->stdout("Retrying failed analyses...\n");
 
-        $failedCount = AssetAnalysisRecord::find()
-            ->where(['status' => AnalysisStatus::Failed->value])
-            ->count();
-
-        if ($failedCount === 0) {
-            $this->stdout("No failed analyses found.\n", Console::FG_GREEN);
-            return ExitCode::OK;
-        }
-
-        $transaction = Craft::$app->getDb()->beginTransaction();
-
         try {
-            AssetAnalysisRecord::updateAll(
-                ['status' => AnalysisStatus::Pending->value],
-                ['status' => AnalysisStatus::Failed->value]
-            );
+            $failedCount = Plugin::getInstance()->assetAnalysis->retryAllFailed();
 
-            Craft::$app->getQueue()->push(new BulkAnalyzeAssetsJob([
-                'reprocess' => true,
-            ]));
-
-            Logger::info(LogCategory::JobStarted, "Retry failed analyses queued from console", context: ['failedCount' => (int) $failedCount]);
-
-            $transaction->commit();
+            if ($failedCount === 0) {
+                $this->stdout("No failed analyses found.\n", Console::FG_GREEN);
+                return ExitCode::OK;
+            }
 
             $this->stdout("Queued {$failedCount} failed analyses for retry.\n", Console::FG_GREEN);
             $this->stdout("Run ");
@@ -297,9 +265,8 @@ class LensController extends Controller
 
             return ExitCode::OK;
         } catch (\Throwable $e) {
-            $transaction->rollBack();
             $this->stderr("Failed to retry analyses: {$e->getMessage()}\n", Console::FG_RED);
-            Craft::error($e->getMessage(), __METHOD__);
+            Logger::error(LogCategory::AssetProcessing, "Failed to retry analyses: {$e->getMessage()}", exception: $e);
             return ExitCode::UNSPECIFIED_ERROR;
         }
     }

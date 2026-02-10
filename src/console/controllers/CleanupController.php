@@ -5,10 +5,7 @@ declare(strict_types=1);
 namespace vitordiniz22\craftlens\console\controllers;
 
 use craft\console\Controller;
-use vitordiniz22\craftlens\enums\AnalysisStatus;
-use vitordiniz22\craftlens\enums\LogCategory;
-use vitordiniz22\craftlens\helpers\Logger;
-use vitordiniz22\craftlens\records\AssetAnalysisRecord;
+use vitordiniz22\craftlens\Plugin;
 use yii\console\ExitCode;
 
 /**
@@ -26,35 +23,18 @@ class CleanupController extends Controller
      */
     public function actionStuckPending(int $minutes = 10): int
     {
-        $cutoffTime = time() - ($minutes * 60);
-        $cutoffDate = date('Y-m-d H:i:s', $cutoffTime);
+        $resetInfo = Plugin::getInstance()->assetAnalysis->resetStuckPending($minutes);
 
-        $stuckRecords = AssetAnalysisRecord::find()
-            ->where(['status' => AnalysisStatus::Pending->value])
-            ->andWhere(['<', 'dateUpdated', $cutoffDate])
-            ->all();
-
-        if (empty($stuckRecords)) {
+        if (empty($resetInfo)) {
             $this->stdout("No stuck pending records found.\n");
             return ExitCode::OK;
         }
 
-        $count = count($stuckRecords);
+        $count = count($resetInfo);
         $this->stdout("Found {$count} record(s) stuck in pending status for more than {$minutes} minutes.\n");
 
-        foreach ($stuckRecords as $record) {
-            $minutesStuck = (time() - $record->dateUpdated->getTimestamp()) / 60;
-
-            Logger::warning(
-                LogCategory::AssetProcessing,
-                "Resetting stuck pending record for asset {$record->assetId} (stuck for " . round($minutesStuck) . " minutes)",
-                $record->assetId
-            );
-
-            $record->status = AnalysisStatus::Failed->value;
-            $record->save();
-
-            $this->stdout("  - Reset asset {$record->assetId}\n");
+        foreach ($resetInfo as $info) {
+            $this->stdout("  - Reset asset {$info['assetId']} (stuck for {$info['minutesStuck']} minutes)\n");
         }
 
         $this->stdout("Done! Reset {$count} stuck record(s).\n");
@@ -69,35 +49,18 @@ class CleanupController extends Controller
      */
     public function actionStuckProcessing(int $minutes = 30): int
     {
-        $cutoffTime = time() - ($minutes * 60);
-        $cutoffDate = date('Y-m-d H:i:s', $cutoffTime);
+        $resetInfo = Plugin::getInstance()->assetAnalysis->resetStuckProcessing($minutes);
 
-        $stuckRecords = AssetAnalysisRecord::find()
-            ->where(['status' => AnalysisStatus::Processing->value])
-            ->andWhere(['<', 'dateUpdated', $cutoffDate])
-            ->all();
-
-        if (empty($stuckRecords)) {
+        if (empty($resetInfo)) {
             $this->stdout("No stuck processing records found.\n");
             return ExitCode::OK;
         }
 
-        $count = count($stuckRecords);
+        $count = count($resetInfo);
         $this->stdout("Found {$count} record(s) stuck in processing status for more than {$minutes} minutes.\n");
 
-        foreach ($stuckRecords as $record) {
-            $minutesStuck = (time() - $record->dateUpdated->getTimestamp()) / 60;
-
-            Logger::warning(
-                LogCategory::AssetProcessing,
-                "Resetting stuck processing record for asset {$record->assetId} (stuck for " . round($minutesStuck) . " minutes)",
-                $record->assetId
-            );
-
-            $record->status = AnalysisStatus::Failed->value;
-            $record->save();
-
-            $this->stdout("  - Reset asset {$record->assetId}\n");
+        foreach ($resetInfo as $info) {
+            $this->stdout("  - Reset asset {$info['assetId']} (stuck for {$info['minutesStuck']} minutes)\n");
         }
 
         $this->stdout("Done! Reset {$count} stuck record(s).\n");

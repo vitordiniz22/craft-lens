@@ -267,6 +267,67 @@ class DuplicateDetectionService extends Component
     }
 
     /**
+     * Get similar assets for display in the analysis panel.
+     *
+     * @return array<array{assetId: int, filename: string, thumbnailUrl: string, editUrl: string, similarity: float}>
+     */
+    public function getSimilarAssetsForDisplay(int $assetId, int $limit = 3): array
+    {
+        $duplicates = DuplicateGroupRecord::find()
+            ->where(['and',
+                ['resolvedAt' => null],
+                ['or',
+                    ['canonicalAssetId' => $assetId],
+                    ['duplicateAssetId' => $assetId],
+                ],
+            ])
+            ->orderBy(['similarity' => SORT_DESC])
+            ->limit($limit)
+            ->all();
+
+        if (empty($duplicates)) {
+            return [];
+        }
+
+        $otherAssetIds = array_map(function ($dup) use ($assetId) {
+            return $dup->canonicalAssetId == $assetId
+                ? $dup->duplicateAssetId
+                : $dup->canonicalAssetId;
+        }, $duplicates);
+
+        $otherAssets = \craft\elements\Asset::find()
+            ->id($otherAssetIds)
+            ->indexBy('id')
+            ->all();
+
+        $similarImages = [];
+
+        foreach ($duplicates as $dup) {
+            $otherAssetId = ($dup->canonicalAssetId == $assetId)
+                ? $dup->duplicateAssetId
+                : $dup->canonicalAssetId;
+
+            $otherAsset = $otherAssets[$otherAssetId] ?? null;
+
+            if ($otherAsset !== null) {
+                $thumbnailUrl = Craft::$app->getAssets()->getThumbUrl($otherAsset, 120, 120);
+
+                if ($thumbnailUrl !== null) {
+                    $similarImages[] = [
+                        'assetId' => $otherAssetId,
+                        'filename' => $otherAsset->filename,
+                        'thumbnailUrl' => $thumbnailUrl,
+                        'editUrl' => $otherAsset->getCpEditUrl(),
+                        'similarity' => $dup->similarity,
+                    ];
+                }
+            }
+        }
+
+        return $similarImages;
+    }
+
+    /**
      * Resolve a duplicate pair.
      */
     public function resolve(int $groupId, string $resolution, ?int $userId): bool

@@ -750,6 +750,142 @@ class AssetAnalysisService extends Component
     }
 
     /**
+     * Reset all failed analyses to pending and queue them for retry.
+     *
+     * @return int Number of records reset
+     */
+    public function retryAllFailed(): int
+    {
+        $failedCount = (int) AssetAnalysisRecord::find()
+            ->where(['status' => AnalysisStatus::Failed->value])
+            ->count();
+
+        if ($failedCount === 0) {
+            return 0;
+        }
+
+        $transaction = Craft::$app->getDb()->beginTransaction();
+
+        try {
+            AssetAnalysisRecord::updateAll(
+                ['status' => AnalysisStatus::Pending->value],
+                ['status' => AnalysisStatus::Failed->value]
+            );
+
+            Craft::$app->getQueue()->push(new BulkAnalyzeAssetsJob([
+                'reprocess' => true,
+            ]));
+
+            Logger::info(LogCategory::JobStarted, 'Retry failed analyses queued', context: ['failedCount' => $failedCount]);
+
+            $transaction->commit();
+        } catch (\Throwable $e) {
+            $transaction->rollBack();
+            throw $e;
+        }
+
+        return $failedCount;
+    }
+
+    /**
+     * Reset records stuck in pending status beyond the given threshold.
+     *
+     * @return array<array{assetId: int, minutesStuck: int}> Info about reset records
+     */
+    public function resetStuckPending(int $minutes = 10): array
+    {
+        $cutoffDate = date('Y-m-d H:i:s', time() - ($minutes * 60));
+
+        $stuckRecords = AssetAnalysisRecord::find()
+            ->where(['status' => AnalysisStatus::Pending->value])
+            ->andWhere(['<', 'dateUpdated', $cutoffDate])
+            ->all();
+
+        if (empty($stuckRecords)) {
+            return [];
+        }
+
+        $resetInfo = [];
+        $assetIds = [];
+
+        foreach ($stuckRecords as $record) {
+            $dateUpdated = $record->dateUpdated instanceof \DateTime
+                ? $record->dateUpdated
+                : new \DateTime($record->dateUpdated);
+
+            $minutesStuck = (int) round((time() - $dateUpdated->getTimestamp()) / 60);
+
+            Logger::warning(
+                LogCategory::AssetProcessing,
+                "Resetting stuck pending record for asset {$record->assetId} (stuck for {$minutesStuck} minutes)",
+                $record->assetId
+            );
+
+            $assetIds[] = $record->assetId;
+            $resetInfo[] = [
+                'assetId' => $record->assetId,
+                'minutesStuck' => $minutesStuck,
+            ];
+        }
+
+        AssetAnalysisRecord::updateAll(
+            ['status' => AnalysisStatus::Failed->value],
+            ['assetId' => $assetIds, 'status' => AnalysisStatus::Pending->value]
+        );
+
+        return $resetInfo;
+    }
+
+    /**
+     * Reset records stuck in processing status beyond the given threshold.
+     *
+     * @return array<array{assetId: int, minutesStuck: int}> Info about reset records
+     */
+    public function resetStuckProcessing(int $minutes = 30): array
+    {
+        $cutoffDate = date('Y-m-d H:i:s', time() - ($minutes * 60));
+
+        $stuckRecords = AssetAnalysisRecord::find()
+            ->where(['status' => AnalysisStatus::Processing->value])
+            ->andWhere(['<', 'dateUpdated', $cutoffDate])
+            ->all();
+
+        if (empty($stuckRecords)) {
+            return [];
+        }
+
+        $resetInfo = [];
+        $assetIds = [];
+
+        foreach ($stuckRecords as $record) {
+            $dateUpdated = $record->dateUpdated instanceof \DateTime
+                ? $record->dateUpdated
+                : new \DateTime($record->dateUpdated);
+
+            $minutesStuck = (int) round((time() - $dateUpdated->getTimestamp()) / 60);
+
+            Logger::warning(
+                LogCategory::AssetProcessing,
+                "Resetting stuck processing record for asset {$record->assetId} (stuck for {$minutesStuck} minutes)",
+                $record->assetId
+            );
+
+            $assetIds[] = $record->assetId;
+            $resetInfo[] = [
+                'assetId' => $record->assetId,
+                'minutesStuck' => $minutesStuck,
+            ];
+        }
+
+        AssetAnalysisRecord::updateAll(
+            ['status' => AnalysisStatus::Failed->value],
+            ['assetId' => $assetIds, 'status' => AnalysisStatus::Processing->value]
+        );
+
+        return $resetInfo;
+    }
+
+    /**
      * Get all distinct stock providers detected in the library.
      *
      * @return array<string, string> provider => Provider Label
