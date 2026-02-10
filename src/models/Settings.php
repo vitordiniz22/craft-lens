@@ -17,7 +17,7 @@ class Settings extends Model
     // API Configuration
     public string $aiProvider = 'openai';
     public string $openaiApiKey = '';
-    public string $openaiModel = 'gpt-5.2';
+    public string $openaiModel = 'gpt-5-mini';
     public string $geminiApiKey = '';
     public string $geminiModel = 'gemini-2.5-flash';
 
@@ -28,7 +28,7 @@ class Settings extends Model
     // Processing Options
     public bool $autoProcessOnUpload = true;
     public bool $reprocessOnFileReplace = true;
-    public bool $requireReviewBeforeApply = false;
+    public bool $requireReviewBeforeApply = true;
 
     // Volume Settings
     public array $enabledVolumes = ['*'];
@@ -81,7 +81,7 @@ class Settings extends Model
             'claudeModel' => Craft::t('lens', 'Claude Model'),
             'autoProcessOnUpload' => Craft::t('lens', 'Auto-Process on Upload'),
             'reprocessOnFileReplace' => Craft::t('lens', 'Reprocess on File Replace'),
-            'requireReviewBeforeApply' => Craft::t('lens', 'Require Review Before Apply'),
+            'requireReviewBeforeApply' => Craft::t('lens', 'Require Human Review'),
             'enabledVolumes' => Craft::t('lens', 'Enabled Volumes'),
         ];
     }
