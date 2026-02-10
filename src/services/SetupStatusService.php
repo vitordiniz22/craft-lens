@@ -7,6 +7,7 @@ namespace vitordiniz22\craftlens\services;
 use Craft;
 use vitordiniz22\craftlens\enums\AiProvider;
 use vitordiniz22\craftlens\enums\SetupSeverity;
+use vitordiniz22\craftlens\fieldlayoutelements\LensAnalysisElement;
 use vitordiniz22\craftlens\models\Settings;
 use vitordiniz22\craftlens\Plugin;
 use yii\base\Component;
@@ -19,6 +20,7 @@ class SetupStatusService extends Component
 {
     public const CATEGORY_AI_PROVIDER = 'ai_provider';
     public const CATEGORY_VOLUMES = 'volumes';
+    public const CATEGORY_FIELD_LAYOUT = 'field_layout';
 
     /**
      * Get all setup status checks.
@@ -34,6 +36,9 @@ class SetupStatusService extends Component
 
         // Volume checks
         $checks[] = $this->checkVolumesEnabled();
+
+        // Field layout checks
+        $checks[] = $this->checkAnalysisPanelConfigured();
 
         return $checks;
     }
@@ -156,6 +161,41 @@ class SetupStatusService extends Component
     }
 
     /**
+     * Check if the Analysis Panel is added to at least one enabled volume's field layout.
+     */
+    public function isAnalysisPanelConfigured(): bool
+    {
+        $settings = $this->getSettings();
+        $enabledVolumeUids = $settings->enabledVolumes ?? [];
+
+        if (empty($enabledVolumeUids)) {
+            return false;
+        }
+
+        foreach (Craft::$app->getVolumes()->getAllVolumes() as $volume) {
+            if (!in_array($volume->uid, $enabledVolumeUids, true)) {
+                continue;
+            }
+
+            $fieldLayout = $volume->getFieldLayout();
+
+            if ($fieldLayout === null) {
+                continue;
+            }
+
+            foreach ($fieldLayout->getTabs() as $tab) {
+                foreach ($tab->getElements() as $element) {
+                    if ($element instanceof LensAnalysisElement) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Check if at least one volume is enabled.
      */
     public function hasEnabledVolumes(): bool
@@ -203,6 +243,23 @@ class SetupStatusService extends Component
                 : Craft::t('lens', 'No asset volumes are enabled for processing. Enable at least one volume.'),
             'actionLabel' => Craft::t('lens', 'Configure Volumes'),
             'actionUrl' => 'lens/settings#volumes',
+            'isResolved' => $isResolved,
+        ];
+    }
+
+    private function checkAnalysisPanelConfigured(): array
+    {
+        $isResolved = $this->isAnalysisPanelConfigured();
+
+        return [
+            'key' => 'analysis_panel_added',
+            'category' => self::CATEGORY_FIELD_LAYOUT,
+            'severity' => SetupSeverity::Warning->value,
+            'message' => $isResolved
+                ? Craft::t('lens', 'Analysis Panel is configured.')
+                : Craft::t('lens', 'Analysis Panel has not been added to any volume field layout.'),
+            'actionLabel' => Craft::t('lens', 'Add to Field Layout'),
+            'actionUrl' => 'settings/assets',
             'isResolved' => $isResolved,
         ];
     }

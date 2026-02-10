@@ -8,18 +8,7 @@
   background: var(--gray-050);
   border: 1px solid var(--hairline-color);
   border-radius: var(--large-border-radius);
-  padding: 20px 24px;
-  margin-bottom: 24px;
-}
-
-.lens-setup-banner--critical {
-  background: var(--red-050);
-  border-color: var(--red-200);
-}
-
-.lens-setup-banner--warning {
-  background: var(--amber-050);
-  border-color: var(--amber-200);
+  padding: 20px;
 }
 
 .lens-setup-banner--info {
@@ -58,14 +47,13 @@
   height: 28px;
   border-radius: 50%;
   background: var(--error-color);
-  color: white;
-  font-size: 14px;
-  font-weight: 700;
   flex-shrink: 0;
 }
 
-.lens-setup-banner--warning .lens-setup-banner-icon {
-  background: var(--warning-color);
+.lens-setup-banner-icon svg {
+  width: 16px;
+  height: 16px;
+  fill: white;
 }
 
 .lens-setup-banner--info .lens-setup-banner-icon {

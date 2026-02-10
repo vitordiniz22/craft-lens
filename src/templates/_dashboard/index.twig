@@ -17,26 +17,28 @@
         } %}
     {% endif %}
 
-    {# Section 1: Needs Attention (conditional) #}
-    {% include 'lens/_dashboard/_attention' %}
+    {% if not hasCriticalIssues %}
+        {# Section 1: Needs Attention (conditional) #}
+        {% include 'lens/_dashboard/_attention' %}
 
-    {# Section 2: Processing Status (always visible) #}
-    {% include 'lens/_dashboard/_processing-status' %}
+        {# Section 2: Processing Status (always visible) #}
+        {% include 'lens/_dashboard/_processing-status' %}
 
-    {# Section 3: Library Health (always visible) #}
-    {% include 'lens/_dashboard/_library-health' %}
+        {# Section 3: Library Health (always visible) #}
+        {% include 'lens/_dashboard/_library-health' %}
 
-    {# Section 4: Quick Actions #}
-    {% include 'lens/_dashboard/_quick-actions' %}
+        {# Section 4: Quick Actions #}
+        {% include 'lens/_dashboard/_quick-actions' %}
 
-    {# Section 5: Quick Insights (conditional) #}
-    {% include 'lens/_dashboard/_quick-insights' %}
+        {# Section 5: Quick Insights (conditional) #}
+        {% include 'lens/_dashboard/_quick-insights' %}
 
-    {# Section 6: Recent Activity #}
-    {% include 'lens/_dashboard/_recent-activity' %}
+        {# Section 6: Recent Activity #}
+        {% include 'lens/_dashboard/_recent-activity' %}
 
-    {# Section 7: Usage (collapsed) #}
-    {% include 'lens/_dashboard/_usage' %}
+        {# Section 7: Usage (collapsed) #}
+        {% include 'lens/_dashboard/_usage' %}
+    {% endif %}
 </div>
 
 {% endblock %}

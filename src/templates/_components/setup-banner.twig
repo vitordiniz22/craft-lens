@@ -22,10 +22,10 @@
 {% set bannerDismissKey = dismissKey ?? 'setup-banner' %}
 
 {% if unresolvedChecks|length > 0 or (showCompleted ?? false and resolvedChecks|length > 0) %}
-<div class="lens-setup-banner {{ hasCritical ? 'lens-setup-banner--critical' : (hasWarning ? 'lens-setup-banner--warning' : (hasInfo ? 'lens-setup-banner--info' : '')) }}"
+<div class="lens-setup-banner {{ hasInfo ? 'lens-setup-banner--info' : '' }}"
      {% if canDismiss %}data-lens-dismissible="{{ bannerDismissKey }}"{% endif %}>
     <div class="lens-setup-banner-header">
-        <div class="lens-setup-banner-icon">!</div>
+        <div class="lens-setup-banner-icon">{{ iconSvg('triangle-exclamation') }}</div>
         <h3 class="lens-setup-banner-title">{{ title ?? 'Setup Required'|t('lens') }}</h3>
         {% if canDismiss %}
             <button type="button" class="lens-banner-dismiss" data-lens-dismiss title="{{ 'Dismiss'|t('lens') }}">
@@ -59,7 +59,7 @@
                     <span class="lens-setup-item-text">{{ check.message }}</span>
                 </div>
                 <div class="lens-setup-item-action">
-                    <a href="{{ cpUrl(check.actionUrl) }}" class="btn small">
+                    <a href="{{ cpUrl(check.actionUrl) }}" class="btn small {{ check.severity == 'critical' ? 'caution' }}">
                         {{ check.actionLabel }}
                     </a>
                 </div>

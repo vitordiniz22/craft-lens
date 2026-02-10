@@ -6,11 +6,9 @@
 /* Dashboard Layout */
 .lens-dashboard-page {
     max-width: 900px;
-}
-
-/* Section Spacing */
-.lens-dashboard-section {
-    margin-bottom: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
 }
 
 .lens-section-title {
@@ -25,10 +23,6 @@
 /* ==========================================================================
    Section 1: Needs Attention
    ========================================================================== */
-
-.lens-attention {
-    margin-bottom: 24px;
-}
 
 .lens-attention__cards {
     display: flex;
@@ -194,10 +188,6 @@
 /* ==========================================================================
    Section 4: Quick Actions
    ========================================================================== */
-
-.lens-actions {
-    margin-bottom: 24px;
-}
 
 .lens-actions__grid {
     display: flex;
