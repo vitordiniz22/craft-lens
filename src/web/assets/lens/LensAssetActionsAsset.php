@@ -12,7 +12,13 @@ class LensAssetActionsAsset extends AssetBundle
     {
         $this->sourcePath = __DIR__ . '/dist';
         $this->depends = [LensAsset::class];
-        $this->js = ['js/lens-asset-actions.js'];
+        $this->js = [
+            'js/components/lens-inline-editor.js',
+            'js/components/lens-tag-editor.js',
+            'js/components/lens-color-editor.js',
+            'js/components/lens-safety-flags.js',
+            'js/pages/lens-analysis-panel.js',
+        ];
 
         parent::init();
     }

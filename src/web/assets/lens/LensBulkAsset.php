@@ -12,7 +12,7 @@ class LensBulkAsset extends AssetBundle
     {
         $this->sourcePath = __DIR__ . '/dist';
         $this->depends = [LensAsset::class];
-        $this->js = ['js/lens-bulk.js'];
+        $this->js = ['js/pages/lens-bulk-processing.js'];
 
         parent::init();
     }

@@ -467,9 +467,9 @@ class ReviewController extends Controller
                 'filename' => $asset->filename,
                 'suggestedTitle' => $analysis->suggestedTitle,
                 'avgConfidence' => $this->calculateAverageConfidence(
-                    $analysis->titleConfidence,
-                    $analysis->altTextConfidence,
-                    $analysis->longDescriptionConfidence
+                    $analysis->titleConfidence !== null ? (float) $analysis->titleConfidence : null,
+                    $analysis->altTextConfidence !== null ? (float) $analysis->altTextConfidence : null,
+                    $analysis->longDescriptionConfidence !== null ? (float) $analysis->longDescriptionConfidence : null
                 ),
                 'tagCount' => $tagCounts[$analysis->id] ?? 0,
             ];

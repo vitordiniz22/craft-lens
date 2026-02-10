@@ -37,7 +37,18 @@ class LensAsset extends AssetBundle
             'css/lens-review.css',
             'css/lens-dashboard.css',
         ];
-        $this->js = ['js/lens-base.js'];
+        $this->js = [
+            'js/lens-base.js',
+            'js/lens-config.js',
+            'js/core/lens-utils.js',
+            'js/core/lens-dom.js',
+            'js/core/lens-button-state.js',
+            'js/core/lens-api.js',
+            'js/services/lens-people-detection-service.js',
+            'js/services/lens-taxonomy-service.js',
+            'js/services/lens-asset-processing-service.js',
+            'js/components/lens-dismissible-notices.js',
+        ];
 
         parent::init();
     }

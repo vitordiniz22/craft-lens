@@ -56,21 +56,6 @@ class StatisticsService extends Component
     }
 
     /**
-     * Get count of analyzed assets missing alt text.
-     */
-    public function getMissingAltTextCount(): int
-    {
-        return (int) AssetAnalysisRecord::find()
-            ->where(['in', 'status', AnalysisStatus::analyzedValues()])
-            ->andWhere([
-                'or',
-                ['altText' => null],
-                ['altText' => ''],
-            ])
-            ->count();
-    }
-
-    /**
      * Get top tags by frequency.
      */
     public function getTopTags(int $limit = 10): array
@@ -85,13 +70,6 @@ class StatisticsService extends Component
             ->count();
     }
 
-    private function getAnalyzedCount(): int
-    {
-        return (int) AssetAnalysisRecord::find()
-            ->where(['in', 'status', AnalysisStatus::analyzedValues()])
-            ->count();
-    }
-
     private function getUnprocessedCount(): int
     {
         return Plugin::getInstance()->assetAnalysis->getUnprocessedCount();
@@ -100,20 +78,6 @@ class StatisticsService extends Component
     public function getPendingReviewCount(): int
     {
         return Plugin::getInstance()->review->getPendingReviewCount();
-    }
-
-    private function getApprovedCount(): int
-    {
-        return (int) AssetAnalysisRecord::find()
-            ->where(['status' => AnalysisStatus::Approved->value])
-            ->count();
-    }
-
-    private function getRejectedCount(): int
-    {
-        return (int) AssetAnalysisRecord::find()
-            ->where(['status' => AnalysisStatus::Rejected->value])
-            ->count();
     }
 
     public function getFailedCount(): int

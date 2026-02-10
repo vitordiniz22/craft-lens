@@ -12,7 +12,10 @@ class LensReviewAsset extends AssetBundle
     {
         $this->sourcePath = __DIR__ . '/dist';
         $this->depends = [LensAsset::class];
-        $this->js = ['js/lens-review.js'];
+        $this->js = [
+            'js/components/lens-focal-point-editor.js',
+            'js/pages/lens-review-page.js',
+        ];
 
         parent::init();
     }
