@@ -50,12 +50,16 @@
 
 /* Animated variant (gradient + shimmer) */
 .lens-progress--animated .lens-progress-fill {
-  background: linear-gradient(90deg, var(--link-color) 0%, var(--green-600) 100%);
+  background: linear-gradient(
+    90deg,
+    var(--link-color) 0%,
+    var(--green-600) 100%
+  );
   position: relative;
 }
 
 .lens-progress--animated .lens-progress-fill::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -68,9 +72,4 @@
     transparent 100%
   );
   animation: lens-progress-shimmer 1.5s infinite;
-}
-
-@keyframes lens-progress-shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
 }

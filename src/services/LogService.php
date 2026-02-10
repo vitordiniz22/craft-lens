@@ -253,6 +253,11 @@ class LogService extends Component
             ? json_decode($record->retryJobData, true)
             : $record->retryJobData;
 
+        if (!is_array($data)) {
+            Logger::warning(LogCategory::JobFailed, 'Invalid JSON in retry job data', context: ['logId' => $logId]);
+            return false;
+        }
+
         $jobClass = $data['class'] ?? null;
         $jobParams = $data['params'] ?? [];
 

@@ -18,13 +18,13 @@
                     </div>
                     <div class="lens-result-info">
                         <div class="lens-result-title">{{ item.suggestedTitle ?: item.filename }}</div>
-                        <div class="lens-browse-card-meta">
+                        <div class="lens-browse-card__meta">
                             {% if item.avgConfidence >= 0.8 %}
-                                <span class="lens-confidence-badge lens-confidence-high">{{ (item.avgConfidence * 100)|round }}%</span>
+                                <span class="lens-confidence-badge lens-confidence-badge--high">{{ (item.avgConfidence * 100)|round }}%</span>
                             {% elseif item.avgConfidence >= 0.5 %}
-                                <span class="lens-confidence-badge lens-confidence-medium">{{ (item.avgConfidence * 100)|round }}%</span>
+                                <span class="lens-confidence-badge lens-confidence-badge--medium">{{ (item.avgConfidence * 100)|round }}%</span>
                             {% else %}
-                                <span class="lens-confidence-badge lens-confidence-low">{{ (item.avgConfidence * 100)|round }}%</span>
+                                <span class="lens-confidence-badge lens-confidence-badge--low">{{ (item.avgConfidence * 100)|round }}%</span>
                             {% endif %}
                             <span class="lens-tag-count">{{ item.tagCount }} {{ 'tags'|t('lens') }}</span>
                         </div>
@@ -34,7 +34,7 @@
         </div>
 
         {% if totalPages > 1 %}
-            <div class="lens-browse-pagination">
+            <div class="lens-browse-pagination lens-flex-center lens-gap-16">
                 {% if page > 1 %}
                     <a href="{{ cpUrl('lens/review', {page: page - 1}) }}" class="btn small">
                         &larr; {{ 'Previous'|t('lens') }}

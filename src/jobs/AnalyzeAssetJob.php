@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace vitordiniz22\craftlens\jobs;
 
 use craft\elements\Asset;
-use craft\i18n\Translation;
 use craft\queue\BaseJob;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\Logger;
@@ -47,8 +46,6 @@ class AnalyzeAssetJob extends BaseJob
 
     protected function defaultDescription(): ?string
     {
-        return Translation::prep('lens', 'Analyzing asset {id}', [
-            'id' => $this->assetId,
-        ]);
+        return Craft::t('lens', 'Analyzing asset {id}', ['id' => $this->assetId]);
     }
 }

@@ -181,6 +181,12 @@ class SearchController extends Controller
             throw new BadRequestHttpException('Invalid group ID');
         }
 
+        $allowedResolutions = ['kept', 'deleted', 'ignored'];
+
+        if (!in_array($resolution, $allowedResolutions, true)) {
+            throw new BadRequestHttpException('Invalid resolution value');
+        }
+
         $userId = Craft::$app->getUser()->getId();
         $success = Plugin::getInstance()->duplicateDetection->resolve($groupId, $resolution, $userId);
 

@@ -18,24 +18,32 @@ class LensAsset extends AssetBundle
         $this->sourcePath = __DIR__ . '/dist';
         $this->depends = [CpAsset::class];
         $this->css = [
-            'css/lens.css',
-            'css/components/badge.css',
-            'css/components/swatch.css',
-            'css/components/card.css',
-            'css/components/progress-bar.css',
-            'css/components/stat-card.css',
+            // Base (must load first)
+            'css/base/lens.css',
+            'css/base/utilities.css',
+            'css/base/animations.css',
+
+            // Components (alphabetical)
             'css/components/alert-section.css',
-            'css/components/inline-notice.css',
+            'css/components/badge.css',
+            'css/components/card.css',
+            'css/components/confidence-badge.css',
             'css/components/empty-state.css',
+            'css/components/inline-notice.css',
+            'css/components/progress-bar.css',
             'css/components/setup-banner.css',
+            'css/components/stat-card.css',
             'css/components/stats-grid.css',
-            'css/lens-analysis.css',
-            'css/lens-statistics.css',
-            'css/lens-widgets.css',
-            'css/lens-search.css',
-            'css/lens-bulk.css',
-            'css/lens-review.css',
-            'css/lens-dashboard.css',
+            'css/components/swatch.css',
+
+            // Pages (alphabetical)
+            'css/pages/lens-analysis.css',
+            'css/pages/lens-bulk.css',
+            'css/pages/lens-dashboard.css',
+            'css/pages/lens-review.css',
+            'css/pages/lens-search.css',
+            'css/pages/lens-statistics.css',
+            'css/pages/lens-widgets.css',
         ];
         $this->js = [
             'js/lens-base.js',

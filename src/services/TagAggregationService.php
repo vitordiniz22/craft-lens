@@ -33,7 +33,7 @@ class TagAggregationService extends Component
      */
     public function searchTags(string $query, int $limit = 10): array
     {
-        $query = mb_strtolower(trim($query));
+        $query = $this->normalizeQuery($query);
 
         if ($query === '') {
             return [];
@@ -81,5 +81,13 @@ class TagAggregationService extends Component
         return array_map(function ($row) {
             return ['tag' => $row['tag'], 'count' => (int) $row['count']];
         }, $results);
+    }
+
+    /**
+     * Normalize a tag query string.
+     */
+    private function normalizeQuery(string $query): string
+    {
+        return mb_strtolower(trim($query));
     }
 }

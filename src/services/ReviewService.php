@@ -39,11 +39,7 @@ class ReviewService extends Component
         }
 
         $record->status = AnalysisStatus::Approved->value;
-
-        if (!$record->save()) {
-            $errors = implode(', ', $record->getErrorSummary(true));
-            throw new \RuntimeException("Failed to save analysis record {$analysisId}: {$errors}");
-        }
+        $this->validateRecordSave($record, $analysisId);
 
         Logger::info(LogCategory::Review, 'Analysis approved', assetId: $record->assetId);
     }
@@ -63,11 +59,7 @@ class ReviewService extends Component
         }
 
         $record->status = AnalysisStatus::Rejected->value;
-
-        if (!$record->save()) {
-            $errors = implode(', ', $record->getErrorSummary(true));
-            throw new \RuntimeException("Failed to save analysis record {$analysisId}: {$errors}");
-        }
+        $this->validateRecordSave($record, $analysisId);
 
         Logger::info(LogCategory::Review, 'Analysis rejected', assetId: $record->assetId);
     }
@@ -231,11 +223,7 @@ class ReviewService extends Component
         }
 
         $record->dateUpdated = DateTimeHelper::now();
-
-        if (!$record->save()) {
-            $errors = implode(', ', $record->getErrorSummary(true));
-            throw new \RuntimeException("Failed to save analysis record {$analysisId}: {$errors}");
-        }
+        $this->validateRecordSave($record, $analysisId);
     }
 
     /**
@@ -435,4 +423,16 @@ class ReviewService extends Component
         ];
     }
 
+    /**
+     * Validate that a record was saved successfully and throw exception if not.
+     *
+     * @throws \RuntimeException If save failed
+     */
+    private function validateRecordSave(AssetAnalysisRecord $record, int $analysisId): void
+    {
+        if (!$record->save()) {
+            $errors = implode(', ', $record->getErrorSummary(true));
+            throw new \RuntimeException("Failed to save analysis record {$analysisId}: {$errors}");
+        }
+    }
 }

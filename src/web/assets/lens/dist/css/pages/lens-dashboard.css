@@ -1,6 +1,6 @@
 /**
  * Dashboard Page
- * Migrated from _dashboard/_styles.twig into the asset bundle.
+ * Strict BEM naming convention: .lens-block__element--modifier
  */
 
 /* Dashboard Layout */
@@ -12,6 +12,7 @@
 .lens-dashboard-section {
     margin-bottom: 24px;
 }
+
 .lens-section-title {
     font-size: 12px;
     font-weight: 600;
@@ -21,21 +22,20 @@
     letter-spacing: 0.5px;
 }
 
-/* ==========================================
+/* ==========================================================================
    Section 1: Needs Attention
-   ========================================== */
-.lens-attention-section {
+   ========================================================================== */
+
+.lens-attention {
     margin-bottom: 24px;
 }
-.lens-attention-cards {
+
+.lens-attention__cards {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
 }
-.lens-attention-card {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+
+.lens-attention__card {
     padding: 10px 16px;
     background: var(--gray-050);
     border-left: 3px solid var(--link-color);
@@ -43,70 +43,74 @@
     border-radius: var(--medium-border-radius);
     transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
-.lens-attention-card:hover {
+
+.lens-attention__card:hover {
     transform: translateY(-2px);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     text-decoration: none;
 }
-.lens-attention-icon {
+
+.lens-attention__icon {
     color: var(--medium-text-color);
 }
-.lens-attention-count {
+
+.lens-attention__count {
     font-size: 20px;
     font-weight: 700;
     color: var(--text-color);
 }
-.lens-attention-label {
+
+.lens-attention__label {
     font-size: 13px;
     color: var(--medium-text-color);
 }
 
-/* ==========================================
+/* ==========================================================================
    Section 2: Processing Status
-   ========================================== */
-.lens-processing-section {
+   ========================================================================== */
+
+.lens-processing {
     padding: 20px;
 }
-.lens-processing-status {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-.lens-progress-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-}
-.lens-progress-label {
+
+
+
+.lens-processing__progress-label {
     font-weight: 600;
     color: var(--link-color);
 }
-.lens-progress-text {
+
+.lens-processing__progress-text {
     font-size: 14px;
     color: var(--text-color);
 }
-.lens-progress-estimate {
+
+.lens-processing__estimate {
     font-size: 12px;
     color: var(--medium-text-color);
 }
-.lens-processing-actions {
+
+.lens-processing__actions {
     display: flex;
     justify-content: flex-start;
     margin-top: 4px;
 }
-.lens-waiting-info {
+
+.lens-processing__waiting-info {
     font-size: 13px;
 }
-.lens-waiting-count {
+
+.lens-processing__waiting-count {
     color: var(--warning-color);
     font-weight: 500;
 }
-.lens-processing-complete .lens-progress-header {
+
+.lens-processing--complete .lens-processing__progress-header {
     justify-content: flex-start;
     gap: 8px;
 }
-.lens-processing-complete-icon {
+
+.lens-processing__complete-icon {
     color: var(--success-color);
     display: inline-flex;
     align-items: center;
@@ -114,99 +118,114 @@
     height: 16px;
     flex-shrink: 0;
 }
-.lens-processing-complete-icon svg {
+
+.lens-processing__complete-icon svg {
     width: 16px !important;
     height: 16px !important;
     max-width: 16px;
     max-height: 16px;
 }
 
-/* ==========================================
+/* ==========================================================================
    Section 3: Library Health
-   ========================================== */
-.lens-health-section {
+   ========================================================================== */
+
+.lens-health {
     padding: 20px;
 }
-.lens-health-metrics {
+
+.lens-health__metrics {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 24px;
 }
-.lens-health-metric {
+
+.lens-health__metric {
     min-width: 0;
 }
-.lens-metric-header {
+
+.lens-health__metric-header {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
     margin-bottom: 4px;
 }
-.lens-metric-label {
+
+.lens-health__metric-label {
     font-size: 12px;
     color: var(--medium-text-color);
 }
-.lens-metric-label--lg {
+
+.lens-health__metric-label--lg {
     font-size: 13px;
 }
-.lens-metric-value {
+
+.lens-health__metric-value {
     font-size: 20px;
     font-weight: 600;
     color: var(--text-color);
 }
-.lens-metric-value.lens-metric--good {
+
+.lens-health__metric-value--good {
     color: var(--success-color);
 }
-.lens-metric-value.lens-metric--warning {
+
+.lens-health__metric-value--warning {
     color: var(--warning-color);
 }
-.lens-metric-detail {
+
+.lens-health__metric-detail {
     font-size: 12px;
     color: var(--light-text-color);
-    display: flex;
-    align-items: center;
-    gap: 8px;
 }
-.lens-metric-counts {
+
+.lens-health__metric-counts {
     color: var(--medium-text-color);
 }
-.lens-metric-link {
+
+.lens-health__metric-link {
     color: var(--link-color);
     text-decoration: none;
 }
-.lens-metric-link:hover {
+
+.lens-health__metric-link:hover {
     text-decoration: underline;
 }
 
-/* ==========================================
+/* ==========================================================================
    Section 4: Quick Actions
-   ========================================== */
-.lens-actions-section {
+   ========================================================================== */
+
+.lens-actions {
     margin-bottom: 24px;
 }
-.lens-quick-actions {
+
+.lens-actions__grid {
     display: flex;
-    gap: 12px;
     flex-wrap: wrap;
 }
-.lens-action-form {
+
+.lens-actions__form {
     display: inline;
 }
 
-/* ==========================================
+/* ==========================================================================
    Section 5: Quick Insights
-   ========================================== */
-.lens-insights-section {
+   ========================================================================== */
+
+.lens-insights {
     padding: 20px;
 }
-.lens-insights-grid {
+
+.lens-insights__grid {
     display: grid;
     grid-template-columns: 2fr 1fr;
-    gap: 24px;
 }
-.lens-insight-block {
+
+.lens-insights__block {
     min-width: 0;
 }
-.lens-insight-label {
+
+.lens-insights__label {
     font-size: 12px;
     font-weight: 600;
     color: var(--medium-text-color);
@@ -214,79 +233,92 @@
     text-transform: uppercase;
     letter-spacing: 0.3px;
 }
+
 /* Badge spacing within chips */
 .inline-chips .chip .badge {
     margin-left: 4px;
 }
-.lens-colors-compact {
+
+.lens-insights__colors {
     display: flex;
-    gap: 8px;
 }
-/* ==========================================
+
+/* ==========================================================================
    Section 6: Recent Activity
-   ========================================== */
-.lens-activity-section {
+   ========================================================================== */
+
+.lens-activity {
     padding: 20px;
 }
-.lens-activity-feed {
+
+.lens-activity__feed {
     list-style: none;
     padding: 0;
     margin: 0;
 }
-.lens-activity-item {
+
+.lens-activity__item {
     padding: 8px 0;
     border-bottom: 1px solid var(--hairline-color);
     font-size: 13px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
 }
-.lens-activity-item:last-child {
+
+.lens-activity__item:last-child {
     border-bottom: none;
 }
-.lens-activity-time {
+
+.lens-activity__time {
     color: var(--medium-text-color);
     flex-shrink: 0;
 }
-.lens-activity-separator {
+
+.lens-activity__separator {
     color: var(--light-text-color);
 }
-.lens-activity-link {
+
+.lens-activity__link {
     color: var(--link-color);
     text-decoration: none;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
-.lens-activity-link:hover {
+
+.lens-activity__link:hover {
     text-decoration: underline;
 }
-.lens-activity-filename {
+
+.lens-activity__filename {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
-.lens-activity-action {
+
+.lens-activity__action {
     color: var(--medium-text-color);
     flex-shrink: 0;
 }
-.lens-activity-item.lens-activity-failed .lens-activity-action {
+
+.lens-activity__item--failed .lens-activity__action {
     color: var(--error-color);
 }
 
-/* ==========================================
+/* ==========================================================================
    Section 7: Enhanced Usage
-   ========================================== */
-.lens-usage-section {
+   ========================================================================== */
+
+.lens-usage {
     padding: 20px;
 }
-.lens-usage-grid {
+
+.lens-usage__grid {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     gap: 24px;
     margin-bottom: 16px;
 }
-.lens-usage-column-header {
+
+.lens-usage__column-header {
     font-size: 12px;
     font-weight: 600;
     color: var(--medium-text-color);
@@ -294,61 +326,68 @@
     letter-spacing: 0.3px;
     margin-bottom: 8px;
 }
-.lens-usage-value {
+
+.lens-usage__value {
     font-size: 14px;
     color: var(--text-color);
     margin-bottom: 4px;
 }
-.lens-usage-delta {
+
+.lens-usage__delta {
     font-size: 14px;
     font-weight: 500;
     margin-bottom: 4px;
 }
-.lens-delta--positive {
+
+.lens-usage__delta--positive {
     color: var(--success-color);
 }
-.lens-delta--negative {
+
+.lens-usage__delta--negative {
     color: var(--error-color);
 }
-.lens-usage-footer {
+
+.lens-usage__footer {
     font-size: 13px;
     color: var(--medium-text-color);
     padding-top: 12px;
     border-top: 1px solid var(--hairline-color);
 }
-.lens-usage-separator {
+
+.lens-usage__separator {
     margin: 0 8px;
     color: var(--light-text-color);
 }
 
-/* ==========================================
+/* ==========================================================================
    Responsive
-   ========================================== */
+   ========================================================================== */
+
 @media (max-width: 768px) {
-    .lens-health-metrics {
+    .lens-health__metrics {
         grid-template-columns: 1fr;
         gap: 16px;
     }
-    .lens-insights-grid {
+    .lens-insights__grid {
         grid-template-columns: 1fr;
     }
-    .lens-attention-cards {
+    .lens-attention__cards {
         flex-direction: column;
     }
     .lens-asset-card {
         width: 100%;
     }
-    .lens-quick-actions {
+    .lens-actions__grid {
         flex-direction: column;
     }
-    .lens-quick-actions .btn,
-    .lens-quick-actions .lens-action-form {
+    .lens-actions__grid .btn,
+    .lens-actions__grid .lens-actions__form {
         width: 100%;
     }
-    .lens-quick-actions .lens-action-form .btn {
+    .lens-actions__grid .lens-actions__form .btn {
         width: 100%;
     }
-    .lens-usage-grid {
+    .lens-usage__grid {
         grid-template-columns: 1fr;
         gap: 16px;
     }

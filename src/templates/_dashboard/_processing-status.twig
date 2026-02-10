@@ -1,5 +1,5 @@
 {# Section 2: Processing Status - always visible #}
-<div class="lens-dashboard-section lens-processing-section pane">
+<div class="lens-dashboard-section lens-processing pane">
     <h2 class="lens-section-title">{{ 'Analysis Progress'|t('lens') }}</h2>
 
     {% set totalImages = processingStats.totalImages %}
@@ -7,15 +7,15 @@
     {% set unprocessed = processingStats.unprocessed %}
     {% set processing = processingStats.processing|default(0) %}
 
-    <div class="lens-processing-status" data-state="{{ processingState }}">
+    <div class="lens-processing__status lens-flex-column lens-gap-12" data-state="{{ processingState }}">
         {% if processingState == 'processing' %}
             {# Processing state #}
             <div class="lens-processing-active">
                 {% set progress = processingProgress %}
                 {% set percentComplete = progress.percentComplete|default(0) %}
-                <div class="lens-progress-header">
-                    <span class="lens-progress-label">{{ 'Processing...'|t('lens') }}</span>
-                    <span class="lens-progress-text">
+                <div class="lens-processing__progress-header lens-flex-between lens-gap-12">
+                    <span class="lens-processing__progress-label">{{ 'Processing...'|t('lens') }}</span>
+                    <span class="lens-processing__progress-text">
                         {{ progress.completed|default(0)|number_format }} {{ 'of'|t('lens') }} {{ progress.total|default(totalImages)|number_format }}
                         ({{ percentComplete|round }}%)
                     </span>
@@ -24,11 +24,11 @@
                     <div class="lens-progress-fill" style="width: {{ percentComplete }}%"></div>
                 </div>
                 {% if queueInfo.estimatedMinutes is defined and queueInfo.estimatedMinutes %}
-                    <div class="lens-progress-estimate">
+                    <div class="lens-processing__estimate">
                         {{ 'Estimated: ~{minutes} minutes remaining'|t('lens', {minutes: queueInfo.estimatedMinutes}) }}
                     </div>
                 {% endif %}
-                <form method="post" action="{{ actionUrl('lens/bulk/cancel') }}" class="lens-processing-actions">
+                <form method="post" action="{{ actionUrl('lens/bulk/cancel') }}" class="lens-processing__actions">
                     {{ csrfInput() }}
                     <button type="submit" class="btn">{{ 'Pause'|t('lens') }}</button>
                 </form>
@@ -37,8 +37,8 @@
             {# Assets waiting state #}
             <div class="lens-processing-waiting">
                 {% set percentComplete = totalImages > 0 ? ((analyzed / totalImages) * 100) : 0 %}
-                <div class="lens-progress-header">
-                    <span class="lens-progress-text">
+                <div class="lens-processing__progress-header lens-flex-between lens-gap-12">
+                    <span class="lens-processing__progress-text">
                         {{ analyzed|number_format }} {{ 'of'|t('lens') }} {{ totalImages|number_format }}
                         ({{ percentComplete|round }}%)
                     </span>
@@ -46,22 +46,22 @@
                 <div class="lens-progress lens-progress--small">
                     <div class="lens-progress-fill" style="width: {{ percentComplete }}%"></div>
                 </div>
-                <div class="lens-waiting-info">
-                    <span class="lens-waiting-count">{{ unprocessed|number_format }} {{ 'assets waiting'|t('lens') }}</span>
+                <div class="lens-processing__waiting-info">
+                    <span class="lens-processing__waiting-count">{{ unprocessed|number_format }} {{ 'assets waiting'|t('lens') }}</span>
                 </div>
-                <form method="post" action="{{ actionUrl('lens/bulk/process') }}" class="lens-processing-actions">
+                <form method="post" action="{{ actionUrl('lens/bulk/process') }}" class="lens-processing__actions">
                     {{ csrfInput() }}
                     <button type="submit" class="btn submit">{{ 'Analyze Remaining'|t('lens') }}</button>
                 </form>
             </div>
         {% else %}
             {# Idle/Complete state #}
-            <div class="lens-processing-complete">
-                <div class="lens-progress-header">
-                    <span class="lens-progress-text">
+            <div class="lens-processing--complete">
+                <div class="lens-processing__progress-header lens-flex-between lens-gap-12">
+                    <span class="lens-processing__progress-text">
                         {{ analyzed|number_format }} {{ 'of'|t('lens') }} {{ totalImages|number_format }} {{ 'complete'|t('lens') }}
                     </span>
-                    <span class="lens-processing-complete-icon">{{ iconSvg('check') }}</span>
+                    <span class="lens-processing__complete-icon">{{ iconSvg('check') }}</span>
                 </div>
                 <div class="lens-progress lens-progress--small lens-simple-progress--complete">
                     <div class="lens-progress-fill" style="width: 100%"></div>

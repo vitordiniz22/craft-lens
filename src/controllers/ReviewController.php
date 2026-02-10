@@ -6,6 +6,7 @@ namespace vitordiniz22\craftlens\controllers;
 
 use Craft;
 use craft\elements\Asset;
+use craft\helpers\UrlHelper;
 use craft\web\Controller;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\enums\LogCategory;
@@ -105,12 +106,10 @@ class ReviewController extends Controller
         $queueIds = $reviewService->getPendingReviewIds();
 
         if (!empty($queueIds)) {
-            // Redirect to first pending review
-            return $this->redirect("lens/review/{$queueIds[0]}");
+            return $this->redirect(UrlHelper::cpUrl("lens/review/{$queueIds[0]}"));
         }
 
-        // Queue empty - redirect to browse
-        return $this->redirect('lens/review');
+        return $this->redirect(UrlHelper::cpUrl('lens/review'));
     }
 
     public function actionApprove(): Response
@@ -335,7 +334,7 @@ class ReviewController extends Controller
         if (!empty($queueIds)) {
             $nextId = $queueIds[0];
             Craft::$app->getSession()->setNotice(Craft::t('lens', 'Analysis skipped.'));
-            return $this->redirect("lens/review/{$nextId}");
+            return $this->redirect(UrlHelper::cpUrl("lens/review/{$nextId}"));
         }
 
         // Queue empty
@@ -362,48 +361,13 @@ class ReviewController extends Controller
 
         // Load all pending reviews for bulk mode (up to 100)
         $pendingReviews = $reviewService->getPendingReviews(100, 0);
-        $assetIds = array_map(fn($a) => $a->assetId, $pendingReviews);
+        $assetIds = $this->extractIdsFromAnalyses($pendingReviews);
         $analysisIds = array_map(fn($a) => $a->id, $pendingReviews);
 
         $assets = Asset::find()->id($assetIds)->indexBy('id')->all();
+        $tagCounts = $this->getTagCounts($analysisIds);
 
-        $tagCounts = [];
-        if (!empty($analysisIds)) {
-            $tagCountRows = AssetTagRecord::find()
-                ->select(['analysisId', 'COUNT(*) AS cnt'])
-                ->where(['analysisId' => $analysisIds])
-                ->groupBy(['analysisId'])
-                ->asArray()
-                ->all();
-            foreach ($tagCountRows as $row) {
-                $tagCounts[(int) $row['analysisId']] = (int) $row['cnt'];
-            }
-        }
-
-        $items = [];
-        foreach ($pendingReviews as $analysis) {
-            $asset = $assets[$analysis->assetId] ?? null;
-            if ($asset === null) {
-                continue;
-            }
-
-            $avgConfidence = 0;
-            $confFields = [$analysis->titleConfidence, $analysis->altTextConfidence, $analysis->longDescriptionConfidence];
-            $confFields = array_filter($confFields, fn($v) => $v !== null);
-
-            if (!empty($confFields)) {
-                $avgConfidence = array_sum($confFields) / count($confFields);
-            }
-
-            $items[] = [
-                'analysisId' => $analysis->id,
-                'thumbnailUrl' => Craft::$app->getAssets()->getThumbUrl($asset, 200, 200),
-                'filename' => $asset->filename,
-                'suggestedTitle' => $analysis->suggestedTitle,
-                'avgConfidence' => round($avgConfidence, 2),
-                'tagCount' => $tagCounts[$analysis->id] ?? 0,
-            ];
-        }
+        $items = $this->buildReviewItems($pendingReviews, $assets, $tagCounts);
 
         return $this->renderTemplate('lens/_review/bulk', [
             'items' => $items,
@@ -490,7 +454,7 @@ class ReviewController extends Controller
     /**
      * Validate and cast IDs to integers, filtering out invalid values.
      */
-    private function validateAndCastIds($ids): array
+    private function validateAndCastIds(array|int|string $ids): array
     {
         if (!is_array($ids)) {
             $ids = [$ids];
@@ -508,7 +472,7 @@ class ReviewController extends Controller
 
         if (!empty($queueIds)) {
             Craft::$app->getSession()->setNotice(Craft::t('lens', $successMessage));
-            return $this->redirect("lens/review/{$queueIds[0]}");
+            return $this->redirect(UrlHelper::cpUrl("lens/review/{$queueIds[0]}"));
         }
 
         Craft::$app->getSession()->setNotice(Craft::t('lens', 'All reviews complete!'));

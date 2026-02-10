@@ -9,25 +9,18 @@
 
 /* Toolbar */
 .lens-review-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+
   padding: 12px 0;
   margin-bottom: 16px;
   border-bottom: 1px solid var(--hairline-color);
 }
 
 .lens-review-toolbar-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+
 }
 
 .lens-review-toolbar-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+
 }
 
 .lens-review-counter {
@@ -47,8 +40,7 @@
 }
 
 .lens-kbd-hints {
-  display: flex;
-  gap: 8px;
+
   font-size: 11px;
   color: var(--medium-text-color);
 }
@@ -69,16 +61,13 @@
 .lens-review-panels {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
+
   min-height: 400px;
 }
 
 /* Left panel - Image */
 .lens-review-left {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
 }
 
 .lens-review-image-container {
@@ -271,16 +260,10 @@
 
 .lens-review-section-content {
   padding: 0 0 16px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
 }
 
 /* Fields inside review sections */
 .lens-review-field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
 }
 
 /* Long description expandable */
@@ -307,10 +290,6 @@
 .lens-review-action-bar {
   position: sticky;
   bottom: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
   padding: 16px 0;
   margin-top: 16px;
   background: var(--white);
@@ -319,9 +298,6 @@
 }
 
 .lens-review-action-bar .btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
 }
 
 .lens-review-action-bar kbd {
@@ -352,10 +328,6 @@
 }
 
 .lens-browse-pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
   margin-top: 24px;
   padding-top: 24px;
   border-top: 1px solid var(--hairline-color);
@@ -392,7 +364,7 @@
   margin-top: 16px;
 }
 
-.lens-browse-card-meta {
+.lens-browse-card__meta {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -410,30 +382,7 @@
   color: var(--medium-text-color);
 }
 
-/* Confidence badges */
-.lens-confidence-badge {
-  display: inline-block;
-  padding: 2px 6px;
-  border-radius: 3px;
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 1.3;
-}
-
-.lens-confidence-badge.lens-confidence-high {
-  background: var(--emerald-100);
-  color: var(--emerald-900);
-}
-
-.lens-confidence-badge.lens-confidence-medium {
-  background: var(--amber-100);
-  color: var(--amber-900);
-}
-
-.lens-confidence-badge.lens-confidence-low {
-  background: var(--red-100);
-  color: var(--red-800);
-}
+/* Confidence badge component defined in components/confidence-badge.css */
 
 .lens-tag-count {
   font-size: 11px;
@@ -490,15 +439,16 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-.lens-bulk-item input[type="checkbox"]:checked ~ .lens-bulk-item-image {
+.lens-bulk-item input[type="checkbox"]:checked ~ .lens-bulk-item__image {
   border: 2px solid var(--link-color);
 }
 
-.lens-bulk-item input[type="checkbox"]:checked ~ .lens-bulk-item-image .lens-bulk-item-overlay {
+.lens-bulk-item input[type="checkbox"]:checked ~ .lens-bulk-item__image .lens-bulk-item__overlay {
   opacity: 1;
 }
 
-.lens-bulk-item input[type="checkbox"] {
+.lens-bulk-item input[type="checkbox"],
+.lens-bulk-checkbox {
   position: absolute;
   top: 8px;
   left: 8px;
@@ -509,7 +459,7 @@
   accent-color: var(--link-color);
 }
 
-.lens-bulk-item-image {
+.lens-bulk-item__image {
   position: relative;
   aspect-ratio: 1;
   overflow: hidden;
@@ -519,13 +469,13 @@
   justify-content: center;
 }
 
-.lens-bulk-item-image img {
+.lens-bulk-item__image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.lens-bulk-item-overlay {
+.lens-bulk-item__overlay {
   position: absolute;
   inset: 0;
   background: rgba(37, 99, 235, 0.15);
@@ -537,18 +487,18 @@
   pointer-events: none;
 }
 
-.lens-bulk-checkmark {
+.lens-bulk-item__checkmark {
   font-size: 48px;
   color: var(--link-color);
   font-weight: bold;
 }
 
-.lens-bulk-item-info {
+.lens-bulk-item__info {
   padding: 8px;
   border-top: 1px solid var(--hairline-color);
 }
 
-.lens-bulk-item-title {
+.lens-bulk-item__title {
   font-size: 12px;
   font-weight: 500;
   color: var(--text-color);
@@ -558,7 +508,7 @@
   margin-bottom: 4px;
 }
 
-.lens-bulk-item-meta {
+.lens-bulk-item__meta {
   display: flex;
   align-items: center;
   gap: 6px;

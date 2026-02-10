@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace vitordiniz22\craftlens\helpers;
 
+use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\exceptions\AnalysisException;
+use vitordiniz22\craftlens\helpers\Logger;
+
 /**
  * Helper for normalizing AI provider responses.
  *
@@ -228,7 +231,7 @@ final class ResponseNormalizer
     /**
      * Clamp a value to valid confidence range (0.0 to 1.0).
      */
-    public static function clampConfidence(mixed $value): float
+    public static function clampConfidence(float|int|string $value): float
     {
         return min(1.0, max(0.0, (float) $value));
     }

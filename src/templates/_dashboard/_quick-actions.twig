@@ -1,8 +1,8 @@
 {# Section 4: Quick Actions #}
-<div class="lens-dashboard-section lens-actions-section">
-    <div class="lens-quick-actions">
+<div class="lens-dashboard-section lens-actions">
+    <div class="lens-actions__grid lens-gap-12">
         {% if unprocessedCount > 0 %}
-            <form method="post" action="{{ actionUrl('lens/bulk/process') }}" class="lens-action-form">
+            <form method="post" action="{{ actionUrl('lens/bulk/process') }}" class="lens-actions__form">
                 {{ csrfInput() }}
                 <button type="submit" class="btn submit">
                     {{ 'Analyze All Unprocessed'|t('lens') }}

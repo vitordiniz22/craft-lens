@@ -173,7 +173,7 @@ class AnalysisController extends Controller
 
             $this->response->setStatusCode(500);
             return $this->asJson([
-                'error' => 'Internal error: ' . $e->getMessage(),
+                'error' => 'An error occurred while processing your request.',
                 'status' => 'error',
             ]);
         }
@@ -338,7 +338,7 @@ class AnalysisController extends Controller
     /**
      * Decode JSON parameter to array.
      */
-    private function decodeJsonParam($value): array
+    private function decodeJsonParam(string|array $value): array
     {
         return is_string($value)
             ? (json_decode($value, true) ?? [])

@@ -8,7 +8,6 @@ use Craft;
 use craft\base\Batchable;
 use craft\db\QueryBatcher;
 use craft\elements\Asset;
-use craft\i18n\Translation;
 use craft\queue\BaseBatchedJob;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\enums\LogCategory;
@@ -98,12 +97,10 @@ class BulkAnalyzeAssetsJob extends BaseBatchedJob
             $volume = Craft::$app->getVolumes()->getVolumeById($this->volumeId);
             $volumeName = $volume?->name ?? "ID {$this->volumeId}";
 
-            return Translation::prep('lens', 'Analyzing assets in {volume}', [
-                'volume' => $volumeName,
-            ]);
+            return Craft::t('lens', 'Analyzing assets in {volume}', ['volume' => $volumeName]);
         }
 
-        return Translation::prep('lens', 'Analyzing all assets');
+        return Craft::t('lens', 'Analyzing all assets');
     }
 
     /**

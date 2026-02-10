@@ -26,9 +26,9 @@
         <input type="hidden" name="containsPeople" data-lens-control="field-containsPeople">
         <input type="hidden" name="faceCount" data-lens-control="field-faceCount">
 
-        <div class="lens-review-panels" data-lens-target="review-view">
+        <div class="lens-review-panels lens-gap-24" data-lens-target="review-view">
             {# Left Panel - Image #}
-            <div class="lens-review-left">
+            <div class="lens-review-left lens-flex-column lens-gap-12">
                 <div class="lens-review-image-container" data-lens-target="image-container">
                     <img data-lens-target="review-image"
                          src="{{ analysis.previewUrl }}"
@@ -126,7 +126,7 @@
             </div>
         </div>
 
-        <div class="lens-review-action-bar">
+        <div class="lens-review-action-bar lens-flex-center lens-gap-8">
             {% if prevId %}
                 <a href="{{ cpUrl('lens/review/' ~ prevId) }}" class="btn">
                     &larr; {{ 'Previous'|t('lens') }}

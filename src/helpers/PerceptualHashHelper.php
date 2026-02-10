@@ -25,51 +25,59 @@ class PerceptualHashHelper
      */
     public static function compute(string $imagePath): string
     {
+        if (!file_exists($imagePath) || !is_readable($imagePath)) {
+            throw new \RuntimeException("Image file not found or not readable: {$imagePath}");
+        }
+
         $image = self::loadImage($imagePath);
 
         // Resize to 16x16
         $resized = imagescale($image, self::HASH_SIZE, self::HASH_SIZE);
-        imagedestroy($image);
 
         if ($resized === false) {
+            imagedestroy($image);
             Logger::warning(LogCategory::AssetProcessing, "Failed to resize image for perceptual hash: {$imagePath}");
             throw new \RuntimeException("Failed to resize image: {$imagePath}");
         }
 
-        // Convert to grayscale
-        imagefilter($resized, IMG_FILTER_GRAYSCALE);
+        imagedestroy($image);
 
-        // Collect pixel values and compute average
-        $pixels = [];
-        $total = 0;
+        try {
+            // Convert to grayscale
+            imagefilter($resized, IMG_FILTER_GRAYSCALE);
 
-        for ($y = 0; $y < self::HASH_SIZE; $y++) {
-            for ($x = 0; $x < self::HASH_SIZE; $x++) {
-                $rgb = imagecolorat($resized, $x, $y);
-                $gray = $rgb & 0xFF; // Already grayscale, R=G=B
-                $pixels[] = $gray;
-                $total += $gray;
+            // Collect pixel values and compute average
+            $pixels = [];
+            $total = 0;
+
+            for ($y = 0; $y < self::HASH_SIZE; $y++) {
+                for ($x = 0; $x < self::HASH_SIZE; $x++) {
+                    $rgb = imagecolorat($resized, $x, $y);
+                    $gray = $rgb & 0xFF; // Already grayscale, R=G=B
+                    $pixels[] = $gray;
+                    $total += $gray;
+                }
             }
+
+            $average = $total / count($pixels);
+
+            // Build binary hash: 1 if pixel >= average, 0 otherwise
+            $bitArray = [];
+            foreach ($pixels as $pixel) {
+                $bitArray[] = $pixel >= $average ? '1' : '0';
+            }
+            $bits = implode('', $bitArray);
+
+            // Convert binary string to hex (256 bits -> 64 hex chars)
+            $hexArray = [];
+            for ($i = 0; $i < 256; $i += 4) {
+                $hexArray[] = dechex(bindec(substr($bits, $i, 4)));
+            }
+
+            return implode('', $hexArray);
+        } finally {
+            imagedestroy($resized);
         }
-
-        imagedestroy($resized);
-
-        $average = $total / count($pixels);
-
-        // Build binary hash: 1 if pixel >= average, 0 otherwise
-        $bitArray = [];
-        foreach ($pixels as $pixel) {
-            $bitArray[] = $pixel >= $average ? '1' : '0';
-        }
-        $bits = implode('', $bitArray);
-
-        // Convert binary string to hex (256 bits -> 64 hex chars)
-        $hexArray = [];
-        for ($i = 0; $i < 256; $i += 4) {
-            $hexArray[] = dechex(bindec(substr($bits, $i, 4)));
-        }
-
-        return implode('', $hexArray);
     }
 
     /**

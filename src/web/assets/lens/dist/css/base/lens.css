@@ -1,0 +1,37 @@
+/**
+ * Lens Plugin
+ * AI Asset Intelligence for Craft CMS
+ *
+ * Base overrides for native Craft CMS styles and global CSS variables.
+ * Component and page-specific styles are in separate files.
+ */
+
+/* ==========================================================================
+   Global CSS Variables
+   ========================================================================== */
+
+:root {
+  /* Standardized breakpoints */
+  --lens-breakpoint-sm: 640px;
+  --lens-breakpoint-md: 768px;
+  --lens-breakpoint-lg: 1024px;
+  --lens-breakpoint-xl: 1280px;
+
+  /* Transition variables */
+  --lens-transition-fast: 0.15s ease;
+  --lens-transition-normal: 0.3s ease;
+}
+
+/* ==========================================================================
+   Native Craft CMS styles
+   ========================================================================== */
+
+a.chip {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+a.chip:hover {
+  opacity: 0.9;
+}

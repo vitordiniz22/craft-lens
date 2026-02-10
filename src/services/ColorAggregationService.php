@@ -30,19 +30,19 @@ class ColorAggregationService extends Component
      */
     public function getColorCounts(int $limit = 20): array
     {
-        $colorCounts = [];
-
-        $query = (new Query())
-            ->select(['c.hex'])
+        $exactColorCounts = (new Query())
+            ->select(['c.hex', 'COUNT(*) as count'])
             ->from(Install::TABLE_ASSET_COLORS . ' c')
             ->innerJoin(Install::TABLE_ASSET_ANALYSES . ' a', '[[c.analysisId]] = [[a.id]]')
-            ->where(['in', 'a.status', AnalysisStatus::analyzedValues()]);
+            ->where(['in', 'a.status', AnalysisStatus::analyzedValues()])
+            ->groupBy(['c.hex'])
+            ->all();
 
-        foreach ($query->batch(500) as $rows) {
-            foreach ($rows as $row) {
-                $grouped = $this->groupSimilarColor($row['hex']);
-                $colorCounts[$grouped] = ($colorCounts[$grouped] ?? 0) + 1;
-            }
+        $colorCounts = [];
+
+        foreach ($exactColorCounts as $row) {
+            $grouped = $this->groupSimilarColor($row['hex']);
+            $colorCounts[$grouped] = ($colorCounts[$grouped] ?? 0) + (int) $row['count'];
         }
 
         arsort($colorCounts);

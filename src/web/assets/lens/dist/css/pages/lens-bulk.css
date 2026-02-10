@@ -58,22 +58,22 @@
   text-align: center;
 }
 
-.lens-counter-value {
+.lens-counter__value {
   display: block;
   font-size: 32px;
   font-weight: 600;
   color: var(--text-color);
 }
 
-.lens-counter-success .lens-counter-value {
+.lens-counter--success .lens-counter__value {
   color: var(--success-color);
 }
 
-.lens-counter-error .lens-counter-value {
+.lens-counter--error .lens-counter__value {
   color: var(--error-color);
 }
 
-.lens-counter-label {
+.lens-counter__label {
   display: block;
   font-size: 12px;
   color: var(--medium-text-color);
@@ -206,12 +206,12 @@
   color: var(--medium-text-color);
 }
 
-@media (max-width: 600px) {
+@media (max-width: 640px) {
   .lens-progress-counters {
     gap: 16px;
   }
 
-  .lens-counter-value {
+  .lens-counter__value {
     font-size: 24px;
   }
 

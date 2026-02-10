@@ -73,7 +73,7 @@
   letter-spacing: 0.02em;
 }
 
-.lens-section-title {
+.lens-section-header__title {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -138,15 +138,6 @@
 .lens-spinner-icon {
   color: var(--ui-control-color);
   animation: lens-spin 1s linear infinite;
-}
-
-@keyframes lens-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 .lens-processing-text strong {
@@ -476,21 +467,7 @@
   border-top: 1px solid var(--hairline-color);
 }
 
-/* ==========================================================================
-   Swatch (inline color preview)
-   ========================================================================== */
-
-.lens-swatch {
-  display: inline-block;
-  border-radius: 3px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  vertical-align: middle;
-}
-
-.lens-swatch--sm {
-  width: 14px;
-  height: 14px;
-}
+/* Swatch component defined in components/swatch.css */
 
 /* ==========================================================================
    Image Quality Section
@@ -697,37 +674,6 @@
 
 .lens-similar-thumb:hover {
   border-color: var(--link-color);
-}
-
-/* ==========================================================================
-   Analytics Panel (kept from legacy)
-   ========================================================================== */
-
-.lens-analytics-stat {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.lens-stat-content {
-  display: flex;
-  flex-direction: column;
-}
-
-.lens-analytics-chart {
-  margin: 16px 0;
-}
-
-.lens-sparkline-svg {
-  width: 100%;
-  height: 50px;
-  border-radius: 4px;
-}
-
-.lens-analytics-breakdown {
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid var(--hairline-color);
 }
 
 /* ==========================================================================

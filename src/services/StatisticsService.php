@@ -12,6 +12,7 @@ use vitordiniz22\craftlens\migrations\Install;
 use vitordiniz22\craftlens\Plugin;
 use vitordiniz22\craftlens\records\AssetAnalysisRecord;
 use yii\base\Component;
+use yii\db\Expression;
 use yii\db\Query;
 
 /**
@@ -24,15 +25,35 @@ class StatisticsService extends Component
      */
     public function getOverviewStats(): array
     {
+        $analyzedStatuses = AnalysisStatus::analyzedValues();
+
         $result = AssetAnalysisRecord::find()
             ->select([
                 'COUNT(*) as total',
-                'SUM(CASE WHEN status IN (\'' . implode("','", AnalysisStatus::analyzedValues()) . '\') THEN 1 ELSE 0 END) as analyzed',
-                'SUM(CASE WHEN status = \'' . AnalysisStatus::Approved->value . '\' THEN 1 ELSE 0 END) as approved',
-                'SUM(CASE WHEN status = \'' . AnalysisStatus::Rejected->value . '\' THEN 1 ELSE 0 END) as rejected',
-                'SUM(CASE WHEN status = \'' . AnalysisStatus::PendingReview->value . '\' THEN 1 ELSE 0 END) as pendingReview',
-                'SUM(CASE WHEN status = \'' . AnalysisStatus::Failed->value . '\' THEN 1 ELSE 0 END) as failed',
-                'SUM(CASE WHEN status IN (\'' . implode("','", AnalysisStatus::analyzedValues()) . '\') AND (altText IS NULL OR altText = \'\') THEN 1 ELSE 0 END) as missingAltText',
+                new Expression(
+                    'SUM(CASE WHEN status IN (:analyzed1, :analyzed2) THEN 1 ELSE 0 END) as analyzed',
+                    [':analyzed1' => $analyzedStatuses[0], ':analyzed2' => $analyzedStatuses[1]]
+                ),
+                new Expression(
+                    'SUM(CASE WHEN status = :approved THEN 1 ELSE 0 END) as approved',
+                    [':approved' => AnalysisStatus::Approved->value]
+                ),
+                new Expression(
+                    'SUM(CASE WHEN status = :rejected THEN 1 ELSE 0 END) as rejected',
+                    [':rejected' => AnalysisStatus::Rejected->value]
+                ),
+                new Expression(
+                    'SUM(CASE WHEN status = :pendingReview THEN 1 ELSE 0 END) as pendingReview',
+                    [':pendingReview' => AnalysisStatus::PendingReview->value]
+                ),
+                new Expression(
+                    'SUM(CASE WHEN status = :failed THEN 1 ELSE 0 END) as failed',
+                    [':failed' => AnalysisStatus::Failed->value]
+                ),
+                new Expression(
+                    "SUM(CASE WHEN status IN (:analyzed3, :analyzed4) AND (altText IS NULL OR altText = '') THEN 1 ELSE 0 END) as missingAltText",
+                    [':analyzed3' => $analyzedStatuses[0], ':analyzed4' => $analyzedStatuses[1]]
+                ),
                 'SUM(actualCost) as totalCost',
             ])
             ->asArray()

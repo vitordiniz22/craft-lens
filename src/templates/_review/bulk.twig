@@ -35,21 +35,21 @@
                 {% for item in items %}
                     <label class="lens-bulk-item" data-confidence="{{ item.avgConfidence }}">
                         <input type="checkbox" name="ids[]" value="{{ item.analysisId }}" class="lens-bulk-checkbox">
-                        <div class="lens-bulk-item-image">
+                        <div class="lens-bulk-item__image">
                             <img src="{{ item.thumbnailUrl }}" alt="{{ item.filename }}">
-                            <div class="lens-bulk-item-overlay">
-                                <span class="lens-bulk-checkmark">✓</span>
+                            <div class="lens-bulk-item__overlay">
+                                <span class="lens-bulk-item__checkmark">✓</span>
                             </div>
                         </div>
-                        <div class="lens-bulk-item-info">
-                            <div class="lens-bulk-item-title">{{ item.suggestedTitle ?: item.filename }}</div>
-                            <div class="lens-bulk-item-meta">
+                        <div class="lens-bulk-item__info">
+                            <div class="lens-bulk-item__title">{{ item.suggestedTitle ?: item.filename }}</div>
+                            <div class="lens-bulk-item__meta">
                                 {% if item.avgConfidence >= 0.8 %}
-                                    <span class="lens-confidence-badge lens-confidence-high">{{ (item.avgConfidence * 100)|round }}%</span>
+                                    <span class="lens-confidence-badge lens-confidence-badge--high">{{ (item.avgConfidence * 100)|round }}%</span>
                                 {% elseif item.avgConfidence >= 0.5 %}
-                                    <span class="lens-confidence-badge lens-confidence-medium">{{ (item.avgConfidence * 100)|round }}%</span>
+                                    <span class="lens-confidence-badge lens-confidence-badge--medium">{{ (item.avgConfidence * 100)|round }}%</span>
                                 {% else %}
-                                    <span class="lens-confidence-badge lens-confidence-low">{{ (item.avgConfidence * 100)|round }}%</span>
+                                    <span class="lens-confidence-badge lens-confidence-badge--low">{{ (item.avgConfidence * 100)|round }}%</span>
                                 {% endif %}
                                 <span class="lens-tag-count">{{ item.tagCount }} {{ 'tags'|t('lens') }}</span>
                             </div>

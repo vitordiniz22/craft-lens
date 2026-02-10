@@ -165,31 +165,34 @@ class BulkProcessingStatusService extends Component
                 ['like', 'job', AnalyzeAssetJob::class],
             ];
 
-            $pendingJobs = (new Query())
+            $allJobs = (new Query())
+                ->select(['timePushed', 'description'])
                 ->from('{{%queue}}')
                 ->where($lensJobCondition)
-                ->andWhere(['timePushed' => null])
-                ->count();
+                ->all();
 
-            $reservedJobs = (new Query())
-                ->from('{{%queue}}')
-                ->where($lensJobCondition)
-                ->andWhere(['not', ['timePushed' => null]])
-                ->count();
+            $pendingJobs = 0;
+            $reservedJobs = 0;
+            $currentJob = null;
 
-            $currentJob = (new Query())
-                ->select(['description'])
-                ->from('{{%queue}}')
-                ->where($lensJobCondition)
-                ->andWhere(['not', ['timePushed' => null]])
-                ->scalar();
+            foreach ($allJobs as $job) {
+                if ($job['timePushed'] === null) {
+                    $pendingJobs++;
+                } else {
+                    $reservedJobs++;
+
+                    if ($currentJob === null) {
+                        $currentJob = $job['description'];
+                    }
+                }
+            }
 
             // Translate the job description if it's a serialized Translation object
             $jobDescription = $this->translateJobDescription($currentJob);
 
             return [
-                'pendingJobs' => (int) $pendingJobs,
-                'reservedJobs' => (int) $reservedJobs,
+                'pendingJobs' => $pendingJobs,
+                'reservedJobs' => $reservedJobs,
                 'jobDescription' => $jobDescription ?: Craft::t('lens', 'Processing assets...'),
             ];
         } catch (\Throwable) {

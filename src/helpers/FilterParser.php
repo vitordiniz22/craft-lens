@@ -71,16 +71,7 @@ class FilterParser
 
     private static function parseTags(Request $request, array &$filters): void
     {
-        $tags = $request->getQueryParam('tags');
-
-        if ($tags !== null) {
-            if (is_string($tags)) {
-                $tags = array_filter(explode(',', $tags));
-            }
-            if (!empty($tags)) {
-                $filters['tags'] = $tags;
-            }
-        }
+        self::parseCommaSeparatedArray($request, 'tags', $filters);
 
         $tagOperator = $request->getQueryParam('tagOperator');
 
@@ -91,16 +82,7 @@ class FilterParser
 
     private static function parseStatus(Request $request, array &$filters): void
     {
-        $status = $request->getQueryParam('status');
-
-        if ($status !== null) {
-            if (is_string($status)) {
-                $status = array_filter(explode(',', $status));
-            }
-            if (!empty($status)) {
-                $filters['status'] = $status;
-            }
-        }
+        self::parseCommaSeparatedArray($request, 'status', $filters);
     }
 
     private static function parsePeopleFilters(Request $request, array &$filters): void
@@ -271,5 +253,23 @@ class FilterParser
         }
 
         return null;
+    }
+
+    /**
+     * Parse a comma-separated array parameter from request.
+     */
+    private static function parseCommaSeparatedArray(Request $request, string $paramName, array &$filters): void
+    {
+        $value = $request->getQueryParam($paramName);
+
+        if ($value !== null) {
+            if (is_string($value)) {
+                $value = array_filter(explode(',', $value));
+            }
+
+            if (!empty($value)) {
+                $filters[$paramName] = $value;
+            }
+        }
     }
 }
