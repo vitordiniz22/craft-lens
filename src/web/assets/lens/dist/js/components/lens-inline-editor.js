@@ -14,12 +14,16 @@
      * Handles inline editing for title, alt text, description, and people detection
      */
     const LensInlineEditor = {
+        _initialized: false,
+
         /**
          * Initialize inline editor
          */
         init: function() {
+            if (this._initialized) return;
             if (!this._shouldInit()) return;
             this._bindEvents();
+            this._initialized = true;
         },
 
         /**

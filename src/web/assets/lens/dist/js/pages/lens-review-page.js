@@ -10,11 +10,15 @@
     window.Lens.pages = window.Lens.pages || {};
 
     const LensReviewPage = {
+        _initialized: false,
+
         init: function() {
+            if (this._initialized) return;
             if (!document.querySelector('[data-lens-target="review-view"]')) return;
 
             this._bindKeyboardShortcuts();
             this._bindPeopleDetection();
+            this._initialized = true;
         },
 
         // ================================================================

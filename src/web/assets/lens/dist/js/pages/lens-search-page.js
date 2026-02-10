@@ -10,7 +10,10 @@
     window.Lens.pages = window.Lens.pages || {};
 
     const LensSearchPage = {
+        _initialized: false,
+
         init: function() {
+            if (this._initialized) return;
             if (!document.querySelector('[data-lens-target="search-form"]')) return;
 
             this.initFilterToggle();
@@ -20,6 +23,7 @@
             this.initColorToleranceSlider();
             this.initDatePickers();
             this.initKeyboardNavigation();
+            this._initialized = true;
         },
 
         initFilterToggle: function() {

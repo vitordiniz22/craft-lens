@@ -14,6 +14,7 @@
      */
     const LensFocalPointEditor = {
         zoomLevel: 0,
+        _initialized: false,
 
         /**
          * Get zoom steps from config
@@ -26,8 +27,10 @@
          * Initialize focal point editor
          */
         init: function() {
+            if (this._initialized) return;
             if (!this._shouldInit()) return;
             this._bindEvents();
+            this._initialized = true;
         },
 
         /**

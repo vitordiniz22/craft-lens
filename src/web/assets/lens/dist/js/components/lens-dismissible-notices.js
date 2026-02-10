@@ -13,6 +13,8 @@
      * Dismissible Notices Component
      */
     const LensDismissibleNotices = {
+        _initialized: false,
+
         /**
          * Get storage key from config
          */
@@ -24,8 +26,10 @@
          * Initialize dismissible notices
          */
         init: function() {
+            if (this._initialized) return;
             this.restoreDismissedState();
             this.initDismissButtons();
+            this._initialized = true;
         },
 
         /**

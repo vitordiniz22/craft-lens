@@ -14,13 +14,16 @@
      */
     const LensTagEditor = {
         _tagDebounce: null,
+        _initialized: false,
 
         /**
          * Initialize tag editor
          */
         init: function() {
+            if (this._initialized) return;
             if (!this._shouldInit()) return;
             this._bindEvents();
+            this._initialized = true;
         },
 
         /**
@@ -39,11 +42,11 @@
         _bindEvents: function() {
             const DOM = window.Lens.core.DOM;
 
-            // Tag input - Enter key
-            document.addEventListener('keydown', this._handleTagInputEnter.bind(this));
+            // Tag input keyboard handling (Enter to add, arrows to navigate suggestions)
+            DOM.delegate('[data-lens-control="tag-input"]', 'keydown', this._handleTagKeydown.bind(this));
 
             // Tag input - autocomplete
-            document.addEventListener('input', this._handleTagInput.bind(this));
+            DOM.delegate('[data-lens-control="tag-input"]', 'input', this._handleTagInput.bind(this));
 
             // Tag removal
             DOM.delegate('[data-lens-action="tag-remove"]', 'click', this._handleTagRemove.bind(this));
@@ -51,38 +54,50 @@
             // Suggestion selection
             DOM.delegate('[data-lens-target="tag-suggestion-item"]', 'click', this._handleSuggestionClick.bind(this));
 
-            // Arrow key navigation
-            document.addEventListener('keydown', this._handleSuggestionNav.bind(this));
-
             // Hide suggestions on blur
-            document.addEventListener('focusout', this._handleInputBlur.bind(this));
+            DOM.delegate('[data-lens-control="tag-input"]', 'focusout', this._handleInputBlur.bind(this));
         },
 
         // ================================================================
         // Event Handlers
         // ================================================================
 
-        _handleTagInputEnter: function(e) {
-            if (e.key !== 'Enter') return;
-            const input = e.target.closest('[data-lens-control="tag-input"]');
-            if (!input) return;
+        _handleTagKeydown: function(e, input) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
 
-            e.preventDefault();
+                const editor = input.closest('[data-lens-target="tag-editor"]');
+                const activeSuggestion = editor ? editor.querySelector('[data-lens-target="tag-suggestion-item"].is-active') : null;
 
-            const editor = input.closest('[data-lens-target="tag-editor"]');
-            const activeSuggestion = editor ? editor.querySelector('[data-lens-target="tag-suggestion-item"].is-active') : null;
+                if (activeSuggestion) {
+                    this._selectSuggestion(editor, activeSuggestion);
+                } else {
+                    this._addTagFromInput(editor);
+                }
+            } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                const editor = input.closest('[data-lens-target="tag-editor"]');
+                const suggestionsEl = editor ? editor.querySelector('[data-lens-target="tag-suggestions"]') : null;
+                if (!suggestionsEl || !suggestionsEl.classList.contains('is-visible')) return;
 
-            if (activeSuggestion) {
-                this._selectSuggestion(editor, activeSuggestion);
-            } else {
-                this._addTagFromInput(editor);
+                e.preventDefault();
+
+                const items = suggestionsEl.querySelectorAll('[data-lens-target="tag-suggestion-item"]');
+                const active = suggestionsEl.querySelector('[data-lens-target="tag-suggestion-item"].is-active');
+                let idx = active ? Array.prototype.indexOf.call(items, active) : -1;
+
+                if (active) active.classList.remove('is-active');
+
+                if (e.key === 'ArrowDown') {
+                    idx = (idx + 1) % items.length;
+                } else {
+                    idx = idx <= 0 ? items.length - 1 : idx - 1;
+                }
+
+                items[idx].classList.add('is-active');
             }
         },
 
-        _handleTagInput: function(e) {
-            const input = e.target.closest('[data-lens-control="tag-input"]');
-            if (!input) return;
-
+        _handleTagInput: function(e, input) {
             const query = input.value.trim();
             const editor = input.closest('[data-lens-target="tag-editor"]');
             if (!editor) return;
@@ -111,36 +126,7 @@
             }
         },
 
-        _handleSuggestionNav: function(e) {
-            if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
-            const input = e.target.closest('[data-lens-control="tag-input"]');
-            if (!input) return;
-
-            const editor = input.closest('[data-lens-target="tag-editor"]');
-            const suggestionsEl = editor ? editor.querySelector('[data-lens-target="tag-suggestions"]') : null;
-            if (!suggestionsEl || !suggestionsEl.classList.contains('is-visible')) return;
-
-            e.preventDefault();
-
-            const items = suggestionsEl.querySelectorAll('[data-lens-target="tag-suggestion-item"]');
-            const active = suggestionsEl.querySelector('[data-lens-target="tag-suggestion-item"].is-active');
-            let idx = active ? Array.prototype.indexOf.call(items, active) : -1;
-
-            if (active) active.classList.remove('is-active');
-
-            if (e.key === 'ArrowDown') {
-                idx = (idx + 1) % items.length;
-            } else {
-                idx = idx <= 0 ? items.length - 1 : idx - 1;
-            }
-
-            items[idx].classList.add('is-active');
-        },
-
-        _handleInputBlur: function(e) {
-            const input = e.target.closest('[data-lens-control="tag-input"]');
-            if (!input) return;
-
+        _handleInputBlur: function(e, input) {
             // Delay to allow click events to fire first
             setTimeout(() => {
                 const editor = input.closest('[data-lens-target="tag-editor"]');

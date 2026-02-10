@@ -13,12 +13,16 @@
      * Color Editor Component
      */
     const LensColorEditor = {
+        _initialized: false,
+
         /**
          * Initialize color editor
          */
         init: function() {
+            if (this._initialized) return;
             if (!this._shouldInit()) return;
             this._bindEvents();
+            this._initialized = true;
         },
 
         /**

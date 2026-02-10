@@ -13,12 +13,16 @@
      * Safety Flags Component
      */
     const LensSafetyFlags = {
+        _initialized: false,
+
         /**
          * Initialize safety flags component
          */
         init: function() {
+            if (this._initialized) return;
             if (!this._shouldInit()) return;
             this._bindEvents();
+            this._initialized = true;
         },
 
         /**

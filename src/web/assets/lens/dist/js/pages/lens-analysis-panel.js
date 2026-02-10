@@ -14,16 +14,20 @@
      * Coordinates InlineEditor, TagEditor, ColorEditor, and SafetyFlags components
      */
     const LensAnalysisPanel = {
+        _initialized: false,
+
         /**
          * Initialize analysis panel
          */
         init: function() {
+            if (this._initialized) return;
             if (!this._shouldInit()) return;
 
             // Components auto-initialize themselves, we just coordinate page-level features
             this.initTaxonomySave();
             this.initAssetActions();
             this.initAutoPolling();
+            this._initialized = true;
         },
 
         /**

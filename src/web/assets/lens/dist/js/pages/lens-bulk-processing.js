@@ -13,14 +13,18 @@
         container: null,
         currentState: 'ready',
         pollInterval: null,
+        _initialized: false,
 
         init: function() {
+            if (this._initialized) return;
+
             this.container = document.querySelector('[data-lens-target="bulk-container"]');
             if (!this.container) return;
 
             this.currentState = this.container.dataset.lensInitialState || 'ready';
 
             this._bindEvents();
+            this._initialized = true;
 
             // If already processing, start polling
             if (this.currentState === 'processing') {
