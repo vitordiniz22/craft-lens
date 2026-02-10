@@ -246,7 +246,7 @@ class Plugin extends BasePlugin
             Gc::class,
             Gc::EVENT_RUN,
             function() {
-                $this->log->cleanup(7);
+                $this->log->cleanup(30);
             }
         );
     }
@@ -387,6 +387,12 @@ class Plugin extends BasePlugin
                 $asset = $event->sender;
 
                 if ($asset->kind !== Asset::KIND_IMAGE) {
+                    return;
+                }
+
+                $currentUser = Craft::$app->getUser()->getIdentity();
+
+                if ($currentUser === null || !$currentUser->can('accessPlugin-lens')) {
                     return;
                 }
 

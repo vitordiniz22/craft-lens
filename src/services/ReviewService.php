@@ -19,6 +19,7 @@ use vitordiniz22\craftlens\records\ExifMetadataRecord;
 use yii\base\Component;
 use yii\base\InvalidArgumentException;
 
+
 /**
  * Service for managing the AI suggestions review workflow.
  */
@@ -42,6 +43,8 @@ class ReviewService extends Component
         $this->validateRecordSave($record, $analysisId);
 
         Logger::info(LogCategory::Review, 'Analysis approved', assetId: $record->assetId);
+
+        $this->autoApplyAfterApproval($record);
     }
 
     /**
@@ -421,6 +424,22 @@ class ReviewService extends Component
             'exif' => $exifData,
             'similarImages' => $similarImages,
         ];
+    }
+
+    /**
+     * Auto-apply title, alt text, and focal point to the Craft asset after approval.
+     *
+     * Only applies fields that haven't been manually set on the asset.
+     */
+    private function autoApplyAfterApproval(AssetAnalysisRecord $record): void
+    {
+        $asset = Asset::find()->id($record->assetId)->one();
+
+        if ($asset === null) {
+            return;
+        }
+
+        Plugin::getInstance()->assetAnalysis->autoApplyFromRecord($asset, $record);
     }
 
     /**

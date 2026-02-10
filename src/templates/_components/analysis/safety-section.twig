@@ -48,6 +48,26 @@
             {{ 'NSFW Score: {score}%'|t('lens', {score: (analysis.nsfwScore * 100)|round}) }}
         </div>
     </div>
+{% elseif analysis.nsfwScoreEditedBy is defined and analysis.nsfwScoreEditedBy and analysis.nsfwScoreAi is defined and analysis.nsfwScoreAi > 0 %}
+    <div class="lens-detection-item">
+        <div class="flex items-center gap-s">
+            <span class="status off"></span>
+            {{ 'NSFW flag cleared'|t('lens') }}
+            <span class="lens-badge">{{ 'was {score}%'|t('lens', {score: (analysis.nsfwScoreAi * 100)|round}) }}</span>
+        </div>
+        <div class="lens-edit-meta">
+            {% set editor = craft.users.id(analysis.nsfwScoreEditedBy).one() %}
+            {{ 'Cleared by {user} on {date}'|t('lens', {
+                user: editor ? editor.friendlyName : ('Unknown'|t('lens')),
+                date: analysis.nsfwScoreEditedAt|date('short')
+            }) }}
+        </div>
+        {% if not static and not isProcessing %}
+            <button type="button" class="lens-flag-dismiss" data-lens-action="flag-revert" data-lens-field="nsfwScore" data-lens-analysis-id="{{ analysis.id }}">
+                {{ 'Restore AI flag'|t('lens') }}
+            </button>
+        {% endif %}
+    </div>
 {% endif %}
 
 {# Watermark Detection #}
@@ -80,6 +100,25 @@
             {% endif %}
         </div>
     </div>
+{% elseif analysis.hasWatermarkEditedBy is defined and analysis.hasWatermarkEditedBy and analysis.hasWatermarkAi is defined and analysis.hasWatermarkAi %}
+    <div class="lens-detection-item">
+        <div class="flex items-center gap-s">
+            <span class="status off"></span>
+            {{ 'Watermark flag cleared'|t('lens') }}
+        </div>
+        <div class="lens-edit-meta">
+            {% set editor = craft.users.id(analysis.hasWatermarkEditedBy).one() %}
+            {{ 'Cleared by {user} on {date}'|t('lens', {
+                user: editor ? editor.friendlyName : ('Unknown'|t('lens')),
+                date: analysis.hasWatermarkEditedAt|date('short')
+            }) }}
+        </div>
+        {% if not static and not isProcessing %}
+            <button type="button" class="lens-flag-dismiss" data-lens-action="flag-revert" data-lens-field="hasWatermark" data-lens-analysis-id="{{ analysis.id }}">
+                {{ 'Restore AI flag'|t('lens') }}
+            </button>
+        {% endif %}
+    </div>
 {% endif %}
 
 {# Brand Detection #}
@@ -104,5 +143,24 @@
                 </button>
             {% endif %}
         </div>
+    </div>
+{% elseif analysis.containsBrandLogoEditedBy is defined and analysis.containsBrandLogoEditedBy and analysis.containsBrandLogoAi is defined and analysis.containsBrandLogoAi %}
+    <div class="lens-detection-item">
+        <div class="flex items-center gap-s">
+            <span class="status off"></span>
+            {{ 'Brand detection dismissed'|t('lens') }}
+        </div>
+        <div class="lens-edit-meta">
+            {% set editor = craft.users.id(analysis.containsBrandLogoEditedBy).one() %}
+            {{ 'Cleared by {user} on {date}'|t('lens', {
+                user: editor ? editor.friendlyName : ('Unknown'|t('lens')),
+                date: analysis.containsBrandLogoEditedAt|date('short')
+            }) }}
+        </div>
+        {% if not static and not isProcessing %}
+            <button type="button" class="lens-flag-dismiss" data-lens-action="flag-revert" data-lens-field="containsBrandLogo" data-lens-analysis-id="{{ analysis.id }}">
+                {{ 'Restore AI flag'|t('lens') }}
+            </button>
+        {% endif %}
     </div>
 {% endif %}

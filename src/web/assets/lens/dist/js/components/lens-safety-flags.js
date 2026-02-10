@@ -31,7 +31,8 @@
          * @private
          */
         _shouldInit: function() {
-            return document.querySelector('[data-lens-action="flag-dismiss"]') !== null;
+            return document.querySelector('[data-lens-action="flag-dismiss"]') !== null ||
+                   document.querySelector('[data-lens-action="flag-revert"]') !== null;
         },
 
         /**
@@ -40,6 +41,7 @@
          */
         _bindEvents: function() {
             window.Lens.core.DOM.delegate('[data-lens-action="flag-dismiss"]', 'click', this._handleDismiss.bind(this));
+            window.Lens.core.DOM.delegate('[data-lens-action="flag-revert"]', 'click', this._handleRevert.bind(this));
         },
 
         // ================================================================
@@ -59,6 +61,20 @@
                     if (response.data.success) {
                         this._fadeOutFlag(dismissBtn);
                         Craft.cp.displayNotice(Craft.t('lens', 'Flag cleared.'));
+                    }
+                });
+            });
+        },
+
+        _handleRevert: function(e, revertBtn) {
+            const analysisId = revertBtn.dataset.lensAnalysisId;
+            const field = revertBtn.dataset.lensField;
+
+            window.Lens.core.ButtonState.withLoading(revertBtn, Craft.t('lens', 'Restoring...'), () => {
+                return window.Lens.core.API.revertField(analysisId, field).then((response) => {
+                    if (response.data.success) {
+                        Craft.cp.displayNotice(Craft.t('lens', 'AI flag restored. Refreshing...'));
+                        setTimeout(() => window.location.reload(), window.Lens.config.ANIMATION.RELOAD_DELAY_MS);
                     }
                 });
             });

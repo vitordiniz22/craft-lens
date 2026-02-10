@@ -231,66 +231,119 @@ abstract class BaseAiProvider implements AiProviderInterface
         }
     }
 
+    private const MAX_RETRIES = 2;
+    private const RETRYABLE_STATUS_CODES = [429, 502, 503];
+    private const MAX_RETRY_AFTER_SECONDS = 30;
+
     /**
-     * Execute an HTTP request with standardized Guzzle error handling.
+     * Execute an HTTP request with standardized Guzzle error handling and retry logic.
+     *
+     * Retries on transient errors (429, 502, 503) with exponential backoff.
+     * For 429 responses, respects the Retry-After header when present.
      *
      * @param callable(int): array $request Receives start time (hrtime), returns parsed response body
      * @throws AnalysisException
      */
     protected function executeApiRequest(callable $request, int $assetId): array
     {
-        $startTime = hrtime(true);
+        $lastException = null;
 
-        try {
-            return $request($startTime);
-        } catch (ConnectException $e) {
-            $elapsed = (int) ((hrtime(true) - $startTime) / 1_000_000);
-            Logger::apiCall(
-                provider: $this->getName(),
-                message: 'Connection failed: ' . $e->getMessage(),
-                assetId: $assetId,
-                responseTimeMs: $elapsed,
-                httpStatusCode: null,
-                level: LogLevel::Error->value,
-            );
-            throw AnalysisException::apiError(
-                $this->getName(),
-                'Connection failed: ' . $e->getMessage(),
-                $assetId
-            );
-        } catch (RequestException $e) {
-            $elapsed = (int) ((hrtime(true) - $startTime) / 1_000_000);
-            $statusCode = $e->hasResponse() ? $e->getResponse()->getStatusCode() : null;
-            $errorMessage = $this->extractErrorMessage($e) ?? $this->getDefaultErrorMessage($statusCode);
-            Logger::apiCall(
-                provider: $this->getName(),
-                message: $errorMessage,
-                assetId: $assetId,
-                responseTimeMs: $elapsed,
-                httpStatusCode: $statusCode,
-                level: LogLevel::Error->value,
-            );
-            throw AnalysisException::apiError(
-                $this->getName(),
-                $errorMessage,
-                $assetId
-            );
-        } catch (GuzzleException $e) {
-            $elapsed = (int) ((hrtime(true) - $startTime) / 1_000_000);
-            Logger::apiCall(
-                provider: $this->getName(),
-                message: $e->getMessage(),
-                assetId: $assetId,
-                responseTimeMs: $elapsed,
-                httpStatusCode: null,
-                level: LogLevel::Error->value,
-            );
-            throw AnalysisException::apiError(
-                $this->getName(),
-                $e->getMessage(),
-                $assetId
-            );
+        for ($attempt = 0; $attempt <= self::MAX_RETRIES; $attempt++) {
+            $startTime = hrtime(true);
+
+            try {
+                return $request($startTime);
+            } catch (ConnectException $e) {
+                $elapsed = (int) ((hrtime(true) - $startTime) / 1_000_000);
+                $sanitizedMessage = $this->sanitizeErrorMessage($e->getMessage());
+                Logger::apiCall(
+                    provider: $this->getName(),
+                    message: 'Connection failed: ' . $sanitizedMessage,
+                    assetId: $assetId,
+                    responseTimeMs: $elapsed,
+                    httpStatusCode: null,
+                    level: LogLevel::Error->value,
+                );
+                throw AnalysisException::apiError(
+                    $this->getName(),
+                    'Connection failed: ' . $sanitizedMessage,
+                    $assetId
+                );
+            } catch (RequestException $e) {
+                $elapsed = (int) ((hrtime(true) - $startTime) / 1_000_000);
+                $statusCode = $e->hasResponse() ? $e->getResponse()->getStatusCode() : null;
+                $errorMessage = $this->extractErrorMessage($e) ?? $this->getDefaultErrorMessage($statusCode);
+
+                if ($statusCode !== null && in_array($statusCode, self::RETRYABLE_STATUS_CODES, true) && $attempt < self::MAX_RETRIES) {
+                    $delay = $this->getRetryDelay($e, $attempt);
+                    Logger::apiCall(
+                        provider: $this->getName(),
+                        message: "Retryable error (HTTP {$statusCode}), attempt " . ($attempt + 1) . '/' . (self::MAX_RETRIES + 1) . " - retrying in {$delay}s: {$errorMessage}",
+                        assetId: $assetId,
+                        responseTimeMs: $elapsed,
+                        httpStatusCode: $statusCode,
+                        level: LogLevel::Warning->value,
+                    );
+                    $lastException = $e;
+                    sleep($delay);
+                    continue;
+                }
+
+                Logger::apiCall(
+                    provider: $this->getName(),
+                    message: $errorMessage,
+                    assetId: $assetId,
+                    responseTimeMs: $elapsed,
+                    httpStatusCode: $statusCode,
+                    level: LogLevel::Error->value,
+                );
+                throw AnalysisException::apiError(
+                    $this->getName(),
+                    $errorMessage,
+                    $assetId
+                );
+            } catch (GuzzleException $e) {
+                $elapsed = (int) ((hrtime(true) - $startTime) / 1_000_000);
+                $sanitizedMessage = $this->sanitizeErrorMessage($e->getMessage());
+                Logger::apiCall(
+                    provider: $this->getName(),
+                    message: $sanitizedMessage,
+                    assetId: $assetId,
+                    responseTimeMs: $elapsed,
+                    httpStatusCode: null,
+                    level: LogLevel::Error->value,
+                );
+                throw AnalysisException::apiError(
+                    $this->getName(),
+                    $sanitizedMessage,
+                    $assetId
+                );
+            }
         }
+
+        // Should not reach here, but handle defensively
+        $errorMessage = $lastException !== null
+            ? $this->sanitizeErrorMessage($lastException->getMessage())
+            : 'Request failed after retries';
+        throw AnalysisException::apiError($this->getName(), $errorMessage, $assetId);
+    }
+
+    /**
+     * Calculate retry delay with exponential backoff, respecting Retry-After header.
+     */
+    private function getRetryDelay(RequestException $e, int $attempt): int
+    {
+        $baseDelay = (int) (2 ** ($attempt + 1)); // 2s, 4s
+
+        if ($e->hasResponse()) {
+            $retryAfter = $e->getResponse()->getHeaderLine('Retry-After');
+
+            if ($retryAfter !== '' && is_numeric($retryAfter)) {
+                return min((int) $retryAfter, self::MAX_RETRY_AFTER_SECONDS);
+            }
+        }
+
+        return $baseDelay;
     }
 
     /**
@@ -309,7 +362,24 @@ abstract class BaseAiProvider implements AiProviderInterface
             return null;
         }
 
-        return $body['error']['message'] ?? null;
+        $message = $body['error']['message'] ?? null;
+
+        return $message !== null ? $this->sanitizeErrorMessage($message) : null;
+    }
+
+    /**
+     * Sanitize an error message by truncating and stripping potential API keys.
+     */
+    protected function sanitizeErrorMessage(string $message): string
+    {
+        $message = mb_substr($message, 0, 500);
+
+        // Strip common API key patterns
+        $message = preg_replace('/\bsk-[a-zA-Z0-9]{20,}\b/', '[REDACTED]', $message);
+        $message = preg_replace('/\bAIza[a-zA-Z0-9_-]{30,}\b/', '[REDACTED]', $message);
+        $message = preg_replace('/[?&](key|api_key|apikey)=[^&\s]+/', '$1=[REDACTED]', $message);
+
+        return $message;
     }
 
     /**

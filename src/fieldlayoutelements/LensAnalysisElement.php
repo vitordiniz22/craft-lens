@@ -51,6 +51,12 @@ class LensAnalysisElement extends BaseUiElement
             return null;
         }
 
+        $currentUser = Craft::$app->getUser()->getIdentity();
+
+        if ($currentUser === null || !$currentUser->can('accessPlugin-lens')) {
+            return null;
+        }
+
         try {
             Craft::$app->getView()->registerAssetBundle(LensAssetActionsAsset::class);
 
