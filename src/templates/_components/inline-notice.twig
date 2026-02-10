@@ -12,10 +12,10 @@
  #}
 
 {% set iconMap = {
-    'error': '&#10060;',
-    'warning': '&#9888;',
-    'info': '&#8505;',
-    'tip': '&#10004;'
+    'error': 'circle-exclamation',
+    'warning': 'triangle-exclamation',
+    'info': 'circle-info',
+    'tip': 'circle-check'
 } %}
 
 {% set titleMap = {
@@ -28,7 +28,7 @@
 <div class="lens-inline-notice lens-inline-notice--{{ type }}"
      {% if dismissible ?? false %}data-lens-dismissible="{{ dismissKey ?? '' }}"{% endif %}>
     <div class="lens-notice-header">
-        <span class="lens-notice-icon">{{ iconMap[type]|raw }}</span>
+        <span class="lens-notice-icon">{{ iconSvg(iconMap[type]) }}</span>
         <h4 class="lens-notice-title">{{ title ?? titleMap[type] }}</h4>
     </div>
 
@@ -46,7 +46,7 @@
 
     {% if dismissible ?? false %}
         <button type="button" class="lens-notice-dismiss" data-lens-dismiss>
-            &#10005;
+            {{ iconSvg('xmark') }}
         </button>
     {% endif %}
 </div>

@@ -5,24 +5,13 @@
  #}
 
 <div class="lens-asset-sidebar">
-    {# Primary message: Add the UI component #}
-    {% include 'lens/_components/inline-notice' with {
-        type: 'info',
-        title: 'Analysis Panel Not Added'|t('lens'),
-        message: 'Add it to this volume\'s field layout to view AI-generated alt text, tags, and more.'|t('lens'),
-        cta: {
-            label: 'Edit Volume'|t('lens'),
-            url: 'settings/assets/volumes/' ~ asset.volume.id
-        }
-    } %}
-
-    {# Configuration issues (if any) #}
+    {# Critical configuration issues first (API key, volumes) #}
     {% if lens.hasCriticalIssues() %}
         {% set criticalIssues = lens.getCriticalIssues() %}
         {% for issue in criticalIssues|slice(0, 2) %}
             {% include 'lens/_components/inline-notice' with {
                 type: 'error',
-                title: issue.category == 'ai_provider' ? 'API Not Configured'|t('lens') : 'Setup Required'|t('lens'),
+                title: issue.category == 'ai_provider' ? 'API Key Required'|t('lens') : 'Setup Required'|t('lens'),
                 message: issue.message,
                 cta: {
                     label: issue.actionLabel,
@@ -31,4 +20,15 @@
             } %}
         {% endfor %}
     {% endif %}
+
+    {# Info: Add Lens Analysis to field layout #}
+    {% include 'lens/_components/inline-notice' with {
+        type: 'info',
+        title: 'Lens Analysis Not Added'|t('lens'),
+        message: 'Add Lens Analysis to this volume\'s field layout for full AI insights.'|t('lens'),
+        cta: {
+            label: 'Edit Volume'|t('lens'),
+            url: 'settings/assets/volumes/' ~ asset.volume.id
+        }
+    } %}
 </div>

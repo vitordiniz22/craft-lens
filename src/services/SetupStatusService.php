@@ -161,7 +161,7 @@ class SetupStatusService extends Component
     }
 
     /**
-     * Check if the Analysis Panel is added to at least one enabled volume's field layout.
+     * Check if Lens Analysis is added to at least one enabled volume's field layout.
      */
     public function isAnalysisPanelConfigured(): bool
     {
@@ -223,7 +223,7 @@ class SetupStatusService extends Component
             'severity' => SetupSeverity::Critical->value,
             'message' => $isResolved
                 ? Craft::t('lens', '{provider} is configured and ready.', ['provider' => $providerName])
-                : Craft::t('lens', 'AI analysis requires a {provider} API key to function.', ['provider' => $providerName]),
+                : Craft::t('lens', 'Configure your AI provider API key to start analyzing images.'),
             'actionLabel' => Craft::t('lens', 'Configure API Key'),
             'actionUrl' => 'lens/settings#provider',
             'isResolved' => $isResolved,
@@ -256,8 +256,8 @@ class SetupStatusService extends Component
             'category' => self::CATEGORY_FIELD_LAYOUT,
             'severity' => SetupSeverity::Warning->value,
             'message' => $isResolved
-                ? Craft::t('lens', 'Analysis Panel is configured.')
-                : Craft::t('lens', 'Analysis Panel has not been added to any volume field layout.'),
+                ? Craft::t('lens', 'Lens Analysis is configured.')
+                : Craft::t('lens', 'Lens Analysis has not been added to any volume field layout.'),
             'actionLabel' => Craft::t('lens', 'Add to Field Layout'),
             'actionUrl' => 'settings/assets',
             'isResolved' => $isResolved,

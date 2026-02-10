@@ -18,7 +18,7 @@ class LensAnalysisElement extends BaseUiElement
 {
     public static function displayName(): string
     {
-        return Craft::t('lens', 'AI Analysis Panel');
+        return Craft::t('lens', 'Lens Analysis');
     }
 
     public static function icon(): ?string
@@ -38,7 +38,7 @@ class LensAnalysisElement extends BaseUiElement
 
     protected function selectorLabel(): string
     {
-        return Craft::t('lens', 'AI Analysis');
+        return Craft::t('lens', 'Lens Analysis');
     }
 
     public function formHtml(?ElementInterface $element = null, bool $static = false): ?string
