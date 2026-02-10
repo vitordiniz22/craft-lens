@@ -179,26 +179,6 @@ class AnalysisController extends Controller
         }
     }
 
-    public function actionRegenerateTitle(): Response
-    {
-        $this->requireCpRequest();
-        $this->requirePostRequest();
-        $this->requirePermission('accessPlugin-lens');
-
-        $asset = $this->getRequiredAsset();
-
-        Plugin::getInstance()->assetAnalysis->reprocessAsset($asset);
-
-        Logger::info(LogCategory::AssetProcessing, 'Title regeneration queued', assetId: $asset->id);
-
-        if ($this->request->getAcceptsJson()) {
-            return $this->asJson(['success' => true]);
-        }
-
-        Craft::$app->getSession()->setNotice(Craft::t('lens', 'Regenerating title...'));
-        return $this->redirectToPostedUrl();
-    }
-
     /**
      * Update a single editable field on an analysis record.
      */

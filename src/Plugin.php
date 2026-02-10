@@ -469,7 +469,6 @@ class Plugin extends BasePlugin
                 $event->rules['lens/analysis/get-status'] = 'lens/analysis/get-status';
                 $event->rules['lens/analysis/apply-title'] = 'lens/analysis/apply-title';
                 $event->rules['lens/analysis/apply-focal-point'] = 'lens/analysis/apply-focal-point';
-                $event->rules['lens/analysis/regenerate-title'] = 'lens/analysis/regenerate-title';
                 $event->rules['lens/bulk'] = 'lens/bulk/index';
                 $event->rules['lens/bulk/process'] = 'lens/bulk/process';
                 $event->rules['lens/bulk/status'] = 'lens/bulk/status';

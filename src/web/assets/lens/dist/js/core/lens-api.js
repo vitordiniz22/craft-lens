@@ -112,63 +112,6 @@
         },
 
         /**
-         * Trigger asset analysis
-         * @param {string|number} assetId - Asset ID
-         * @param {Object} [options={}] - Additional options
-         * @returns {Promise} Promise resolving with response data
-         */
-        analyzeAsset: function(assetId, options) {
-            return this.post('lens/analysis/analyze', {
-                assetId: assetId
-            }, options);
-        },
-
-        /**
-         * Check analysis status
-         * @param {string|number} assetId - Asset ID
-         * @param {Object} [options={}] - Additional options
-         * @returns {Promise} Promise resolving with status data
-         */
-        checkStatus: function(assetId, options) {
-            // Disable error notices for status checks (expected to fail sometimes)
-            const statusOptions = Object.assign({}, options, {
-                showErrorNotice: false,
-                logErrors: false
-            });
-
-            return this.get('lens/analysis/status', { assetId: assetId }, statusOptions);
-        },
-
-        /**
-         * Dismiss a safety flag
-         * @param {string|number} analysisId - Analysis ID
-         * @param {string} flagType - Flag type to dismiss
-         * @param {Object} [options={}] - Additional options
-         * @returns {Promise} Promise resolving with response data
-         */
-        dismissFlag: function(analysisId, flagType, options) {
-            return this.post('lens/analysis/dismiss-flag', {
-                analysisId: analysisId,
-                flag: flagType
-            }, options);
-        },
-
-        /**
-         * Save taxonomy data (tags and colors)
-         * @param {string|number} analysisId - Analysis ID
-         * @param {Object} taxonomyData - Taxonomy data {tags: [], colors: []}
-         * @param {Object} [options={}] - Additional options
-         * @returns {Promise} Promise resolving with response data
-         */
-        saveTaxonomy: function(analysisId, taxonomyData, options) {
-            return this.post('lens/analysis/save-taxonomy', {
-                analysisId: analysisId,
-                tags: taxonomyData.tags || [],
-                colors: taxonomyData.colors || []
-            }, options);
-        },
-
-        /**
          * Fetch tag suggestions
          * @param {string} query - Search query
          * @param {Object} [options={}] - Additional options
@@ -180,7 +123,7 @@
                 logErrors: false
             });
 
-            return this.get('lens/analysis/tag-suggestions', { q: query }, suggestOptions);
+            return this.get('lens/analysis/tag-suggestions', { query: query }, suggestOptions);
         },
 
         /**
