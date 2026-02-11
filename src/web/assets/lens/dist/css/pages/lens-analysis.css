@@ -8,16 +8,16 @@
    ========================================================================== */
 
 .lens-asset-sidebar .lens-inline-notice + .lens-inline-notice {
-  margin-top: 12px;
+    margin-top: 12px;
 }
 
 .lens-provider-icon {
-  opacity: 0.6;
+    opacity: 0.6;
 }
 
 .lens-model-name {
-  opacity: 0.7;
-  margin-left: 2px;
+    opacity: 0.7;
+    margin-left: 2px;
 }
 
 /* ==========================================================================
@@ -25,27 +25,27 @@
    ========================================================================== */
 
 .lens-analysis-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
 }
 
 .lens-empty-analysis {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 24px 16px;
 }
 
 .lens-empty-analysis .btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .lens-empty-analysis .btn.loading .label {
-  visibility: visible;
+    visibility: visible;
 }
 
 /* ==========================================================================
@@ -53,17 +53,17 @@
    ========================================================================== */
 
 .lens-panel-heading {
-  border-bottom: 1px solid var(--hairline-color);
+    border-bottom: 1px solid var(--hairline-color);
 }
 
 .lens-panel-heading .heading {
-  margin-bottom: 0;
+    margin-bottom: 0;
 }
 
 .lens-panel-meta {
-  font-size: 12px;
-  color: var(--medium-text-color);
-  margin-top: 4px;
+    font-size: 12px;
+    color: var(--medium-text-color);
+    margin-top: 4px;
 }
 
 /* ==========================================================================
@@ -71,77 +71,76 @@
    ========================================================================== */
 
 .lens-section {
-  border-bottom: 1px solid var(--hairline-color);
+    border-bottom: 1px solid var(--hairline-color);
 }
 
 .lens-section:last-child {
-  border-bottom: none;
+    border-bottom: none;
 }
 
 .lens-section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: 12px 0 4px;
-  color: var(--text-color);
-  font-size: 13px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 12px 0 4px;
+    color: var(--text-color);
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
 }
 
 .lens-section-header__title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .lens-section-body {
-  padding-bottom: 16px;
+    padding-bottom: 16px;
 }
-
 
 /* ==========================================================================
    Processing Banner
    ========================================================================== */
 
 .lens-processing-banner {
-  margin-bottom: 16px;
-  padding: 12px 16px;
-  background: var(--gray-050);
-  border: 1px solid var(--hairline-color);
-  border-radius: var(--medium-border-radius);
+    margin-bottom: 16px;
+    padding: 12px 16px;
+    background: var(--gray-050);
+    border: 1px solid var(--hairline-color);
+    border-radius: var(--medium-border-radius);
 }
 
 .lens-processing-banner-content {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
 }
 
 .lens-processing-spinner {
-  flex-shrink: 0;
-  margin-top: 2px;
+    flex-shrink: 0;
+    margin-top: 2px;
 }
 
 .lens-spinner-icon {
-  color: var(--ui-control-color);
-  animation: lens-spin 1s linear infinite;
+    color: var(--ui-control-color);
+    animation: lens-spin 1s linear infinite;
 }
 
 .lens-processing-text strong {
-  display: block;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-color);
-  margin-bottom: 4px;
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 4px;
 }
 
 .lens-processing-text p {
-  margin: 0;
-  color: var(--medium-text-color);
-  line-height: 1.5;
+    margin: 0;
+    color: var(--medium-text-color);
+    line-height: 1.5;
 }
 
 /* ==========================================================================
@@ -149,73 +148,74 @@
    ========================================================================== */
 
 .lens-editable-field {
-  position: relative;
-  width: 100%;
+    position: relative;
+    width: 100%;
 }
 
 .lens-editable-field + .lens-editable-field {
-  margin-top: 16px;
+    margin-top: 16px;
 }
 
 .lens-field-header {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
 }
 
 .lens-field-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--medium-text-color);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--medium-text-color);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
 }
 
 .lens-edit-trigger {
-  opacity: 0;
-  transition: opacity 0.15s ease;
-  cursor: pointer;
-  background: none;
-  border: none;
-  padding: 2px 4px;
-  font-size: 13px;
-  color: var(--link-color);
-  line-height: 1;
-  border-radius: var(--small-border-radius);
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 2px 4px;
+    font-size: 13px;
+    color: var(--link-color);
+    line-height: 1;
+    border-radius: var(--small-border-radius);
 }
 
 .lens-edit-trigger:hover {
-  background: var(--gray-100);
+    background: var(--gray-100);
 }
 
 .lens-editable-field:hover .lens-edit-trigger {
-  opacity: 1;
+    opacity: 1;
 }
 
 .lens-field-display {
-  width: 100%;
+    width: 100%;
 }
 
 .lens-field-display p {
-  margin: 0;
-  font-size: 14px;
-  color: var(--text-color);
-  line-height: 1.5;
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-color);
+    line-height: 1.5;
 }
 
 .lens-field-display .lens-panel-title {
-  font-size: 16px;
-  font-weight: 700;
+    font-size: 16px;
+    font-weight: 700;
 }
 
 /* Edit mode */
 .lens-field-edit {
-  width: 100%;
+    width: 100%;
 }
 
 .lens-field-edit[hidden] {
-  display: none;
+    display: none;
 }
 
 .lens-field-edit input[type="text"],
@@ -223,68 +223,68 @@
 .lens-field-edit input[type="email"],
 .lens-field-edit input[type="url"],
 .lens-field-edit textarea {
-  width: 100%;
-  margin-bottom: 8px;
+    width: 100%;
+    margin-bottom: 8px;
 }
 
 .lens-field-edit textarea {
-  min-height: 60px;
-  resize: vertical;
+    min-height: 60px;
+    resize: vertical;
 }
 
 .lens-field-actions {
-  display: flex;
-  gap: 6px;
+    display: flex;
+    gap: 6px;
 }
 
 /* Provenance indicators */
 .lens-lock-icon {
-  font-size: 11px;
-  line-height: 1;
-  opacity: 0.6;
+    font-size: 11px;
+    line-height: 1;
+    opacity: 0.6;
 }
 
 .lens-edit-meta {
-  font-size: 12px;
-  color: var(--medium-text-color);
-  margin-top: 4px;
+    font-size: 12px;
+    color: var(--medium-text-color);
+    margin-top: 4px;
 }
 
 .lens-ai-suggestion {
-  font-size: 12px;
-  font-style: italic;
-  color: var(--medium-text-color);
-  margin-top: 2px;
+    font-size: 12px;
+    font-style: italic;
+    color: var(--medium-text-color);
+    margin-top: 2px;
 }
 
 .lens-revert-trigger {
-  color: var(--link-color);
-  cursor: pointer;
-  text-decoration: underline;
-  background: none;
-  border: none;
-  padding: 0;
-  font-size: 12px;
-  font-style: normal;
+    color: var(--link-color);
+    cursor: pointer;
+    text-decoration: underline;
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 12px;
+    font-style: normal;
 }
 
 .lens-revert-trigger:hover {
-  color: var(--link-hover-color);
+    color: var(--link-hover-color);
 }
 
 /* Apply button row */
 .lens-apply-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
 }
 
 .lens-applied-indicator {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
 }
 
 /* ==========================================================================
@@ -292,9 +292,9 @@
    ========================================================================== */
 
 .lens-panel-featured {
-  background: var(--gray-050);
-  padding: 14px;
-  border-radius: var(--medium-border-radius);
+    background: var(--gray-050);
+    padding: 14px;
+    border-radius: var(--medium-border-radius);
 }
 
 /* ==========================================================================
@@ -302,90 +302,90 @@
    ========================================================================== */
 
 .lens-tag-editor {
-  width: 100%;
+    width: 100%;
 }
 
 .lens-tag-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
 }
 
 .lens-tag-chips .chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .lens-tag-chips .chip--ai {
-  border-style: dashed;
+    border-style: dashed;
 }
 
 .lens-tag-remove {
-  cursor: pointer;
-  background: none;
-  border: none;
-  padding: 0 2px;
-  font-size: 14px;
-  line-height: 1;
-  color: var(--medium-text-color);
-  opacity: 0.6;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0 2px;
+    font-size: 14px;
+    line-height: 1;
+    color: var(--medium-text-color);
+    opacity: 0.6;
 }
 
 .lens-tag-remove:hover {
-  opacity: 1;
-  color: var(--error-color);
+    opacity: 1;
+    color: var(--error-color);
 }
 
 .lens-tag-input-row {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  position: relative;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    position: relative;
 }
 
 .lens-tag-input {
-  flex: 1;
-  min-width: 80px;
+    flex: 1;
+    min-width: 80px;
 }
 
 .lens-tag-suggestions {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background: var(--white);
-  border: 1px solid var(--hairline-color);
-  border-radius: var(--small-border-radius);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  z-index: 100;
-  max-height: 180px;
-  overflow-y: auto;
-  display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--white);
+    border: 1px solid var(--hairline-color);
+    border-radius: var(--small-border-radius);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+    max-height: 180px;
+    overflow-y: auto;
+    display: none;
 }
 
 .lens-tag-suggestions.is-visible {
-  display: block;
+    display: block;
 }
 
 .lens-tag-suggestion {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 6px 10px;
-  cursor: pointer;
-  font-size: 13px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 13px;
 }
 
 .lens-tag-suggestion:hover,
 .lens-tag-suggestion.is-active {
-  background: var(--gray-050);
+    background: var(--gray-050);
 }
 
 .lens-tag-suggestion-count {
-  font-size: 11px;
-  color: var(--medium-text-color);
+    font-size: 11px;
+    color: var(--medium-text-color);
 }
 
 /* ==========================================================================
@@ -393,68 +393,68 @@
    ========================================================================== */
 
 .lens-color-editor {
-  width: 100%;
+    width: 100%;
 }
 
 .lens-color-swatches {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 8px;
 }
 
 .lens-color-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
-  border: 1px solid var(--hairline-color);
-  border-radius: var(--small-border-radius);
-  font-size: 12px;
-  font-family: var(--mono-font-family);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    border: 1px solid var(--hairline-color);
+    border-radius: var(--small-border-radius);
+    font-size: 12px;
+    font-family: var(--mono-font-family);
 }
 
 .lens-color-item--ai {
-  border-style: dashed;
+    border-style: dashed;
 }
 
 .lens-color-remove {
-  cursor: pointer;
-  background: none;
-  border: none;
-  padding: 0 2px;
-  font-size: 13px;
-  line-height: 1;
-  color: var(--medium-text-color);
-  opacity: 0.6;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0 2px;
+    font-size: 13px;
+    line-height: 1;
+    color: var(--medium-text-color);
+    opacity: 0.6;
 }
 
 .lens-color-remove:hover {
-  opacity: 1;
-  color: var(--error-color);
+    opacity: 1;
+    color: var(--error-color);
 }
 
 .lens-color-add-row {
-  display: flex;
-  gap: 6px;
-  align-items: center;
+    display: flex;
+    gap: 6px;
+    align-items: center;
 }
 
 .lens-color-picker {
-  width: 32px;
-  height: 28px;
-  padding: 0;
-  border: 1px solid var(--hairline-color);
-  border-radius: var(--small-border-radius);
-  cursor: pointer;
-  background: none;
+    width: 32px;
+    height: 28px;
+    padding: 0;
+    border: 1px solid var(--hairline-color);
+    border-radius: var(--small-border-radius);
+    cursor: pointer;
+    background: none;
 }
 
 /* Shared save row for taxonomy */
 .lens-taxonomy-save {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--hairline-color);
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--hairline-color);
 }
 
 /* Swatch component defined in components/swatch.css */
@@ -464,42 +464,42 @@
    ========================================================================== */
 
 .lens-quality-metrics {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
 }
 
 .lens-quality-metric {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
 .lens-metric-label {
-  font-size: 12px;
-  color: var(--medium-text-color);
-  min-width: 70px;
+    font-size: 12px;
+    color: var(--medium-text-color);
+    min-width: 70px;
 }
 
 .lens-metric-bar {
-  flex: 1;
-  height: 6px;
-  background: var(--gray-200);
-  border-radius: 3px;
-  overflow: hidden;
+    flex: 1;
+    height: 6px;
+    background: var(--gray-200);
+    border-radius: 3px;
+    overflow: hidden;
 }
 
 .lens-metric-fill {
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    var(--red-500) 0%,
-    var(--amber-400) 40%,
-    var(--green-500) 80%
-  );
-  border-radius: 3px;
-  transition: width 0.3s ease;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        var(--red-500) 0%,
+        var(--amber-400) 40%,
+        var(--green-500) 80%
+    );
+    border-radius: 3px;
+    transition: width 0.3s ease;
 }
 
 /* ==========================================================================
@@ -507,42 +507,42 @@
    ========================================================================== */
 
 .lens-nsfw-chip {
-  background: var(--red-100);
-  color: var(--red-800);
+    background: var(--red-100);
+    color: var(--red-800);
 }
 
 .lens-watermark-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
 }
 
 .lens-watermark-type {
-  font-weight: 600;
-  color: var(--amber-800);
+    font-weight: 600;
+    color: var(--amber-800);
 }
 
 .lens-detection-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 8px 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 8px 0;
 }
 
 .lens-detection-item + .lens-detection-item {
-  border-top: 1px solid var(--hairline-color);
+    border-top: 1px solid var(--hairline-color);
 }
 
 .lens-flag-dismiss {
-  font-size: 12px;
-  color: var(--link-color);
-  cursor: pointer;
-  background: none;
-  border: none;
-  padding: 0;
-  text-decoration: underline;
-  margin-top: 4px;
+    font-size: 12px;
+    color: var(--link-color);
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    text-decoration: underline;
+    margin-top: 4px;
 }
 
 /* ==========================================================================
@@ -550,75 +550,75 @@
    ========================================================================== */
 
 .lens-people-detection {
-  /* Inherits from .lens-editable-field */
-  transition: opacity 0.3s ease;
+    /* Inherits from .lens-editable-field */
+    transition: opacity 0.3s ease;
 }
 
 .lens-people-edit-panel {
-  margin-top: 12px;
+    margin-top: 12px;
 }
 
 .lens-people-edit-options {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 12px;
 }
 
 .lens-people-option {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  border: 1px solid var(--hairline-color);
-  border-radius: var(--small-border-radius);
-  cursor: pointer;
-  transition:
-    background-color 0.15s ease,
-    border-color 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border: 1px solid var(--hairline-color);
+    border-radius: var(--small-border-radius);
+    cursor: pointer;
+    transition:
+        background-color 0.15s ease,
+        border-color 0.15s ease;
 }
 
 .lens-people-option:hover {
-  background-color: var(--gray-050);
-  border-color: var(--gray-300);
+    background-color: var(--gray-050);
+    border-color: var(--gray-300);
 }
 
 .lens-people-option input[type="radio"] {
-  margin: 0;
-  flex-shrink: 0;
-  cursor: pointer;
+    margin: 0;
+    flex-shrink: 0;
+    cursor: pointer;
 }
 
 .lens-people-option span {
-  color: var(--text-color);
-  font-size: 13px;
-  white-space: nowrap;
+    color: var(--text-color);
+    font-size: 13px;
+    white-space: nowrap;
 }
 
 /* Highlight selected option */
 .lens-people-option:has(input[type="radio"]:checked) {
-  background-color: var(--blue-050);
-  border-color: var(--blue-300);
+    background-color: var(--blue-050);
+    border-color: var(--blue-300);
 }
 
 /* Pending review notice */
 .lens-pending-notice {
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  padding: 8px 10px;
-  margin-top: 8px;
-  background-color: var(--gray-050);
-  border: 1px solid var(--hairline-color);
-  border-radius: var(--small-border-radius);
-  font-size: 12px;
-  color: var(--medium-text-color);
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 8px 10px;
+    margin-top: 8px;
+    background-color: var(--gray-050);
+    border: 1px solid var(--hairline-color);
+    border-radius: var(--small-border-radius);
+    font-size: 12px;
+    color: var(--medium-text-color);
 }
 
 .lens-info-icon {
-  font-size: 14px;
-  line-height: 1;
-  opacity: 0.7;
+    font-size: 14px;
+    line-height: 1;
+    opacity: 0.7;
 }
 
 /* ==========================================================================
@@ -626,20 +626,20 @@
    ========================================================================== */
 
 .lens-exif-grid {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 4px 12px;
-  font-size: 13px;
-  width: 100%;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 4px 12px;
+    font-size: 13px;
+    width: 100%;
 }
 
 .lens-exif-label {
-  color: var(--medium-text-color);
-  font-weight: 500;
+    color: var(--medium-text-color);
+    font-weight: 500;
 }
 
 .lens-exif-value {
-  color: var(--text-color);
+    color: var(--text-color);
 }
 
 /* ==========================================================================
@@ -647,23 +647,23 @@
    ========================================================================== */
 
 .lens-similar-strip {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  padding: 4px 0;
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 4px 0;
 }
 
 .lens-similar-thumb {
-  width: 64px;
-  height: 64px;
-  border-radius: var(--small-border-radius);
-  object-fit: cover;
-  border: 1px solid var(--hairline-color);
-  flex-shrink: 0;
+    width: 64px;
+    height: 64px;
+    border-radius: var(--small-border-radius);
+    object-fit: cover;
+    border: 1px solid var(--hairline-color);
+    flex-shrink: 0;
 }
 
 .lens-similar-thumb:hover {
-  border-color: var(--link-color);
+    border-color: var(--link-color);
 }
 
 /* ==========================================================================
@@ -671,88 +671,88 @@
    ========================================================================== */
 
 .lens-error-notice {
-  padding: 16px;
-  border-radius: var(--medium-border-radius);
-  background: var(--red-050);
-  border: 1px solid var(--red-200);
-  margin: 16px 0;
+    padding: 16px;
+    border-radius: var(--medium-border-radius);
+    background: var(--red-050);
+    border: 1px solid var(--red-200);
+    margin: 16px 0;
 }
 
 .lens-error-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-  color: var(--red-800);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    color: var(--red-800);
 }
 
 .lens-error-icon {
-  flex-shrink: 0;
-  color: var(--red-600);
+    flex-shrink: 0;
+    color: var(--red-600);
 }
 
 .lens-error-header strong {
-  font-weight: 600;
-  font-size: 14px;
+    font-weight: 600;
+    font-size: 14px;
 }
 
 .lens-error-message {
-  margin: 8px 0;
-  color: var(--red-800);
-  line-height: 1.5;
-  font-size: 13px;
+    margin: 8px 0;
+    color: var(--red-800);
+    line-height: 1.5;
+    font-size: 13px;
 }
 
 .lens-error-suggestion {
-  margin-top: 12px;
-  padding: 12px;
-  background: var(--amber-050);
-  border-left: 3px solid var(--amber-500);
-  border-radius: var(--small-border-radius);
+    margin-top: 12px;
+    padding: 12px;
+    background: var(--amber-050);
+    border-left: 3px solid var(--amber-500);
+    border-radius: var(--small-border-radius);
 }
 
 .lens-error-suggestion strong {
-  display: block;
-  margin-bottom: 6px;
-  color: var(--amber-900);
-  font-size: 13px;
+    display: block;
+    margin-bottom: 6px;
+    color: var(--amber-900);
+    font-size: 13px;
 }
 
 .lens-error-suggestion ul {
-  margin: 8px 0 0 20px;
-  padding: 0;
-  list-style: disc;
+    margin: 8px 0 0 20px;
+    padding: 0;
+    list-style: disc;
 }
 
 .lens-error-suggestion li {
-  margin: 4px 0;
-  color: var(--amber-950);
-  font-size: 13px;
-  line-height: 1.5;
+    margin: 4px 0;
+    color: var(--amber-950);
+    font-size: 13px;
+    line-height: 1.5;
 }
 
 .lens-error-suggestion a {
-  color: var(--link-color);
-  text-decoration: underline;
+    color: var(--link-color);
+    text-decoration: underline;
 }
 
 .lens-error-suggestion a:hover {
-  color: var(--link-hover-color);
+    color: var(--link-hover-color);
 }
 
 .lens-error-actions {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--red-200);
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--red-200);
 }
 
 .lens-error-actions .btn {
-  background: white;
-  border: 1px solid var(--red-200);
-  color: var(--red-800);
+    background: white;
+    border: 1px solid var(--red-200);
+    color: var(--red-800);
 }
 
 .lens-error-actions .btn:hover {
-  background: var(--red-050);
-  border-color: var(--red-300);
+    background: var(--red-050);
+    border-color: var(--red-300);
 }

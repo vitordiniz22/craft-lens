@@ -123,9 +123,6 @@
                 <div class="lens-section-header">
                     <span class="lens-section-title">
                         {{ 'Taxonomy'|t('lens') }}
-                        {% if analysisTags|length %}
-                            <span class="badge">{{ analysisTags|length }}</span>
-                        {% endif %}
                     </span>
                 </div>
                 <div class="lens-section-body">
@@ -144,11 +141,6 @@
                 <div class="lens-section-header">
                     <span class="lens-section-title">
                         {{ 'Visual Analysis'|t('lens') }}
-                        {% if analysis.overallQualityScore is not null %}
-                            <span class="lens-badge lens-badge--{{ analysis.overallQualityScore >= 0.7 ? 'success' : (analysis.overallQualityScore >= 0.4 ? 'warning' : 'error') }}">
-                                {{ (analysis.overallQualityScore * 100)|round }}%
-                            </span>
-                        {% endif %}
                     </span>
                 </div>
                 <div class="lens-section-body">
