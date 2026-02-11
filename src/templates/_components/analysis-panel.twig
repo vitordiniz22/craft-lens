@@ -252,12 +252,16 @@
                 } %}
             {% endif %}
         {% else %}
-            <p class="light">{{ 'This image has not been analyzed yet.'|t('lens') }}</p>
-            {% if not static %}
-                <button type="button" class="btn submit" data-lens-action="analyze" data-lens-asset-id="{{ asset.id }}">
-                    {{ 'Analyze Now'|t('lens') }}
-                </button>
-            {% endif %}
+            <div class="lens-empty-analysis">
+                <p class="light">{{ 'This image has not been analyzed yet.'|t('lens') }}</p>
+
+                {% if not static %}
+                    <button type="button" class="btn submit" data-lens-action="analyze" data-lens-asset-id="{{ asset.id }}" data-lens-loading-text="{{ 'Processing'|t('lens') }}">
+                        <div class="spinner"></div>
+                        <span class="label">{{ 'Analyze Now'|t('lens') }}</span>
+                    </button>
+                {% endif %}
+            </div>
         {% endif %}
     {% endif %}
 </div>

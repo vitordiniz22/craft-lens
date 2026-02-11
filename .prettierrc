@@ -1,0 +1,27 @@
+{
+    "tabWidth": 4,
+    "singleQuote": true,
+    "semi": true,
+    "trailingComma": "all",
+    "printWidth": 80,
+    "arrowParens": "always",
+    "endOfLine": "lf",
+    "bracketSpacing": true,
+    "htmlWhitespaceSensitivity": "css",
+    "singleAttributePerLine": false,
+    "overrides": [
+        {
+            "files": "*.css",
+            "options": {
+                "singleQuote": false
+            }
+        },
+        {
+            "files": "*.twig",
+            "options": {
+                "singleQuote": false,
+                "htmlWhitespaceSensitivity": "ignore"
+            }
+        }
+    ]
+}

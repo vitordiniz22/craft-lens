@@ -30,6 +30,24 @@
   gap: 0;
 }
 
+.lens-empty-analysis {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 24px 16px;
+}
+
+.lens-empty-analysis .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lens-empty-analysis .btn.loading .label {
+  visibility: visible;
+}
+
 /* ==========================================================================
    Panel Header (always visible)
    ========================================================================== */

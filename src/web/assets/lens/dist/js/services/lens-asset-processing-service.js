@@ -70,7 +70,7 @@
                     const status = response.data.status;
 
                     // Handle terminal states
-                    if (status === 'completed' || status === 'approved' || status === 'failed') {
+                    if (status === 'completed' || status === 'approved' || status === 'failed' || status === 'pending_review') {
                         self._clearPoll(assetId);
 
                         if (status === 'failed' && options.onError) {
@@ -170,7 +170,7 @@
          * @private
          */
         _isPendingStatus: function(status) {
-            const pendingStates = ['not_found', 'pending', 'processing', 'pending_review'];
+            const pendingStates = ['not_found', 'pending', 'processing'];
             return pendingStates.indexOf(status) !== -1;
         },
 

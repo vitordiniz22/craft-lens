@@ -3,7 +3,7 @@
  * Orchestrates components and handles page-specific functionality
  * Replaces lens-asset-actions.js with cleaner, component-based architecture
  */
-(function() {
+(function () {
     'use strict';
 
     window.Lens = window.Lens || {};
@@ -19,7 +19,7 @@
         /**
          * Initialize analysis panel
          */
-        init: function() {
+        init: function () {
             if (this._initialized) return;
             if (!this._shouldInit()) return;
 
@@ -35,7 +35,7 @@
          * @returns {boolean}
          * @private
          */
-        _shouldInit: function() {
+        _shouldInit: function () {
             return document.querySelector('.lens-analysis-panel') !== null;
         },
 
@@ -43,91 +43,165 @@
         // Taxonomy Save (Tags + Colors Batch)
         // ================================================================
 
-        initTaxonomySave: function() {
-            window.Lens.core.DOM.delegate('[data-lens-action="taxonomy-save"]', 'click', this._handleTaxonomySave.bind(this));
+        initTaxonomySave: function () {
+            window.Lens.core.DOM.delegate(
+                '[data-lens-action="taxonomy-save"]',
+                'click',
+                this._handleTaxonomySave.bind(this),
+            );
         },
 
-        _handleTaxonomySave: function(e, saveBtn) {
+        _handleTaxonomySave: function (e, saveBtn) {
             if (saveBtn.disabled) return;
 
             const analysisId = saveBtn.dataset.lensAnalysisId;
             const section = saveBtn.closest('.lens-section');
             if (!section) return;
 
-            window.Lens.core.ButtonState.withLoading(saveBtn, Craft.t('lens', 'Saving...'), () => {
-                // Collect tags using service
-                const tagEditor = section.querySelector('[data-lens-target="tag-editor"]');
-                const tags = window.Lens.services.Taxonomy.collectTags(tagEditor);
+            window.Lens.core.ButtonState.withLoading(
+                saveBtn,
+                Craft.t('lens', 'Saving...'),
+                () => {
+                    // Collect tags using service
+                    const tagEditor = section.querySelector(
+                        '[data-lens-target="tag-editor"]',
+                    );
+                    const tags =
+                        window.Lens.services.Taxonomy.collectTags(tagEditor);
 
-                // Collect colors using service
-                const colorEditor = section.querySelector('[data-lens-target="color-editor"]');
-                const colors = window.Lens.services.Taxonomy.collectColors(colorEditor);
+                    // Collect colors using service
+                    const colorEditor = section.querySelector(
+                        '[data-lens-target="color-editor"]',
+                    );
+                    const colors =
+                        window.Lens.services.Taxonomy.collectColors(
+                            colorEditor,
+                        );
 
-                // Save both via parallel API calls
-                const tagPromise = window.Lens.core.API.post('lens/analysis/update-tags', {
-                    analysisId: analysisId,
-                    tags: JSON.stringify(tags)
-                });
+                    // Save both via parallel API calls
+                    const tagPromise = window.Lens.core.API.post(
+                        'lens/analysis/update-tags',
+                        {
+                            analysisId: analysisId,
+                            tags: JSON.stringify(tags),
+                        },
+                    );
 
-                const colorPromise = window.Lens.core.API.post('lens/analysis/update-colors', {
-                    analysisId: analysisId,
-                    colors: JSON.stringify(colors)
-                });
+                    const colorPromise = window.Lens.core.API.post(
+                        'lens/analysis/update-colors',
+                        {
+                            analysisId: analysisId,
+                            colors: JSON.stringify(colors),
+                        },
+                    );
 
-                return Promise.all([tagPromise, colorPromise]).then(() => {
-                    Craft.cp.displayNotice(Craft.t('lens', 'Taxonomy saved.'));
-                    const status = section.querySelector('[data-lens-target="taxonomy-status"]');
-                    if (status) status.textContent = '';
-                    saveBtn.textContent = Craft.t('lens', 'Save Changes');
-                });
-            });
+                    return Promise.all([tagPromise, colorPromise]).then(() => {
+                        Craft.cp.displayNotice(
+                            Craft.t('lens', 'Taxonomy saved.'),
+                        );
+                        const status = section.querySelector(
+                            '[data-lens-target="taxonomy-status"]',
+                        );
+                        if (status) status.textContent = '';
+                        saveBtn.textContent = Craft.t('lens', 'Save Changes');
+                    });
+                },
+            );
         },
 
         // ================================================================
         // Asset Actions
         // ================================================================
 
-        initAssetActions: function() {
-            window.Lens.core.DOM.delegate('[data-lens-action="analyze"], [data-lens-action="reprocess"]', 'click', this._handleAnalyze.bind(this));
-            window.Lens.core.DOM.delegate('[data-lens-action="apply-title"]', 'click', this._handleApplyTitle.bind(this));
-            window.Lens.core.DOM.delegate('[data-lens-action="apply-focal-point"]', 'click', this._handleApplyFocalPoint.bind(this));
-            window.Lens.core.DOM.delegate('[data-lens-action="find-similar"]', 'click', this._handleFindSimilar.bind(this));
+        initAssetActions: function () {
+            window.Lens.core.DOM.delegate(
+                '[data-lens-action="analyze"], [data-lens-action="reprocess"]',
+                'click',
+                this._handleAnalyze.bind(this),
+            );
+            window.Lens.core.DOM.delegate(
+                '[data-lens-action="apply-title"]',
+                'click',
+                this._handleApplyTitle.bind(this),
+            );
+            window.Lens.core.DOM.delegate(
+                '[data-lens-action="apply-focal-point"]',
+                'click',
+                this._handleApplyFocalPoint.bind(this),
+            );
+            window.Lens.core.DOM.delegate(
+                '[data-lens-action="find-similar"]',
+                'click',
+                this._handleFindSimilar.bind(this),
+            );
         },
 
-        _handleAnalyze: function(e, btn) {
+        _handleAnalyze: function (e, btn) {
             if (btn.disabled) return;
 
             const assetId = btn.dataset.lensAssetId;
+            const label = btn.querySelector('.label');
+            const loadingText = btn.dataset.lensLoadingText;
+            const originalText = label ? label.textContent : '';
 
-            window.Lens.core.ButtonState.withLoading(btn, Craft.t('lens', 'Processing...'), () => {
-                return window.Lens.core.API.post('lens/analysis/reprocess', { assetId: assetId }).then((response) => {
+            btn.disabled = true;
+            btn.classList.add('loading');
+
+            if (label && loadingText) label.textContent = loadingText;
+
+            var restoreBtn = function () {
+                btn.disabled = false;
+                btn.classList.remove('loading');
+                if (label) label.textContent = originalText;
+            };
+
+            window.Lens.core.API.post('lens/analysis/reprocess', {
+                assetId: assetId,
+            })
+                .then(function (response) {
                     if (response.data.success) {
-                        Craft.cp.displayNotice(Craft.t('lens', 'Asset queued for analysis.'));
-                        btn.textContent = Craft.t('lens', 'Analyzing...');
+                        Craft.cp.displayNotice(
+                            Craft.t('lens', 'Asset queued for analysis.'),
+                        );
 
-                        // Start polling using service
-                        window.Lens.services.AssetProcessing.poll(assetId);
+                        if (label)
+                            label.textContent = Craft.t('lens', 'Analyzing');
+
+                        // Keep loading state throughout polling — only release on failure
+                        window.Lens.services.AssetProcessing.poll(assetId, {
+                            onError: restoreBtn,
+                            onMaxAttempts: restoreBtn,
+                        });
                     }
-                });
-            });
+                })
+                .catch(restoreBtn);
         },
 
-        _handleApplyTitle: function(e, btn) {
+        _handleApplyTitle: function (e, btn) {
             if (btn.disabled) return;
 
             const assetId = btn.dataset.lensAssetId;
             const analysisId = btn.dataset.lensAnalysisId;
 
-            window.Lens.core.ButtonState.withLoading(btn, Craft.t('lens', 'Applying...'), () => {
-                return window.Lens.core.API.applyTitle(assetId, analysisId).then((response) => {
-                    if (response.data.success) {
-                        Craft.cp.displayNotice(Craft.t('lens', 'Title applied to asset.'));
-                    }
-                });
-            });
+            window.Lens.core.ButtonState.withLoading(
+                btn,
+                Craft.t('lens', 'Applying...'),
+                () => {
+                    return window.Lens.core.API.applyTitle(
+                        assetId,
+                        analysisId,
+                    ).then((response) => {
+                        if (response.data.success) {
+                            Craft.cp.displayNotice(
+                                Craft.t('lens', 'Title applied to asset.'),
+                            );
+                        }
+                    });
+                },
+            );
         },
 
-        _handleApplyFocalPoint: function(e, btn) {
+        _handleApplyFocalPoint: function (e, btn) {
             if (btn.disabled) return;
 
             const assetId = btn.dataset.lensAssetId;
@@ -135,20 +209,34 @@
             const focalY = parseFloat(btn.dataset.lensFocalY);
 
             if (isNaN(focalX) || isNaN(focalY)) {
-                Craft.cp.displayError(Craft.t('lens', 'Invalid focal point coordinates.'));
+                Craft.cp.displayError(
+                    Craft.t('lens', 'Invalid focal point coordinates.'),
+                );
                 return;
             }
 
-            window.Lens.core.ButtonState.withLoading(btn, Craft.t('lens', 'Applying...'), () => {
-                return window.Lens.core.API.applyFocalPoint(assetId, { x: focalX, y: focalY }).then((response) => {
-                    if (response.data.success) {
-                        Craft.cp.displayNotice(Craft.t('lens', 'Focal point applied to asset.'));
-                    }
-                });
-            });
+            window.Lens.core.ButtonState.withLoading(
+                btn,
+                Craft.t('lens', 'Applying...'),
+                () => {
+                    return window.Lens.core.API.applyFocalPoint(assetId, {
+                        x: focalX,
+                        y: focalY,
+                    }).then((response) => {
+                        if (response.data.success) {
+                            Craft.cp.displayNotice(
+                                Craft.t(
+                                    'lens',
+                                    'Focal point applied to asset.',
+                                ),
+                            );
+                        }
+                    });
+                },
+            );
         },
 
-        _handleFindSimilar: function(e, btn) {
+        _handleFindSimilar: function (e, btn) {
             if (btn.disabled) return;
 
             const assetId = btn.dataset.lensAssetId;
@@ -161,7 +249,7 @@
         // Auto-Polling
         // ================================================================
 
-        initAutoPolling: function() {
+        initAutoPolling: function () {
             const panel = document.querySelector('.lens-analysis-panel');
             if (!panel) return;
 
@@ -170,9 +258,11 @@
 
             // If analysis is pending or processing, start polling using service
             if (status === 'pending' || status === 'processing') {
-                window.Lens.services.AssetProcessing.poll(parseInt(assetId, 10));
+                window.Lens.services.AssetProcessing.poll(
+                    parseInt(assetId, 10),
+                );
             }
-        }
+        },
     };
 
     window.Lens.pages.AnalysisPanel = LensAnalysisPanel;
