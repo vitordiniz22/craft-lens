@@ -7,6 +7,8 @@
  #   - title: (optional) Notice title/heading
  #   - message: Notice message text (required)
  #   - cta: (optional) Object with 'label' and 'url' for call-to-action button
+ #       - cta.small: (optional) Whether button is small, defaults to true
+ #       - cta.submit: (optional) Whether button uses submit (red) style, defaults to true for error type
  #   - dismissible: (optional) Whether notice can be dismissed, defaults to false
  #   - dismissKey: (optional) Unique key for storing dismissed state in localStorage
  #}
@@ -38,7 +40,7 @@
 
     {% if cta ?? false %}
         <div class="lens-notice-action">
-            <a href="{{ cpUrl(cta.url) }}" class="btn small {{ type == 'error' ? 'submit' : '' }}">
+            <a href="{{ cpUrl(cta.url) }}" class="btn{{ (cta.small ?? true) ? ' small' : '' }}{{ (cta.submit ?? (type == 'error')) ? ' submit' : '' }}">
                 {{ cta.label }}
             </a>
         </div>

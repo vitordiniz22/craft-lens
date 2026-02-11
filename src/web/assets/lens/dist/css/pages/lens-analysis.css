@@ -101,34 +101,6 @@
   padding-bottom: 16px;
 }
 
-.lens-pending-notice-content {
-  width: 100%;
-}
-
-.lens-pending-icon {
-  flex-shrink: 0;
-  width: 16px;
-  height: 16px;
-}
-
-.lens-pending-icon svg {
-  width: 16px;
-  height: 16px;
-  color: var(--amber-600);
-}
-
-.lens-pending-notice strong {
-  color: var(--amber-900);
-  font-size: 13px;
-  text-transform: uppercase;
-  font-weight: 600;
-  letter-spacing: 0.025em;
-}
-
-.lens-pending-notice p {
-  color: var(--amber-800);
-  line-height: 1.5;
-}
 
 /* ==========================================================================
    Processing Banner

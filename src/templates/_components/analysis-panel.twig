@@ -88,18 +88,17 @@
     {% if analysis %}
         {# Pending review notice #}
         {% if analysis.status == 'pending_review' and not (static ?? false) %}
-            <div class="lens-pending-notice lens-alert-section lens-alert-section--warning">
-                <div class="lens-pending-notice-content">
-                    <div class="flex items-center gap-s mb-xs">
-                        <span class="lens-pending-icon">{{ iconSvg('circle-exclamation') }}</span>
-                        <strong>{{ 'Pending Review'|t('lens') }}</strong>
-                    </div>
-                    <p class="smalltext" style="margin: 0 0 8px 0">
-                        {{ 'This analysis is awaiting review. All data shown is provisional and may be edited after approval or rejection.'|t('lens') }}
-                    </p>
-                    <a href="{{ cpUrl('lens/review/' ~ analysis.id) }}" class="btn small submit">{{ 'Review now'|t('lens') }}</a>
-                </div>
-            </div>
+            {% include 'lens/_components/inline-notice' with {
+                type: 'warning',
+                title: 'Pending Review'|t('lens'),
+                message: 'This analysis is awaiting review. All data shown is provisional and may be edited after approval or rejection.'|t('lens'),
+                cta: {
+                    label: 'Review now'|t('lens'),
+                    url: 'lens/review/' ~ analysis.id,
+                    small: false,
+                    submit: true
+                }
+            } %}
         {% endif %}
 
         {# Section 1: Content Metadata #}
