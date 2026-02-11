@@ -193,13 +193,13 @@ class BulkProcessingStatusService extends Component
             return [
                 'pendingJobs' => $pendingJobs,
                 'reservedJobs' => $reservedJobs,
-                'jobDescription' => $jobDescription ?: Craft::t('lens', 'Processing assets...'),
+                'jobDescription' => $jobDescription ?: Craft::t('lens', 'Processing assets'),
             ];
         } catch (\Throwable) {
             return [
                 'pendingJobs' => 0,
                 'reservedJobs' => 0,
-                'jobDescription' => Craft::t('lens', 'Processing assets...'),
+                'jobDescription' => Craft::t('lens', 'Processing assets'),
             ];
         }
     }
@@ -346,7 +346,7 @@ class BulkProcessingStatusService extends Component
     {
         $message = match ([$from, $to]) {
             ['processing', 'complete'] => Craft::t('lens', 'Bulk processing complete!'),
-            ['ready', 'processing'] => Craft::t('lens', 'Processing started...'),
+            ['ready', 'processing'] => Craft::t('lens', 'Processing started'),
             default => null,
         };
 

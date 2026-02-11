@@ -60,7 +60,7 @@
 
             window.Lens.core.ButtonState.withLoading(
                 saveBtn,
-                Craft.t('lens', 'Saving...'),
+                Craft.t('lens', 'Saving'),
                 () => {
                     // Collect tags using service
                     const tagEditor = section.querySelector(
@@ -185,7 +185,7 @@
 
             window.Lens.core.ButtonState.withLoading(
                 btn,
-                Craft.t('lens', 'Applying...'),
+                Craft.t('lens', 'Applying'),
                 () => {
                     return window.Lens.core.API.applyTitle(
                         assetId,
@@ -217,7 +217,7 @@
 
             window.Lens.core.ButtonState.withLoading(
                 btn,
-                Craft.t('lens', 'Applying...'),
+                Craft.t('lens', 'Applying'),
                 () => {
                     return window.Lens.core.API.applyFocalPoint(assetId, {
                         x: focalX,

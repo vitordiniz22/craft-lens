@@ -14,7 +14,7 @@
                 {% set progress = processingProgress %}
                 {% set percentComplete = progress.percentComplete|default(0) %}
                 <div class="lens-processing__progress-header lens-flex-between lens-gap-12">
-                    <span class="lens-processing__progress-label">{{ 'Processing...'|t('lens') }}</span>
+                    <span class="lens-processing__progress-label">{{ 'Processing'|t('lens') }}</span>
                     <span class="lens-processing__progress-text">
                         {{ progress.completed|default(0)|number_format }} {{ 'of'|t('lens') }} {{ progress.total|default(totalImages)|number_format }}
                         ({{ percentComplete|round }}%)
