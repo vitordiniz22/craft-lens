@@ -101,12 +101,19 @@
             } %}
         {% endif %}
 
-        {# Section 1: Content Metadata #}
+        {# Section 1: Description #}
         {% if (analysis.suggestedTitle or analysis.altText or analysis.longDescription) and analysis.status not in ['failed', 'processing'] %}
             <div class="lens-section">
                 <div class="lens-section-header">
-                    <span class="lens-section-title">{{ 'Content'|t('lens') }}</span>
+                    <span class="lens-section-title">{{ 'Description'|t('lens') }}</span>
                 </div>
+                <p class="lens-section-intro">
+                    {% if readOnly %}
+                        {{ 'AI-suggested metadata.'|t('lens') }}
+                    {% else %}
+                        {{ 'AI-suggested metadata. Click the pencil to edit.'|t('lens') }}
+                    {% endif %}
+                </p>
                 <div class="lens-section-body">
                     {% include 'lens/_components/analysis/content-section' with {
                         analysis: analysis, asset: asset,
@@ -140,7 +147,7 @@
             <div class="lens-section">
                 <div class="lens-section-header">
                     <span class="lens-section-title">
-                        {{ 'Visual Analysis'|t('lens') }}
+                        {{ 'Quality & Focal Point'|t('lens') }}
                     </span>
                 </div>
                 <div class="lens-section-body">
@@ -157,7 +164,7 @@
             <div class="lens-section">
                 <div class="lens-section-header">
                     <span class="lens-section-title">
-                        {{ 'Content Safety'|t('lens') }}
+                        {{ 'Flags & Detection'|t('lens') }}
                         {% if hasSafetyFlags %}
                             <span class="lens-badge lens-badge--error">!</span>
                         {% endif %}
@@ -176,12 +183,12 @@
         {% if analysis.extractedText and analysis.status not in ['failed', 'processing'] %}
             <div class="lens-section">
                 <div class="lens-section-header">
-                    <span class="lens-section-title">{{ 'OCR'|t('lens') }}</span>
+                    <span class="lens-section-title">{{ 'Extracted Text'|t('lens') }}</span>
                 </div>
                 <div class="lens-section-body">
                     {% include 'lens/_components/analysis/editable-field' with {
                         fieldName: 'extractedText',
-                        label: 'Extracted Text'|t('lens'),
+                        label: null,
                         value: analysis.extractedText,
                         aiValue: analysis.extractedTextAi,
                         confidence: null,

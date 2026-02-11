@@ -143,19 +143,19 @@ class ReviewController extends Controller
 
         $modifications = [];
 
-        // Text fields
+        // Text fields — skip empty strings to avoid clearing data when form submits unmodified hidden inputs
         $suggestedTitle = $this->request->getBodyParam('suggestedTitle');
-        if ($suggestedTitle !== null) {
+        if ($suggestedTitle !== null && $suggestedTitle !== '') {
             $modifications['suggestedTitle'] = $suggestedTitle;
         }
 
         $altText = $this->request->getBodyParam('altText');
-        if ($altText !== null) {
+        if ($altText !== null && $altText !== '') {
             $modifications['altText'] = $altText;
         }
 
         $longDescription = $this->request->getBodyParam('longDescription');
-        if ($longDescription !== null) {
+        if ($longDescription !== null && $longDescription !== '') {
             $modifications['longDescription'] = $longDescription;
         }
 

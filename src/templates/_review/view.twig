@@ -15,10 +15,10 @@
         {{ actionInput('lens/review/approve') }}
         {{ hiddenInput('analysisId', analysis.analysisId) }}
 
-        {# Hidden inputs for modifications - populated by JavaScript #}
-        <input type="hidden" name="suggestedTitle" data-lens-control="field-suggestedTitle">
-        <input type="hidden" name="altText" data-lens-control="field-altText">
-        <input type="hidden" name="longDescription" data-lens-control="field-longDescription">
+        {# Hidden inputs for modifications - pre-populated with current values, updated by JavaScript on edit #}
+        <input type="hidden" name="suggestedTitle" data-lens-control="field-suggestedTitle" value="{{ analysis.suggestedTitle }}">
+        <input type="hidden" name="altText" data-lens-control="field-altText" value="{{ analysis.altText }}">
+        <input type="hidden" name="longDescription" data-lens-control="field-longDescription" value="{{ analysis.longDescription }}">
         <input type="hidden" name="tags" data-lens-control="field-tags">
         <input type="hidden" name="dominantColors" data-lens-control="field-colors">
         <input type="hidden" name="focalPointX" data-lens-control="focal-x">
@@ -74,7 +74,8 @@
                 </div>
 
                 <div class="lens-review-section">
-                    <h4>{{ 'Content'|t('lens') }}</h4>
+                    <h4>{{ 'Description'|t('lens') }}</h4>
+                    <p class="lens-section-intro">{{ 'AI-suggested metadata. Edit directly to customize.'|t('lens') }}</p>
                     {% include 'lens/_components/analysis/content-section' with {
                         analysis: analysis,
                         mode: 'review',
@@ -84,7 +85,7 @@
                 </div>
 
                 <div class="lens-review-section">
-                    <h4>{{ 'Tags & Colors'|t('lens') }}</h4>
+                    <h4>{{ 'Taxonomy'|t('lens') }}</h4>
                     {% include 'lens/_components/analysis/taxonomy-section' with {
                         analysis: analysis,
                         analysisTags: analysis.tags,
@@ -95,7 +96,7 @@
                 </div>
 
                 <div class="lens-review-section">
-                    <h4>{{ 'Quality & People'|t('lens') }}</h4>
+                    <h4>{{ 'Quality & Focal Point'|t('lens') }}</h4>
                     {% include 'lens/_components/analysis/quality-section' with {
                         analysis: analysis,
                         mode: 'review',
@@ -105,7 +106,7 @@
                 </div>
 
                 <div class="lens-review-section">
-                    <h4>{{ 'Safety & Detection'|t('lens') }}</h4>
+                    <h4>{{ 'Flags & Detection'|t('lens') }}</h4>
                     {% include 'lens/_components/analysis/safety-section' with {
                         analysis: analysis,
                         mode: 'review',
@@ -116,7 +117,7 @@
 
                 {% if analysis.exif %}
                     <div class="lens-review-section">
-                        <h4>{{ 'Metadata'|t('lens') }}</h4>
+                        <h4>{{ 'Technical Info'|t('lens') }}</h4>
                         {% include 'lens/_components/analysis/technical-section' with {
                             analysis: analysis,
                             exifData: analysis.exif

@@ -10,7 +10,7 @@
 {% if analysis.suggestedTitle %}
     {% include 'lens/_components/analysis/editable-field' with {
         fieldName: 'suggestedTitle',
-        label: 'Suggested Title'|t('lens'),
+        label: 'Title'|t('lens'),
         value: analysis.suggestedTitle,
         aiValue: analysis.suggestedTitleAi,
         confidence: analysis.titleConfidence,
