@@ -18,6 +18,8 @@
             </a>
         {% endfor %}
     </div>
+{% else %}
+    <p class="light smalltext">{{ 'No similar assets found'|t('lens') }}</p>
 {% endif %}
 
 {# Find Similar button #}

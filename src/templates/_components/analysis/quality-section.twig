@@ -56,6 +56,11 @@
             </div>
         {% endif %}
     </div>
+{% else %}
+    <div class="lens-detection-item lens-detection-item--clear mb-m">
+        <span class="lens-field-label">{{ 'Focal Point'|t('lens') }}</span>
+        <p class="light smalltext">{{ 'No focal point suggested'|t('lens') }}</p>
+    </div>
 {% endif %}
 
 {# Quality Metrics #}
@@ -95,5 +100,10 @@
                 <span class="smalltext light" style="min-width:32px;text-align:right">{{ (analysis.noiseScore * 100)|round }}%</span>
             </div>
         {% endif %}
+    </div>
+{% else %}
+    <div class="lens-detection-item lens-detection-item--clear">
+        <span class="lens-field-label">{{ 'Image Quality'|t('lens') }}</span>
+        <p class="light smalltext">{{ 'Quality metrics not available'|t('lens') }}</p>
     </div>
 {% endif %}

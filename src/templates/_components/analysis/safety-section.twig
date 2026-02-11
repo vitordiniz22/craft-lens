@@ -68,6 +68,13 @@
             </button>
         {% endif %}
     </div>
+{% else %}
+    <div class="lens-detection-item lens-detection-item--clear">
+        <div class="flex items-center gap-s">
+            <span class="status on"></span>
+            {{ 'No NSFW content detected'|t('lens') }}
+        </div>
+    </div>
 {% endif %}
 
 {# Watermark Detection #}
@@ -119,6 +126,13 @@
             </button>
         {% endif %}
     </div>
+{% else %}
+    <div class="lens-detection-item lens-detection-item--clear">
+        <div class="flex items-center gap-s">
+            <span class="status on"></span>
+            {{ 'No watermark detected'|t('lens') }}
+        </div>
+    </div>
 {% endif %}
 
 {# Brand Detection #}
@@ -162,5 +176,12 @@
                 {{ 'Restore AI flag'|t('lens') }}
             </button>
         {% endif %}
+    </div>
+{% else %}
+    <div class="lens-detection-item lens-detection-item--clear">
+        <div class="flex items-center gap-s">
+            <span class="status on"></span>
+            {{ 'No brands detected'|t('lens') }}
+        </div>
     </div>
 {% endif %}

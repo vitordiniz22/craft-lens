@@ -117,6 +117,25 @@
                     } %}
                 </div>
 
+                <div class="lens-review-section">
+                    <h4>{{ 'Extracted Text'|t('lens') }}</h4>
+                    {% include 'lens/_components/analysis/editable-field' with {
+                        fieldName: 'extractedText',
+                        label: null,
+                        value: analysis.extractedText,
+                        aiValue: analysis.extractedTextAi,
+                        confidence: null,
+                        editedBy: analysis.extractedTextEditedBy,
+                        editedAt: analysis.extractedTextEditedAt,
+                        inputType: 'textarea',
+                        featured: false,
+                        static: false,
+                        analysisId: analysis.analysisId,
+                        isProcessing: false,
+                        mode: 'review'
+                    } %}
+                </div>
+
                 {% if analysis.exif %}
                     <div class="lens-review-section">
                         <h4>{{ 'Technical Info'|t('lens') }}</h4>

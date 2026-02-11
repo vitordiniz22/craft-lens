@@ -9,8 +9,6 @@
  #}
 
 {% set hasSafetyFlags = analysis and (analysis.containsPeople or analysis.isFlaggedNsfw or analysis.hasWatermark or (analysis.containsBrandLogo and analysis.detectedBrands|length)) %}
-{% set hasExif = exifData is defined and exifData %}
-{% set hasSimilar = similarImages is defined and similarImages|length %}
 
 {# Editing is locked when static (Craft preview) or when asset is pending review #}
 {% set readOnly = (static ?? false) or (analysis and analysis.status == 'pending_review') %}
@@ -102,7 +100,7 @@
         {% endif %}
 
         {# Section 1: Description #}
-        {% if (analysis.suggestedTitle or analysis.altText or analysis.longDescription) and analysis.status not in ['failed', 'processing'] %}
+        {% if analysis.status not in ['failed', 'processing'] %}
             <div class="lens-section">
                 <div class="lens-section-header">
                     <span class="lens-section-header__title">{{ 'Description'|t('lens') }}</span>
@@ -143,7 +141,7 @@
         {% endif %}
 
         {# Section 3: Focal Point & Quality #}
-        {% if ((analysis.focalPointX is not null) or (analysis.overallQualityScore is not null)) and analysis.status not in ['failed', 'processing'] %}
+        {% if analysis.status not in ['failed', 'processing'] %}
             <div class="lens-section">
                 <div class="lens-section-header">
                     <span class="lens-section-header__title">
@@ -160,7 +158,7 @@
         {% endif %}
 
         {# Section 4: Content Safety #}
-        {% if (hasSafetyFlags or (analysis.nsfwScore is defined and analysis.nsfwScore > 0)) and analysis.status not in ['failed', 'processing'] %}
+        {% if analysis.status not in ['failed', 'processing'] %}
             <div class="lens-section">
                 <div class="lens-section-header">
                     <span class="lens-section-header__title">
@@ -180,7 +178,7 @@
         {% endif %}
 
         {# Section 5: Extracted Text #}
-        {% if analysis.extractedText and analysis.status not in ['failed', 'processing'] %}
+        {% if analysis.status not in ['failed', 'processing'] %}
             <div class="lens-section">
                 <div class="lens-section-header">
                     <span class="lens-section-header__title">{{ 'Extracted Text'|t('lens') }}</span>
@@ -205,7 +203,7 @@
         {% endif %}
 
         {# Section 6: Technical Info #}
-        {% if hasExif %}
+        {% if analysis.status not in ['failed', 'processing'] %}
             <div class="lens-section">
                 <div class="lens-section-header">
                     <span class="lens-section-header__title">{{ 'Technical Info'|t('lens') }}</span>
@@ -219,7 +217,7 @@
         {% endif %}
 
         {# Section 7: Similar Assets #}
-        {% if hasSimilar %}
+        {% if analysis.status not in ['failed', 'processing'] %}
             <div class="lens-section">
                 <div class="lens-section-header">
                     <span class="lens-section-header__title">{{ 'Similar Assets'|t('lens') }}</span>
