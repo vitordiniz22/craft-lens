@@ -74,8 +74,10 @@
                 </div>
 
                 <div class="lens-review-section">
-                    <h4>{{ 'Description'|t('lens') }}</h4>
-                    <p class="lens-section-intro">{{ 'AI-suggested metadata. Edit directly to customize.'|t('lens') }}</p>
+                    <div class="lens-section-header">
+                        <h4 class="lens-section-header__title">{{ 'Description'|t('lens') }}</h4>
+                        <p class="lens-section-header__intro">{{ 'AI-suggested metadata. Edit directly to customize.'|t('lens') }}</p>
+                    </div>
                     {% include 'lens/_components/analysis/content-section' with {
                         analysis: analysis,
                         mode: 'review',

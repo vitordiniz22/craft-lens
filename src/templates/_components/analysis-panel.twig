@@ -105,15 +105,15 @@
         {% if (analysis.suggestedTitle or analysis.altText or analysis.longDescription) and analysis.status not in ['failed', 'processing'] %}
             <div class="lens-section">
                 <div class="lens-section-header">
-                    <span class="lens-section-title">{{ 'Description'|t('lens') }}</span>
+                    <span class="lens-section-header__title">{{ 'Description'|t('lens') }}</span>
+                    <p class="lens-section-header__intro">
+                        {% if readOnly %}
+                            {{ 'AI-suggested metadata.'|t('lens') }}
+                        {% else %}
+                            {{ 'AI-suggested metadata. Click the pencil to edit.'|t('lens') }}
+                        {% endif %}
+                    </p>
                 </div>
-                <p class="lens-section-intro">
-                    {% if readOnly %}
-                        {{ 'AI-suggested metadata.'|t('lens') }}
-                    {% else %}
-                        {{ 'AI-suggested metadata. Click the pencil to edit.'|t('lens') }}
-                    {% endif %}
-                </p>
                 <div class="lens-section-body">
                     {% include 'lens/_components/analysis/content-section' with {
                         analysis: analysis, asset: asset,
@@ -128,7 +128,7 @@
         {% if analysis.status not in ['pending', 'processing', 'failed'] %}
             <div class="lens-section">
                 <div class="lens-section-header">
-                    <span class="lens-section-title">
+                    <span class="lens-section-header__title">
                         {{ 'Taxonomy'|t('lens') }}
                     </span>
                 </div>
@@ -146,7 +146,7 @@
         {% if ((analysis.focalPointX is not null) or (analysis.overallQualityScore is not null)) and analysis.status not in ['failed', 'processing'] %}
             <div class="lens-section">
                 <div class="lens-section-header">
-                    <span class="lens-section-title">
+                    <span class="lens-section-header__title">
                         {{ 'Quality & Focal Point'|t('lens') }}
                     </span>
                 </div>
@@ -163,7 +163,7 @@
         {% if (hasSafetyFlags or (analysis.nsfwScore is defined and analysis.nsfwScore > 0)) and analysis.status not in ['failed', 'processing'] %}
             <div class="lens-section">
                 <div class="lens-section-header">
-                    <span class="lens-section-title">
+                    <span class="lens-section-header__title">
                         {{ 'Flags & Detection'|t('lens') }}
                         {% if hasSafetyFlags %}
                             <span class="lens-badge lens-badge--error">!</span>
@@ -183,7 +183,7 @@
         {% if analysis.extractedText and analysis.status not in ['failed', 'processing'] %}
             <div class="lens-section">
                 <div class="lens-section-header">
-                    <span class="lens-section-title">{{ 'Extracted Text'|t('lens') }}</span>
+                    <span class="lens-section-header__title">{{ 'Extracted Text'|t('lens') }}</span>
                 </div>
                 <div class="lens-section-body">
                     {% include 'lens/_components/analysis/editable-field' with {
@@ -208,7 +208,7 @@
         {% if hasExif %}
             <div class="lens-section">
                 <div class="lens-section-header">
-                    <span class="lens-section-title">{{ 'Technical Info'|t('lens') }}</span>
+                    <span class="lens-section-header__title">{{ 'Technical Info'|t('lens') }}</span>
                 </div>
                 <div class="lens-section-body">
                     {% include 'lens/_components/analysis/technical-section' with {
@@ -222,7 +222,7 @@
         {% if hasSimilar %}
             <div class="lens-section">
                 <div class="lens-section-header">
-                    <span class="lens-section-title">{{ 'Similar Assets'|t('lens') }}</span>
+                    <span class="lens-section-header__title">{{ 'Similar Assets'|t('lens') }}</span>
                 </div>
                 <div class="lens-section-body">
                     {% include 'lens/_components/analysis/relationships-section' with {

@@ -1,7 +1,7 @@
 {# Section 5: Quick Insights - only shows when data exists #}
 {% if topTags|length or dominantColors|length %}
 <div class="lens-dashboard-section lens-insights pane">
-    <h2 class="lens-section-title">{{ 'Quick Insights'|t('lens') }}</h2>
+    <h2 class="lens-section-header__title">{{ 'Quick Insights'|t('lens') }}</h2>
 
     <div class="lens-insights__grid lens-gap-24">
         {# Top Tags - compact inline list #}

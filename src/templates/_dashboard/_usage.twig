@@ -2,7 +2,7 @@
 {% set hasUsageData = monthlyUsage.assetsProcessed > 0 or lastMonthUsage.assetsProcessed > 0 %}
 {% if hasUsageData %}
 <div class="lens-dashboard-section lens-usage pane">
-    <h2 class="lens-section-title">{{ 'Usage'|t('lens') }}</h2>
+    <h2 class="lens-section-header__title">{{ 'Usage'|t('lens') }}</h2>
 
     {# Comparison Grid #}
     <div class="lens-usage__grid">
