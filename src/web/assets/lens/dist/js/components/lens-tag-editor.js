@@ -112,6 +112,9 @@
         },
 
         _handleTagRemove: function(e, removeBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+
             const chip = removeBtn.closest('.chip');
             if (!chip) return;
 
@@ -178,8 +181,9 @@
             const chips = window.Lens.services.Taxonomy.getOrCreateChipsContainer(editor);
             if (!chips) return;
 
-            const chip = document.createElement('div');
-            chip.className = 'chip' + (isAi ? ' chip--ai' : '');
+            const chip = document.createElement('a');
+            chip.href = Craft.getCpUrl('lens/search', {tags: tagName});
+            chip.className = 'chip';
             chip.dataset.lensTag = tagName;
             chip.dataset.lensIsAi = isAi ? '1' : '0';
             chip.dataset.lensConfidence = isAi ? '' : '1';
