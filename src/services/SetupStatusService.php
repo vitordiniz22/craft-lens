@@ -257,7 +257,7 @@ class SetupStatusService extends Component
             'severity' => SetupSeverity::Warning->value,
             'message' => $isResolved
                 ? Craft::t('lens', 'Lens Analysis is configured.')
-                : Craft::t('lens', 'Lens Analysis has not been added to any volume field layout.'),
+                : Craft::t('lens', 'The Lens Analysis UI element has not been added to any asset volume\'s field layout.'),
             'actionLabel' => Craft::t('lens', 'Add to Field Layout'),
             'actionUrl' => 'settings/assets',
             'isResolved' => $isResolved,
