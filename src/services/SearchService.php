@@ -160,6 +160,7 @@ class SearchService extends Component
         $this->applyQualityPresetFilter($query, $filters);
         $this->applyGpsFilter($query, $filters);
         $this->applyFocalPointFilter($query, $filters);
+        $this->applyDefaultStatusExclusion($query, $filters);
 
         return $query;
     }
@@ -539,6 +540,23 @@ class SearchService extends Component
                 ['lens.focalPointY' => null]
             ]);
         }
+    }
+
+    /**
+     * Exclude non-analyzed statuses by default when no explicit status filter is set.
+     * Failed, processing, and pending assets are hidden unless explicitly requested.
+     */
+    private function applyDefaultStatusExclusion(Query $query, array $filters): void
+    {
+        if (!empty($filters['status'])) {
+            return;
+        }
+
+        $query->andWhere(['not', ['lens.status' => [
+            AnalysisStatus::Failed->value,
+            AnalysisStatus::Processing->value,
+            AnalysisStatus::Pending->value,
+        ]]]);
     }
 
     /**

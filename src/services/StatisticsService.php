@@ -426,41 +426,40 @@ class StatisticsService extends Component
     /**
      * Get all items requiring user attention with counts and links.
      * Returns only items with count > 0.
-     * Order: Pending Review, Failed, NSFW, Watermarked, Duplicates, Missing Alt Text
+     * Order: Pending Review, Failed, NSFW, Watermarked, Duplicates
      */
     public function getAttentionItems(?array $overviewStats = null): array
     {
         $plugin = Plugin::getInstance();
         $overview = $overviewStats ?? $this->getOverviewStats();
+        $nsfwCount = $this->getNsfwFlaggedCount();
+        $watermarkedCount = $this->getWatermarkedCount();
+        $duplicateCount = $plugin->duplicateDetection->getUnresolvedDuplicateCount();
 
         $items = [];
 
-        // 1. Pending Review
         if ($overview['pendingReview'] > 0) {
             $items[] = [
                 'type' => 'pending_review',
                 'label' => Craft::t('lens', 'Pending Review'),
                 'count' => $overview['pendingReview'],
-                'url' => 'lens/review',
+                'url' => 'lens/search?status=pending_review',
                 'color' => 'blue',
                 'icon' => 'eye',
             ];
         }
 
-        // 2. Failed Analyses
         if ($overview['failed'] > 0) {
             $items[] = [
                 'type' => 'failed',
                 'label' => Craft::t('lens', 'Failed Analyses'),
                 'count' => $overview['failed'],
-                'url' => 'assets?lensStatus=failed',
+                'url' => 'lens/search?status=failed',
                 'color' => 'red',
                 'icon' => 'triangle-exclamation',
             ];
         }
 
-        // 3. NSFW Flagged
-        $nsfwCount = $this->getNsfwFlaggedCount();
         if ($nsfwCount > 0) {
             $items[] = [
                 'type' => 'nsfw_flagged',
@@ -472,8 +471,6 @@ class StatisticsService extends Component
             ];
         }
 
-        // 4. Watermarked Images
-        $watermarkedCount = $this->getWatermarkedCount();
         if ($watermarkedCount > 0) {
             $items[] = [
                 'type' => 'watermarked',
@@ -485,8 +482,6 @@ class StatisticsService extends Component
             ];
         }
 
-        // 5. Duplicates
-        $duplicateCount = $plugin->duplicateDetection->getUnresolvedDuplicateCount();
         if ($duplicateCount > 0) {
             $items[] = [
                 'type' => 'duplicates',
@@ -495,18 +490,6 @@ class StatisticsService extends Component
                 'url' => 'lens/duplicates',
                 'color' => 'amber',
                 'icon' => 'copy',
-            ];
-        }
-
-        // 6. Missing Alt Text
-        if ($overview['missingAltText'] > 0) {
-            $items[] = [
-                'type' => 'missing_alt',
-                'label' => Craft::t('lens', 'Missing Alt Text'),
-                'count' => $overview['missingAltText'],
-                'url' => 'lens/search?missingAltText=1',
-                'color' => 'amber',
-                'icon' => 'text',
             ];
         }
 

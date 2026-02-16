@@ -22,6 +22,7 @@ class FilterParser
         'colorFamily', 'colorTolerance', 'hasDuplicates', 'quickFilter',
         'hasWatermark', 'watermarkType', 'containsBrandLogo',
         'qualityPreset', 'hasGps', 'hasFocalPoint',
+        'nsfwFlagged',
     ];
 
     /**
@@ -42,6 +43,7 @@ class FilterParser
         self::parseEnumFilters($request, $filters);
         self::parseQuickFilter($request, $filters);
         self::parsePagination($request, $filters);
+        self::parseNsfwFlagged($request, $filters);
 
         return $filters;
     }
@@ -170,7 +172,7 @@ class FilterParser
     {
         $booleanFilterKeys = [
             'hasDuplicates', 'hasWatermark', 'containsBrandLogo',
-            'hasGps', 'hasFocalPoint'
+            'hasGps', 'hasFocalPoint',
         ];
 
         foreach ($booleanFilterKeys as $key) {
@@ -220,6 +222,19 @@ class FilterParser
 
         if ($limit !== null && is_numeric($limit)) {
             $filters['limit'] = min(100, max(1, (int) $limit));
+        }
+    }
+
+    /**
+     * Parse nsfwFlagged=1 shorthand into nsfwScoreMin=0.5.
+     */
+    private static function parseNsfwFlagged(Request $request, array &$filters): void
+    {
+        $nsfwFlagged = $request->getQueryParam('nsfwFlagged');
+
+        if ($nsfwFlagged !== null && filter_var($nsfwFlagged, FILTER_VALIDATE_BOOLEAN) && !isset($filters['nsfwScoreMin'])) {
+            $filters['nsfwScoreMin'] = 0.5;
+            $filters['nsfwFlagged'] = true;
         }
     }
 

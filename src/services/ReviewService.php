@@ -370,6 +370,7 @@ class ReviewService extends Component
             'extractedText' => $record->extractedText,
             'extractedTextAi' => $record->extractedTextAi,
             'extractedTextEditedBy' => $record->extractedTextEditedBy,
+            'extractedTextEditedAt' => $record->extractedTextEditedAt,
 
             // Tags and colors
             'tags' => array_map(fn($t) => [

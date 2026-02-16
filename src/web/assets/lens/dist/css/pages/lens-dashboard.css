@@ -11,6 +11,10 @@
     gap: 24px;
 }
 
+.lens-dashboard-section {
+    margin-top: 0;
+    margin-bottom: 0;
+}
 
 /* ==========================================================================
    Section 1: Needs Attention
@@ -58,7 +62,6 @@
    ========================================================================== */
 
 .lens-processing {
-    padding: 20px;
 }
 
 .lens-processing__progress-label {
@@ -79,7 +82,7 @@
 .lens-processing__actions {
     display: flex;
     justify-content: flex-start;
-    margin-top: 4px;
+    margin-top: 10px;
 }
 
 .lens-processing__waiting-info {
@@ -117,7 +120,6 @@
    ========================================================================== */
 
 .lens-health {
-    padding: 20px;
 }
 
 .lens-health__metrics {
