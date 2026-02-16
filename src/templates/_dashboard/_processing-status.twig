@@ -6,6 +6,10 @@
     {% set analyzed = processingStats.analyzed %}
     {% set unprocessed = processingStats.unprocessed %}
     {% set processing = processingStats.processing|default(0) %}
+    {% set pendingReview = processingStats.pendingReview|default(0) %}
+    {% set failed = processingStats.failed|default(0) %}
+    {% set processed = analyzed + pendingReview + failed %}
+    {% set waiting = max(0, unprocessed - failed) %}
 
     <div class="lens-processing__status lens-flex-column lens-gap-12" data-state="{{ processingState }}">
         {% if processingState == 'processing' %}
@@ -28,18 +32,20 @@
                         {{ 'Estimated: ~{minutes} minutes remaining'|t('lens', {minutes: queueInfo.estimatedMinutes}) }}
                     </div>
                 {% endif %}
-                <form method="post" action="{{ actionUrl('lens/bulk/cancel') }}" class="lens-processing__actions">
-                    {{ csrfInput() }}
-                    <button type="submit" class="btn">{{ 'Pause'|t('lens') }}</button>
-                </form>
+                <div class="lens-actions__grid lens-gap-12">
+                    <form method="post" action="{{ actionUrl('lens/bulk/cancel') }}">
+                        {{ csrfInput() }}
+                        <button type="submit" class="btn">{{ 'Pause'|t('lens') }}</button>
+                    </form>
+                </div>
             </div>
         {% elseif unprocessed > 0 %}
             {# Assets waiting state #}
             <div class="lens-processing-waiting">
-                {% set percentComplete = totalImages > 0 ? ((analyzed / totalImages) * 100) : 0 %}
+                {% set percentComplete = totalImages > 0 ? ((processed / totalImages) * 100) : 0 %}
                 <div class="lens-processing__progress-header lens-flex-between lens-gap-12">
                     <span class="lens-processing__progress-text">
-                        {{ analyzed|number_format }} {{ 'of'|t('lens') }} {{ totalImages|number_format }}
+                        {{ processed|number_format }} {{ 'of'|t('lens') }} {{ totalImages|number_format }}
                         ({{ percentComplete|round }}%)
                     </span>
                 </div>
@@ -47,19 +53,43 @@
                     <div class="lens-progress-fill" style="width: {{ percentComplete }}%"></div>
                 </div>
                 <div class="lens-processing__waiting-info">
-                    <span class="lens-processing__waiting-count">{{ unprocessed|number_format }} {{ 'assets waiting'|t('lens') }}</span>
+                    {% if waiting > 0 %}
+                        <span class="lens-processing__waiting-count">{{ waiting|number_format }} {{ 'unprocessed'|t('lens') }}</span>
+                    {% endif %}
+                    {% if pendingReview > 0 %}
+                        {% if waiting > 0 %}
+                            <span class="lens-processing__separator"> · </span>
+                        {% endif %}
+                        <span class="lens-processing__review-count">{{ pendingReview|number_format }} {{ 'pending review'|t('lens') }}</span>
+                    {% endif %}
+                    {% if failed > 0 %}
+                        {% if waiting > 0 or pendingReview > 0 %}
+                            <span class="lens-processing__separator"> · </span>
+                        {% endif %}
+                        <span class="lens-processing__failed-count">{{ failed|number_format }} {{ 'failed'|t('lens') }}</span>
+                    {% endif %}
                 </div>
-                <form method="post" action="{{ actionUrl('lens/bulk/process') }}" class="lens-processing__actions">
-                    {{ csrfInput() }}
-                    <button type="submit" class="btn submit">{{ 'Analyze Remaining'|t('lens') }}</button>
-                </form>
+                <div class="lens-actions__grid lens-gap-12">
+                    {% if waiting > 0 %}
+                        <form method="post" action="{{ actionUrl('lens/bulk/process') }}" style="display: inline;">
+                            {{ csrfInput() }}
+                            <button type="submit" class="btn submit">{{ 'Start Analysis'|t('lens') }}</button>
+                        </form>
+                    {% endif %}
+                    {% if failed > 0 %}
+                        <form method="post" action="{{ actionUrl('lens/bulk/retry-failed') }}" style="display: inline;">
+                            {{ csrfInput() }}
+                            <button type="submit" class="btn{% if waiting == 0 %} submit{% endif %}">{{ 'Retry Failed'|t('lens') }}</button>
+                        </form>
+                    {% endif %}
+                </div>
             </div>
         {% else %}
             {# Idle/Complete state #}
             <div class="lens-processing--complete">
                 <div class="lens-processing__progress-header lens-flex-between lens-gap-12">
                     <span class="lens-processing__progress-text">
-                        {{ analyzed|number_format }} {{ 'of'|t('lens') }} {{ totalImages|number_format }} {{ 'complete'|t('lens') }}
+                        {{ processed|number_format }} {{ 'of'|t('lens') }} {{ totalImages|number_format }} {{ 'complete'|t('lens') }}
                     </span>
                     <span class="lens-processing__complete-icon">{{ iconSvg('check') }}</span>
                 </div>

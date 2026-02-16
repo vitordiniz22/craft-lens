@@ -234,15 +234,14 @@ class BulkProcessingStatusService extends Component
     {
         $initialUnprocessed = $session['initialUnprocessed'] ?? $stats['unprocessed'];
         $total = max($initialUnprocessed, 1);
-        $currentUnprocessed = $stats['unprocessed'] + $stats['processing'];
-        $completed = max(0, $initialUnprocessed - $currentUnprocessed);
+        $completed = max(0, $initialUnprocessed - $stats['unprocessed']);
         $percentComplete = ($completed / $total) * 100;
 
         return [
             'total' => $total,
             'completed' => $completed,
             'failed' => $stats['failed'],
-            'remaining' => $currentUnprocessed,
+            'remaining' => $stats['unprocessed'],
             'percentComplete' => round($percentComplete, 1),
         ];
     }

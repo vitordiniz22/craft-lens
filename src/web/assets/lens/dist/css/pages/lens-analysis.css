@@ -511,6 +511,11 @@
     color: var(--red-800);
 }
 
+.lens-nsfw-chip--caution {
+    background: var(--amber-100);
+    color: var(--amber-800);
+}
+
 .lens-watermark-info {
     display: flex;
     align-items: center;

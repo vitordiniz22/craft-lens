@@ -41,12 +41,50 @@
             {% endif %}
         </div>
     </div>
+{% elseif analysis.nsfwScore is defined and analysis.nsfwScore >= 0.2 %}
+    {# Caution tier (20-49%) - Amber warning #}
+    <div class="lens-detection-item lens-alert-section lens-alert-section--warning" style="padding: 10px; border-radius: var(--small-border-radius)">
+        <div style="width: 100%">
+            <div class="flex items-center gap-s mb-xs">
+                <span class="smalltext" style="text-transform:uppercase;font-weight:600">{{ 'Content Advisory'|t('lens') }}</span>
+                <span class="lens-badge lens-badge--amber">{{ (analysis.nsfwScore * 100)|round }}%</span>
+            </div>
+            {% if analysis.nsfwCategories|length %}
+                <div class="chips">
+                    {% for cat in analysis.nsfwCategories %}
+                        <div class="chip lens-nsfw-chip lens-nsfw-chip--caution">
+                            <div class="chip-content">
+                                <span class="chip-label">{{ cat.category }}</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            {% if not static and not isProcessing %}
+                <button type="button" class="lens-flag-dismiss" data-lens-action="flag-dismiss" data-lens-field="nsfwScore" data-lens-value="0" data-lens-analysis-id="{{ analysis.id }}">
+                    {{ 'Clear flag'|t('lens') }}
+                </button>
+            {% endif %}
+        </div>
+    </div>
 {% elseif analysis.nsfwScore is defined and analysis.nsfwScore > 0 %}
+    {# Low score (1-19%) - Plain text with categories #}
     <div class="lens-detection-item">
         <div class="flex items-center gap-s">
             <span class="status on"></span>
             {{ 'NSFW Score: {score}%'|t('lens', {score: (analysis.nsfwScore * 100)|round}) }}
         </div>
+        {% if analysis.nsfwCategories|length %}
+            <div class="chips" style="margin-top: 4px;">
+                {% for cat in analysis.nsfwCategories %}
+                    <div class="chip small">
+                        <div class="chip-content">
+                            <span class="chip-label">{{ cat.category }}</span>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
     </div>
 {% elseif analysis.nsfwScoreEditedBy is defined and analysis.nsfwScoreEditedBy and analysis.nsfwScoreAi is defined and analysis.nsfwScoreAi > 0 %}
     <div class="lens-detection-item">

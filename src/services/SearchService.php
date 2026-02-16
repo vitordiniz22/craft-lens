@@ -54,6 +54,11 @@ class SearchService extends Component
             'icon' => 'warning',
             'filters' => ['nsfwScoreMin' => 0.5],
         ],
+        'nsfw-caution' => [
+            'label' => 'NSFW Caution',
+            'icon' => 'warning',
+            'filters' => ['nsfwScoreMin' => 0.2, 'nsfwScoreMax' => 0.499],
+        ],
         'recent-7d' => [
             'label' => 'Last 7 Days',
             'icon' => 'clock',

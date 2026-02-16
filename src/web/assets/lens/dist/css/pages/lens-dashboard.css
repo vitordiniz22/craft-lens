@@ -79,19 +79,32 @@
     color: var(--medium-text-color);
 }
 
-.lens-processing__actions {
-    display: flex;
-    justify-content: flex-start;
-    margin-top: 10px;
-}
-
 .lens-processing__waiting-info {
     font-size: 13px;
+    margin-bottom: 6px;
 }
 
 .lens-processing__waiting-count {
+    color: var(--medium-text-color);
+    font-weight: 500;
+}
+
+.lens-processing__review-count {
     color: var(--warning-color);
     font-weight: 500;
+}
+
+.lens-processing__failed-count {
+    color: var(--error-color);
+    font-weight: 500;
+}
+
+.lens-processing__separator {
+    color: var(--light-text-color);
+}
+
+.lens-processing__progress-header {
+    margin-bottom: 2px;
 }
 
 .lens-processing--complete .lens-processing__progress-header {

@@ -8,7 +8,7 @@
  #   analysisTags, analysisColors, exifData, similarImages
  #}
 
-{% set hasSafetyFlags = analysis and (analysis.containsPeople or analysis.isFlaggedNsfw or analysis.hasWatermark or (analysis.containsBrandLogo and analysis.detectedBrands|length)) %}
+{% set hasSafetyFlags = analysis and (analysis.containsPeople or analysis.isFlaggedNsfw or (analysis.nsfwScore is defined and analysis.nsfwScore >= 0.2) or analysis.hasWatermark or (analysis.containsBrandLogo and analysis.detectedBrands|length)) %}
 
 {# Editing is locked when static (Craft preview) or when asset is pending review #}
 {% set readOnly = (static ?? false) or (analysis and analysis.status == 'pending_review') %}
@@ -163,8 +163,10 @@
                 <div class="lens-section-header">
                     <span class="lens-section-header__title">
                         {{ 'Flags & Detection'|t('lens') }}
-                        {% if hasSafetyFlags %}
+                        {% if analysis.isFlaggedNsfw %}
                             <span class="lens-badge lens-badge--error">!</span>
+                        {% elseif analysis.nsfwScore is defined and analysis.nsfwScore >= 0.2 %}
+                            <span class="lens-badge lens-badge--warning">!</span>
                         {% endif %}
                     </span>
                 </div>
