@@ -23,22 +23,6 @@
   margin-bottom: 12px;
 }
 
-.lens-banner-dismiss {
-  margin-left: auto;
-  padding: 4px 8px;
-  background: transparent;
-  border: none;
-  color: var(--medium-text-color);
-  font-size: 16px;
-  cursor: pointer;
-  opacity: 0.6;
-  transition: opacity 0.15s ease;
-}
-
-.lens-banner-dismiss:hover {
-  opacity: 1;
-}
-
 .lens-setup-banner-icon {
   display: flex;
   align-items: center;
@@ -54,6 +38,10 @@
   width: 16px;
   height: 16px;
   fill: white;
+}
+
+.lens-setup-banner--warning .lens-setup-banner-icon {
+  background: var(--bg-pending);
 }
 
 .lens-setup-banner--info .lens-setup-banner-icon {
@@ -90,10 +78,6 @@
   border: 1px solid var(--hairline-color);
 }
 
-.lens-setup-item--complete {
-  opacity: 0.7;
-}
-
 .lens-setup-item-content {
   display: flex;
   align-items: center;
@@ -118,11 +102,6 @@
 .lens-setup-item-text {
   font-size: 14px;
   color: var(--text-color);
-}
-
-.lens-setup-item--complete .lens-setup-item-text {
-  text-decoration: line-through;
-  color: var(--medium-text-color);
 }
 
 .lens-setup-item-action {
