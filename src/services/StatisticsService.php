@@ -248,18 +248,21 @@ class StatisticsService extends Component
     /**
      * Get recent activity feed items for dashboard.
      *
-     * @return array<array{type: string, message: string, assetId: int|null, assetFilename: string|null, assetUrl: string|null, timestamp: string, timeAgo: string}>
+     * @return array<array{type: string, statusLabel: string, assetId: int|null, assetFilename: string|null, assetUrl: string|null, thumbnailUrl: string|null, timestamp: string, timeAgo: string}>
      */
     public function getRecentActivity(int $limit = 10): array
     {
+        $statusTypeMap = [
+            AnalysisStatus::Completed->value => 'analyzed',
+            AnalysisStatus::Approved->value => 'approved',
+            AnalysisStatus::Rejected->value => 'rejected',
+            AnalysisStatus::Failed->value => 'failed',
+            AnalysisStatus::PendingReview->value => 'pending_review',
+        ];
+
         $records = AssetAnalysisRecord::find()
-            ->where(['in', 'status', [
-                AnalysisStatus::Completed->value,
-                AnalysisStatus::Approved->value,
-                AnalysisStatus::Failed->value,
-            ]])
-            ->andWhere(['not', ['processedAt' => null]])
-            ->orderBy(['processedAt' => SORT_DESC])
+            ->where(['in', 'status', array_keys($statusTypeMap)])
+            ->orderBy(['dateUpdated' => SORT_DESC])
             ->limit($limit)
             ->all();
 
@@ -272,24 +275,23 @@ class StatisticsService extends Component
 
         foreach ($records as $record) {
             $asset = $assets[$record->assetId] ?? null;
-            $processedAt = $record->processedAt;
 
-            if (!$processedAt) {
-                continue;
-            }
+            $dateUpdated = $record->dateUpdated;
+            $timestamp = $dateUpdated instanceof DateTime
+                ? $dateUpdated
+                : new DateTime($dateUpdated);
 
-            $timestamp = $processedAt instanceof DateTime
-                ? $processedAt
-                : new DateTime($processedAt);
+            $thumbnailUrl = $asset !== null
+                ? Craft::$app->getAssets()->getThumbUrl($asset, 34, 34)
+                : null;
 
             $activities[] = [
-                'type' => $record->status === AnalysisStatus::Failed->value ? 'failed' : 'analyzed',
-                'message' => $record->status === AnalysisStatus::Failed->value
-                    ? Craft::t('lens', '{filename} failed to analyze', ['filename' => $asset?->filename ?? 'Unknown'])
-                    : Craft::t('lens', '{filename} analyzed', ['filename' => $asset?->filename ?? 'Unknown']),
+                'type' => $statusTypeMap[$record->status] ?? 'analyzed',
+                'statusLabel' => AnalysisStatus::from($record->status)->label(),
                 'assetId' => $record->assetId,
-                'assetFilename' => $asset?->filename,
+                'assetFilename' => $asset?->filename ?? Craft::t('lens', 'Deleted asset'),
                 'assetUrl' => $asset?->getCpEditUrl(),
+                'thumbnailUrl' => $thumbnailUrl,
                 'timestamp' => $timestamp->format('c'),
                 'timeAgo' => $this->formatTimeAgo($timestamp),
             ];

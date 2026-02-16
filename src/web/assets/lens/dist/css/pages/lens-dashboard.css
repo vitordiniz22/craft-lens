@@ -255,6 +255,9 @@
 }
 
 .lens-activity__item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     padding: 8px 0;
     border-bottom: 1px solid var(--hairline-color);
     font-size: 13px;
@@ -264,18 +267,35 @@
     border-bottom: none;
 }
 
-.lens-activity__time {
-    color: var(--medium-text-color);
+/* Thumbnail */
+.lens-activity__thumb {
     flex-shrink: 0;
 }
 
-.lens-activity__separator {
-    color: var(--light-text-color);
+.lens-activity__thumb-img,
+.lens-activity__thumb-placeholder {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--small-border-radius);
 }
 
-.lens-activity__link {
-    color: var(--link-color);
-    text-decoration: none;
+.lens-activity__thumb-img {
+    object-fit: cover;
+}
+
+.lens-activity__thumb-placeholder {
+    background: var(--gray-100);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--light-text-color);
+    font-size: 14px;
+}
+
+/* Filename */
+.lens-activity__name {
+    flex: 1;
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -286,18 +306,66 @@
 }
 
 .lens-activity__filename {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.lens-activity__action {
     color: var(--medium-text-color);
-    flex-shrink: 0;
+    font-style: italic;
 }
 
-.lens-activity__item--failed .lens-activity__action {
+/* Status badge */
+.lens-activity__badge {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 10px;
+    white-space: nowrap;
+    background: var(--gray-050);
+}
+
+.lens-activity__badge-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+
+.lens-activity__badge--analyzed {
+    color: var(--link-color);
+}
+.lens-activity__badge--analyzed .lens-activity__badge-dot {
+    background: var(--link-color);
+}
+
+.lens-activity__badge--approved {
+    color: var(--success-color);
+}
+.lens-activity__badge--approved .lens-activity__badge-dot {
+    background: var(--success-color);
+}
+
+.lens-activity__badge--rejected,
+.lens-activity__badge--failed {
     color: var(--error-color);
+}
+.lens-activity__badge--rejected .lens-activity__badge-dot,
+.lens-activity__badge--failed .lens-activity__badge-dot {
+    background: var(--error-color);
+}
+
+.lens-activity__badge--pending_review {
+    color: var(--warning-color);
+}
+.lens-activity__badge--pending_review .lens-activity__badge-dot {
+    background: var(--warning-color);
+}
+
+/* Time ago */
+.lens-activity__time {
+    flex-shrink: 0;
+    color: var(--light-text-color);
+    font-size: 12px;
+    text-align: right;
 }
 
 /* ==========================================================================
@@ -387,5 +455,8 @@
     .lens-usage__grid {
         grid-template-columns: 1fr;
         gap: 16px;
+    }
+    .lens-activity__thumb {
+        display: none;
     }
 }

@@ -5,19 +5,40 @@
 
     <ul class="lens-activity__feed">
         {% for activity in recentActivity %}
-            <li class="lens-activity__item lens-flex-center lens-gap-6 lens-activity-{{ activity.type }}">
-                <span class="lens-activity__time">{{ activity.timeAgo }}</span>
-                <span class="lens-activity__separator">&mdash;</span>
-                {% if activity.assetUrl %}
-                    <a href="{{ activity.assetUrl }}" class="lens-activity__link">
-                        {{ activity.assetFilename }}
-                    </a>
-                {% else %}
-                    <span class="lens-activity__filename">{{ activity.assetFilename|default('Unknown asset'|t('lens')) }}</span>
-                {% endif %}
-                <span class="lens-activity__action">
-                    {{ activity.type == 'failed' ? 'failed'|t('lens') : 'analyzed'|t('lens') }}
+            <li class="lens-activity__item">
+                <div class="lens-activity__thumb">
+                    {% if activity.thumbnailUrl %}
+                        <img src="{{ activity.thumbnailUrl }}"
+                             alt=""
+                             class="lens-activity__thumb-img"
+                             loading="lazy">
+                    {% else %}
+                        <div class="lens-activity__thumb-placeholder" data-icon="image"></div>
+                    {% endif %}
+                </div>
+
+                <div class="lens-activity__name">
+                    {% if activity.assetUrl %}
+                        <a href="{{ activity.assetUrl }}" class="lens-activity__link">
+                            {{ activity.assetFilename }}
+                        </a>
+                    {% else %}
+                        <span class="lens-activity__filename">
+                            {{ activity.assetFilename }}
+                        </span>
+                    {% endif %}
+                </div>
+
+                <span class="lens-activity__badge lens-activity__badge--{{ activity.type }}">
+                    <span class="lens-activity__badge-dot"></span>
+                    {{ activity.statusLabel }}
                 </span>
+
+                <time class="lens-activity__time"
+                      datetime="{{ activity.timestamp }}"
+                      title="{{ activity.timestamp|date('M j, Y g:i A') }}">
+                    {{ activity.timeAgo }}
+                </time>
             </li>
         {% endfor %}
     </ul>
