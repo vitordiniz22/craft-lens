@@ -369,59 +369,55 @@
 }
 
 /* ==========================================================================
-   Section 7: Enhanced Usage
+   Section 7: Usage & Costs
    ========================================================================== */
 
 .lens-usage {
     padding: 20px;
 }
 
-.lens-usage__grid {
+.lens-usage__cards {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr);
     gap: 24px;
     margin-bottom: 16px;
 }
 
-.lens-usage__column-header {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--medium-text-color);
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-    margin-bottom: 8px;
+.lens-usage__card {
+    text-align: center;
+    padding: 12px 8px;
 }
 
-.lens-usage__value {
-    font-size: 14px;
+.lens-usage__card-value {
+    font-size: 24px;
+    font-weight: 700;
     color: var(--text-color);
-    margin-bottom: 4px;
+    line-height: 1.2;
 }
 
-.lens-usage__delta {
-    font-size: 14px;
-    font-weight: 500;
-    margin-bottom: 4px;
-}
-
-.lens-usage__delta--positive {
-    color: var(--success-color);
-}
-
-.lens-usage__delta--negative {
-    color: var(--error-color);
-}
-
-.lens-usage__footer {
+.lens-usage__card-label {
     font-size: 13px;
     color: var(--medium-text-color);
-    padding-top: 12px;
-    border-top: 1px solid var(--hairline-color);
+    margin-top: 4px;
 }
 
-.lens-usage__separator {
-    margin: 0 8px;
+.lens-usage__projection {
+    font-size: 13px;
+    color: var(--medium-text-color);
+    text-align: center;
+    padding: 12px 0;
+    border-top: 1px solid var(--hairline-color);
+    border-bottom: 1px solid var(--hairline-color);
+}
+
+.lens-usage__monthly {
+    padding-top: 12px;
+}
+
+.lens-usage__month-line {
+    font-size: 13px;
     color: var(--light-text-color);
+    line-height: 1.6;
 }
 
 /* ==========================================================================
@@ -452,9 +448,19 @@
     .lens-actions__grid .lens-actions__form .btn {
         width: 100%;
     }
-    .lens-usage__grid {
+    .lens-usage__cards {
         grid-template-columns: 1fr;
-        gap: 16px;
+        gap: 8px;
+    }
+    .lens-usage__card {
+        text-align: left;
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        padding: 8px 0;
+    }
+    .lens-usage__card-value {
+        font-size: 20px;
     }
     .lens-activity__thumb {
         display: none;

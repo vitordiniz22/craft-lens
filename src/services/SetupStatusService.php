@@ -172,8 +172,10 @@ class SetupStatusService extends Component
             return false;
         }
 
+        $allVolumesEnabled = in_array('*', $enabledVolumeUids, true);
+
         foreach (Craft::$app->getVolumes()->getAllVolumes() as $volume) {
-            if (!in_array($volume->uid, $enabledVolumeUids, true)) {
+            if (!$allVolumesEnabled && !in_array($volume->uid, $enabledVolumeUids, true)) {
                 continue;
             }
 

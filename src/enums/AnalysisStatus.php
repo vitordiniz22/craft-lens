@@ -42,6 +42,23 @@ enum AnalysisStatus: string
     }
 
     /**
+     * Statuses where the AI provider was called and cost was incurred.
+     * Used for usage/cost tracking — includes pending_review and rejected
+     * assets that analyzedValues() excludes.
+     *
+     * @return string[]
+     */
+    public static function processedValues(): array
+    {
+        return [
+            self::Completed->value,
+            self::PendingReview->value,
+            self::Approved->value,
+            self::Rejected->value,
+        ];
+    }
+
+    /**
      * Statuses where an asset should not be re-queued for analysis.
      *
      * @return string[]

@@ -26,6 +26,7 @@ class StatisticsService extends Component
     public function getOverviewStats(): array
     {
         $analyzedStatuses = AnalysisStatus::analyzedValues();
+        $processedStatuses = AnalysisStatus::processedValues();
 
         $result = AssetAnalysisRecord::find()
             ->select([
@@ -33,6 +34,15 @@ class StatisticsService extends Component
                 new Expression(
                     'SUM(CASE WHEN status IN (:analyzed1, :analyzed2) THEN 1 ELSE 0 END) as analyzed',
                     [':analyzed1' => $analyzedStatuses[0], ':analyzed2' => $analyzedStatuses[1]]
+                ),
+                new Expression(
+                    'SUM(CASE WHEN status IN (:proc1, :proc2, :proc3, :proc4) THEN 1 ELSE 0 END) as processed',
+                    [
+                        ':proc1' => $processedStatuses[0],
+                        ':proc2' => $processedStatuses[1],
+                        ':proc3' => $processedStatuses[2],
+                        ':proc4' => $processedStatuses[3],
+                    ]
                 ),
                 new Expression(
                     'SUM(CASE WHEN status = :approved THEN 1 ELSE 0 END) as approved',
@@ -60,6 +70,7 @@ class StatisticsService extends Component
             ->one();
 
         $analyzed = (int) ($result['analyzed'] ?? 0);
+        $processed = (int) ($result['processed'] ?? 0);
         $totalCost = (float) ($result['totalCost'] ?? 0.0);
 
         return [
@@ -72,7 +83,7 @@ class StatisticsService extends Component
             'failed' => (int) ($result['failed'] ?? 0),
             'missingAltText' => (int) ($result['missingAltText'] ?? 0),
             'totalCost' => $totalCost,
-            'avgCostPerAsset' => $analyzed > 0 ? round($totalCost / $analyzed, 4) : 0.0,
+            'avgCostPerAsset' => $processed > 0 ? round($totalCost / $processed, 4) : 0.0,
         ];
     }
 
@@ -341,7 +352,7 @@ class StatisticsService extends Component
                 'COUNT(*) as count',
                 'SUM(actualCost) as totalCost',
             ])
-            ->where(['in', 'status', AnalysisStatus::analyzedValues()])
+            ->where(['in', 'status', AnalysisStatus::processedValues()])
             ->andWhere(['>=', 'processedAt', $startOfMonth])
             ->asArray()
             ->one();
@@ -371,7 +382,7 @@ class StatisticsService extends Component
                 'COUNT(*) as count',
                 'SUM(actualCost) as totalCost',
             ])
-            ->where(['in', 'status', AnalysisStatus::analyzedValues()])
+            ->where(['in', 'status', AnalysisStatus::processedValues()])
             ->andWhere(['>=', 'processedAt', $startOfLastMonth])
             ->andWhere(['<=', 'processedAt', $endOfLastMonth])
             ->asArray()
@@ -399,7 +410,7 @@ class StatisticsService extends Component
                 'COUNT(*) as count',
                 'SUM(actualCost) as totalCost',
             ])
-            ->where(['in', 'status', AnalysisStatus::analyzedValues()])
+            ->where(['in', 'status', AnalysisStatus::processedValues()])
             ->asArray()
             ->one();
 

@@ -1,53 +1,60 @@
-{# Section 7: Enhanced Usage #}
-{% set hasUsageData = monthlyUsage.assetsProcessed > 0 or lastMonthUsage.assetsProcessed > 0 %}
+{# Section 7: Usage & Costs #}
+{% set hasUsageData = allTimeUsage.totalAssets > 0 %}
 {% if hasUsageData %}
 <div class="lens-dashboard-section lens-usage pane">
-    <h2 class="lens-section-header__title">{{ 'Usage'|t('lens') }}</h2>
+    <h2 class="lens-section-header__title">{{ 'Usage & Costs'|t('lens') }}</h2>
 
-    {# Comparison Grid #}
-    <div class="lens-usage__grid">
-        {# This Month Column #}
-        <div class="lens-usage-column">
-            <div class="lens-usage__column-header">{{ 'This Month'|t('lens') }}</div>
-            <div class="lens-usage__value">{{ monthlyUsage.assetsProcessed }} {{ 'assets'|t('lens') }}</div>
-            <div class="lens-usage__value">${{ monthlyUsage.totalCost|number_format(2) }} {{ 'spent'|t('lens') }}</div>
-            <div class="lens-usage__value">${{ monthlyUsage.avgCostPerAsset|number_format(3) }}/{{ 'asset'|t('lens') }}</div>
+    {# Primary stat cards: all-time totals #}
+    {% set avgCost = allTimeUsage.totalAssets > 0
+        ? allTimeUsage.totalCost / allTimeUsage.totalAssets
+        : 0 %}
+
+    <div class="lens-usage__cards">
+        <div class="lens-usage__card">
+            <div class="lens-usage__card-value">{{ allTimeUsage.totalAssets|number_format }}</div>
+            <div class="lens-usage__card-label">{{ 'Processed'|t('lens') }}</div>
         </div>
-
-        {# Last Month Column #}
-        <div class="lens-usage-column">
-            <div class="lens-usage__column-header">{{ 'Last Month'|t('lens') }}</div>
-            <div class="lens-usage__value">{{ lastMonthUsage.assetsProcessed }} {{ 'assets'|t('lens') }}</div>
-            <div class="lens-usage__value">${{ lastMonthUsage.totalCost|number_format(2) }} {{ 'spent'|t('lens') }}</div>
-            <div class="lens-usage__value">${{ lastMonthUsage.avgCostPerAsset|number_format(3) }}/{{ 'asset'|t('lens') }}</div>
+        <div class="lens-usage__card">
+            <div class="lens-usage__card-value">${{ allTimeUsage.totalCost|number_format(4) }}</div>
+            <div class="lens-usage__card-label">{{ 'Total Spent'|t('lens') }}</div>
         </div>
-
-        {# Change Column #}
-        <div class="lens-usage-column lens-usage-change">
-            <div class="lens-usage__column-header">{{ 'Change'|t('lens') }}</div>
-            {% set assetDelta = monthlyUsage.assetsProcessed - lastMonthUsage.assetsProcessed %}
-            {% set costDelta = monthlyUsage.totalCost - lastMonthUsage.totalCost %}
-            {% set avgDelta = monthlyUsage.avgCostPerAsset - lastMonthUsage.avgCostPerAsset %}
-
-            <div class="lens-usage__delta {{ assetDelta >= 0 ? 'lens-usage__delta--positive' : 'lens-usage__delta--negative' }}">
-                {{ assetDelta >= 0 ? '▲' : '▼' }} {{ assetDelta|abs }}
-            </div>
-            <div class="lens-usage__delta {{ costDelta <= 0 ? 'lens-usage__delta--positive' : 'lens-usage__delta--negative' }}">
-                {{ costDelta <= 0 ? '▼' : '▲' }} ${{ costDelta|abs|number_format(2) }}
-            </div>
-            <div class="lens-usage__delta {{ avgDelta <= 0 ? 'lens-usage__delta--positive' : 'lens-usage__delta--negative' }}">
-                {{ avgDelta <= 0 ? '▼' : '▲' }} ${{ avgDelta|abs|number_format(3) }}
-            </div>
+        <div class="lens-usage__card">
+            <div class="lens-usage__card-value">${{ avgCost|number_format(4) }}</div>
+            <div class="lens-usage__card-label">{{ 'Per Asset'|t('lens') }}</div>
         </div>
     </div>
 
-    {# Footer: Projection + All-time #}
-    <div class="lens-usage__footer">
+    {# Projection line #}
+    <div class="lens-usage__projection">
         {% if costProjection.remainingAssets > 0 %}
-            <span>{{ costProjection.remainingAssets }} {{ 'assets remaining'|t('lens') }} · {{ 'Est.'|t('lens') }} ${{ costProjection.estimatedCost|number_format(2) }} {{ 'to complete'|t('lens') }}</span>
-            <span class="lens-usage__separator">·</span>
+            {{ costProjection.remainingAssets|number_format }} {{ 'assets remaining'|t('lens') }}
+            &middot;
+            {{ 'Est.'|t('lens') }} ${{ costProjection.estimatedCost|number_format(4) }} {{ 'to complete'|t('lens') }}
+        {% else %}
+            {{ 'All assets processed'|t('lens') }}
         {% endif %}
-        <span>{{ 'All-time:'|t('lens') }} {{ allTimeUsage.totalAssets }} {{ 'assets'|t('lens') }} · ${{ allTimeUsage.totalCost|number_format(2) }} {{ 'total'|t('lens') }}</span>
     </div>
+
+    {# Monthly summary (secondary) #}
+    {% if monthlyUsage.assetsProcessed > 0 or lastMonthUsage.assetsProcessed > 0 %}
+    <div class="lens-usage__monthly">
+        {% if monthlyUsage.assetsProcessed > 0 %}
+        <div class="lens-usage__month-line">
+            {{ 'This month:'|t('lens') }}
+            {{ monthlyUsage.assetsProcessed|number_format }} {{ 'processed'|t('lens') }}
+            &middot;
+            ${{ monthlyUsage.totalCost|number_format(4) }} {{ 'spent'|t('lens') }}
+        </div>
+        {% endif %}
+        {% if lastMonthUsage.assetsProcessed > 0 %}
+        <div class="lens-usage__month-line">
+            {{ 'Last month:'|t('lens') }}
+            {{ lastMonthUsage.assetsProcessed|number_format }} {{ 'processed'|t('lens') }}
+            &middot;
+            ${{ lastMonthUsage.totalCost|number_format(4) }} {{ 'spent'|t('lens') }}
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
 </div>
 {% endif %}
