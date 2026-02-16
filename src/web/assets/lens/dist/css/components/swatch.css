@@ -16,3 +16,19 @@
   width: 16px;
   height: 16px;
 }
+
+.lens-swatch--md {
+  width: 32px;
+  height: 32px;
+}
+
+/* Clickable swatch variant */
+.lens-swatch--interactive {
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.lens-swatch--interactive:hover {
+  opacity: 0.85;
+  transform: scale(1.1);
+}
