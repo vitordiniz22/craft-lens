@@ -121,6 +121,31 @@ class AssetAnalysisService extends Component
     }
 
     /**
+     * Get analysis records for multiple assets in a single query.
+     *
+     * @param int[] $assetIds
+     * @return array<int, AssetAnalysisRecord> Map of assetId => AssetAnalysisRecord
+     */
+    public function getAnalysesByAssetIds(array $assetIds): array
+    {
+        if (empty($assetIds)) {
+            return [];
+        }
+
+        $records = AssetAnalysisRecord::find()
+            ->where(['assetId' => $assetIds])
+            ->all();
+
+        $map = [];
+
+        foreach ($records as $record) {
+            $map[$record->assetId] = $record;
+        }
+
+        return $map;
+    }
+
+    /**
      * Check if an asset should be processed.
      */
     public function shouldProcess(Asset $asset): bool

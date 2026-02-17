@@ -51,6 +51,17 @@ class SearchController extends Controller
         $filters = FilterParser::fromRequest($request);
         $results = $plugin->search->search($filters);
 
+        $assetIds = array_map(fn($a) => $a->id, $results['assets']);
+        $analysisMap = $plugin->assetAnalysis->getAnalysesByAssetIds($assetIds);
+        $analysisIds = array_values(array_filter(array_map(
+            fn($a) => $a->id ?? null,
+            $analysisMap
+        )));
+
+        $tagsMap = $plugin->tagAggregation->getTagsForAnalyses($analysisIds);
+        $colorsMap = $plugin->colorAggregation->getColorsForAnalyses($analysisIds);
+        $dupCountsMap = $plugin->duplicateDetection->getUnresolvedDuplicateCountsForAssets($assetIds);
+
         return $this->renderTemplate('lens/_search/index', [
             'assets' => $results['assets'],
             'total' => $results['total'],
@@ -62,6 +73,10 @@ class SearchController extends Controller
             'colorFamilies' => $plugin->search->getColorFamilies(),
             'quickFilters' => $plugin->search->getQuickFilters(),
             'hasFilters' => FilterParser::hasActiveFilters($filters),
+            'analysisMap' => $analysisMap,
+            'tagsMap' => $tagsMap,
+            'colorsMap' => $colorsMap,
+            'dupCountsMap' => $dupCountsMap,
         ]);
     }
 

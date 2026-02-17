@@ -216,6 +216,47 @@ class DuplicateDetectionService extends Component
     }
 
     /**
+     * Get unresolved duplicate counts for multiple assets in a single query.
+     *
+     * @param int[] $assetIds
+     * @return array<int, int> Map of assetId => count
+     */
+    public function getUnresolvedDuplicateCountsForAssets(array $assetIds): array
+    {
+        if (empty($assetIds)) {
+            return [];
+        }
+
+        $counts = [];
+
+        $canonicalRows = DuplicateGroupRecord::find()
+            ->select(['canonicalAssetId', 'COUNT(*) AS cnt'])
+            ->where(['resolution' => null, 'canonicalAssetId' => $assetIds])
+            ->groupBy(['canonicalAssetId'])
+            ->asArray()
+            ->all();
+
+        foreach ($canonicalRows as $row) {
+            $id = (int) $row['canonicalAssetId'];
+            $counts[$id] = ($counts[$id] ?? 0) + (int) $row['cnt'];
+        }
+
+        $duplicateRows = DuplicateGroupRecord::find()
+            ->select(['duplicateAssetId', 'COUNT(*) AS cnt'])
+            ->where(['resolution' => null, 'duplicateAssetId' => $assetIds])
+            ->groupBy(['duplicateAssetId'])
+            ->asArray()
+            ->all();
+
+        foreach ($duplicateRows as $row) {
+            $id = (int) $row['duplicateAssetId'];
+            $counts[$id] = ($counts[$id] ?? 0) + (int) $row['cnt'];
+        }
+
+        return $counts;
+    }
+
+    /**
      * Compare two assets and return the matching pair record if similar.
      *
      * Creates a new DuplicateGroupRecord if the pair doesn't already exist.

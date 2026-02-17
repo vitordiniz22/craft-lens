@@ -27,6 +27,32 @@ class TagAggregationService extends Component
     }
 
     /**
+     * Get tags for multiple analyses in a single query.
+     *
+     * @param int[] $analysisIds
+     * @return array<int, AssetTagRecord[]> Map of analysisId => AssetTagRecord[]
+     */
+    public function getTagsForAnalyses(array $analysisIds): array
+    {
+        if (empty($analysisIds)) {
+            return [];
+        }
+
+        $records = AssetTagRecord::find()
+            ->where(['analysisId' => $analysisIds])
+            ->orderBy(['confidence' => SORT_DESC])
+            ->all();
+
+        $map = [];
+
+        foreach ($records as $record) {
+            $map[$record->analysisId][] = $record;
+        }
+
+        return $map;
+    }
+
+    /**
      * Search tags by partial name for autocomplete.
      *
      * @return array<array{tag: string, count: int}>

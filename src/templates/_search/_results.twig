@@ -8,7 +8,7 @@
                 total: total
             }) }}
         </p>
-        <a href="{{ cpUrl('lens/search/export', filters ?? {}) }}" class="btn small" id="lens-export">
+        <a href="{{ cpUrl('lens/search/export', filters ?? {}) }}" class="btn small" data-lens-action="export-csv">
             <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" style="margin-right: 4px;">
                 <path d="M10.75 2.75a.75.75 0 00-1.5 0v8.614L6.295 8.235a.75.75 0 10-1.09 1.03l4.25 4.5a.75.75 0 001.09 0l4.25-4.5a.75.75 0 00-1.09-1.03l-2.955 3.129V2.75z"/>
                 <path d="M3.5 12.75a.75.75 0 00-1.5 0v2.5A2.75 2.75 0 004.75 18h10.5A2.75 2.75 0 0018 15.25v-2.5a.75.75 0 00-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5z"/>
@@ -19,124 +19,29 @@
 
     <div class="lens-results-grid">
         {% for asset in assets %}
-            {% set analysis = lens.getAnalysis(asset.id) %}
-            <div class="card lens-asset-card" data-asset-id="{{ asset.id }}">
-                <a href="{{ asset.cpEditUrl }}" class="lens-result-preview">
-                    {% if asset.kind == 'image' %}
-                        <img src="{{ craft.app.assets.getThumbUrl(asset, 200, 200) }}" alt="{{ asset.title }}" loading="lazy">
-                    {% else %}
-                        <div class="lens-result-icon">
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M4 4h16a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm0 2v12h16V6H4zm4 3a1 1 0 011-1h6a1 1 0 010 2H9a1 1 0 01-1-1zm0 4a1 1 0 011-1h6a1 1 0 010 2H9a1 1 0 01-1-1z"/>
-                            </svg>
-                        </div>
-                    {% endif %}
+            {% set analysis = analysisMap[asset.id] ?? null %}
 
-                    {% if analysis %}
-                        <div class="lens-result-overlay">
-                            {% if analysis.altTextConfidence %}
-                                <span class="lens-badge lens-badge--small lens-badge--dark" title="{{ 'Confidence'|t('lens') }}">
-                                    {{ (analysis.altTextConfidence * 100)|round }}%
-                                </span>
-                            {% endif %}
-                            {% if analysis.containsPeople %}
-                                <span class="lens-badge lens-badge--dark" title="{{ 'Contains people'|t('lens') }}">
-                                    <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor">
-                                        <path d="M10 8a3 3 0 100-6 3 3 0 000 6zM3.465 14.493a1.23 1.23 0 00.41 1.412A9.957 9.957 0 0010 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 00-13.074.003z"/>
-                                    </svg>
-                                    {{ analysis.faceCount }}
-                                </span>
-                            {% endif %}
-                            {% set dupCount = lens.getDuplicateCount(asset.id) %}
-                            {% if dupCount > 0 %}
-                                <a href="{{ cpUrl('lens/duplicates') }}" class="lens-duplicate-badge" title="{{ '{count} duplicate(s)'|t('lens', {count: dupCount}) }}">
-                                    <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor">
-                                        <path d="M7 3.5A1.5 1.5 0 018.5 2h3.879a1.5 1.5 0 011.06.44l3.122 3.12A1.5 1.5 0 0117 6.622V12.5a1.5 1.5 0 01-1.5 1.5h-1v-3.379a3 3 0 00-.879-2.121L10.5 5.379A3 3 0 008.379 4.5H7v-1z"/>
-                                        <path d="M4.5 6A1.5 1.5 0 003 7.5v9A1.5 1.5 0 004.5 18h7a1.5 1.5 0 001.5-1.5v-5.879a1.5 1.5 0 00-.44-1.06L9.44 6.44A1.5 1.5 0 008.378 6H4.5z"/>
-                                    </svg>
-                                    {{ dupCount }}
-                                </a>
-                            {% endif %}
-                            {% if analysis.status == 'pending_review' %}
-                                <span class="lens-badge lens-badge--small lens-badge--info" title="{{ 'Pending Review'|t('lens') }}">
-                                    {{ iconSvg('eye')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
-                                    {{ 'Review'|t('lens') }}
-                                </span>
-                            {% endif %}
-                            {% if analysis.status == 'failed' %}
-                                <span class="lens-badge lens-badge--small lens-badge--error">
-                                    {{ iconSvg('circle-xmark')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
-                                    {{ 'Failed'|t('lens') }}
-                                </span>
-                            {% endif %}
-                        </div>
-                    {% endif %}
-                </a>
-
-                <div class="lens-result-info">
-                    <a href="{{ asset.cpEditUrl }}" class="lens-result-title" title="{{ asset.filename }}">
-                        {{ asset.title|truncate(30) }}
-                    </a>
-
-                    {% if analysis %}
-                        {% if analysis.altText %}
-                            <p class="lens-result-alt" title="{{ analysis.altText }}">
-                                {{ analysis.altText|truncate(60) }}
-                            </p>
-                        {% endif %}
-
-                        {% set resultTags = lens.getTagsForAnalysis(analysis.id) %}
-                        {% if resultTags|length %}
-                            <div class="chips small">
-                                {% for tag in resultTags|slice(0, 4) %}
-                                    <a href="{{ cpUrl('lens/search', {tags: tag.tag}) }}" class="chip small">
-                                        {{ tag.tag }}
-                                    </a>
-                                {% endfor %}
-                                {% if resultTags|length > 4 %}
-                                    <span class="chip small disabled">+{{ resultTags|length - 4 }}</span>
-                                {% endif %}
-                            </div>
-                        {% endif %}
-
-                        {% set resultColors = lens.getColorsForAnalysis(analysis.id) %}
-                        {% if resultColors|length %}
-                            <div class="lens-result-colors">
-                                {% for color in resultColors|slice(0, 5) %}
-                                    <span class="lens-swatch lens-swatch--sm" style="background-color: {{ color.hex }}" title="{{ color.hex }}"></span>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-
-                    {% endif %}
-                </div>
-            </div>
+            {% include 'lens/_components/asset-card' with {
+                asset: asset,
+                analysis: analysis,
+                tags: tagsMap[analysis.id ?? 0] ?? [],
+                colors: colorsMap[analysis.id ?? 0] ?? [],
+                dupCount: dupCountsMap[asset.id] ?? 0,
+                linkUrl: asset.cpEditUrl,
+                showAltText: true,
+                showTags: true,
+                showColors: true,
+            } only %}
         {% endfor %}
     </div>
 
-    {# Pagination #}
-    {% if total > limit %}
-        <div class="flex flex-center" style="gap: var(--m); margin-top: var(--xl); padding-top: var(--xl); border-top: 1px solid var(--hairline-color);">
-            {% set totalPages = ((total / limit)|round(0, 'ceil'))|number_format(0, '', '') %}
-            {% set currentPage = ((offset / limit) + 1)|number_format(0, '', '') %}
-
-            {% if offset > 0 %}
-                <a href="{{ cpUrl('lens/search', filters|merge({offset: max(0, offset - limit)})) }}" class="btn">
-                    {{ 'Previous'|t('lens') }}
-                </a>
-            {% endif %}
-
-            <span class="light">
-                {{ 'Page {current} of {total}'|t('lens', {current: currentPage, total: totalPages}) }}
-            </span>
-
-            {% if offset + limit < total %}
-                <a href="{{ cpUrl('lens/search', filters|merge({offset: offset + limit})) }}" class="btn">
-                    {{ 'Next'|t('lens') }}
-                </a>
-            {% endif %}
-        </div>
-    {% endif %}
+    {% include 'lens/_components/pagination' with {
+        total: total,
+        limit: limit,
+        offset: offset,
+        baseUrl: 'lens/search',
+        urlParams: filters,
+    } only %}
 
 {% elseif hasFilters is defined and hasFilters %}
     <div class="zilch">

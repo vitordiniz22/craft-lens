@@ -1,0 +1,66 @@
+{#
+ # Reusable pagination component.
+ #
+ # Parameters:
+ #   total     - int total results
+ #   limit     - int per page
+ #   offset    - int current offset (for offset-based pagination)
+ #   page      - int current page number (for page-based pagination, optional)
+ #   totalPages - int total pages (for page-based pagination, optional)
+ #   baseUrl   - string CP URL path
+ #   urlParams - array of current params to merge with pagination param
+ #   pageParam - string param name: 'offset' (default) or 'page'
+ #}
+
+{% set pageParam = pageParam ?? 'offset' %}
+
+{% if pageParam == 'page' %}
+    {# Page-based pagination (used by review browse) #}
+    {% set totalPages = totalPages ?? 1 %}
+    {% set page = page ?? 1 %}
+
+    {% if totalPages > 1 %}
+        <div class="flex flex-center" style="gap: var(--m); margin-top: var(--xl); padding-top: var(--xl); border-top: 1px solid var(--hairline-color);">
+            {% if page > 1 %}
+                <a href="{{ cpUrl(baseUrl, (urlParams ?? {})|merge({page: page - 1})) }}" class="btn small">
+                    {{ 'Previous'|t('lens') }}
+                </a>
+            {% endif %}
+
+            <span class="light">
+                {{ 'Page {current} of {total}'|t('lens', {current: page, total: totalPages}) }}
+            </span>
+
+            {% if page < totalPages %}
+                <a href="{{ cpUrl(baseUrl, (urlParams ?? {})|merge({page: page + 1})) }}" class="btn small">
+                    {{ 'Next'|t('lens') }}
+                </a>
+            {% endif %}
+        </div>
+    {% endif %}
+
+{% else %}
+    {# Offset-based pagination (used by search) #}
+    {% if total > limit %}
+        {% set totalPages = ((total / limit)|round(0, 'ceil'))|number_format(0, '', '') %}
+        {% set currentPage = ((offset / limit) + 1)|number_format(0, '', '') %}
+
+        <div class="flex flex-center" style="gap: var(--m); margin-top: var(--xl); padding-top: var(--xl); border-top: 1px solid var(--hairline-color);">
+            {% if offset > 0 %}
+                <a href="{{ cpUrl(baseUrl, (urlParams ?? {})|merge({offset: max(0, offset - limit)})) }}" class="btn">
+                    {{ 'Previous'|t('lens') }}
+                </a>
+            {% endif %}
+
+            <span class="light">
+                {{ 'Page {current} of {total}'|t('lens', {current: currentPage, total: totalPages}) }}
+            </span>
+
+            {% if offset + limit < total %}
+                <a href="{{ cpUrl(baseUrl, (urlParams ?? {})|merge({offset: offset + limit})) }}" class="btn">
+                    {{ 'Next'|t('lens') }}
+                </a>
+            {% endif %}
+        </div>
+    {% endif %}
+{% endif %}

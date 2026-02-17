@@ -1,0 +1,127 @@
+{#
+ # Reusable asset card component for search results and review browse grids.
+ #
+ # Parameters:
+ #   asset     - Craft Asset element
+ #   analysis  - AssetAnalysisRecord or null (pre-loaded)
+ #   tags      - array of tag records (pre-loaded), optional
+ #   colors    - array of color records (pre-loaded), optional
+ #   dupCount  - int (pre-loaded), optional
+ #   linkUrl   - string (destination URL when card is clicked)
+ #   showAltText  - bool (default true)
+ #   showTags     - bool (default true)
+ #   showColors   - bool (default true)
+ #   showMeta     - bool (show confidence badge in browse cards, default false)
+ #   avgConfidence - float (for browse mode confidence badge, optional)
+ #   tagCount   - int (for browse mode tag count display, optional)
+ #}
+
+{% set showAltText = showAltText ?? true %}
+{% set showTags = showTags ?? true %}
+{% set showColors = showColors ?? true %}
+{% set showMeta = showMeta ?? false %}
+{% set tags = tags ?? [] %}
+{% set colors = colors ?? [] %}
+{% set dupCount = dupCount ?? 0 %}
+
+<div class="card lens-asset-card" data-lens-target="result-card" data-lens-asset-id="{{ asset.id }}">
+    <a href="{{ linkUrl }}" class="lens-result-preview">
+        {% if asset.kind == 'image' %}
+            <img src="{{ craft.app.assets.getThumbUrl(asset, 200, 200) }}" alt="{{ asset.title }}" loading="lazy">
+        {% else %}
+            <div class="lens-result-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M4 4h16a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm0 2v12h16V6H4zm4 3a1 1 0 011-1h6a1 1 0 010 2H9a1 1 0 01-1-1zm0 4a1 1 0 011-1h6a1 1 0 010 2H9a1 1 0 01-1-1z"/>
+                </svg>
+            </div>
+        {% endif %}
+
+        {% if analysis %}
+            <div class="lens-result-overlay">
+                {% if analysis.altTextConfidence %}
+                    <span class="lens-badge lens-badge--small lens-badge--dark" title="{{ 'Confidence'|t('lens') }}">
+                        {{ (analysis.altTextConfidence * 100)|round }}%
+                    </span>
+                {% endif %}
+                {% if analysis.containsPeople %}
+                    <span class="lens-badge lens-badge--dark" title="{{ 'Contains people'|t('lens') }}">
+                        <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M10 8a3 3 0 100-6 3 3 0 000 6zM3.465 14.493a1.23 1.23 0 00.41 1.412A9.957 9.957 0 0010 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 00-13.074.003z"/>
+                        </svg>
+                        {{ analysis.faceCount }}
+                    </span>
+                {% endif %}
+                {% if dupCount > 0 %}
+                    <a href="{{ cpUrl('lens/duplicates') }}" class="lens-duplicate-badge" title="{{ '{count} duplicate(s)'|t('lens', {count: dupCount}) }}">
+                        <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M7 3.5A1.5 1.5 0 018.5 2h3.879a1.5 1.5 0 011.06.44l3.122 3.12A1.5 1.5 0 0117 6.622V12.5a1.5 1.5 0 01-1.5 1.5h-1v-3.379a3 3 0 00-.879-2.121L10.5 5.379A3 3 0 008.379 4.5H7v-1z"/>
+                            <path d="M4.5 6A1.5 1.5 0 003 7.5v9A1.5 1.5 0 004.5 18h7a1.5 1.5 0 001.5-1.5v-5.879a1.5 1.5 0 00-.44-1.06L9.44 6.44A1.5 1.5 0 008.378 6H4.5z"/>
+                        </svg>
+                        {{ dupCount }}
+                    </a>
+                {% endif %}
+                {% if analysis.status == 'pending_review' %}
+                    <span class="lens-badge lens-badge--small lens-badge--info" title="{{ 'Pending Review'|t('lens') }}">
+                        {{ iconSvg('eye')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
+                        {{ 'Review'|t('lens') }}
+                    </span>
+                {% endif %}
+                {% if analysis.status == 'failed' %}
+                    <span class="lens-badge lens-badge--small lens-badge--error">
+                        {{ iconSvg('circle-xmark')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
+                        {{ 'Failed'|t('lens') }}
+                    </span>
+                {% endif %}
+            </div>
+        {% endif %}
+    </a>
+
+    <div class="lens-result-info">
+        <a href="{{ linkUrl }}" class="lens-result-title" title="{{ asset.filename }}">
+            {{ (analysis.suggestedTitle ?? asset.title)|truncate(30) }}
+        </a>
+
+        {% if analysis %}
+            {% if showAltText and analysis.altText %}
+                <p class="lens-result-alt" title="{{ analysis.altText }}">
+                    {{ analysis.altText|truncate(60) }}
+                </p>
+            {% endif %}
+
+            {% if showTags and tags|length %}
+                <div class="chips small">
+                    {% for tag in tags|slice(0, 4) %}
+                        <a href="{{ cpUrl('lens/search', {tags: tag.tag}) }}" class="chip small">
+                            {{ tag.tag }}
+                        </a>
+                    {% endfor %}
+                    {% if tags|length > 4 %}
+                        <span class="chip small disabled">+{{ tags|length - 4 }}</span>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            {% if showColors and colors|length %}
+                <div class="lens-result-colors">
+                    {% for color in colors|slice(0, 5) %}
+                        <span class="lens-swatch lens-swatch--sm" style="background-color: {{ color.hex }}" title="{{ color.hex }}"></span>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endif %}
+
+        {% if showMeta %}
+            <div class="lens-browse-card__meta">
+                {% set avgConfidence = avgConfidence ?? 0 %}
+                {% if avgConfidence >= 0.8 %}
+                    <span class="lens-confidence-badge lens-confidence-badge--high">{{ (avgConfidence * 100)|round }}%</span>
+                {% elseif avgConfidence >= 0.5 %}
+                    <span class="lens-confidence-badge lens-confidence-badge--medium">{{ (avgConfidence * 100)|round }}%</span>
+                {% else %}
+                    <span class="lens-confidence-badge lens-confidence-badge--low">{{ (avgConfidence * 100)|round }}%</span>
+                {% endif %}
+                <span class="lens-tag-count">{{ tagCount ?? 0 }} {{ 'tags'|t('lens') }}</span>
+            </div>
+        {% endif %}
+    </div>
+</div>

@@ -65,8 +65,16 @@ class ReviewController extends Controller
         $tagCounts = $this->getTagCounts($ids['analysisIds']);
         $items = $this->buildReviewItems($pendingReviews, $assets, $tagCounts);
 
+        $analysisMap = [];
+
+        foreach ($pendingReviews as $analysis) {
+            $analysisMap[$analysis->assetId] = $analysis;
+        }
+
         return $this->renderTemplate('lens/_review/browse', [
             'items' => $items,
+            'assets' => $assets,
+            'analysisMap' => $analysisMap,
             'page' => $page,
             'totalPages' => $totalPages,
             'totalCount' => $totalCount,
@@ -443,6 +451,7 @@ class ReviewController extends Controller
 
             $items[] = [
                 'analysisId' => $analysis->id,
+                'assetId' => $analysis->assetId,
                 'thumbnailUrl' => Craft::$app->getAssets()->getThumbUrl($asset, 200, 200),
                 'filename' => $asset->filename,
                 'suggestedTitle' => $analysis->suggestedTitle,

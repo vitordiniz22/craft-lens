@@ -26,6 +26,31 @@ class ColorAggregationService extends Component
     }
 
     /**
+     * Get colors for multiple analyses in a single query.
+     *
+     * @param int[] $analysisIds
+     * @return array<int, AssetColorRecord[]> Map of analysisId => AssetColorRecord[]
+     */
+    public function getColorsForAnalyses(array $analysisIds): array
+    {
+        if (empty($analysisIds)) {
+            return [];
+        }
+
+        $records = AssetColorRecord::find()
+            ->where(['analysisId' => $analysisIds])
+            ->all();
+
+        $map = [];
+
+        foreach ($records as $record) {
+            $map[$record->analysisId][] = $record;
+        }
+
+        return $map;
+    }
+
+    /**
      * @return array<array{hex: string, count: int}>
      */
     public function getColorCounts(int $limit = 20): array
