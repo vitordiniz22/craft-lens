@@ -4,187 +4,40 @@
 {% set selectedSubnavItem = 'bulk' %}
 
 {% block content %}
-    <div class="lens-bulk-page" data-lens-target="bulk-container"
-         data-lens-initial-state="{{ initialState }}">
+    <div class="lens-bulk-page">
 
         {# Stats Grid - Always visible #}
-            <div class="lens-stats-grid" data-lens-target="stats-grid">
-                <div class="lens-stat-card">
-                    <div class="lens-stat-value" data-lens-stat="totalImages">{{ stats.totalImages }}</div>
-                    <div class="lens-stat-label">{{ 'Total Images'|t('lens') }}</div>
-                </div>
-                <div class="lens-stat-card lens-stat-success">
-                    <div class="lens-stat-value" data-lens-stat="analyzed">{{ stats.analyzed }}</div>
-                    <div class="lens-stat-label">{{ 'Analyzed'|t('lens') }}</div>
-                </div>
-                <div class="lens-stat-card lens-stat-warning">
-                    <div class="lens-stat-value" data-lens-stat="unprocessed">{{ stats.unprocessed }}</div>
-                    <div class="lens-stat-label">{{ 'Unprocessed'|t('lens') }}</div>
-                </div>
-                <div class="lens-stat-card">
-                    <div class="lens-stat-value" data-lens-stat="pendingReview">{{ stats.pendingReview }}</div>
-                    <div class="lens-stat-label">{{ 'Pending Review'|t('lens') }}</div>
-                </div>
-                <div class="lens-stat-card lens-stat-error">
-                    <div class="lens-stat-value" data-lens-stat="failed">{{ stats.failed }}</div>
-                    <div class="lens-stat-label">{{ 'Failed'|t('lens') }}</div>
-                </div>
+        <div class="lens-stats-grid">
+            <div class="lens-stat-card">
+                <div class="lens-stat-value">{{ stats.totalImages }}</div>
+                <div class="lens-stat-label">{{ 'Total Images'|t('lens') }}</div>
             </div>
-
-            {# ===== STATE: READY ===== #}
-            <div class="pane lens-bulk-state" data-lens-target="state-ready"
-                 style="margin-top: 24px;{% if initialState != 'ready' %} display: none;{% endif %}">
-
-                {% if stats.unprocessed == 0 and stats.failed == 0 %}
-                    {# All assets analyzed - success message #}
-                    <div class="lens-all-done">
-                        <span class="lens-all-done-icon"></span>
-                        <h2>{{ 'All Assets Analyzed'|t('lens') }}</h2>
-                        <p>{{ '{count} images have been analyzed.'|t('lens', {count: stats.analyzed}) }}</p>
-                    </div>
-                {% else %}
-                    <h2>{{ 'Process Assets'|t('lens') }}</h2>
-
-                    <div class="lens-bulk-summary">
-                        {% if stats.unprocessed > 0 %}
-                            <p>
-                                <strong data-lens-stat="unprocessed">{{ stats.unprocessed }}</strong>
-                                {{ 'images ready for analysis.'|t('lens') }}
-                            </p>
-
-                            {% if estimatedCost > 0 %}
-                                <div class="lens-estimated-cost">
-                                    <span class="lens-cost-label">{{ 'Estimated cost:'|t('lens') }}</span>
-                                    <strong>${{ estimatedCost|number_format(4) }}</strong>
-                                    <span class="light">{{ '(based on current provider settings)'|t('lens') }}</span>
-                                </div>
-                            {% endif %}
-                        {% endif %}
-                    </div>
-
-                    <form method="post" data-lens-target="bulk-form">
-                        {{ csrfInput() }}
-                        {{ actionInput('lens/bulk/process') }}
-
-                        <div class="field">
-                            <div class="heading">
-                                <label for="volumeId">{{ 'Volume'|t('lens') }}</label>
-                            </div>
-                            <div class="input">
-                                <select name="volumeId" data-lens-control="volume-select" class="text">
-                                    <option value="">{{ 'All Volumes'|t('lens') }}</option>
-                                    {% for volume in volumes %}
-                                        <option value="{{ volume.id }}">{{ volume.name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="lens-bulk-actions">
-                            <button type="submit" class="btn submit" data-lens-action="bulk-start"
-                                    {% if stats.unprocessed == 0 %}disabled{% endif %}>
-                                {{ 'Start Processing'|t('lens') }}
-                            </button>
-
-                            {% if stats.failed > 0 %}
-                                <button type="button" class="btn" data-lens-action="bulk-retry">
-                                    {{ 'Retry {count} Failed'|t('lens', {count: stats.failed}) }}
-                                </button>
-                            {% endif %}
-                        </div>
-                    </form>
-                {% endif %}
+            <div class="lens-stat-card lens-stat-success">
+                <div class="lens-stat-value">{{ stats.analyzed }}</div>
+                <div class="lens-stat-label">{{ 'Analyzed'|t('lens') }}</div>
             </div>
-
-            {# ===== STATE: PROCESSING ===== #}
-            <div class="pane lens-bulk-state" data-lens-target="state-processing"
-                 style="margin-top: 24px;{% if initialState != 'processing' %} display: none;{% endif %}">
-                <h2>{{ 'Processing in Progress'|t('lens') }}</h2>
-
-                <div class="lens-progress-section">
-                    <div class="lens-progress lens-progress--large lens-progress--animated">
-                        <div class="lens-progress-fill" data-lens-target="progress-bar" style="width: 0%"></div>
-                    </div>
-                    <div class="lens-progress-text" data-lens-target="progress-text">
-                        {{ 'Starting'|t('lens') }}
-                    </div>
-                </div>
-
-                <div class="lens-progress-counters">
-                    <div class="lens-counter lens-counter--success">
-                        <span class="lens-counter__value" data-lens-target="completed-count">0</span>
-                        <span class="lens-counter__label">{{ 'Completed'|t('lens') }}</span>
-                    </div>
-                    <div class="lens-counter lens-counter--error">
-                        <span class="lens-counter__value" data-lens-target="failed-count">0</span>
-                        <span class="lens-counter__label">{{ 'Failed'|t('lens') }}</span>
-                    </div>
-                    <div class="lens-counter">
-                        <span class="lens-counter__value" data-lens-target="remaining-count">0</span>
-                        <span class="lens-counter__label">{{ 'Remaining'|t('lens') }}</span>
-                    </div>
-                </div>
-
-                <div class="lens-progress-details light">
-                    <p data-lens-target="job-description">{{ 'Analyzing assets'|t('lens') }}</p>
-                    <p>{{ 'Cost so far:'|t('lens') }} <strong data-lens-target="current-cost">$0.0000</strong></p>
-                </div>
-
-                <div class="lens-progress-actions" style="text-align: center; margin-top: 20px;">
-                    <button type="button" class="btn" data-lens-action="bulk-cancel">
-                        {{ 'Cancel Processing'|t('lens') }}
-                    </button>
-                </div>
+            <div class="lens-stat-card lens-stat-warning">
+                <div class="lens-stat-value">{{ stats.unprocessed }}</div>
+                <div class="lens-stat-label">{{ 'Unprocessed'|t('lens') }}</div>
             </div>
-
-            {# ===== STATE: COMPLETE ===== #}
-            <div class="pane lens-bulk-state lens-state-complete" data-lens-target="state-complete"
-                 style="margin-top: 24px;{% if initialState != 'complete' %} display: none;{% endif %}">
-                <div class="lens-complete-header">
-                    <span class="lens-complete-icon"></span>
-                    <h2>{{ 'Processing Complete'|t('lens') }}</h2>
-                </div>
-
-                <div class="lens-complete-summary">
-                    <div class="lens-summary-grid">
-                        <div class="lens-summary-item">
-                            <span class="lens-summary-value" data-lens-target="summary-analyzed">{{ stats.analyzed }}</span>
-                            <span class="lens-summary-label">{{ 'Analyzed'|t('lens') }}</span>
-                        </div>
-                        <div class="lens-summary-item lens-summary-warning">
-                            <span class="lens-summary-value" data-lens-target="summary-failed">{{ stats.failed }}</span>
-                            <span class="lens-summary-label">{{ 'Failed'|t('lens') }}</span>
-                        </div>
-                        <div class="lens-summary-item">
-                            <span class="lens-summary-value" data-lens-target="summary-review">{{ stats.pendingReview }}</span>
-                            <span class="lens-summary-label">{{ 'Pending Review'|t('lens') }}</span>
-                        </div>
-                    </div>
-
-                    <p class="lens-total-cost">
-                        {{ 'Total cost for this run:'|t('lens') }} <strong data-lens-target="summary-cost">$0.0000</strong>
-                    </p>
-                </div>
-
-                <div class="lens-complete-actions">
-                    {% if stats.pendingReview > 0 %}
-                        <a href="{{ cpUrl('lens/review') }}" class="btn submit">
-                            {{ 'View Review Queue'|t('lens') }}
-                        </a>
-                    {% endif %}
-
-                    <button type="button" class="btn" data-lens-action="bulk-retry-complete" style="display: none;">
-                        {{ 'Retry Failed'|t('lens') }}
-                    </button>
-
-                    <button type="button" class="btn" data-lens-action="bulk-dismiss-complete">
-                        {{ 'Process More'|t('lens') }}
-                    </button>
-
-                    <a href="{{ cpUrl('lens/search') }}" class="btn">
-                        {{ 'Browse Assets'|t('lens') }}
-                    </a>
-                </div>
+            <div class="lens-stat-card">
+                <div class="lens-stat-value">{{ stats.pendingReview }}</div>
+                <div class="lens-stat-label">{{ 'Pending Review'|t('lens') }}</div>
             </div>
+            <div class="lens-stat-card lens-stat-error">
+                <div class="lens-stat-value">{{ stats.failed }}</div>
+                <div class="lens-stat-label">{{ 'Failed'|t('lens') }}</div>
+            </div>
+        </div>
+
+        {# Render only the current state #}
+        {% if state == 'processing' %}
+            {% include 'lens/_bulk/_state-processing' %}
+        {% elseif state == 'complete' %}
+            {% include 'lens/_bulk/_state-complete' %}
+        {% else %}
+            {% include 'lens/_bulk/_state-ready' %}
+        {% endif %}
+
     </div>
 {% endblock %}

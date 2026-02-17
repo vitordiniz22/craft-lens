@@ -1,0 +1,17 @@
+<div class="pane" style="margin-top: 24px;">
+    <h2>{{ 'Processing in Progress'|t('lens') }}</h2>
+
+    <div data-lens-target="progress-container">
+        {% include 'lens/_bulk/_progress' %}
+    </div>
+
+    <div style="text-align: center; margin-top: 20px;">
+        <form method="post" style="display: inline-block;">
+            {{ csrfInput() }}
+            {{ actionInput('lens/bulk/cancel') }}
+            <button type="submit" class="btn">
+                {{ 'Cancel Processing'|t('lens') }}
+            </button>
+        </form>
+    </div>
+</div>

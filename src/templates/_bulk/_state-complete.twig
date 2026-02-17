@@ -1,0 +1,55 @@
+<div class="pane lens-state-complete" style="margin-top: 24px;">
+    <div class="lens-complete-header">
+        <span class="lens-complete-icon"></span>
+        <h2>{{ 'Processing Complete'|t('lens') }}</h2>
+    </div>
+
+    <div class="lens-complete-summary">
+        <div class="lens-summary-grid">
+            <div class="lens-summary-item">
+                <span class="lens-summary-value">{{ stats.analyzed }}</span>
+                <span class="lens-summary-label">{{ 'Analyzed'|t('lens') }}</span>
+            </div>
+            <div class="lens-summary-item lens-summary-warning">
+                <span class="lens-summary-value">{{ stats.failed }}</span>
+                <span class="lens-summary-label">{{ 'Failed'|t('lens') }}</span>
+            </div>
+            <div class="lens-summary-item">
+                <span class="lens-summary-value">{{ stats.pendingReview }}</span>
+                <span class="lens-summary-label">{{ 'Pending Review'|t('lens') }}</span>
+            </div>
+        </div>
+
+        {% if session and session.actualCost is defined %}
+            <p class="lens-total-cost">
+                {{ 'Total cost for this run:'|t('lens') }} <strong>${{ session.actualCost|number_format(4) }}</strong>
+            </p>
+        {% endif %}
+    </div>
+
+    <div class="lens-complete-actions">
+        {% if stats.pendingReview > 0 %}
+            <a href="{{ cpUrl('lens/review') }}" class="btn submit">
+                {{ 'View Review Queue'|t('lens') }}
+            </a>
+        {% endif %}
+
+        {% if stats.failed > 0 %}
+            <form method="post" style="display: inline-block;">
+                {{ csrfInput() }}
+                {{ actionInput('lens/bulk/retry-failed') }}
+                <button type="submit" class="btn">
+                    {{ 'Retry {count} Failed'|t('lens', {count: stats.failed}) }}
+                </button>
+            </form>
+        {% endif %}
+
+        <a href="{{ cpUrl('lens/bulk/dismiss') }}" class="btn">
+            {{ 'Process More'|t('lens') }}
+        </a>
+
+        <a href="{{ cpUrl('lens/search') }}" class="btn">
+            {{ 'Browse Assets'|t('lens') }}
+        </a>
+    </div>
+</div>

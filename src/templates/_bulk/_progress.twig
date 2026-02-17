@@ -1,0 +1,31 @@
+<div class="lens-progress-section">
+    <div class="lens-progress lens-progress--large lens-progress--animated">
+        <div class="lens-progress-fill" style="width: {{ progress.percentComplete ?? 0 }}%"></div>
+    </div>
+    <div class="lens-progress-text">
+        {{ progress.completed ?? 0 }} / {{ progress.total ?? 0 }}
+        ({{ progress.percentComplete ?? 0 }}%)
+    </div>
+</div>
+
+<div class="lens-progress-counters">
+    <div class="lens-counter lens-counter--success">
+        <span class="lens-counter__value">{{ progress.completed ?? 0 }}</span>
+        <span class="lens-counter__label">{{ 'Completed'|t('lens') }}</span>
+    </div>
+    <div class="lens-counter lens-counter--error">
+        <span class="lens-counter__value">{{ progress.failed ?? 0 }}</span>
+        <span class="lens-counter__label">{{ 'Failed'|t('lens') }}</span>
+    </div>
+    <div class="lens-counter">
+        <span class="lens-counter__value">{{ progress.remaining ?? 0 }}</span>
+        <span class="lens-counter__label">{{ 'Remaining'|t('lens') }}</span>
+    </div>
+</div>
+
+<div class="lens-progress-details light">
+    <p>{{ queueInfo.jobDescription ?? 'Analyzing assets'|t('lens') }}</p>
+    {% if session and session.actualCost is defined %}
+        <p>{{ 'Cost so far:'|t('lens') }} <strong>${{ session.actualCost|number_format(4) }}</strong></p>
+    {% endif %}
+</div>

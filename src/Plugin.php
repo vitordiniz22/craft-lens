@@ -488,6 +488,8 @@ class Plugin extends BasePlugin
                 $event->rules['lens/bulk/status'] = 'lens/bulk/status';
                 $event->rules['lens/bulk/retry-failed'] = 'lens/bulk/retry-failed';
                 $event->rules['lens/bulk/cancel'] = 'lens/bulk/cancel';
+                $event->rules['lens/bulk/progress'] = 'lens/bulk/progress';
+                $event->rules['lens/bulk/dismiss'] = 'lens/bulk/dismiss';
                 $event->rules['lens/search'] = 'lens/search/index';
                 $event->rules['lens/search/resolve-duplicate'] = 'lens/search/resolve-duplicate';
                 $event->rules['lens/search/export'] = 'lens/search/export';

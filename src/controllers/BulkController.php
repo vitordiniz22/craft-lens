@@ -41,23 +41,79 @@ class BulkController extends Controller
         $this->requireCpRequest();
         $this->requirePermission('accessPlugin-lens');
 
+        $volumeId = $this->request->getQueryParam('volumeId');
+        $volumeId = $volumeId ? (int) $volumeId : null;
+
         $statusService = Plugin::getInstance()->bulkProcessingStatus;
-        $stats = $statusService->getStats();
+        $stats = $statusService->getStats($volumeId);
         $volumes = Craft::$app->getVolumes()->getAllVolumes();
 
-        // Determine initial state
-        $statusData = $statusService->getStatus();
-        $initialState = $statusData['state'];
+        // Determine state
+        $state = $statusService->determineState($stats);
+        $session = $statusService->getSessionData();
 
-        // Calculate estimated cost
-        $estimatedCost = $statusService->getEstimatedCost($stats['unprocessed']);
-
-        return $this->renderTemplate('lens/_bulk/index', [
+        $templateVars = [
             'stats' => $stats,
             'volumes' => $volumes,
-            'initialState' => $initialState,
-            'estimatedCost' => $estimatedCost,
+            'state' => $state,
+            'selectedVolumeId' => $volumeId,
+        ];
+
+        if ($state === 'ready') {
+            $templateVars['estimatedCost'] = $statusService->getEstimatedCost($stats['unprocessed']);
+        }
+
+        if ($state === 'processing') {
+            $templateVars['progress'] = $statusService->getProgress($session, $stats);
+            $templateVars['queueInfo'] = $statusService->getQueueInfo();
+            $templateVars['session'] = $statusService->formatSession($session);
+        }
+
+        if ($state === 'complete') {
+            $templateVars['session'] = $statusService->formatSession($session);
+        }
+
+        return $this->renderTemplate('lens/_bulk/index', $templateVars);
+    }
+
+    /**
+     * Returns an HTML fragment for progress polling.
+     */
+    public function actionProgress(): Response
+    {
+        $this->requireCpRequest();
+        $this->requirePermission('accessPlugin-lens');
+
+        $statusService = Plugin::getInstance()->bulkProcessingStatus;
+        $stats = $statusService->getStats();
+        $state = $statusService->determineState($stats);
+        $session = $statusService->getSessionData();
+
+        $html = Craft::$app->getView()->renderTemplate('lens/_bulk/_progress', [
+            'progress' => $statusService->getProgress($session, $stats),
+            'queueInfo' => $statusService->getQueueInfo(),
+            'session' => $statusService->formatSession($session),
         ]);
+
+        $response = Craft::$app->getResponse();
+        $response->getHeaders()->set('X-Lens-State', $state);
+        $response->format = Response::FORMAT_HTML;
+        $response->data = $html;
+
+        return $response;
+    }
+
+    /**
+     * Clear the session so state reverts to ready.
+     */
+    public function actionDismiss(): Response
+    {
+        $this->requireCpRequest();
+        $this->requirePermission('accessPlugin-lens');
+
+        Plugin::getInstance()->bulkProcessingStatus->clearSession();
+
+        return $this->redirect('lens/bulk');
     }
 
     /**
@@ -102,13 +158,6 @@ class BulkController extends Controller
 
         Logger::info(LogCategory::AssetProcessing, 'Bulk processing cancelled from CP', context: ['jobsCancelled' => $cancelled]);
 
-        if ($this->request->getAcceptsJson()) {
-            return $this->asJson([
-                'success' => true,
-                'cancelled' => $cancelled,
-            ]);
-        }
-
         Craft::$app->getSession()->setNotice(
             Craft::t('lens', 'Processing cancelled. {count} jobs removed.', ['count' => $cancelled])
         );
@@ -139,10 +188,6 @@ class BulkController extends Controller
 
         Logger::info(LogCategory::JobStarted, 'Bulk processing started from CP', context: ['volumeId' => $volumeId]);
 
-        if ($this->request->getAcceptsJson()) {
-            return $this->asJson(['success' => true]);
-        }
-
         Craft::$app->getSession()->setNotice(Craft::t('lens', 'Bulk processing started.'));
         return $this->redirect('lens/bulk');
     }
@@ -162,9 +207,6 @@ class BulkController extends Controller
             ->column();
 
         if (empty($failedAssetIds)) {
-            if ($this->request->getAcceptsJson()) {
-                return $this->asJson(['success' => true, 'count' => 0]);
-            }
             Craft::$app->getSession()->setNotice(Craft::t('lens', 'No failed analyses to retry.'));
             return $this->redirect('lens/bulk');
         }
@@ -193,10 +235,6 @@ class BulkController extends Controller
         }
 
         Logger::info(LogCategory::JobStarted, 'Retry failed analyses started from CP', context: ['failedCount' => count($failedAssetIds)]);
-
-        if ($this->request->getAcceptsJson()) {
-            return $this->asJson(['success' => true, 'count' => count($failedAssetIds)]);
-        }
 
         Craft::$app->getSession()->setNotice(
             Craft::t('lens', '{count} failed analyses queued for retry.', ['count' => count($failedAssetIds)])

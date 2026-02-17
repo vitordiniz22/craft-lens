@@ -1,0 +1,69 @@
+<div class="pane" style="margin-top: 24px;">
+    {% if stats.unprocessed == 0 and stats.failed == 0 %}
+        <div class="lens-all-done">
+            <span class="lens-all-done-icon"></span>
+            <h2>{{ 'All Assets Analyzed'|t('lens') }}</h2>
+            <p>{{ '{count} images have been analyzed.'|t('lens', {count: stats.analyzed}) }}</p>
+        </div>
+    {% else %}
+        <h2>{{ 'Process Assets'|t('lens') }}</h2>
+
+        <div class="lens-bulk-summary">
+            {% if stats.unprocessed > 0 %}
+                <p>
+                    <strong>{{ stats.unprocessed }}</strong>
+                    {{ 'images ready for analysis.'|t('lens') }}
+                </p>
+
+                {% if estimatedCost is defined and estimatedCost > 0 %}
+                    <div class="lens-estimated-cost">
+                        <span class="lens-cost-label">{{ 'Estimated cost:'|t('lens') }}</span>
+                        <strong>${{ estimatedCost|number_format(4) }}</strong>
+                        <span class="light">{{ '(based on current provider settings)'|t('lens') }}</span>
+                    </div>
+                {% endif %}
+            {% endif %}
+        </div>
+
+        <div class="field">
+            <div class="heading">
+                <label for="volumeId">{{ 'Volume'|t('lens') }}</label>
+            </div>
+            <div class="input">
+                <select id="volumeId" class="text" onchange="window.location.href=Craft.getCpUrl('lens/bulk', this.value ? {volumeId: this.value} : {})">
+                    <option value="">{{ 'All Volumes'|t('lens') }}</option>
+                    {% for volume in volumes %}
+                        <option value="{{ volume.id }}" {% if selectedVolumeId == volume.id %}selected{% endif %}>
+                            {{ volume.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="lens-bulk-actions">
+            {% if stats.unprocessed > 0 %}
+                <form method="post">
+                    {{ csrfInput() }}
+                    {{ actionInput('lens/bulk/process') }}
+                    {% if selectedVolumeId %}
+                        <input type="hidden" name="volumeId" value="{{ selectedVolumeId }}">
+                    {% endif %}
+                    <button type="submit" class="btn submit">
+                        {{ 'Start Processing'|t('lens') }}
+                    </button>
+                </form>
+            {% endif %}
+
+            {% if stats.failed > 0 %}
+                <form method="post" style="display: inline-block;">
+                    {{ csrfInput() }}
+                    {{ actionInput('lens/bulk/retry-failed') }}
+                    <button type="submit" class="btn">
+                        {{ 'Retry {count} Failed'|t('lens', {count: stats.failed}) }}
+                    </button>
+                </form>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>

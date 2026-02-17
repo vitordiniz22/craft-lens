@@ -25,7 +25,7 @@ class BulkProcessingStatusService extends Component
     /**
      * Duration in seconds to show the "complete" state after processing finishes.
      */
-    private const COMPLETE_STATE_DURATION = 30;
+    private const COMPLETE_STATE_DURATION = 300;
 
     /**
      * Default token estimates for cost calculation when no historical data exists.
@@ -119,7 +119,7 @@ class BulkProcessingStatusService extends Component
     /**
      * Determine the current processing state.
      */
-    private function determineState(array $stats): string
+    public function determineState(array $stats): string
     {
         $hasQueuedJobs = $this->hasLensJobsInQueue();
         $processingCount = $stats['processing'] ?? 0;
@@ -156,7 +156,7 @@ class BulkProcessingStatusService extends Component
     /**
      * Get information about the current queue state.
      */
-    private function getQueueInfo(): array
+    public function getQueueInfo(): array
     {
         try {
             $lensJobCondition = [
@@ -230,7 +230,7 @@ class BulkProcessingStatusService extends Component
     /**
      * Calculate progress based on session data and current stats.
      */
-    private function getProgress(?array $session, array $stats): array
+    public function getProgress(?array $session, array $stats): array
     {
         $initialUnprocessed = $session['initialUnprocessed'] ?? $stats['unprocessed'];
         $total = max($initialUnprocessed, 1);
@@ -249,7 +249,7 @@ class BulkProcessingStatusService extends Component
     /**
      * Get the current session data from cache.
      */
-    private function getSessionData(): ?array
+    public function getSessionData(): ?array
     {
         $cacheKey = $this->getSessionCacheKey();
         $session = Craft::$app->getCache()->get($cacheKey);
@@ -264,7 +264,7 @@ class BulkProcessingStatusService extends Component
     /**
      * Format session data for the API response.
      */
-    private function formatSession(?array $session): ?array
+    public function formatSession(?array $session): ?array
     {
         if ($session === null) {
             return null;
@@ -530,6 +530,15 @@ class BulkProcessingStatusService extends Component
         }
 
         return $cancelled;
+    }
+
+    /**
+     * Clear the current session so the state reverts to "ready".
+     */
+    public function clearSession(): void
+    {
+        Craft::$app->getCache()->delete($this->getSessionCacheKey());
+        Craft::$app->getCache()->delete($this->getSessionCacheKey() . '_previous_state');
     }
 
     /**
