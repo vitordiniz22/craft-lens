@@ -1,45 +1,10 @@
 {# Filter Panel — included within the search form context in index.twig #}
 {% import '_includes/forms.twig' as forms %}
 
-<div class="pane {% if not hasFilters %}hidden{% endif %}" data-lens-target="filters-panel">
+<div class="pane{% if not hasFilters %} hidden{% endif %}" data-lens-target="filters-panel">
     <div class="flex flex-wrap" style="gap: var(--xl);">
-        {# Tags Filter #}
-        <div class="field">
-            <div class="heading"><label>{{ 'Tags'|t('lens') }}</label></div>
-            <div class="input">
-                <select name="tags[]" id="lens-tag-select" multiple style="min-width: 200px;">
-                    {% for tag in allTags %}
-                        <option value="{{ tag }}" {% if tag in (filters.tags ?? []) %}selected{% endif %}>
-                            {{ tag }}
-                        </option>
-                    {% endfor %}
-                </select>
-                <div class="flex" style="gap: var(--s); margin-top: var(--xs);">
-                    <label class="light" style="font-size: 12px;">
-                        <input type="radio" name="tagOperator" value="or" {% if (filters.tagOperator ?? 'or') == 'or' %}checked{% endif %}>
-                        {{ 'Any tag'|t('lens') }}
-                    </label>
-                    <label class="light" style="font-size: 12px;">
-                        <input type="radio" name="tagOperator" value="and" {% if (filters.tagOperator ?? 'or') == 'and' %}checked{% endif %}>
-                        {{ 'All tags'|t('lens') }}
-                    </label>
-                </div>
-            </div>
-        </div>
 
-        {# Status Filter #}
-        <div class="field">
-            <div class="heading"><label>{{ 'Status'|t('lens') }}</label></div>
-            <div class="input">
-                <select name="status[]" multiple style="min-width: 160px;">
-                    {% for option in statusOptions %}
-                        <option value="{{ option.value }}" {% if option.value in (filters.status ?? []) %}selected{% endif %}>
-                            {{ option.label }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
+        {# — Row 1: Content Detection — #}
 
         {# Contains People #}
         {{ forms.selectField({
@@ -67,7 +32,7 @@
                     {% for preset in facePresets %}
                         <button type="button"
                                 class="btn{% if (filters.faceCountPreset ?? '') == preset.value %} active{% endif %}"
-                                data-value="{{ preset.value }}"
+                                data-lens-value="{{ preset.value }}"
                                 aria-pressed="{{ (filters.faceCountPreset ?? '') == preset.value ? 'true' : 'false' }}">
                             {{ preset.label }}
                         </button>
@@ -76,68 +41,6 @@
                 <input type="hidden" name="faceCountPreset" value="{{ filters.faceCountPreset ?? '' }}">
             </div>
         </div>
-
-        {# Confidence Range #}
-        <div class="field">
-            <div class="heading"><label>{{ 'Confidence'|t('lens') }}</label></div>
-            <div class="input">
-                <div class="flex" style="gap: var(--s); align-items: center;">
-                    <input type="number" name="confidenceMin" placeholder="{{ 'Min %'|t('lens') }}" min="0" max="100" step="5" class="text" style="width: 80px;" value="{{ (filters.confidenceMin ?? null) ? ((filters.confidenceMin * 100)|round) : '' }}">
-                    <span class="light">-</span>
-                    <input type="number" name="confidenceMax" placeholder="{{ 'Max %'|t('lens') }}" min="0" max="100" step="5" class="text" style="width: 80px;" value="{{ (filters.confidenceMax ?? null) ? ((filters.confidenceMax * 100)|round) : '' }}">
-                </div>
-            </div>
-        </div>
-
-        {# NSFW Score Range #}
-        <div class="field">
-            <div class="heading"><label>{{ 'NSFW Score'|t('lens') }}</label></div>
-            <div class="input">
-                <div class="flex" style="gap: var(--s); align-items: center;">
-                    <input type="number" name="nsfwScoreMin" placeholder="{{ 'Min %'|t('lens') }}" min="0" max="100" step="5" class="text" style="width: 80px;" value="{{ (filters.nsfwScoreMin ?? null) ? ((filters.nsfwScoreMin * 100)|round) : '' }}">
-                    <span class="light">-</span>
-                    <input type="number" name="nsfwScoreMax" placeholder="{{ 'Max %'|t('lens') }}" min="0" max="100" step="5" class="text" style="width: 80px;" value="{{ (filters.nsfwScoreMax ?? null) ? ((filters.nsfwScoreMax * 100)|round) : '' }}">
-                </div>
-            </div>
-        </div>
-
-        {# Has Watermark #}
-        {{ forms.selectField({
-            label: 'Watermark'|t('lens'),
-            name: 'hasWatermark',
-            options: [
-                {value: '', label: 'Any'|t('lens')},
-                {value: '1', label: 'Has Watermark'|t('lens')},
-                {value: '0', label: 'No Watermark'|t('lens')},
-            ],
-            value: (filters.hasWatermark ?? null) is same as(true) ? '1' : ((filters.hasWatermark ?? null) is same as(false) ? '0' : ''),
-        }) }}
-
-        {# Watermark Type #}
-        {{ forms.selectField({
-            label: 'Watermark Type'|t('lens'),
-            name: 'watermarkType',
-            options: [
-                {value: '', label: 'Any'|t('lens')},
-                {value: 'stock', label: 'Stock'|t('lens')},
-                {value: 'logo', label: 'Logo'|t('lens')},
-                {value: 'text', label: 'Text'|t('lens')},
-                {value: 'copyright', label: 'Copyright'|t('lens')},
-            ],
-            value: filters.watermarkType ?? '',
-        }) }}
-
-        {# Contains Brand Logo #}
-        {{ forms.selectField({
-            label: 'Brand Logo'|t('lens'),
-            name: 'containsBrandLogo',
-            options: [
-                {value: '', label: 'Any'|t('lens')},
-                {value: '1', label: 'Has Brand Logo'|t('lens')},
-                {value: '0', label: 'No Brand Logo'|t('lens')},
-            ],
-            value: (filters.containsBrandLogo ?? null) is same as(true) ? '1' : ((filters.containsBrandLogo ?? null) is same as(false) ? '0' : ''),
-        }) }}
 
         {# Quality Preset #}
         <div class="field">
@@ -152,7 +55,7 @@
                     {% for preset in qualityPresets %}
                         <button type="button"
                                 class="btn{% if (filters.qualityPreset ?? '') == preset.value %} active{% endif %}"
-                                data-value="{{ preset.value }}"
+                                data-lens-value="{{ preset.value }}"
                                 aria-pressed="{{ (filters.qualityPreset ?? '') == preset.value ? 'true' : 'false' }}">
                             {{ preset.label }}
                         </button>
@@ -162,29 +65,75 @@
             </div>
         </div>
 
-        {# Has GPS #}
+        {# — Row 2: Image Marks — #}
+
+        {# Has Watermark #}
         {{ forms.selectField({
-            label: 'GPS Data'|t('lens'),
-            name: 'hasGps',
+            label: 'Watermark'|t('lens'),
+            name: 'hasWatermark',
             options: [
                 {value: '', label: 'Any'|t('lens')},
-                {value: '1', label: 'Has GPS'|t('lens')},
-                {value: '0', label: 'No GPS'|t('lens')},
+                {value: '1', label: 'Has Watermark'|t('lens')},
+                {value: '0', label: 'No Watermark'|t('lens')},
             ],
-            value: (filters.hasGps ?? null) is same as(true) ? '1' : ((filters.hasGps ?? null) is same as(false) ? '0' : ''),
+            value: (filters.hasWatermark ?? null) is same as(true) ? '1' : ((filters.hasWatermark ?? null) is same as(false) ? '0' : ''),
         }) }}
 
-        {# Has Focal Point #}
+        {# Contains Brand Logo #}
         {{ forms.selectField({
-            label: 'Focal Point'|t('lens'),
-            name: 'hasFocalPoint',
+            label: 'Brand Logo'|t('lens'),
+            name: 'containsBrandLogo',
             options: [
                 {value: '', label: 'Any'|t('lens')},
-                {value: '1', label: 'Has Focal Point'|t('lens')},
-                {value: '0', label: 'No Focal Point'|t('lens')},
+                {value: '1', label: 'Has Brand Logo'|t('lens')},
+                {value: '0', label: 'No Brand Logo'|t('lens')},
             ],
-            value: (filters.hasFocalPoint ?? null) is same as(true) ? '1' : ((filters.hasFocalPoint ?? null) is same as(false) ? '0' : ''),
+            value: (filters.containsBrandLogo ?? null) is same as(true) ? '1' : ((filters.containsBrandLogo ?? null) is same as(false) ? '0' : ''),
         }) }}
+
+        {# — Row 3: Color — #}
+
+        {# Color Filter #}
+        <div class="field" style="min-width: 280px;">
+            <div class="heading"><label>{{ 'Color'|t('lens') }}</label></div>
+            <div class="input">
+                {{ forms.color({
+                    name: 'color',
+                    value: filters.color ?? '',
+                    small: true,
+                }) }}
+                {% set toleranceValue = filters.colorTolerance ?? 30 %}
+                {% set toleranceLabel = toleranceValue <= 20 ? 'Exact' : (toleranceValue <= 50 ? 'Similar' : (toleranceValue <= 75 ? 'Broad' : 'Very broad')) %}
+                <div style="margin-top: var(--s);" data-lens-target="color-tolerance-wrap"{% if not (filters.color ?? false) %} class="hidden"{% endif %}>
+                    <label class="light" style="font-size: 11px;">
+                        {{ 'Tolerance'|t('lens') }}: <span data-lens-target="tolerance-value">{{ toleranceValue }}</span>%
+                        <span class="light" data-lens-target="tolerance-label" style="margin-left: var(--xs);">({{ toleranceLabel|t('lens') }})</span>
+                    </label>
+                    <input type="range"
+                           name="colorTolerance"
+                           data-lens-control="color-tolerance"
+                           min="0" max="100" step="5"
+                           value="{{ toleranceValue }}"
+                           style="width: 100%;">
+                </div>
+            </div>
+        </div>
+
+        {# — Row 4: Metadata — #}
+
+        {# Status Filter #}
+        <div class="field">
+            <div class="heading"><label>{{ 'Status'|t('lens') }}</label></div>
+            <div class="input">
+                <select name="status[]" multiple style="min-width: 160px;">
+                    {% for option in statusOptions %}
+                        <option value="{{ option.value }}" {% if option.value in (filters.status ?? []) %}selected{% endif %}>
+                            {{ option.label }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
 
         {# Date Analyzed Range #}
         <div class="field" style="min-width: 280px;">
@@ -225,42 +174,9 @@
             ],
             value: (filters.hasDuplicates ?? '') == '1' ? '1' : ((filters.hasDuplicates ?? '') == '0' ? '0' : ''),
         }) }}
-
-        {# Color Family Filter #}
-        <div class="field" style="min-width: 280px;">
-            <div class="heading"><label>{{ 'Color'|t('lens') }}</label></div>
-            <div class="input">
-                <div class="btngroup" data-lens-preset="colorFamily" style="flex-wrap: wrap; gap: 4px;">
-                    {% for color in colorFamilies %}
-                        <button type="button"
-                                class="btn{% if (filters.colorFamily ?? '') == color.id %} active{% endif %}"
-                                data-value="{{ color.id }}"
-                                style="background-color: {{ color.hex }}; min-width: 28px; min-height: 28px; padding: 4px;{% if color.id == 'white' %} border: 1px solid var(--hairline-color);{% endif %}"
-                                title="{{ color.name|t('lens') }}"
-                                aria-pressed="{{ (filters.colorFamily ?? '') == color.id ? 'true' : 'false' }}">
-                        </button>
-                    {% endfor %}
-                </div>
-                <input type="hidden" name="colorFamily" value="{{ filters.colorFamily ?? '' }}">
-                {% if filters.colorFamily ?? false %}
-                    <div style="margin-top: var(--s);">
-                        <label class="light" style="font-size: 11px;">
-                            {{ 'Tolerance'|t('lens') }}: <span data-lens-target="tolerance-value">{{ filters.colorTolerance ?? 30 }}</span>%
-                        </label>
-                        <input type="range"
-                               name="colorTolerance"
-                               data-lens-control="color-tolerance"
-                               min="0"
-                               max="100"
-                               step="5"
-                               value="{{ filters.colorTolerance ?? 30 }}"
-                               style="width: 100%;">
-                    </div>
-                {% endif %}
-            </div>
-        </div>
     </div>
 
+    {# — Row 5: Actions — #}
     <hr>
     <div class="flex" style="gap: var(--s);">
         <button type="submit" class="btn submit">{{ 'Apply Filters'|t('lens') }}</button>

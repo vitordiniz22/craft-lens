@@ -360,44 +360,16 @@ class SearchService extends Component
     }
 
     /**
-     * Color families with their representative hex values and HSL ranges.
-     */
-    private const COLOR_FAMILIES = [
-        'red'     => ['hex' => '#E53935', 'hue' => [350, 10]],
-        'orange'  => ['hex' => '#FB8C00', 'hue' => [11, 40]],
-        'yellow'  => ['hex' => '#FDD835', 'hue' => [41, 65]],
-        'lime'    => ['hex' => '#C0CA33', 'hue' => [66, 80]],
-        'green'   => ['hex' => '#43A047', 'hue' => [81, 150]],
-        'teal'    => ['hex' => '#00897B', 'hue' => [151, 180]],
-        'cyan'    => ['hex' => '#00ACC1', 'hue' => [181, 200]],
-        'blue'    => ['hex' => '#1E88E5', 'hue' => [201, 250]],
-        'purple'  => ['hex' => '#8E24AA', 'hue' => [251, 290]],
-        'magenta' => ['hex' => '#D81B60', 'hue' => [291, 330]],
-        'pink'    => ['hex' => '#EC407A', 'hue' => [331, 349]],
-        'brown'   => ['hex' => '#6D4C41', 'special' => 'brown'],
-        'gray'    => ['hex' => '#757575', 'special' => 'gray'],
-        'black'   => ['hex' => '#212121', 'special' => 'black'],
-        'white'   => ['hex' => '#FAFAFA', 'special' => 'white'],
-    ];
-
-    /**
-     * Apply color family filter.
+     * Apply color filter using direct hex matching with tolerance.
      */
     private function applyColorFilter(Query $query, array $filters): void
     {
-        if (!isset($filters['colorFamily'])) {
+        if (!isset($filters['color'])) {
             return;
         }
 
-        $colorFamily = $filters['colorFamily'];
         $tolerance = $filters['colorTolerance'] ?? 30;
-
-        if (!isset(self::COLOR_FAMILIES[$colorFamily])) {
-            return;
-        }
-
-        // Find assets with matching dominant colors
-        $matchingAssetIds = $this->findAssetsWithColorFamily($colorFamily, $tolerance);
+        $matchingAssetIds = $this->findAssetsWithColorHex($filters['color'], $tolerance);
 
         if (empty($matchingAssetIds)) {
             $query->andWhere('1 = 0');
@@ -565,13 +537,14 @@ class SearchService extends Component
     }
 
     /**
-     * Find assets that have dominant colors matching the given color family.
-     * Uses batch processing to avoid loading all records into memory.
+     * Find assets that have dominant colors matching a given hex color within tolerance.
      *
      * @return int[]
      */
-    private function findAssetsWithColorFamily(string $colorFamily, int $tolerance): array
+    private function findAssetsWithColorHex(string $hex, int $tolerance): array
     {
+        $targetHsl = $this->hexToHsl($hex);
+
         $query = (new Query())
             ->select(['c.hex', 'a.assetId'])
             ->from(Install::TABLE_ASSET_COLORS . ' c')
@@ -582,7 +555,7 @@ class SearchService extends Component
 
         foreach ($query->batch(500) as $rows) {
             foreach ($rows as $row) {
-                if ($this->colorMatchesFamily($row['hex'] ?? '', $colorFamily, $tolerance)) {
+                if ($this->colorMatchesHsl($row['hex'] ?? '', $targetHsl, $tolerance)) {
                     $matchingIds[] = (int) $row['assetId'];
                 }
             }
@@ -592,68 +565,31 @@ class SearchService extends Component
     }
 
     /**
-     * Check if a hex color matches a color family within tolerance.
+     * Check if a hex color matches a target HSL within tolerance.
      */
-    private function colorMatchesFamily(string $hex, string $family, int $tolerance): bool
+    private function colorMatchesHsl(string $hex, array $targetHsl, int $tolerance): bool
     {
         if (empty($hex)) {
             return false;
         }
 
         $hsl = $this->hexToHsl($hex);
-        $familyDef = self::COLOR_FAMILIES[$family] ?? null;
 
-        if ($familyDef === null) {
-            return false;
-        }
+        // Circular hue distance (0-180 max)
+        $hueDiff = abs($hsl['h'] - $targetHsl['h']);
+        $hueDist = min($hueDiff, 360 - $hueDiff);
 
-        // Handle special cases (brown, gray, black, white)
-        if (isset($familyDef['special'])) {
-            return $this->matchesSpecialColor($hsl, $familyDef['special'], $tolerance);
-        }
+        $satDist = abs($hsl['s'] - $targetHsl['s']);
+        $lightDist = abs($hsl['l'] - $targetHsl['l']);
 
-        // Handle hue-based colors
-        $hueRange = $familyDef['hue'];
-        $toleranceHue = $tolerance * 0.5; // Scale tolerance for hue
+        // Scale tolerance into per-channel thresholds
+        $hueThreshold = $tolerance * 1.5;   // 0-150 degrees
+        $satThreshold = $tolerance;          // 0-100%
+        $lightThreshold = $tolerance;        // 0-100%
 
-        $minHue = $hueRange[0] - $toleranceHue;
-        $maxHue = $hueRange[1] + $toleranceHue;
-
-        // Handle wraparound for red (hue crosses 0/360)
-        if ($minHue < 0 || $maxHue > 360 || $hueRange[0] > $hueRange[1]) {
-            // Wraparound case (like red: 350-10)
-            $minHue = ($minHue + 360) % 360;
-            $maxHue = $maxHue % 360;
-            return $hsl['h'] >= $minHue || $hsl['h'] <= $maxHue;
-        }
-
-        return $hsl['h'] >= $minHue && $hsl['h'] <= $maxHue;
-    }
-
-    /**
-     * Match special colors (brown, gray, black, white) based on saturation and lightness.
-     */
-    private function matchesSpecialColor(array $hsl, string $special, int $tolerance): bool
-    {
-        $toleranceSat = $tolerance * 0.3;
-        $toleranceLight = $tolerance * 0.5;
-
-        switch ($special) {
-            case 'black':
-                return $hsl['l'] <= (14 + $toleranceLight);
-            case 'white':
-                return $hsl['l'] >= (86 - $toleranceLight);
-            case 'gray':
-                return $hsl['s'] <= (10 + $toleranceSat) && $hsl['l'] > 14 && $hsl['l'] < 86;
-            case 'brown':
-                // Brown: low-medium saturation, low-medium lightness, warm hues
-                $warmHue = ($hsl['h'] >= 0 && $hsl['h'] <= 50) || $hsl['h'] >= 350;
-                $brownSat = $hsl['s'] >= (10 - $toleranceSat) && $hsl['s'] <= (50 + $toleranceSat);
-                $brownLight = $hsl['l'] >= (15 - $toleranceLight) && $hsl['l'] <= (40 + $toleranceLight);
-                return $warmHue && $brownSat && $brownLight;
-        }
-
-        return false;
+        return $hueDist <= $hueThreshold
+            && $satDist <= $satThreshold
+            && $lightDist <= $lightThreshold;
     }
 
     /**
@@ -701,41 +637,6 @@ class SearchService extends Component
             's' => (int) round($s * 100),
             'l' => (int) round($l * 100),
         ];
-    }
-
-    /**
-     * Get available color families for the filter UI.
-     *
-     * @return array<array{id: string, hex: string, name: string}>
-     */
-    public function getColorFamilies(): array
-    {
-        $families = [];
-        foreach (self::COLOR_FAMILIES as $id => $def) {
-            $families[] = [
-                'id' => $id,
-                'hex' => $def['hex'],
-                'name' => ucfirst($id),
-            ];
-        }
-        return $families;
-    }
-
-    /**
-     * Get all unique tags for autocomplete.
-     *
-     * @return string[]
-     */
-    public function getAllTags(): array
-    {
-        return (new Query())
-            ->select(['tag'])
-            ->distinct()
-            ->from(Install::TABLE_ASSET_TAGS . ' tags')
-            ->innerJoin(Install::TABLE_ASSET_ANALYSES . ' lens', '[[tags.analysisId]] = [[lens.id]]')
-            ->where(['in', 'lens.status', AnalysisStatus::analyzedValues()])
-            ->orderBy(['tag' => SORT_ASC])
-            ->column();
     }
 
     /**

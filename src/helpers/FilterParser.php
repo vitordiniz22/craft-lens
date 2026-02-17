@@ -19,7 +19,7 @@ class FilterParser
         'confidenceMin', 'confidenceMax',
         'nsfwScoreMin', 'nsfwScoreMax',
         'processedFrom', 'processedTo',
-        'colorFamily', 'colorTolerance', 'hasDuplicates', 'quickFilter',
+        'color', 'colorTolerance', 'hasDuplicates', 'quickFilter',
         'hasWatermark', 'watermarkType', 'containsBrandLogo',
         'qualityPreset', 'hasGps', 'hasFocalPoint',
         'nsfwFlagged',
@@ -155,10 +155,14 @@ class FilterParser
 
     private static function parseColorFilters(Request $request, array &$filters): void
     {
-        $colorFamily = $request->getQueryParam('colorFamily');
+        $color = $request->getQueryParam('color');
 
-        if ($colorFamily !== null && trim($colorFamily) !== '') {
-            $filters['colorFamily'] = trim($colorFamily);
+        if ($color !== null && trim($color) !== '') {
+            $hex = ltrim(trim($color), '#');
+
+            if (preg_match('/^[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$/', $hex)) {
+                $filters['color'] = '#' . $hex;
+            }
         }
 
         $colorTolerance = $request->getQueryParam('colorTolerance');

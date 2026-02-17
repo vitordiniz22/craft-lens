@@ -18,9 +18,10 @@
 
             this.initFilterToggle();
             this.initClearSearch();
-            this.initConfidenceInputs();
+            this.initFormCleanup();
             this.initSearchEnterKey();
             this.initPresetButtonGroups();
+            this.initColorInput();
             this.initColorToleranceSlider();
             this.initDatePickers();
             this.initKeyboardNavigation();
@@ -28,14 +29,14 @@
         },
 
         initFilterToggle: function () {
+            const panel = document.querySelector(
+                '[data-lens-target="filters-panel"]',
+            );
+
             window.Lens.core.DOM.delegate(
                 '[data-lens-action="toggle-filters"]',
                 'click',
                 (e, btn) => {
-                    const panel = window.Lens.core.DOM.findTarget(
-                        btn,
-                        'filters-panel',
-                    );
                     if (panel) window.Lens.core.DOM.toggleClass(panel);
                 },
             );
@@ -58,17 +59,13 @@
             );
         },
 
-        initConfidenceInputs: function () {
+        initFormCleanup: function () {
             const form = document.querySelector(
                 '[data-lens-target="search-form"]',
             );
             if (!form) return;
 
             form.addEventListener('submit', () => {
-                const confidenceMin =
-                    window.Lens.core.DOM.findControl('confidence-min');
-                const confidenceMax =
-                    window.Lens.core.DOM.findControl('confidence-max');
                 let selects = form.querySelectorAll('select');
                 let hiddenInputs = form.querySelectorAll(
                     'input[type="hidden"]',
@@ -76,13 +73,6 @@
                 let inputs = form.querySelectorAll(
                     'input[type="text"], input[type="number"], input[type="date"]',
                 );
-
-                [confidenceMin, confidenceMax].forEach((input) => {
-                    if (input && input.value) {
-                        const val = parseFloat(input.value);
-                        if (val > 1) input.value = (val / 100).toFixed(2);
-                    }
-                });
 
                 inputs.forEach((input) => {
                     if (!input.value) input.disabled = true;
@@ -116,51 +106,91 @@
 
         initSearchEnterKey: function () {
             const input = window.Lens.core.DOM.findControl('search-query');
+
             if (!input) return;
 
             input.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') {
                     const form = input.closest('form');
+
                     if (form) form.submit();
                 }
             });
         },
 
         initPresetButtonGroups: function () {
-            const groups = document.querySelectorAll('[data-lens-preset]');
-            groups.forEach((btn) => {
-                btn.addEventListener('click', () => {
-                    const groupName = btn.dataset.lensPreset;
-                    const value = btn.dataset.lensValue;
-                    const isActive =
-                        btn.getAttribute('aria-pressed') === 'true';
+            document.addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-lens-value]');
+                if (!btn) return;
 
-                    // Toggle this button
-                    btn.setAttribute('aria-pressed', !isActive);
-                    btn.classList.toggle('active');
+                const group = btn.closest('[data-lens-preset]');
+                if (!group) return;
 
-                    // Update hidden input
-                    const hiddenInput = document.querySelector(
-                        'input[name="' + groupName + '"]',
-                    );
-                    if (hiddenInput) {
-                        hiddenInput.value = isActive ? '' : value;
-                    }
+                const groupName = group.dataset.lensPreset;
+                const value = btn.dataset.lensValue;
+                const isActive = btn.getAttribute('aria-pressed') === 'true';
 
-                    // Deactivate other buttons in same group
-                    if (!isActive) {
-                        const siblings = document.querySelectorAll(
-                            '[data-lens-preset="' + groupName + '"]',
-                        );
-                        siblings.forEach((sibling) => {
-                            if (sibling !== btn) {
-                                sibling.setAttribute('aria-pressed', 'false');
-                                sibling.classList.remove('active');
-                            }
-                        });
-                    }
-                });
+                // Toggle this button
+                btn.setAttribute('aria-pressed', isActive ? 'false' : 'true');
+                btn.classList.toggle('active');
+
+                // Update hidden input
+                const hiddenInput = document.querySelector(
+                    'input[name="' + groupName + '"]',
+                );
+                if (hiddenInput) {
+                    hiddenInput.value = isActive ? '' : value;
+                }
+
+                // Deactivate other buttons in same group
+                if (!isActive) {
+                    const siblings =
+                        group.querySelectorAll('[data-lens-value]');
+                    siblings.forEach((sibling) => {
+                        if (sibling !== btn) {
+                            sibling.setAttribute('aria-pressed', 'false');
+                            sibling.classList.remove('active');
+                        }
+                    });
+                }
+
             });
+        },
+
+        initColorInput: function () {
+            const colorInput = document.querySelector('input[name="color"]');
+            if (!colorInput) return;
+
+            const toleranceWrap = document.querySelector(
+                '[data-lens-target="color-tolerance-wrap"]',
+            );
+            if (!toleranceWrap) return;
+
+            const updateVisibility = () => {
+                if (colorInput.value.trim()) {
+                    toleranceWrap.classList.remove('hidden');
+                } else {
+                    toleranceWrap.classList.add('hidden');
+                }
+            };
+
+            // Typing directly in the hex input
+            colorInput.addEventListener('input', updateVisibility);
+
+            // Craft.ColorInput sets the value programmatically from the
+            // native picker, which doesn't fire input/change. Instead,
+            // observe the preview swatch — Craft always updates its
+            // background-color when the value changes.
+            const container = colorInput.closest('.color-container');
+            if (container) {
+                const preview = container.querySelector('.color-preview');
+                if (preview) {
+                    new MutationObserver(updateVisibility).observe(preview, {
+                        attributes: true,
+                        attributeFilter: ['style'],
+                    });
+                }
+            }
         },
 
         initColorToleranceSlider: function () {
@@ -172,7 +202,22 @@
                     '[data-lens-target="tolerance-value"]',
                 );
                 if (display) display.textContent = slider.value;
+                const label = document.querySelector(
+                    '[data-lens-target="tolerance-label"]',
+                );
+                if (label)
+                    label.textContent =
+                        '(' +
+                        this.getToleranceLabel(parseInt(slider.value)) +
+                        ')';
             });
+        },
+
+        getToleranceLabel: function (value) {
+            if (value <= 20) return Craft.t('lens', 'Exact');
+            if (value <= 50) return Craft.t('lens', 'Similar');
+            if (value <= 75) return Craft.t('lens', 'Broad');
+            return Craft.t('lens', 'Very broad');
         },
 
         initDatePickers: function () {

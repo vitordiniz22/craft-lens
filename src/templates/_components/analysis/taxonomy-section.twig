@@ -52,7 +52,7 @@
                 {% for color in analysisColors %}
                     <div class="lens-color-item" data-lens-target="color-item" data-lens-hex="{{ color.hex }}" data-lens-is-ai="{{ color.isAi ? '1' : '0' }}" data-lens-percentage="{{ color.percentage }}">
                         <span class="lens-swatch lens-swatch--sm" style="background-color: {{ color.hex }}"></span>
-                        <a href="{{ cpUrl('lens/search', {colorFamily: color.hex}) }}">{{ color.hex }}</a>
+                        <a href="{{ cpUrl('lens/search', {color: color.hex}) }}">{{ color.hex }}</a>
                         {% if color.percentage %}
                             <span class="badge">{{ (color.percentage * 100)|round }}%</span>
                         {% endif %}
