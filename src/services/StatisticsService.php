@@ -345,26 +345,9 @@ class StatisticsService extends Component
      */
     public function getMonthlyUsageSummary(): array
     {
-        $startOfMonth = (new DateTime('first day of this month'))->format('Y-m-d 00:00:00');
-
-        $result = AssetAnalysisRecord::find()
-            ->select([
-                'COUNT(*) as count',
-                'SUM(actualCost) as totalCost',
-            ])
-            ->where(['in', 'status', AnalysisStatus::processedValues()])
-            ->andWhere(['>=', 'processedAt', $startOfMonth])
-            ->asArray()
-            ->one();
-
-        $count = (int) ($result['count'] ?? 0);
-        $totalCost = (float) ($result['totalCost'] ?? 0.0);
-
-        return [
-            'assetsProcessed' => $count,
-            'totalCost' => $totalCost,
-            'avgCostPerAsset' => $count > 0 ? $totalCost / $count : 0.0,
-        ];
+        return $this->getUsageSummaryForPeriod(
+            (new DateTime('first day of this month'))->format('Y-m-d 00:00:00'),
+        );
     }
 
     /**
@@ -374,19 +357,32 @@ class StatisticsService extends Component
      */
     public function getLastMonthUsageSummary(): array
     {
-        $startOfLastMonth = (new DateTime('first day of last month'))->format('Y-m-d 00:00:00');
-        $endOfLastMonth = (new DateTime('last day of last month'))->format('Y-m-d 23:59:59');
+        return $this->getUsageSummaryForPeriod(
+            (new DateTime('first day of last month'))->format('Y-m-d 00:00:00'),
+            (new DateTime('last day of last month'))->format('Y-m-d 23:59:59'),
+        );
+    }
 
-        $result = AssetAnalysisRecord::find()
+    /**
+     * Get usage summary for a date range.
+     *
+     * @return array{assetsProcessed: int, totalCost: float, avgCostPerAsset: float}
+     */
+    private function getUsageSummaryForPeriod(string $from, ?string $to = null): array
+    {
+        $query = AssetAnalysisRecord::find()
             ->select([
                 'COUNT(*) as count',
                 'SUM(actualCost) as totalCost',
             ])
             ->where(['in', 'status', AnalysisStatus::processedValues()])
-            ->andWhere(['>=', 'processedAt', $startOfLastMonth])
-            ->andWhere(['<=', 'processedAt', $endOfLastMonth])
-            ->asArray()
-            ->one();
+            ->andWhere(['>=', 'processedAt', $from]);
+
+        if ($to !== null) {
+            $query->andWhere(['<=', 'processedAt', $to]);
+        }
+
+        $result = $query->asArray()->one();
 
         $count = (int) ($result['count'] ?? 0);
         $totalCost = (float) ($result['totalCost'] ?? 0.0);

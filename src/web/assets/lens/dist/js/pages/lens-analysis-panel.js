@@ -140,20 +140,15 @@
             if (btn.disabled) return;
 
             const assetId = btn.dataset.lensAssetId;
-            const label = btn.querySelector('.label');
             const loadingText = btn.dataset.lensLoadingText;
-            const originalText = label ? label.textContent : '';
 
-            btn.disabled = true;
-            btn.classList.add('loading');
+            var restoreBtn = window.Lens.core.ButtonState.setLoading(
+                btn,
+                loadingText,
+                { labelSelector: '.label', loadingClass: 'loading' },
+            );
 
-            if (label && loadingText) label.textContent = loadingText;
-
-            var restoreBtn = function () {
-                btn.disabled = false;
-                btn.classList.remove('loading');
-                if (label) label.textContent = originalText;
-            };
+            var label = btn.querySelector('.label');
 
             window.Lens.core.API.post('lens/analysis/reprocess', {
                 assetId: assetId,

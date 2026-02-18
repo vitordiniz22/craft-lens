@@ -27,7 +27,6 @@
 .lens-analysis-panel {
     display: flex;
     flex-direction: column;
-    gap: 0;
 }
 
 .lens-empty-analysis {
@@ -337,7 +336,8 @@
     opacity: 0.6;
 }
 
-.lens-tag-remove:hover {
+.lens-tag-remove:hover,
+.lens-color-remove:hover {
     opacity: 1;
     color: var(--error-color);
 }
@@ -427,11 +427,6 @@
     line-height: 1;
     color: var(--medium-text-color);
     opacity: 0.6;
-}
-
-.lens-color-remove:hover {
-    opacity: 1;
-    color: var(--error-color);
 }
 
 .lens-color-add-row {

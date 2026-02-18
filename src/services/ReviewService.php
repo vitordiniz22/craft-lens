@@ -75,29 +75,7 @@ class ReviewService extends Component
      */
     public function bulkApprove(array $analysisIds, ?int $userId = null): int
     {
-        if (empty($analysisIds)) {
-            return 0;
-        }
-
-        $count = 0;
-        $transaction = Craft::$app->getDb()->beginTransaction();
-
-        try {
-            foreach ($analysisIds as $id) {
-                $this->approve((int)$id, $userId);
-                $count++;
-            }
-
-            $transaction->commit();
-
-            Logger::info(LogCategory::Review, "Bulk approved {$count} analyses", context: ['count' => $count]);
-        } catch (\Throwable $e) {
-            $transaction->rollBack();
-            Logger::error(LogCategory::Review, 'Bulk approve failed, transaction rolled back', exception: $e, context: ['processedBeforeFailure' => $count]);
-            throw $e;
-        }
-
-        return $count;
+        return $this->bulkAction($analysisIds, 'approve', 'approved', $userId);
     }
 
     /**
@@ -108,6 +86,16 @@ class ReviewService extends Component
      */
     public function bulkReject(array $analysisIds, ?int $userId = null): int
     {
+        return $this->bulkAction($analysisIds, 'reject', 'rejected', $userId);
+    }
+
+    /**
+     * Execute a bulk action (approve/reject) within a transaction.
+     *
+     * @throws \Throwable If any action fails (rolls back all changes)
+     */
+    private function bulkAction(array $analysisIds, string $method, string $label, ?int $userId): int
+    {
         if (empty($analysisIds)) {
             return 0;
         }
@@ -117,15 +105,15 @@ class ReviewService extends Component
 
         try {
             foreach ($analysisIds as $id) {
-                $this->reject((int)$id, $userId);
+                $this->$method((int) $id, $userId);
                 $count++;
             }
             $transaction->commit();
 
-            Logger::info(LogCategory::Review, "Bulk rejected {$count} analyses", context: ['count' => $count]);
+            Logger::info(LogCategory::Review, "Bulk {$label} {$count} analyses", context: ['count' => $count]);
         } catch (\Throwable $e) {
             $transaction->rollBack();
-            Logger::error(LogCategory::Review, 'Bulk reject failed, transaction rolled back', exception: $e, context: ['processedBeforeFailure' => $count]);
+            Logger::error(LogCategory::Review, "Bulk {$label} failed, transaction rolled back", exception: $e, context: ['processedBeforeFailure' => $count]);
             throw $e;
         }
 
@@ -272,8 +260,6 @@ class ReviewService extends Component
         $colors = AssetColorRecord::find()
             ->where(['analysisId' => $record->id])
             ->all();
-
-
 
         // EXIF metadata (conditional)
         $exifData = null;

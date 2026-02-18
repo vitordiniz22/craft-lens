@@ -131,61 +131,21 @@
         },
 
         /**
-         * Count tags in editor
-         * @param {HTMLElement} container - Tag editor container
-         * @returns {number} Number of tags
+         * Mark the taxonomy section as dirty (unsaved changes).
+         * Shared by tag and color editors.
+         * @param {HTMLElement} el - Any element inside the .lens-section
          */
-        countTags: function(container) {
-            if (!container) return 0;
-            return container.querySelectorAll('.chip').length;
-        },
+        markDirty: function(el) {
+            var section = el.closest('.lens-section');
+            if (!section) return;
 
-        /**
-         * Count colors in editor
-         * @param {HTMLElement} container - Color editor container
-         * @returns {number} Number of colors
-         */
-        countColors: function(container) {
-            if (!container) return 0;
-            return container.querySelectorAll('[data-lens-target="color-item"]').length;
-        },
-
-        /**
-         * Check if tag editor is empty
-         * @param {HTMLElement} container - Tag editor container
-         * @returns {boolean} True if no tags
-         */
-        isTagEditorEmpty: function(container) {
-            return this.countTags(container) === 0;
-        },
-
-        /**
-         * Check if color editor is empty
-         * @param {HTMLElement} container - Color editor container
-         * @returns {boolean} True if no colors
-         */
-        isColorEditorEmpty: function(container) {
-            return this.countColors(container) === 0;
-        },
-
-        /**
-         * Get empty state element (the "No tags" or "No colors" message)
-         * @param {HTMLElement} container - Editor container
-         * @returns {HTMLElement|null} Empty state element
-         */
-        getEmptyState: function(container) {
-            if (!container) return null;
-            return container.querySelector('p.light');
-        },
-
-        /**
-         * Remove empty state element
-         * @param {HTMLElement} container - Editor container
-         */
-        removeEmptyState: function(container) {
-            const emptyState = this.getEmptyState(container);
-            if (emptyState) {
-                emptyState.remove();
+            var saveBtn = section.querySelector('[data-lens-action="taxonomy-save"]');
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                var status = section.querySelector('[data-lens-target="taxonomy-status"]');
+                if (status) {
+                    status.textContent = Craft.t('lens', 'Unsaved changes');
+                }
             }
         },
 
@@ -195,26 +155,7 @@
          * @returns {HTMLElement|null} Chips container
          */
         getOrCreateChipsContainer: function(editor) {
-            if (!editor) return null;
-
-            let chips = editor.querySelector('[data-lens-target="tag-chips"]');
-            if (!chips) {
-                // Remove empty state
-                this.removeEmptyState(editor);
-
-                // Create chips container
-                chips = document.createElement('div');
-                chips.className = 'lens-tag-chips';
-                chips.dataset.lensTarget = 'tag-chips';
-
-                // Insert after label row
-                const labelRow = editor.querySelector('.flex');
-                if (labelRow) {
-                    labelRow.parentNode.insertBefore(chips, labelRow.nextSibling);
-                }
-            }
-
-            return chips;
+            return this._getOrCreateContainer(editor, 'tag-chips', 'lens-tag-chips');
         },
 
         /**
@@ -223,26 +164,33 @@
          * @returns {HTMLElement|null} Swatches container
          */
         getOrCreateSwatchesContainer: function(editor) {
+            return this._getOrCreateContainer(editor, 'color-swatches', 'lens-color-swatches');
+        },
+
+        /**
+         * Generic container creation for tag chips or color swatches.
+         * @private
+         */
+        _getOrCreateContainer: function(editor, targetName, className) {
             if (!editor) return null;
 
-            let swatches = editor.querySelector('[data-lens-target="color-swatches"]');
-            if (!swatches) {
-                // Remove empty state
-                this.removeEmptyState(editor);
+            var container = editor.querySelector('[data-lens-target="' + targetName + '"]');
+            if (!container) {
+                // Remove empty state ("No tags" / "No colors" message)
+                var emptyState = editor.querySelector('p.light');
+                if (emptyState) emptyState.remove();
 
-                // Create swatches container
-                swatches = document.createElement('div');
-                swatches.className = 'lens-color-swatches';
-                swatches.dataset.lensTarget = 'color-swatches';
+                container = document.createElement('div');
+                container.className = className;
+                container.dataset.lensTarget = targetName;
 
-                // Insert after label row
-                const labelRow = editor.querySelector('.flex');
+                var labelRow = editor.querySelector('.flex');
                 if (labelRow) {
-                    labelRow.parentNode.insertBefore(swatches, labelRow.nextSibling);
+                    labelRow.parentNode.insertBefore(container, labelRow.nextSibling);
                 }
             }
 
-            return swatches;
+            return container;
         }
     };
 })();

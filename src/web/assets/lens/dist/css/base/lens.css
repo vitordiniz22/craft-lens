@@ -10,18 +10,6 @@
    Global CSS Variables
    ========================================================================== */
 
-:root {
-  /* Standardized breakpoints */
-  --lens-breakpoint-sm: 640px;
-  --lens-breakpoint-md: 768px;
-  --lens-breakpoint-lg: 1024px;
-  --lens-breakpoint-xl: 1280px;
-
-  /* Transition variables */
-  --lens-transition-fast: 0.15s ease;
-  --lens-transition-normal: 0.3s ease;
-}
-
 /* ==========================================================================
    Native Craft CMS styles
    ========================================================================== */

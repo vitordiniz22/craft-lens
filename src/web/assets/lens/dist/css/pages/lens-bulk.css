@@ -94,7 +94,7 @@
 }
 
 /* Complete State */
-#lens-state-complete.lens-state-complete {
+#lens-state-complete {
   background: linear-gradient(135deg, var(--green-050) 0%, var(--green-100) 100%);
   border-color: var(--success-color);
 }

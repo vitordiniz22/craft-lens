@@ -97,8 +97,6 @@
 
 .lens-duplicate-badge:hover {
   background: rgba(200, 90, 0, 0.95);
-  color: white;
-  text-decoration: none;
 }
 
 /* Card info section */
@@ -158,14 +156,10 @@
 }
 
 /* Keyboard focus */
-.lens-asset-card:focus {
+.lens-asset-card:focus-visible {
   outline: 2px solid var(--focus-ring-color);
   outline-offset: 2px;
   box-shadow: 0 0 0 4px rgba(0, 102, 204, 0.2);
-}
-
-.lens-asset-card:focus-visible {
-  outline: 2px solid var(--focus-ring-color);
 }
 
 /* Responsive */

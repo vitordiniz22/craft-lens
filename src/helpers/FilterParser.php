@@ -53,13 +53,7 @@ class FilterParser
      */
     public static function hasActiveFilters(array $filters): bool
     {
-        foreach (self::FILTER_KEYS as $key) {
-            if (isset($filters[$key])) {
-                return true;
-            }
-        }
-
-        return false;
+        return !empty(array_intersect_key($filters, array_flip(self::FILTER_KEYS)));
     }
 
     private static function parseTextQuery(Request $request, array &$filters): void
@@ -118,37 +112,26 @@ class FilterParser
         ];
 
         foreach ($rangeFilters as $config) {
-            $min = $request->getQueryParam($config['min']);
+            foreach (['min', 'max'] as $bound) {
+                $value = $request->getQueryParam($config[$bound]);
 
-            if ($min !== null && is_numeric($min)) {
-                $filters[$config['min']] = $config['transform']($min);
-            }
-
-            $max = $request->getQueryParam($config['max']);
-
-            if ($max !== null && is_numeric($max)) {
-                $filters[$config['max']] = $config['transform']($max);
+                if ($value !== null && is_numeric($value)) {
+                    $filters[$config[$bound]] = $config['transform']($value);
+                }
             }
         }
     }
 
     private static function parseDateFilters(Request $request, array &$filters): void
     {
-        $processedFrom = $request->getQueryParam('processedFrom');
+        foreach (['processedFrom', 'processedTo'] as $key) {
+            $param = $request->getQueryParam($key);
 
-        if ($processedFrom !== null) {
-            $date = self::parseDateParam($processedFrom);
-            if ($date !== null) {
-                $filters['processedFrom'] = $date;
-            }
-        }
-
-        $processedTo = $request->getQueryParam('processedTo');
-
-        if ($processedTo !== null) {
-            $date = self::parseDateParam($processedTo);
-            if ($date !== null) {
-                $filters['processedTo'] = $date;
+            if ($param !== null) {
+                $date = self::parseDateParam($param);
+                if ($date !== null) {
+                    $filters[$key] = $date;
+                }
             }
         }
     }
@@ -190,16 +173,17 @@ class FilterParser
 
     private static function parseEnumFilters(Request $request, array &$filters): void
     {
-        $watermarkType = $request->getQueryParam('watermarkType');
+        $enumFilters = [
+            'watermarkType' => ['stock', 'logo', 'text', 'copyright'],
+            'qualityPreset' => ['high', 'medium', 'low'],
+        ];
 
-        if ($watermarkType !== null && in_array($watermarkType, ['stock', 'logo', 'text', 'copyright'], true)) {
-            $filters['watermarkType'] = $watermarkType;
-        }
+        foreach ($enumFilters as $key => $allowedValues) {
+            $value = $request->getQueryParam($key);
 
-        $qualityPreset = $request->getQueryParam('qualityPreset');
-
-        if ($qualityPreset !== null && in_array($qualityPreset, ['high', 'medium', 'low'], true)) {
-            $filters['qualityPreset'] = $qualityPreset;
+            if ($value !== null && in_array($value, $allowedValues, true)) {
+                $filters[$key] = $value;
+            }
         }
     }
 

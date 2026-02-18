@@ -9,18 +9,9 @@
 
 /* Toolbar */
 .lens-review-toolbar {
-
   padding: 12px 0;
   margin-bottom: 16px;
   border-bottom: 1px solid var(--hairline-color);
-}
-
-.lens-review-toolbar-left {
-
-}
-
-.lens-review-toolbar-right {
-
 }
 
 .lens-review-counter {
@@ -40,7 +31,6 @@
 }
 
 .lens-kbd-hints {
-
   font-size: 11px;
   color: var(--medium-text-color);
 }
@@ -192,7 +182,6 @@
   max-height: calc(100vh - 250px);
   display: flex;
   flex-direction: column;
-  gap: 0;
 }
 
 /* Asset header */
@@ -262,10 +251,6 @@
   padding: 0 0 16px 0;
 }
 
-/* Fields inside review sections */
-.lens-review-field {
-}
-
 /* Long description expandable */
 .lens-review-desc-preview {
   max-height: 3.5em;
@@ -295,9 +280,6 @@
   background: var(--white);
   border-top: 1px solid var(--hairline-color);
   z-index: 10;
-}
-
-.lens-review-action-bar .btn {
 }
 
 .lens-review-action-bar kbd {

@@ -103,22 +103,8 @@
             swatches.appendChild(item);
         },
 
-        // ================================================================
-        // Helpers
-        // ================================================================
-
         _markDirty: function(el) {
-            const section = el.closest('.lens-section');
-            if (!section) return;
-
-            const saveBtn = section.querySelector('[data-lens-action="taxonomy-save"]');
-            if (saveBtn) {
-                saveBtn.disabled = false;
-                const status = section.querySelector('[data-lens-target="taxonomy-status"]');
-                if (status) {
-                    status.textContent = Craft.t('lens', 'Unsaved changes');
-                }
-            }
+            window.Lens.services.Taxonomy.markDirty(el);
         }
     };
 

@@ -32,9 +32,12 @@
   margin-bottom: 24px;
 }
 
-.lens-alt-text-pane h2 {
-  margin-top: 0;
-  margin-bottom: 16px;
+.lens-alt-text-pane h2,
+.lens-chart-pane h2,
+.lens-stats-row h2,
+.lens-provider-pane h2,
+.lens-token-pane h2 {
+  margin: 0 0 16px;
 }
 
 .lens-alt-stats-grid {
@@ -68,11 +71,6 @@
 
 .lens-chart-pane {
   margin-bottom: 24px;
-}
-
-.lens-chart-pane h2 {
-  margin-top: 0;
-  margin-bottom: 16px;
 }
 
 .lens-bar-chart {
@@ -128,11 +126,6 @@
 
 .lens-stats-row .pane {
   margin: 0;
-}
-
-.lens-stats-row h2 {
-  margin-top: 0;
-  margin-bottom: 16px;
 }
 
 .lens-confidence-row {
@@ -192,11 +185,6 @@
 
 /* .lens-tag-count defined in lens-review.css */
 
-.lens-provider-pane h2 {
-  margin-top: 0;
-  margin-bottom: 16px;
-}
-
 .lens-provider-stats {
   display: flex;
   flex-wrap: wrap;
@@ -253,11 +241,6 @@
 
 .lens-cost-chart .lens-cost-bar {
   background: linear-gradient(180deg, var(--indigo-500) 0%, var(--purple-600) 100%);
-}
-
-.lens-token-pane h2 {
-  margin-top: 0;
-  margin-bottom: 16px;
 }
 
 .lens-token-grid {

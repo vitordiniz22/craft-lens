@@ -152,19 +152,11 @@ class ReviewController extends Controller
         $modifications = [];
 
         // Text fields — skip empty strings to avoid clearing data when form submits unmodified hidden inputs
-        $suggestedTitle = $this->request->getBodyParam('suggestedTitle');
-        if ($suggestedTitle !== null && $suggestedTitle !== '') {
-            $modifications['suggestedTitle'] = $suggestedTitle;
-        }
-
-        $altText = $this->request->getBodyParam('altText');
-        if ($altText !== null && $altText !== '') {
-            $modifications['altText'] = $altText;
-        }
-
-        $longDescription = $this->request->getBodyParam('longDescription');
-        if ($longDescription !== null && $longDescription !== '') {
-            $modifications['longDescription'] = $longDescription;
+        foreach (['suggestedTitle', 'altText', 'longDescription'] as $field) {
+            $value = $this->request->getBodyParam($field);
+            if ($value !== null && $value !== '') {
+                $modifications[$field] = $value;
+            }
         }
 
         // Tags (JSON-encoded array from hidden input)
@@ -186,18 +178,14 @@ class ReviewController extends Controller
         }
 
         // Numeric fields
-        foreach (['faceCount'] as $field) {
-            $value = $this->request->getBodyParam($field);
-            if ($value !== null) {
-                $modifications[$field] = (int) $value;
-            }
+        $faceCount = $this->request->getBodyParam('faceCount');
+        if ($faceCount !== null) {
+            $modifications['faceCount'] = (int) $faceCount;
         }
 
-        foreach (['nsfwScore'] as $field) {
-            $value = $this->request->getBodyParam($field);
-            if ($value !== null) {
-                $modifications[$field] = (float) $value;
-            }
+        $nsfwScore = $this->request->getBodyParam('nsfwScore');
+        if ($nsfwScore !== null) {
+            $modifications['nsfwScore'] = (float) $nsfwScore;
         }
 
         // Boolean fields
@@ -269,65 +257,37 @@ class ReviewController extends Controller
 
     public function actionBulkApprove(): Response
     {
-        $this->requireCpRequest();
-        $this->requirePostRequest();
-        $this->requirePermission('accessPlugin-lens');
-
-        $ids = $this->request->getRequiredBodyParam('ids');
-        $userId = Craft::$app->getUser()->getId();
-
-        $ids = $this->validateAndCastIds($ids);
-
-        if (empty($ids)) {
-            throw new BadRequestHttpException('No valid IDs provided');
-        }
-
-        $count = Plugin::getInstance()->review->bulkApprove($ids, $userId);
-
-        Logger::info(LogCategory::Review, "Bulk approve from CP", context: ['count' => $count]);
-
-        if ($this->request->getAcceptsJson()) {
-            return $this->asJson([
-                'success' => true,
-                'count' => $count,
-            ]);
-        }
-
-        Craft::$app->getSession()->setNotice(
-            Craft::t('lens', '{count} analyses approved.', ['count' => $count])
-        );
-
-        return $this->redirectToPostedUrl();
+        return $this->handleBulkAction('bulkApprove', 'Bulk approve from CP', 'approved');
     }
 
     public function actionBulkReject(): Response
+    {
+        return $this->handleBulkAction('bulkReject', 'Bulk reject from CP', 'rejected');
+    }
+
+    private function handleBulkAction(string $serviceMethod, string $logMessage, string $actionLabel): Response
     {
         $this->requireCpRequest();
         $this->requirePostRequest();
         $this->requirePermission('accessPlugin-lens');
 
-        $ids = $this->request->getRequiredBodyParam('ids');
-        $userId = Craft::$app->getUser()->getId();
-
-        $ids = $this->validateAndCastIds($ids);
+        $ids = $this->validateAndCastIds($this->request->getRequiredBodyParam('ids'));
 
         if (empty($ids)) {
             throw new BadRequestHttpException('No valid IDs provided');
         }
 
-        $count = Plugin::getInstance()->review->bulkReject($ids, $userId);
+        $userId = Craft::$app->getUser()->getId();
+        $count = Plugin::getInstance()->review->{$serviceMethod}($ids, $userId);
 
-        Logger::info(LogCategory::Review, "Bulk reject from CP", context: ['count' => $count]);
+        Logger::info(LogCategory::Review, $logMessage, context: ['count' => $count]);
 
         if ($this->request->getAcceptsJson()) {
-            return $this->asJson([
-                'success' => true,
-                'count' => $count,
-            ]);
+            return $this->asJson(['success' => true, 'count' => $count]);
         }
 
         Craft::$app->getSession()->setNotice(
-            Craft::t('lens', '{count} analyses rejected.', ['count' => $count])
+            Craft::t('lens', '{count} analyses {action}.', ['count' => $count, 'action' => $actionLabel])
         );
 
         return $this->redirectToPostedUrl();
@@ -345,26 +305,13 @@ class ReviewController extends Controller
             throw new BadRequestHttpException('Invalid analysis ID');
         }
 
-        $reviewService = Plugin::getInstance()->review;
-
-        $reviewService->skip($analysisId);
+        Plugin::getInstance()->review->skip($analysisId);
 
         if ($this->request->getAcceptsJson()) {
             return $this->asJson(['success' => true]);
         }
 
-        // Redirect to next analysis or back to browse
-        $queueIds = $reviewService->getPendingReviewIds();
-
-        if (!empty($queueIds)) {
-            $nextId = $queueIds[0];
-            Craft::$app->getSession()->setNotice(Craft::t('lens', 'Analysis skipped.'));
-            return $this->redirect(UrlHelper::cpUrl("lens/review/{$nextId}"));
-        }
-
-        // Queue empty
-        Craft::$app->getSession()->setNotice(Craft::t('lens', 'All reviews complete!'));
-        return $this->redirect('lens/review');
+        return $this->redirectToNextOrBrowse('Analysis skipped.');
     }
 
     /**

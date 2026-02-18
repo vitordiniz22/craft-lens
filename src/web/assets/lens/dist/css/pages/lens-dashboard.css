@@ -12,8 +12,7 @@
 }
 
 .lens-dashboard-section {
-    margin-top: 0;
-    margin-bottom: 0;
+    margin: 0;
 }
 
 /* ==========================================================================
@@ -60,9 +59,6 @@
 /* ==========================================================================
    Section 2: Processing Status
    ========================================================================== */
-
-.lens-processing {
-}
 
 .lens-processing__progress-label {
     font-weight: 600;
@@ -124,16 +120,11 @@
 .lens-processing__complete-icon svg {
     width: 16px !important;
     height: 16px !important;
-    max-width: 16px;
-    max-height: 16px;
 }
 
 /* ==========================================================================
    Section 3: Library Health
    ========================================================================== */
-
-.lens-health {
-}
 
 .lens-health__metrics {
     display: grid;
@@ -406,8 +397,7 @@
     color: var(--medium-text-color);
     text-align: center;
     padding: 12px 0;
-    border-top: 1px solid var(--hairline-color);
-    border-bottom: 1px solid var(--hairline-color);
+    border-block: 1px solid var(--hairline-color);
 }
 
 .lens-usage__monthly {
