@@ -90,17 +90,15 @@
             const swatches = window.Lens.services.Taxonomy.getOrCreateSwatchesContainer(editor);
             if (!swatches) return;
 
-            const item = document.createElement('div');
-            item.className = 'lens-color-item';
-            item.dataset.lensTarget = 'color-item';
+            var template = editor.querySelector('[data-lens-target="color-item-template"]');
+            if (!template) return;
+
+            var item = template.content.firstElementChild.cloneNode(true);
             item.dataset.lensHex = normalizedHex;
-            item.dataset.lensIsAi = '0';
-            item.dataset.lensPercentage = '';
-            item.innerHTML =
-                '<span class="lens-swatch lens-swatch--sm" style="background-color: ' + normalizedHex + '"></span>' +
-                '<span>' + normalizedHex + '</span>' +
-                '<button type="button" class="lens-color-remove" data-lens-action="color-remove" title="' +
-                Craft.t('lens', 'Remove') + '">&times;</button>';
+            item.querySelector('.lens-swatch').style.backgroundColor = normalizedHex;
+            var link = item.querySelector('[data-lens-target="color-link"]');
+            link.href = Craft.getCpUrl('lens/search', {color: normalizedHex});
+            link.textContent = normalizedHex;
 
             swatches.appendChild(item);
         },

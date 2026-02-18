@@ -236,33 +236,30 @@
         },
 
         _updatePeopleDisplay: function(fieldEl, fields) {
+            var DOM = window.Lens.core.DOM;
             fieldEl.dataset.lensContainsPeople = fields.containsPeople ? '1' : '0';
             fieldEl.dataset.lensFaceCount = fields.faceCount;
 
-            const display = fieldEl.querySelector('[data-lens-target="field-display"]');
-            if (!display) return;
+            var present = fieldEl.querySelector('[data-lens-target="people-present"]');
+            var absent = fieldEl.querySelector('[data-lens-target="people-absent"]');
 
-            let html = '';
             if (fields.containsPeople) {
-                html += '<div class="lens-detection-item"><div>';
-                html += '<div class="flex items-center gap-s">';
-                html += '<span class="status on"></span>';
-                html += '<strong class="lens-people-display-text">';
-                html += window.Lens.utils.escapeHtml(window.Lens.services.PeopleDetection.formatText(fields.containsPeople, fields.faceCount));
-                html += '</strong></div>';
-                html += '<p class="smalltext light lens-people-help-text" style="margin: 4px 0 0">';
-                html += window.Lens.utils.escapeHtml(fields.faceCount > 0
-                    ? Craft.t('lens', 'May require model releases for commercial use')
-                    : Craft.t('lens', 'People visible but faces obscured. May still require releases for commercial use.'));
-                html += '</p></div></div>';
+                DOM.show(present);
+                DOM.hide(absent);
+                var displayText = present.querySelector('[data-lens-target="people-display-text"]');
+                if (displayText) {
+                    displayText.textContent = window.Lens.services.PeopleDetection.formatText(fields.containsPeople, fields.faceCount);
+                }
+                var helpText = present.querySelector('[data-lens-target="people-help-text"]');
+                if (helpText) {
+                    helpText.textContent = fields.faceCount > 0
+                        ? Craft.t('lens', 'May require model releases for commercial use')
+                        : Craft.t('lens', 'People visible but faces obscured. May still require releases for commercial use.');
+                }
             } else {
-                html += '<div class="lens-detection-item lens-detection-empty">';
-                html += '<div class="flex items-center gap-s">';
-                html += '<span class="status off"></span>';
-                html += '<span class="lens-people-display-text">' + window.Lens.utils.escapeHtml(Craft.t('lens', 'No people detected')) + '</span>';
-                html += '</div></div>';
+                DOM.hide(present);
+                DOM.show(absent);
             }
-            display.innerHTML = html;
         },
 
         _showLockIcon: function(fieldEl) {
@@ -282,65 +279,85 @@
         },
 
         _updateEditMeta: function(fieldEl, data) {
-            this._removeEditMeta(fieldEl);
-            this._removeAISuggestion(fieldEl);
+            var DOM = window.Lens.core.DOM;
 
-            if (data.editedBy) {
-                const meta = document.createElement('div');
-                meta.className = 'lens-edit-meta';
-                meta.textContent = Craft.t('lens', 'Edited by {user} on {date}', {
-                    user: data.editedBy,
-                    date: data.editedAt
-                });
-                fieldEl.appendChild(meta);
+            var meta = fieldEl.querySelector('[data-lens-target="field-edit-meta"]');
+            if (meta) {
+                if (data.editedBy) {
+                    meta.textContent = Craft.t('lens', 'Edited by {user} on {date}', {
+                        user: data.editedBy,
+                        date: data.editedAt
+                    });
+                    DOM.show(meta);
+                } else {
+                    meta.textContent = '';
+                    DOM.hide(meta);
+                }
             }
 
-            if (data.aiValue && data.aiValue !== data.value) {
-                const aiDiv = document.createElement('div');
-                aiDiv.className = 'lens-ai-suggestion';
-                const truncated = data.aiValue.length > 100 ? data.aiValue.substring(0, 100) + '...' : data.aiValue;
-                aiDiv.innerHTML = window.Lens.utils.escapeHtml(Craft.t('lens', 'AI suggested: "{value}"', { value: truncated })) +
-                    ' <button type="button" class="lens-revert-trigger" data-lens-action="field-revert">' +
-                    window.Lens.utils.escapeHtml(Craft.t('lens', 'Revert to AI')) + '</button>';
-                fieldEl.appendChild(aiDiv);
+            var aiSuggestion = fieldEl.querySelector('[data-lens-target="field-ai-suggestion"]');
+            if (aiSuggestion) {
+                if (data.aiValue && data.aiValue !== data.value) {
+                    var truncated = data.aiValue.length > 100 ? data.aiValue.substring(0, 100) + '...' : data.aiValue;
+                    var textSpan = aiSuggestion.querySelector('[data-lens-target="ai-suggestion-text"]');
+                    if (textSpan) {
+                        textSpan.textContent = Craft.t('lens', 'AI suggested: "{value}"', { value: truncated });
+                    }
+                    var revertBtn = aiSuggestion.querySelector('[data-lens-action="field-revert"]');
+                    if (revertBtn) DOM.show(revertBtn);
+                    DOM.show(aiSuggestion);
+                } else {
+                    DOM.hide(aiSuggestion);
+                }
             }
         },
 
         _updatePeopleEditMeta: function(fieldEl) {
-            this._removeEditMeta(fieldEl);
-            const meta = document.createElement('div');
-            meta.className = 'lens-edit-meta';
-            meta.textContent = Craft.t('lens', 'Manually edited');
-            fieldEl.appendChild(meta);
+            var meta = fieldEl.querySelector('[data-lens-target="people-edit-meta"]');
+            if (meta) {
+                meta.textContent = Craft.t('lens', 'Manually edited');
+                window.Lens.core.DOM.show(meta);
+            }
         },
 
         _showPeopleAISuggestion: function(fieldEl, fields) {
-            const containsPeopleAi = fieldEl.dataset.lensContainsPeopleAi === '1';
-            const faceCountAi = parseInt(fieldEl.dataset.lensFaceCountAi) || 0;
-            const aiDiffers = (containsPeopleAi !== fields.containsPeople) || (faceCountAi !== fields.faceCount);
+            var DOM = window.Lens.core.DOM;
+            var containsPeopleAi = fieldEl.dataset.lensContainsPeopleAi === '1';
+            var faceCountAi = parseInt(fieldEl.dataset.lensFaceCountAi) || 0;
+            var aiDiffers = (containsPeopleAi !== fields.containsPeople) || (faceCountAi !== fields.faceCount);
 
-            this._removeAISuggestion(fieldEl);
+            var suggestion = fieldEl.querySelector('[data-lens-target="people-ai-suggestion"]');
+            if (!suggestion) return;
 
             if (aiDiffers) {
-                const suggestion = document.createElement('div');
-                suggestion.className = 'lens-ai-suggestion';
-                const aiText = window.Lens.services.PeopleDetection.formatText(containsPeopleAi, faceCountAi);
-                const analysisId = fieldEl.dataset.lensAnalysisId;
-                suggestion.innerHTML = window.Lens.utils.escapeHtml(Craft.t('lens', 'AI suggested: "{text}"', { text: aiText })) +
-                    ' <button type="button" data-lens-action="people-revert" data-lens-analysis-id="' + window.Lens.utils.escapeAttr(analysisId) + '">' +
-                    window.Lens.utils.escapeHtml(Craft.t('lens', 'Revert to AI')) + '</button>';
-                fieldEl.appendChild(suggestion);
+                var aiText = window.Lens.services.PeopleDetection.formatText(containsPeopleAi, faceCountAi);
+                var textSpan = suggestion.querySelector('[data-lens-target="people-ai-text"]');
+                if (textSpan) {
+                    textSpan.textContent = Craft.t('lens', 'AI suggested: "{text}"', { text: aiText });
+                }
+                var revertBtn = suggestion.querySelector('[data-lens-action="people-revert"]');
+                if (revertBtn) DOM.show(revertBtn);
+                DOM.show(suggestion);
+            } else {
+                DOM.hide(suggestion);
             }
         },
 
         _removeEditMeta: function(fieldEl) {
-            const meta = fieldEl.querySelector('.lens-edit-meta');
-            if (meta) meta.remove();
+            var meta = fieldEl.querySelector('[data-lens-target="field-edit-meta"]') ||
+                       fieldEl.querySelector('[data-lens-target="people-edit-meta"]');
+            if (meta) {
+                meta.textContent = '';
+                window.Lens.core.DOM.hide(meta);
+            }
         },
 
         _removeAISuggestion: function(fieldEl) {
-            const suggestion = fieldEl.querySelector('.lens-ai-suggestion');
-            if (suggestion) suggestion.remove();
+            var suggestion = fieldEl.querySelector('[data-lens-target="field-ai-suggestion"]') ||
+                             fieldEl.querySelector('[data-lens-target="people-ai-suggestion"]');
+            if (suggestion) {
+                window.Lens.core.DOM.hide(suggestion);
+            }
         },
 
         _dispatchPeopleUpdateEvent: function(analysisId, fields) {

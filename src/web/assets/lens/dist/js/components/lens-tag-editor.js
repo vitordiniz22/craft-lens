@@ -181,18 +181,15 @@
             const chips = window.Lens.services.Taxonomy.getOrCreateChipsContainer(editor);
             if (!chips) return;
 
-            const chip = document.createElement('a');
+            var template = editor.querySelector('[data-lens-target="tag-chip-template"]');
+            if (!template) return;
+
+            var chip = template.content.firstElementChild.cloneNode(true);
             chip.href = Craft.getCpUrl('lens/search', {tags: tagName});
-            chip.className = 'chip';
             chip.dataset.lensTag = tagName;
             chip.dataset.lensIsAi = isAi ? '1' : '0';
             chip.dataset.lensConfidence = isAi ? '' : '1';
-            chip.innerHTML =
-                '<div class="chip-content">' +
-                    '<span class="chip-label">' + window.Lens.utils.escapeHtml(tagName) + '</span>' +
-                    '<button type="button" class="lens-tag-remove" data-lens-action="tag-remove" title="' +
-                    Craft.t('lens', 'Remove') + '">&times;</button>' +
-                '</div>';
+            chip.querySelector('.chip-label').textContent = tagName;
 
             chips.appendChild(chip);
         },

@@ -38,6 +38,15 @@
                 <button type="button" class="btn small lens-tag-add" data-lens-action="tag-add">{{ 'Add'|t('lens') }}</button>
                 <div class="lens-tag-suggestions" data-lens-target="tag-suggestions"></div>
             </div>
+
+            <template data-lens-target="tag-chip-template">
+                <a href="" class="chip" data-lens-tag="" data-lens-is-ai="0" data-lens-confidence="">
+                    <div class="chip-content">
+                        <span class="chip-label"></span>
+                        <button type="button" class="lens-tag-remove" data-lens-action="tag-remove" title="{{ 'Remove'|t('lens') }}">&times;</button>
+                    </div>
+                </a>
+            </template>
         {% endif %}
     </div>
 
@@ -52,7 +61,7 @@
                 {% for color in analysisColors %}
                     <div class="lens-color-item" data-lens-target="color-item" data-lens-hex="{{ color.hex }}" data-lens-is-ai="{{ color.isAi ? '1' : '0' }}" data-lens-percentage="{{ color.percentage }}">
                         <span class="lens-swatch lens-swatch--sm" style="background-color: {{ color.hex }}"></span>
-                        <a href="{{ cpUrl('lens/search', {color: color.hex}) }}">{{ color.hex }}</a>
+                        <a href="{{ cpUrl('lens/search', {color: color.hex}) }}" data-lens-target="color-link">{{ color.hex }}</a>
                         {% if color.percentage %}
                             <span class="badge">{{ (color.percentage * 100)|round }}%</span>
                         {% endif %}
@@ -69,6 +78,14 @@
                 <input type="color" class="lens-color-picker" data-lens-control="color-picker" value="#000000" title="{{ 'Pick color'|t('lens') }}">
                 <button type="button" class="btn small lens-color-add" data-lens-action="color-add">{{ 'Add'|t('lens') }}</button>
             </div>
+
+            <template data-lens-target="color-item-template">
+                <div class="lens-color-item" data-lens-target="color-item" data-lens-hex="" data-lens-is-ai="0" data-lens-percentage="">
+                    <span class="lens-swatch lens-swatch--sm" style=""></span>
+                    <a href="" data-lens-target="color-link"></a>
+                    <button type="button" class="lens-color-remove" data-lens-action="color-remove" title="{{ 'Remove'|t('lens') }}">&times;</button>
+                </div>
+            </template>
         {% endif %}
     </div>
 

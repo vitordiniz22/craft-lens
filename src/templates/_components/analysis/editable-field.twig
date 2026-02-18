@@ -100,24 +100,30 @@
         </div>
     {% endif %}
 
-    {# Provenance meta - only for asset-edit mode #}
-    {% if not isReviewMode and isEdited %}
-        <div class="lens-edit-meta">
-            {% set editor = craft.users.id(editedBy).one() %}
-            {{ 'Edited by {user} on {date}'|t('lens', {
-                user: editor ? editor.friendlyName : 'Unknown',
-                date: editedAt|date('short')
-            }) }}
+    {# Provenance meta - only for asset-edit mode (always rendered, hidden when not edited) #}
+    {% if not isReviewMode %}
+        <div class="lens-edit-meta" data-lens-target="field-edit-meta"{% if not isEdited %} hidden{% endif %}>
+            {% if isEdited %}
+                {% set editor = craft.users.id(editedBy).one() %}
+                {{ 'Edited by {user} on {date}'|t('lens', {
+                    user: editor ? editor.friendlyName : 'Unknown',
+                    date: editedAt|date('short')
+                }) }}
+            {% endif %}
         </div>
-        {% if aiValue and aiValue != value %}
-            <div class="lens-ai-suggestion">
-                {{ 'AI suggested: "{value}"'|t('lens', {value: aiValue|truncate(100)}) }}
-                {% if not static and not isProcessing %}
-                    <button type="button" class="lens-revert-trigger" data-lens-action="field-revert" data-lens-field="{{ fieldName }}" data-lens-analysis-id="{{ analysisId }}">
-                        {{ 'Revert to AI'|t('lens') }}
-                    </button>
+
+        {% set showAiSuggestion = isEdited and aiValue and aiValue != value %}
+        <div class="lens-ai-suggestion" data-lens-target="field-ai-suggestion"{% if not showAiSuggestion %} hidden{% endif %}>
+            <span data-lens-target="ai-suggestion-text">
+                {% if showAiSuggestion %}
+                    {{ 'AI suggested: "{value}"'|t('lens', {value: aiValue|truncate(100)}) }}
                 {% endif %}
-            </div>
-        {% endif %}
+            </span>
+            {% if not static and not isProcessing %}
+                <button type="button" class="lens-revert-trigger" data-lens-action="field-revert" data-lens-field="{{ fieldName }}" data-lens-analysis-id="{{ analysisId }}"{% if not showAiSuggestion %} hidden{% endif %}>
+                    {{ 'Revert to AI'|t('lens') }}
+                </button>
+            {% endif %}
+        </div>
     {% endif %}
 </div>

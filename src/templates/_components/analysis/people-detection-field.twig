@@ -110,35 +110,33 @@
         </div>
     {% else %}
         {# Asset-edit mode: display with toggle #}
-        <div class="lens-field-display">
-        {% if analysis.containsPeople %}
-            {# People detected - show tier #}
-            <div class="lens-detection-item">
+        <div class="lens-field-display" data-lens-target="field-display">
+            {# People detected variant #}
+            <div class="lens-detection-item" data-lens-target="people-present"{% if not analysis.containsPeople %} hidden{% endif %}>
                 <div>
                     <div class="flex items-center gap-s">
                         <span class="status on"></span>
-                        <strong class="lens-people-display-text">
+                        <strong data-lens-target="people-display-text">
                             {{ _self.peopleDetectionText(analysis.containsPeople, analysis.faceCount) }}
                         </strong>
                     </div>
-                    <p class="smalltext light lens-people-help-text" style="margin: 4px 0 0">
-                        {% if analysis.faceCount > 0 %}
+                    <p class="smalltext light" data-lens-target="people-help-text" style="margin: 4px 0 0">
+                        {% if analysis.containsPeople and analysis.faceCount > 0 %}
                             {{ 'May require model releases for commercial use'|t('lens') }}
-                        {% else %}
+                        {% elseif analysis.containsPeople %}
                             {{ 'People visible but faces obscured. May still require releases for commercial use.'|t('lens') }}
                         {% endif %}
                     </p>
                 </div>
             </div>
-        {% else %}
-            {# No people detected - show empty state #}
-            <div class="lens-detection-item lens-detection-empty">
+
+            {# No people variant #}
+            <div class="lens-detection-item lens-detection-empty" data-lens-target="people-absent"{% if analysis.containsPeople %} hidden{% endif %}>
                 <div class="flex items-center gap-s">
                     <span class="status off"></span>
-                    <span class="lens-people-display-text">{{ _self.peopleDetectionText(false, 0) }}</span>
+                    <span data-lens-target="people-display-text">{{ _self.peopleDetectionText(false, 0) }}</span>
                 </div>
             </div>
-        {% endif %}
         </div>
 
         {# Edit mode (hidden by default) - only if NOT locked #}
@@ -198,38 +196,40 @@
         </div>
         {% endif %}
 
-        {# Provenance meta (show most recent edit) - only for asset-edit mode #}
-        {% if isEdited %}
-        <div class="lens-edit-meta">
-            {% if isFaceCountEdited %}
-                {% set editor = craft.users.id(analysis.faceCountEditedBy).one() %}
-                {% set formattedDate = analysis.faceCountEditedAt|date('M j, Y') %}
-                {{ 'Edited by {user} on {date}'|t('lens', {
-                    user: editor ? editor.friendlyName : 'Unknown',
-                    date: formattedDate
-                }) }}
-            {% elseif isPeopleEdited %}
-                {% set editor = craft.users.id(analysis.containsPeopleEditedBy).one() %}
-                {% set formattedDate = analysis.containsPeopleEditedAt|date('M j, Y') %}
-                {{ 'Edited by {user} on {date}'|t('lens', {
-                    user: editor ? editor.friendlyName : 'Unknown',
-                    date: formattedDate
-                }) }}
+        {# Provenance meta (always rendered, hidden when not edited) #}
+        <div class="lens-edit-meta" data-lens-target="people-edit-meta"{% if not isEdited %} hidden{% endif %}>
+            {% if isEdited %}
+                {% if isFaceCountEdited %}
+                    {% set editor = craft.users.id(analysis.faceCountEditedBy).one() %}
+                    {% set formattedDate = analysis.faceCountEditedAt|date('M j, Y') %}
+                    {{ 'Edited by {user} on {date}'|t('lens', {
+                        user: editor ? editor.friendlyName : 'Unknown',
+                        date: formattedDate
+                    }) }}
+                {% elseif isPeopleEdited %}
+                    {% set editor = craft.users.id(analysis.containsPeopleEditedBy).one() %}
+                    {% set formattedDate = analysis.containsPeopleEditedAt|date('M j, Y') %}
+                    {{ 'Edited by {user} on {date}'|t('lens', {
+                        user: editor ? editor.friendlyName : 'Unknown',
+                        date: formattedDate
+                    }) }}
+                {% endif %}
             {% endif %}
         </div>
 
-        {# Show revert option if AI values differ and not locked #}
-        {% set aiDiffers = (analysis.containsPeopleAi != analysis.containsPeople) or (analysis.faceCountAi != analysis.faceCount) %}
-        {% if aiDiffers and not readOnly %}
-            <div class="lens-ai-suggestion">
-                {{ 'AI suggested: "{text}"'|t('lens', {
-                    text: _self.peopleDetectionText(analysis.containsPeopleAi, analysis.faceCountAi)
-                }) }}
-                <button type="button" data-lens-action="people-revert" data-lens-analysis-id="{{ analysis.id }}">
-                    {{ 'Revert to AI'|t('lens') }}
-                </button>
-            </div>
-        {% endif %}
-        {% endif %}
+        {# AI suggestion (always rendered, hidden when not applicable) #}
+        {% set aiDiffers = isEdited and ((analysis.containsPeopleAi != analysis.containsPeople) or (analysis.faceCountAi != analysis.faceCount)) %}
+        <div class="lens-ai-suggestion" data-lens-target="people-ai-suggestion"{% if not aiDiffers %} hidden{% endif %}>
+            <span data-lens-target="people-ai-text">
+                {% if aiDiffers %}
+                    {{ 'AI suggested: "{text}"'|t('lens', {
+                        text: _self.peopleDetectionText(analysis.containsPeopleAi, analysis.faceCountAi)
+                    }) }}
+                {% endif %}
+            </span>
+            <button type="button" data-lens-action="people-revert" data-lens-analysis-id="{{ analysis.id }}"{% if not aiDiffers or readOnly %} hidden{% endif %}>
+                {{ 'Revert to AI'|t('lens') }}
+            </button>
+        </div>
     {% endif %}
 </div>

@@ -56,26 +56,6 @@
         },
 
         /**
-         * Render confidence badge HTML
-         * @param {number} confidence - Confidence value (0-1)
-         * @returns {string} HTML for confidence badge
-         */
-        renderConfidenceBadge: function(confidence) {
-            if (confidence === null || confidence === undefined) return '';
-            const pct = Math.round(confidence * 100);
-            let cls = 'lens-badge--error';
-
-            // Use config thresholds
-            if (confidence >= window.Lens.config.THRESHOLDS.HIGH_CONFIDENCE) {
-                cls = 'lens-badge--success';
-            } else if (confidence >= window.Lens.config.THRESHOLDS.MEDIUM_CONFIDENCE) {
-                cls = 'lens-badge--warning';
-            }
-
-            return '<span class="lens-badge lens-badge--small ' + cls + '">' + pct + '%</span>';
-        },
-
-        /**
          * Format people detection text for display
          * Centralized to keep Twig and JS in sync
          * @param {boolean} containsPeople - Whether people are detected
