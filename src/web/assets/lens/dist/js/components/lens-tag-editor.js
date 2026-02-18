@@ -83,7 +83,7 @@
 
                 const items = suggestionsEl.querySelectorAll('[data-lens-target="tag-suggestion-item"]');
                 const active = suggestionsEl.querySelector('[data-lens-target="tag-suggestion-item"].is-active');
-                let idx = active ? Array.prototype.indexOf.call(items, active) : -1;
+                let idx = active ? Array.from(items).indexOf(active) : -1;
 
                 if (active) active.classList.remove('is-active');
 

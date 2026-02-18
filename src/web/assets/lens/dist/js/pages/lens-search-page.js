@@ -287,15 +287,7 @@
             var focused = document.querySelector(
                 '[data-lens-target="result-card"].focused',
             );
-            var currentIndex = -1;
-            if (focused) {
-                for (var i = 0; i < results.length; i++) {
-                    if (results[i] === focused) {
-                        currentIndex = i;
-                        break;
-                    }
-                }
-            }
+            var currentIndex = focused ? Array.from(results).indexOf(focused) : -1;
 
             var newIndex = currentIndex + direction;
 

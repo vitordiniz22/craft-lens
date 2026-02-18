@@ -89,27 +89,6 @@
          */
         formatText: function(containsPeople, faceCount) {
             return window.Lens.utils.formatPeopleDetectionText(containsPeople, faceCount);
-        },
-
-        /**
-         * Get radio selection from field values
-         * Alias for fieldsToMode for clarity in some contexts
-         * @param {boolean} containsPeople - Whether people are detected
-         * @param {number} faceCount - Number of visible faces
-         * @returns {string} Radio mode value
-         */
-        getRadioSelection: function(containsPeople, faceCount) {
-            return this.fieldsToMode(containsPeople, faceCount);
-        },
-
-        /**
-         * Validate mode value
-         * @param {string} mode - Mode to validate
-         * @returns {boolean} Whether mode is valid
-         */
-        isValidMode: function(mode) {
-            const validModes = Object.values(this.MODES);
-            return validModes.indexOf(mode) !== -1;
         }
     };
 })();

@@ -96,21 +96,6 @@
                     }
                 }
             });
-        },
-
-        /**
-         * Reset dismissed notices
-         * Useful for testing or settings reset
-         * @param {string} [key] - Optional specific key to reset, or reset all if not provided
-         */
-        resetDismissed: function(key) {
-            if (key) {
-                let dismissed = this.getDismissedNotices();
-                dismissed = dismissed.filter(function(k) { return k !== key; });
-                this.saveDismissedNotices(dismissed);
-            } else {
-                this.saveDismissedNotices([]);
-            }
         }
     };
 

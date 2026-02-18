@@ -112,17 +112,6 @@
         },
 
         /**
-         * Find element with data-lens-action attribute
-         * @param {HTMLElement} element - Element to start search from
-         * @param {string} actionName - Action name (value of data-lens-action)
-         * @returns {HTMLElement|null} Found element or null
-         */
-        findAction: function(element, actionName) {
-            if (!element) return null;
-            return element.closest('[data-lens-action="' + actionName + '"]');
-        },
-
-        /**
          * Find element with data-lens-control attribute
          * @param {string} controlName - Control name (value of data-lens-control)
          * @param {HTMLElement} [context=document] - Context to search within
@@ -131,17 +120,6 @@
         findControl: function(controlName, context) {
             context = context || document;
             return context.querySelector('[data-lens-control="' + controlName + '"]');
-        },
-
-        /**
-         * Find all elements with data-lens-target attribute
-         * @param {string} targetName - Target name (value of data-lens-target)
-         * @param {HTMLElement} [context=document] - Context to search within
-         * @returns {NodeList} Found elements
-         */
-        findAllTargets: function(targetName, context) {
-            context = context || document;
-            return context.querySelectorAll('[data-lens-target="' + targetName + '"]');
         },
 
         /**

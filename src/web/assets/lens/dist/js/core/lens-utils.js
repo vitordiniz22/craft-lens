@@ -24,38 +24,6 @@
         },
 
         /**
-         * Escape attribute value for use in HTML attributes
-         * @param {string} text - Text to escape
-         * @returns {string} Attribute-safe text
-         */
-        escapeAttr: function(text) {
-            if (!text) return '';
-            return String(text)
-                .replace(/&/g, '&amp;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#39;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;');
-        },
-
-        /**
-         * Format file size in human-readable format
-         * @param {number} bytes - File size in bytes
-         * @returns {string} Formatted size (e.g., "1.5 MB")
-         */
-        formatFileSize: function(bytes) {
-            if (!bytes) return '';
-            const units = ['B', 'KB', 'MB', 'GB'];
-            let i = 0;
-            let size = bytes;
-            while (size >= 1024 && i < units.length - 1) {
-                size /= 1024;
-                i++;
-            }
-            return size.toFixed(i === 0 ? 0 : 1) + ' ' + units[i];
-        },
-
-        /**
          * Format people detection text for display
          * Centralized to keep Twig and JS in sync
          * @param {boolean} containsPeople - Whether people are detected
