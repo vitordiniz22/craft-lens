@@ -1,8 +1,8 @@
 {# Filter Panel — included within the search form context in index.twig #}
 {% import '_includes/forms.twig' as forms %}
 
-<div class="pane{% if not hasFilters %} hidden{% endif %}" data-lens-target="filters-panel">
-    <div class="flex flex-wrap" style="gap: var(--xl);">
+<div class="pane lens-search-filters{% if not hasFilters %} hidden{% endif %}" data-lens-target="filters-panel">
+    <div class="lens-filter-grid">
 
         {# — Row 1: Content Detection — #}
 
@@ -94,7 +94,7 @@
         {# — Row 3: Color — #}
 
         {# Color Filter #}
-        <div class="field" style="min-width: 280px;">
+        <div class="field">
             <div class="heading"><label>{{ 'Color'|t('lens') }}</label></div>
             <div class="input">
                 {{ forms.color({
@@ -104,8 +104,8 @@
                 }) }}
                 {% set toleranceValue = filters.colorTolerance ?? 30 %}
                 {% set toleranceLabel = toleranceValue <= 20 ? 'Exact' : (toleranceValue <= 50 ? 'Similar' : (toleranceValue <= 75 ? 'Broad' : 'Very broad')) %}
-                <div style="margin-top: var(--s);" data-lens-target="color-tolerance-wrap"{% if not (filters.color ?? false) %} class="hidden"{% endif %}>
-                    <label class="light" style="font-size: 11px;">
+                <div class="lens-filter-tolerance{% if not (filters.color ?? false) %} hidden{% endif %}" data-lens-target="color-tolerance-wrap">
+                    <label class="light lens-text-sm">
                         {{ 'Tolerance'|t('lens') }}: <span data-lens-target="tolerance-value">{{ toleranceValue }}</span>%
                         <span class="light" data-lens-target="tolerance-label" style="margin-left: var(--xs);">({{ toleranceLabel|t('lens') }})</span>
                     </label>
@@ -114,7 +114,7 @@
                            data-lens-control="color-tolerance"
                            min="0" max="100" step="5"
                            value="{{ toleranceValue }}"
-                           style="width: 100%;">
+                           class="lens-filter-range">
                 </div>
             </div>
         </div>
@@ -122,24 +122,18 @@
         {# — Row 4: Metadata — #}
 
         {# Status Filter #}
-        <div class="field">
-            <div class="heading"><label>{{ 'Status'|t('lens') }}</label></div>
-            <div class="input">
-                <select name="status[]" multiple style="min-width: 160px;">
-                    {% for option in statusOptions %}
-                        <option value="{{ option.value }}" {% if option.value in (filters.status ?? []) %}selected{% endif %}>
-                            {{ option.label }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
+        {{ forms.checkboxSelectField({
+            label: 'Status'|t('lens'),
+            name: 'status',
+            options: statusOptions,
+            values: filters.status ?? [],
+        }) }}
 
         {# Date Analyzed Range #}
-        <div class="field" style="min-width: 280px;">
+        <div class="field">
             <div class="heading"><label>{{ 'Date Analyzed'|t('lens') }}</label></div>
             <div class="input">
-                <div class="flex" style="gap: var(--s); align-items: center;">
+                <div class="lens-flex-center lens-gap-8">
                     <div class="datewrapper">
                         <input type="text"
                                class="text"
@@ -176,9 +170,8 @@
         }) }}
     </div>
 
-    {# — Row 5: Actions — #}
-    <hr>
-    <div class="flex" style="gap: var(--s);">
+    {# Actions #}
+    <div class="lens-filter-actions">
         <button type="submit" class="btn submit">{{ 'Apply Filters'|t('lens') }}</button>
         <a href="{{ cpUrl('lens/search') }}" class="btn">{{ 'Clear All'|t('lens') }}</a>
     </div>

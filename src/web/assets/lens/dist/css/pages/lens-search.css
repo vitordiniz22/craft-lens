@@ -17,8 +17,17 @@
 .lens-search-icon {
   position: absolute;
   left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
   color: var(--medium-text-color);
   pointer-events: none;
+  display: flex;
+  align-items: center;
+}
+
+.lens-search-icon svg {
+  width: 16px;
+  height: 16px;
 }
 
 .lens-search-input-wrap input {
@@ -41,6 +50,71 @@
 
 .lens-clear-search:hover {
   color: var(--text-color);
+}
+
+/* Search toolbar — single row for input + filter button + submit */
+.lens-search-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--m);
+  margin-bottom: var(--m);
+}
+
+/* Icon spacing inside buttons */
+.lens-btn-icon {
+  margin-right: 4px;
+  vertical-align: -1px;
+}
+
+/* Filter panel overrides */
+.lens-search-filters {
+  margin-bottom: var(--m);
+}
+
+.lens-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px 24px;
+}
+
+.lens-filter-grid .field {
+  margin: 0;
+}
+
+.lens-filter-tolerance {
+  margin-top: var(--s);
+}
+
+.lens-filter-range {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.lens-filter-actions {
+  display: flex;
+  gap: var(--s);
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--hairline-color);
+}
+
+/* Results section */
+.lens-search-results {
+  margin-top: var(--xl);
+}
+
+/* Results bar */
+.lens-results-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s);
+  margin-bottom: var(--m);
+}
+
+.lens-results-count {
+  margin: 0;
 }
 
 /* Results grid */
@@ -166,5 +240,11 @@
 @media (max-width: 768px) {
   .lens-results-grid {
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .lens-search-toolbar {
+    flex-wrap: wrap;
   }
 }
