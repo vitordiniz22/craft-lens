@@ -2,9 +2,10 @@
  # Taxonomy Section
  # Tags (chip editor) and Colors (swatch editor) with add/remove capability.
  #
- # Expected variables: analysis, analysisTags, analysisColors, static, isProcessing
+ # Expected variables: analysis, analysisTags, analysisColors, fieldState
  #}
-{% set isProcessing = isProcessing ?? false %}
+{% set fieldState = fieldState ?? 'readonly' %}
+{% set isInteractive = fieldState in ['unlocked', 'editing'] %}
 {% set showTaxonomy = analysis.status not in ['pending', 'processing', 'failed'] %}
 
 {% if showTaxonomy %}
@@ -23,7 +24,7 @@
                             {% if tag.confidence %}
                                 <span class="badge">{{ (tag.confidence * 100)|round }}%</span>
                             {% endif %}
-                            {% if not static and not isProcessing %}
+                            {% if isInteractive %}
                                 <button type="button" class="lens-tag-remove" data-lens-action="tag-remove" title="{{ 'Remove'|t('lens') }}">&times;</button>
                             {% endif %}
                         </div>
@@ -32,7 +33,7 @@
             </div>
         {% endif %}
 
-        {% if not static and not isProcessing %}
+        {% if isInteractive %}
             <div class="lens-tag-input-row">
                 <input type="text" class="text small lens-tag-input" data-lens-control="tag-input" placeholder="{{ 'Add tag'|t('lens') }}">
                 <button type="button" class="btn small lens-tag-add" data-lens-action="tag-add">{{ 'Add'|t('lens') }}</button>
@@ -65,7 +66,7 @@
                         {% if color.percentage %}
                             <span class="badge">{{ (color.percentage * 100)|round }}%</span>
                         {% endif %}
-                        {% if not static and not isProcessing %}
+                        {% if isInteractive %}
                             <button type="button" class="lens-color-remove" data-lens-action="color-remove" title="{{ 'Remove'|t('lens') }}">&times;</button>
                         {% endif %}
                     </div>
@@ -73,7 +74,7 @@
             </div>
         {% endif %}
 
-        {% if not static and not isProcessing %}
+        {% if isInteractive %}
             <div class="lens-color-add-row">
                 <input type="color" class="lens-color-picker" data-lens-control="color-picker" value="#000000" title="{{ 'Pick color'|t('lens') }}">
                 <button type="button" class="btn small lens-color-add" data-lens-action="color-add">{{ 'Add'|t('lens') }}</button>
@@ -89,8 +90,8 @@
         {% endif %}
     </div>
 
-    {# Save changes button (tags + colors) #}
-    {% if not static and not isProcessing %}
+    {# Save changes button (tags + colors) - only in unlocked mode #}
+    {% if fieldState == 'unlocked' %}
         <div class="lens-taxonomy-save">
             <button type="button" class="btn small submit lens-taxonomy-save-btn" data-lens-action="taxonomy-save" data-lens-analysis-id="{{ analysis.id }}" disabled>
                 {{ 'Save Changes'|t('lens') }}

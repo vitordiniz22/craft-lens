@@ -11,7 +11,7 @@
 
     /**
      * Analysis Panel Page Controller
-     * Coordinates InlineEditor, TagEditor, ColorEditor, and SafetyFlags components
+     * Coordinates InlineEditor, TagEditor, and ColorEditor components
      */
     const LensAnalysisPanel = {
         _initialized: false,

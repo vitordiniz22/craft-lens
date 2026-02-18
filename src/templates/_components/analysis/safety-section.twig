@@ -1,125 +1,72 @@
 {#
  # Content Safety Section
- # NSFW, watermark, brands, people detection with dismissable flags.
+ # NSFW, watermark, brands, people detection — all using the 3-state pattern.
  #
- # Expected variables: analysis, static, isProcessing, mode
+ # Expected variables: analysis, fieldState
  #}
-{% set isProcessing = isProcessing ?? false %}
-{% set mode = mode ?? 'asset-edit' %}
+{% set fieldState = fieldState ?? 'readonly' %}
 
-{# People Detection - Editable inline component #}
+{# People Detection — Editable inline component #}
 {% include 'lens/_components/analysis/people-detection-field' with {
     analysis: analysis,
-    static: static,
-    isProcessing: isProcessing,
-    mode: mode
+    fieldState: fieldState
 } only %}
 
-{# NSFW Detection #}
-{% if analysis.isFlaggedNsfw %}
-    <div class="lens-detection-item lens-alert-section lens-alert-section--error" style="padding: 10px; border-radius: var(--small-border-radius)">
-        <div class="flex items-center gap-s mb-xs">
-            <span class="smalltext" style="text-transform:uppercase;font-weight:600">{{ 'Content Warning'|t('lens') }}</span>
-            <span class="lens-badge lens-badge--error-solid">{{ (analysis.nsfwScore * 100)|round }}%</span>
-        </div>
-        {% if analysis.nsfwCategories|length %}
-            <div class="chips">
-                {% for cat in analysis.nsfwCategories %}
-                    <div class="chip lens-nsfw-chip">
-                        <div class="chip-content">
-                            <span class="chip-label">{{ cat.category }}</span>
+{# NSFW Detection Toggle #}
+{% include 'lens/_components/analysis/detection-toggle-field' with {
+    fieldName: 'nsfwScore',
+    label: 'NSFW Detection'|t('lens'),
+    detected: analysis.isFlaggedNsfw or (analysis.nsfwScore is defined and analysis.nsfwScore >= 0.2),
+    detectedAi: analysis.nsfwScoreAi is defined and analysis.nsfwScoreAi >= 0.2,
+    editedBy: analysis.nsfwScoreEditedBy ?? null,
+    editedAt: analysis.nsfwScoreEditedAt ?? null,
+    analysisId: analysis.id,
+    fieldState: fieldState,
+    detectedLabel: 'NSFW content detected'|t('lens'),
+    clearedLabel: 'No NSFW content'|t('lens'),
+    trueValue: 1,
+    falseValue: 0
+} only %}
+
+{# NSFW contextual info — always displayed when data exists (read-only) #}
+{% if analysis.isFlaggedNsfw or (analysis.nsfwScore is defined and analysis.nsfwScore >= 0.2) %}
+    <div class="lens-detection-item" style="padding-left: 8px;">
+        <div>
+            <span class="lens-badge lens-badge--{{ analysis.isFlaggedNsfw ? 'error-solid' : 'amber' }}">{{ (analysis.nsfwScore * 100)|round }}%</span>
+            {% if analysis.nsfwCategories|length %}
+                <div class="chips" style="margin-top: 4px;">
+                    {% for cat in analysis.nsfwCategories %}
+                        <div class="chip small lens-nsfw-chip{% if not analysis.isFlaggedNsfw %} lens-nsfw-chip--caution{% endif %}">
+                            <div class="chip-content">
+                                <span class="chip-label">{{ cat.category }}</span>
+                            </div>
                         </div>
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
-        {% if not static and not isProcessing %}
-            <button type="button" class="lens-flag-dismiss" data-lens-action="flag-dismiss" data-lens-field="nsfwScore" data-lens-value="0" data-lens-analysis-id="{{ analysis.id }}">
-                {{ 'Clear flag'|t('lens') }}
-            </button>
-        {% endif %}
-    </div>
-{% elseif analysis.nsfwScore is defined and analysis.nsfwScore >= 0.2 %}
-    {# Caution tier (20-49%) - Amber warning #}
-    <div class="lens-detection-item lens-alert-section lens-alert-section--warning" style="padding: 10px; border-radius: var(--small-border-radius)">
-        <div class="flex items-center gap-s mb-xs">
-            <span class="smalltext" style="text-transform:uppercase;font-weight:600">{{ 'Content Advisory'|t('lens') }}</span>
-            <span class="lens-badge lens-badge--amber">{{ (analysis.nsfwScore * 100)|round }}%</span>
-        </div>
-        {% if analysis.nsfwCategories|length %}
-            <div class="chips">
-                {% for cat in analysis.nsfwCategories %}
-                    <div class="chip lens-nsfw-chip lens-nsfw-chip--caution">
-                        <div class="chip-content">
-                            <span class="chip-label">{{ cat.category }}</span>
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
-        {% if not static and not isProcessing %}
-            <button type="button" class="lens-flag-dismiss" data-lens-action="flag-dismiss" data-lens-field="nsfwScore" data-lens-value="0" data-lens-analysis-id="{{ analysis.id }}">
-                {{ 'Clear flag'|t('lens') }}
-            </button>
-        {% endif %}
-    </div>
-{% elseif analysis.nsfwScore is defined and analysis.nsfwScore > 0 %}
-    {# Low score (1-19%) - Plain text with categories #}
-    <div class="lens-detection-item">
-        <div class="flex items-center gap-s">
-            <span class="status on"></span>
-            {{ 'NSFW Score: {score}%'|t('lens', {score: (analysis.nsfwScore * 100)|round}) }}
-        </div>
-        {% if analysis.nsfwCategories|length %}
-            <div class="chips" style="margin-top: 4px;">
-                {% for cat in analysis.nsfwCategories %}
-                    <div class="chip small">
-                        <div class="chip-content">
-                            <span class="chip-label">{{ cat.category }}</span>
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
-    </div>
-{% elseif analysis.nsfwScoreEditedBy is defined and analysis.nsfwScoreEditedBy and analysis.nsfwScoreAi is defined and analysis.nsfwScoreAi > 0 %}
-    <div class="lens-detection-item">
-        <div class="flex items-center gap-s">
-            <span class="status off"></span>
-            {{ 'NSFW flag cleared'|t('lens') }}
-            <span class="lens-badge">{{ 'was {score}%'|t('lens', {score: (analysis.nsfwScoreAi * 100)|round}) }}</span>
-        </div>
-        <div class="lens-edit-meta">
-            {% set editor = craft.users.id(analysis.nsfwScoreEditedBy).one() %}
-            {{ 'Cleared by {user} on {date}'|t('lens', {
-                user: editor ? editor.friendlyName : ('Unknown'|t('lens')),
-                date: analysis.nsfwScoreEditedAt|date('short')
-            }) }}
-        </div>
-        {% if not static and not isProcessing %}
-            <button type="button" class="lens-flag-dismiss" data-lens-action="flag-revert" data-lens-field="nsfwScore" data-lens-analysis-id="{{ analysis.id }}">
-                {{ 'Restore AI flag'|t('lens') }}
-            </button>
-        {% endif %}
-    </div>
-{% else %}
-    <div class="lens-detection-item lens-detection-item--clear">
-        <div class="flex items-center gap-s">
-            <span class="status on"></span>
-            {{ 'No NSFW content detected'|t('lens') }}
+                    {% endfor %}
+                </div>
+            {% endif %}
         </div>
     </div>
 {% endif %}
 
-{# Watermark Detection #}
+{# Watermark Detection Toggle #}
+{% include 'lens/_components/analysis/detection-toggle-field' with {
+    fieldName: 'hasWatermark',
+    label: 'Watermark Detection'|t('lens'),
+    detected: analysis.hasWatermark,
+    detectedAi: analysis.hasWatermarkAi ?? false,
+    editedBy: analysis.hasWatermarkEditedBy ?? null,
+    editedAt: analysis.hasWatermarkEditedAt ?? null,
+    analysisId: analysis.id,
+    fieldState: fieldState,
+    detectedLabel: 'Watermark detected'|t('lens'),
+    clearedLabel: 'No watermark detected'|t('lens'),
+    trueValue: 1,
+    falseValue: 0
+} only %}
+
+{# Watermark contextual info — always displayed when data exists (read-only) #}
 {% if analysis.hasWatermark %}
-    <div class="lens-detection-item lens-alert-section lens-alert-section--warning" style="padding: 10px; border-radius: var(--small-border-radius)">
-        <div class="flex items-center gap-s mb-xs">
-            <span class="smalltext" style="text-transform:uppercase;font-weight:600">{{ 'Watermark Detected'|t('lens') }}</span>
-            {% if analysis.watermarkConfidence %}
-                <span class="badge">{{ (analysis.watermarkConfidence * 100)|round }}%</span>
-            {% endif %}
-        </div>
+    <div class="lens-detection-item" style="padding-left: 8px;">
         <div class="lens-watermark-info">
             {% set watermarkTypes = {
                 'stock': 'Stock Photo'|t('lens'),
@@ -129,91 +76,43 @@
                 'unknown': 'Unknown'|t('lens')
             } %}
             <span class="lens-watermark-type">{{ watermarkTypes[analysis.watermarkType] ?? analysis.watermarkType|capitalize }}</span>
+            {% if analysis.watermarkConfidence %}
+                <span class="badge">{{ (analysis.watermarkConfidence * 100)|round }}%</span>
+            {% endif %}
             {% if analysis.watermarkType == 'stock' and analysis.watermarkDetails.stockProvider is defined %}
                 <span class="lens-badge lens-badge--amber">{{ analysis.watermarkDetails.stockProvider }}</span>
             {% endif %}
         </div>
-        {% if not static and not isProcessing %}
-            <button type="button" class="lens-flag-dismiss" data-lens-action="flag-dismiss" data-lens-field="hasWatermark" data-lens-value="0" data-lens-analysis-id="{{ analysis.id }}">
-                {{ 'Clear flag'|t('lens') }}
-            </button>
-        {% endif %}
-    </div>
-{% elseif analysis.hasWatermarkEditedBy is defined and analysis.hasWatermarkEditedBy and analysis.hasWatermarkAi is defined and analysis.hasWatermarkAi %}
-    <div class="lens-detection-item">
-        <div class="flex items-center gap-s">
-            <span class="status off"></span>
-            {{ 'Watermark flag cleared'|t('lens') }}
-        </div>
-        <div class="lens-edit-meta">
-            {% set editor = craft.users.id(analysis.hasWatermarkEditedBy).one() %}
-            {{ 'Cleared by {user} on {date}'|t('lens', {
-                user: editor ? editor.friendlyName : ('Unknown'|t('lens')),
-                date: analysis.hasWatermarkEditedAt|date('short')
-            }) }}
-        </div>
-        {% if not static and not isProcessing %}
-            <button type="button" class="lens-flag-dismiss" data-lens-action="flag-revert" data-lens-field="hasWatermark" data-lens-analysis-id="{{ analysis.id }}">
-                {{ 'Restore AI flag'|t('lens') }}
-            </button>
-        {% endif %}
-    </div>
-{% else %}
-    <div class="lens-detection-item lens-detection-item--clear">
-        <div class="flex items-center gap-s">
-            <span class="status on"></span>
-            {{ 'No watermark detected'|t('lens') }}
-        </div>
     </div>
 {% endif %}
 
-{# Brand Detection #}
+{# Brand Detection Toggle #}
+{% include 'lens/_components/analysis/detection-toggle-field' with {
+    fieldName: 'containsBrandLogo',
+    label: 'Brand Detection'|t('lens'),
+    detected: analysis.containsBrandLogo and analysis.detectedBrands|length,
+    detectedAi: analysis.containsBrandLogoAi ?? false,
+    editedBy: analysis.containsBrandLogoEditedBy ?? null,
+    editedAt: analysis.containsBrandLogoEditedAt ?? null,
+    analysisId: analysis.id,
+    fieldState: fieldState,
+    detectedLabel: 'Brands detected'|t('lens'),
+    clearedLabel: 'No brands detected'|t('lens'),
+    trueValue: 1,
+    falseValue: 0
+} only %}
+
+{# Brand contextual info — always displayed when data exists (read-only) #}
 {% if analysis.containsBrandLogo and analysis.detectedBrands|length %}
-    <div class="lens-detection-item">
-        <div>
-            <div class="flex items-center gap-s mb-xs">
-                <span class="smalltext" style="text-transform:uppercase;font-weight:600">{{ 'Detected Brands'|t('lens') }}</span>
-            </div>
-            <div class="chips">
-                {% for brand in analysis.detectedBrands %}
-                    <div class="chip" title="{{ (brand.confidence * 100)|round }}% confidence">
-                        <div class="chip-content">
-                            <span class="chip-label">{{ brand.brand }}</span>
-                        </div>
+    <div class="lens-detection-item" style="padding-left: 8px;">
+        <div class="chips">
+            {% for brand in analysis.detectedBrands %}
+                <div class="chip" title="{{ (brand.confidence * 100)|round }}% confidence">
+                    <div class="chip-content">
+                        <span class="chip-label">{{ brand.brand }}</span>
                     </div>
-                {% endfor %}
-            </div>
-            {% if not static and not isProcessing %}
-                <button type="button" class="lens-flag-dismiss" data-lens-action="flag-dismiss" data-lens-field="containsBrandLogo" data-lens-value="0" data-lens-analysis-id="{{ analysis.id }}">
-                    {{ 'Dismiss'|t('lens') }}
-                </button>
-            {% endif %}
-        </div>
-    </div>
-{% elseif analysis.containsBrandLogoEditedBy is defined and analysis.containsBrandLogoEditedBy and analysis.containsBrandLogoAi is defined and analysis.containsBrandLogoAi %}
-    <div class="lens-detection-item">
-        <div class="flex items-center gap-s">
-            <span class="status off"></span>
-            {{ 'Brand detection dismissed'|t('lens') }}
-        </div>
-        <div class="lens-edit-meta">
-            {% set editor = craft.users.id(analysis.containsBrandLogoEditedBy).one() %}
-            {{ 'Cleared by {user} on {date}'|t('lens', {
-                user: editor ? editor.friendlyName : ('Unknown'|t('lens')),
-                date: analysis.containsBrandLogoEditedAt|date('short')
-            }) }}
-        </div>
-        {% if not static and not isProcessing %}
-            <button type="button" class="lens-flag-dismiss" data-lens-action="flag-revert" data-lens-field="containsBrandLogo" data-lens-analysis-id="{{ analysis.id }}">
-                {{ 'Restore AI flag'|t('lens') }}
-            </button>
-        {% endif %}
-    </div>
-{% else %}
-    <div class="lens-detection-item lens-detection-item--clear">
-        <div class="flex items-center gap-s">
-            <span class="status on"></span>
-            {{ 'No brands detected'|t('lens') }}
+                </div>
+            {% endfor %}
         </div>
     </div>
 {% endif %}

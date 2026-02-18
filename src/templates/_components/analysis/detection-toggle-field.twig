@@ -1,0 +1,163 @@
+{#
+ # Detection Toggle Field — 3-State Pattern
+ # Binary detection toggle (detected / not detected) for safety flags.
+ #
+ # Expected variables:
+ #   fieldName      - string (e.g., 'nsfwScore', 'hasWatermark', 'containsBrandLogo')
+ #   label          - string
+ #   detected       - bool, current detection value
+ #   detectedAi     - bool, AI detection value
+ #   editedBy       - int|null
+ #   editedAt       - DateTime|null
+ #   analysisId     - int
+ #   fieldState     - 'readonly'|'unlocked'|'editing'
+ #   detectedLabel  - string (e.g., 'NSFW content present')
+ #   clearedLabel   - string (e.g., 'No NSFW content')
+ #   trueValue      - mixed (value to send when "detected", e.g., 1.0 for nsfwScore, 1 for bools)
+ #   falseValue     - mixed (value to send when "not detected", e.g., 0)
+ #}
+
+{% set fieldState = fieldState ?? 'readonly' %}
+{% set isEdited = editedBy is not null %}
+
+{# ============================================================
+   READONLY — Display status text + badge. No interactions.
+   ============================================================ #}
+{% if fieldState == 'readonly' %}
+
+<div class="lens-editable-field">
+    <div class="lens-field-header">
+        {% if isEdited %}
+            <span class="lens-lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
+        {% endif %}
+        <span class="lens-field-label">{{ label }}</span>
+    </div>
+
+    <div class="lens-field-display">
+        <div class="lens-detection-item{% if not detected %} lens-detection-item--clear{% endif %}">
+            <div class="flex items-center gap-s">
+                <span class="status {{ detected ? 'on' : 'on' }}"></span>
+                <span>{{ detected ? detectedLabel : clearedLabel }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ============================================================
+   UNLOCKED — Display + edit pencil, hidden radio panel with Save/Cancel.
+   ============================================================ #}
+{% elseif fieldState == 'unlocked' %}
+
+<div class="lens-editable-field"
+     data-lens-target="detection-toggle"
+     data-lens-field="{{ fieldName }}"
+     data-lens-analysis-id="{{ analysisId }}"
+     data-lens-detected="{{ detected ? '1' : '0' }}"
+     data-lens-detected-ai="{{ detectedAi ? '1' : '0' }}"
+     data-lens-true-value="{{ trueValue }}"
+     data-lens-false-value="{{ falseValue }}">
+
+    <div class="lens-field-header">
+        {% if isEdited %}
+            <span class="lens-lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
+        {% endif %}
+        <span class="lens-field-label">{{ label }}</span>
+        <button type="button" class="lens-edit-trigger" data-lens-action="detection-edit" title="{{ 'Edit'|t('lens') }}">&#9998;</button>
+    </div>
+
+    {# Display mode #}
+    <div class="lens-field-display" data-lens-target="field-display">
+        <div class="lens-detection-item{% if not detected %} lens-detection-item--clear{% endif %}">
+            <div class="flex items-center gap-s">
+                <span class="status {{ detected ? 'on' : 'on' }}"></span>
+                <span data-lens-target="detection-display-text">{{ detected ? detectedLabel : clearedLabel }}</span>
+            </div>
+        </div>
+    </div>
+
+    {# Edit mode (hidden by default) #}
+    <div class="lens-field-edit" data-lens-target="detection-edit-panel" hidden>
+        <div class="lens-people-edit-options">
+            <label class="lens-people-option">
+                <input type="radio" name="detection-{{ fieldName }}-{{ analysisId }}" value="{{ trueValue }}" data-lens-control="detection-radio"
+                       {% if detected %}checked{% endif %}>
+                <span>{{ detectedLabel }}</span>
+            </label>
+            <label class="lens-people-option">
+                <input type="radio" name="detection-{{ fieldName }}-{{ analysisId }}" value="{{ falseValue }}" data-lens-control="detection-radio"
+                       {% if not detected %}checked{% endif %}>
+                <span>{{ clearedLabel }}</span>
+            </label>
+        </div>
+
+        {# Hidden input to hold selected value for save #}
+        <input type="hidden" data-lens-target="detection-value" value="{{ detected ? trueValue : falseValue }}">
+
+        <div class="lens-field-actions">
+            <button type="button" class="btn small submit" data-lens-action="detection-save">{{ 'Save'|t('lens') }}</button>
+            <button type="button" class="btn small" data-lens-action="detection-cancel">{{ 'Cancel'|t('lens') }}</button>
+        </div>
+    </div>
+
+    {# Provenance meta (always rendered, hidden when not edited) #}
+    <div class="lens-edit-meta" data-lens-target="detection-edit-meta"{% if not isEdited %} hidden{% endif %}>
+        {% if isEdited %}
+            {% set editor = craft.users.id(editedBy).one() %}
+            {{ 'Edited by {user} on {date}'|t('lens', {
+                user: editor ? editor.friendlyName : 'Unknown',
+                date: editedAt|date('short')
+            }) }}
+        {% endif %}
+    </div>
+
+    {# AI suggestion with revert button #}
+    {% set aiDiffers = isEdited and (detectedAi != detected) %}
+    <div class="lens-ai-suggestion" data-lens-target="detection-ai-suggestion"{% if not aiDiffers %} hidden{% endif %}>
+        <span data-lens-target="detection-ai-text">
+            {% if aiDiffers %}
+                {{ 'AI suggested: "{value}"'|t('lens', {value: detectedAi ? detectedLabel : clearedLabel}) }}
+            {% endif %}
+        </span>
+        <button type="button" class="lens-revert-trigger" data-lens-action="detection-revert" data-lens-field="{{ fieldName }}" data-lens-analysis-id="{{ analysisId }}"{% if not aiDiffers %} hidden{% endif %}>
+            {{ 'Revert to AI'|t('lens') }}
+        </button>
+    </div>
+</div>
+
+{# ============================================================
+   EDITING — Radio toggle always visible. Hidden input with name for form.
+   ============================================================ #}
+{% elseif fieldState == 'editing' %}
+
+<div class="lens-editable-field"
+     data-lens-target="detection-toggle"
+     data-lens-field="{{ fieldName }}">
+
+    <div class="lens-field-header">
+        <span class="lens-field-label">{{ label }}</span>
+    </div>
+
+    <div class="lens-people-edit-options">
+        <label class="lens-people-option">
+            <input type="radio" name="detection-{{ fieldName }}" value="{{ trueValue }}" data-lens-control="detection-radio-review"
+                   data-lens-field="{{ fieldName }}"
+                   {% if detected %}checked{% endif %}>
+            <span>{{ detectedLabel }}</span>
+        </label>
+        <label class="lens-people-option">
+            <input type="radio" name="detection-{{ fieldName }}" value="{{ falseValue }}" data-lens-control="detection-radio-review"
+                   data-lens-field="{{ fieldName }}"
+                   {% if not detected %}checked{% endif %}>
+            <span>{{ clearedLabel }}</span>
+        </label>
+    </div>
+
+    {# AI suggestion inline (informational) #}
+    {% if detectedAi != detected %}
+        <div class="lens-ai-suggestion-inline">
+            {{ 'AI: "{value}"'|t('lens', {value: detectedAi ? detectedLabel : clearedLabel}) }}
+        </div>
+    {% endif %}
+</div>
+
+{% endif %}

@@ -2,14 +2,13 @@
  # Focal Point & Quality Section
  # Focal point coordinates with Apply button + quality metric bars.
  #
- # Expected variables: analysis, asset (optional in review mode), static, isProcessing, mode
+ # Expected variables: analysis, asset (optional), fieldState
  #}
-{% set isProcessing = isProcessing ?? false %}
-{% set mode = mode ?? 'asset-edit' %}
+{% set fieldState = fieldState ?? 'readonly' %}
 
 {# Focal Point #}
 {% if analysis.focalPointX is not null and analysis.focalPointY is not null %}
-    {% if mode != 'review' %}
+    {% if fieldState == 'unlocked' and asset is defined %}
         {% set currentFp = asset.getFocalPoint() %}
         {% set fpAlreadyApplied = currentFp and (currentFp.x|round(4) == analysis.focalPointX|round(4)) and (currentFp.y|round(4) == analysis.focalPointY|round(4)) %}
     {% endif %}
@@ -33,15 +32,15 @@
             }) }}
         </p>
 
-        {# Apply to asset row - only in asset-edit mode #}
-        {% if mode != 'review' %}
+        {# Apply to asset row - only in unlocked mode #}
+        {% if fieldState == 'unlocked' and asset is defined %}
             <div class="lens-apply-row">
                 {% if fpAlreadyApplied %}
                     <div class="lens-applied-indicator">
                         <span class="status on"></span>
                         <span class="smalltext">{{ 'Applied'|t('lens') }}</span>
                     </div>
-                {% elseif not static and not isProcessing %}
+                {% else %}
                     <button type="button" class="btn small submit"
                             data-lens-action="apply-focal-point"
                             data-lens-asset-id="{{ asset.id }}"
@@ -63,7 +62,7 @@
     </div>
 {% endif %}
 
-{# Quality Metrics #}
+{# Quality Metrics — always read-only #}
 {% if analysis.overallQualityScore is not null %}
     <div class="flex items-center gap-s mb-xs">
         <span class="lens-field-label">{{ 'Image Quality'|t('lens') }}</span>

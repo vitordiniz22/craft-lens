@@ -15,16 +15,18 @@
         {{ actionInput('lens/review/approve') }}
         {{ hiddenInput('analysisId', analysis.analysisId) }}
 
-        {# Hidden inputs for modifications - pre-populated with current values, updated by JavaScript on edit #}
-        <input type="hidden" name="suggestedTitle" data-lens-control="field-suggestedTitle" value="{{ analysis.suggestedTitle }}">
-        <input type="hidden" name="altText" data-lens-control="field-altText" value="{{ analysis.altText }}">
-        <input type="hidden" name="longDescription" data-lens-control="field-longDescription" value="{{ analysis.longDescription }}">
+        {# Hidden inputs for modifications - updated by JavaScript on edit #}
+        {# Text fields use named inputs directly (no hidden duplication needed) #}
         <input type="hidden" name="tags" data-lens-control="field-tags">
         <input type="hidden" name="dominantColors" data-lens-control="field-colors">
         <input type="hidden" name="focalPointX" data-lens-control="focal-x">
         <input type="hidden" name="focalPointY" data-lens-control="focal-y">
         <input type="hidden" name="containsPeople" data-lens-control="field-containsPeople">
         <input type="hidden" name="faceCount" data-lens-control="field-faceCount">
+        {# Detection toggle hidden inputs — synced by JS from radio selections #}
+        <input type="hidden" name="nsfwScore" data-lens-control="field-nsfwScore" value="{{ analysis.nsfwScore ?? 0 }}">
+        <input type="hidden" name="hasWatermark" data-lens-control="field-hasWatermark" value="{{ analysis.hasWatermark ? '1' : '0' }}">
+        <input type="hidden" name="containsBrandLogo" data-lens-control="field-containsBrandLogo" value="{{ analysis.containsBrandLogo ? '1' : '0' }}">
 
         <div class="lens-review-panels lens-gap-24" data-lens-target="review-view">
             {# Left Panel - Image #}
@@ -80,9 +82,7 @@
                     </div>
                     {% include 'lens/_components/analysis/content-section' with {
                         analysis: analysis,
-                        mode: 'review',
-                        static: false,
-                        isProcessing: false
+                        fieldState: 'editing'
                     } %}
                 </div>
 
@@ -92,8 +92,7 @@
                         analysis: analysis,
                         analysisTags: analysis.tags,
                         analysisColors: analysis.colors,
-                        mode: 'review',
-                        static: false
+                        fieldState: 'editing'
                     } %}
                 </div>
 
@@ -101,9 +100,7 @@
                     <h4>{{ 'Quality & Focal Point'|t('lens') }}</h4>
                     {% include 'lens/_components/analysis/quality-section' with {
                         analysis: analysis,
-                        mode: 'review',
-                        static: false,
-                        isProcessing: false
+                        fieldState: 'editing'
                     } %}
                 </div>
 
@@ -111,17 +108,14 @@
                     <h4>{{ 'Flags & Detection'|t('lens') }}</h4>
                     {% include 'lens/_components/analysis/safety-section' with {
                         analysis: analysis,
-                        mode: 'review',
-                        static: false,
-                        isProcessing: false
+                        fieldState: 'editing'
                     } %}
                 </div>
 
                 <div class="lens-review-section">
-                    <h4>{{ 'Extracted Text'|t('lens') }}</h4>
                     {% include 'lens/_components/analysis/editable-field' with {
                         fieldName: 'extractedText',
-                        label: null,
+                        label: 'Extracted Text'|t('lens'),
                         value: analysis.extractedText,
                         aiValue: analysis.extractedTextAi,
                         confidence: null,
@@ -129,10 +123,8 @@
                         editedAt: analysis.extractedTextEditedAt,
                         inputType: 'textarea',
                         featured: false,
-                        static: false,
                         analysisId: analysis.analysisId,
-                        isProcessing: false,
-                        mode: 'review'
+                        fieldState: 'editing'
                     } %}
                 </div>
 

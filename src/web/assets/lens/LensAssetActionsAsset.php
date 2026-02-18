@@ -16,7 +16,6 @@ class LensAssetActionsAsset extends AssetBundle
             'js/components/lens-inline-editor.js',
             'js/components/lens-tag-editor.js',
             'js/components/lens-color-editor.js',
-            'js/components/lens-safety-flags.js',
             'js/pages/lens-analysis-panel.js',
         ];
 

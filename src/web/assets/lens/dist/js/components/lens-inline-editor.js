@@ -1,7 +1,6 @@
 /**
  * Lens Plugin - Inline Editor Component
- * Field editing component with people detection support
- * Extracted and refactored from lens-asset-actions.js
+ * Field editing component with people detection and detection toggle support
  */
 (function() {
     'use strict';
@@ -11,7 +10,7 @@
 
     /**
      * Inline Editor Component
-     * Handles inline editing for title, alt text, description, and people detection
+     * Handles inline editing for text fields, people detection, and detection toggles
      */
     const LensInlineEditor = {
         _initialized: false,
@@ -32,7 +31,9 @@
          * @private
          */
         _shouldInit: function() {
-            return document.querySelector('[data-lens-target="editable-field"]') !== null;
+            return document.querySelector('[data-lens-target="editable-field"]') !== null ||
+                   document.querySelector('[data-lens-target="people-detection"]') !== null ||
+                   document.querySelector('[data-lens-target="detection-toggle"]') !== null;
         },
 
         /**
@@ -40,7 +41,7 @@
          * @private
          */
         _bindEvents: function() {
-            const DOM = window.Lens.core.DOM;
+            var DOM = window.Lens.core.DOM;
 
             // Standard field editing
             DOM.delegate('[data-lens-action="field-edit"]', 'click', this._handleFieldEdit.bind(this));
@@ -53,6 +54,15 @@
             DOM.delegate('[data-lens-action="people-save"]', 'click', this._handlePeopleSave.bind(this));
             DOM.delegate('[data-lens-action="people-cancel"]', 'click', this._handlePeopleCancel.bind(this));
             DOM.delegate('[data-lens-action="people-revert"]', 'click', this._handlePeopleRevert.bind(this));
+
+            // Detection toggle editing
+            DOM.delegate('[data-lens-action="detection-edit"]', 'click', this._handleDetectionEdit.bind(this));
+            DOM.delegate('[data-lens-action="detection-save"]', 'click', this._handleDetectionSave.bind(this));
+            DOM.delegate('[data-lens-action="detection-cancel"]', 'click', this._handleDetectionCancel.bind(this));
+            DOM.delegate('[data-lens-action="detection-revert"]', 'click', this._handleDetectionRevert.bind(this));
+
+            // Detection radio sync (unlocked mode): radio change → hidden input
+            DOM.delegate('[data-lens-control="detection-radio"]', 'change', this._handleDetectionRadioChange.bind(this));
         },
 
         // ================================================================
@@ -60,19 +70,19 @@
         // ================================================================
 
         _handleFieldEdit: function(e, trigger) {
-            const fieldEl = window.Lens.core.DOM.findTarget(trigger, 'editable-field');
+            var fieldEl = window.Lens.core.DOM.findTarget(trigger, 'editable-field');
             if (fieldEl) {
                 window.Lens.core.DOM.enterEditMode(fieldEl, 'field-display', 'field-edit');
             }
         },
 
         _handleFieldCancel: function(e, trigger) {
-            const fieldEl = window.Lens.core.DOM.findTarget(trigger, 'editable-field');
+            var fieldEl = window.Lens.core.DOM.findTarget(trigger, 'editable-field');
             if (!fieldEl) return;
 
             // Restore original value from display
-            const displayText = fieldEl.querySelector('[data-lens-target="field-display"] p');
-            const input = fieldEl.querySelector('[data-lens-target="field-edit"] input, [data-lens-target="field-edit"] textarea');
+            var displayText = fieldEl.querySelector('[data-lens-target="field-display"] p');
+            var input = fieldEl.querySelector('[data-lens-target="field-edit"] input, [data-lens-target="field-edit"] textarea');
             if (displayText && input) {
                 input.value = displayText.textContent;
             }
@@ -81,15 +91,15 @@
         },
 
         _handleFieldSave: function(e, saveBtn) {
-            const fieldEl = window.Lens.core.DOM.findTarget(saveBtn, 'editable-field');
+            var fieldEl = window.Lens.core.DOM.findTarget(saveBtn, 'editable-field');
             if (!fieldEl) return;
 
-            const analysisId = fieldEl.dataset.lensAnalysisId;
-            const fieldName = fieldEl.dataset.lensField;
-            const input = fieldEl.querySelector('[data-lens-target="field-edit"] input, [data-lens-target="field-edit"] textarea');
+            var analysisId = fieldEl.dataset.lensAnalysisId;
+            var fieldName = fieldEl.dataset.lensField;
+            var input = fieldEl.querySelector('[data-lens-target="field-edit"] input, [data-lens-target="field-edit"] textarea');
             if (!input) return;
 
-            const value = input.value;
+            var value = input.value;
 
             window.Lens.core.ButtonState.withLoading(saveBtn, Craft.t('lens', 'Saving...'), () => {
                 return window.Lens.core.API.updateField(analysisId, fieldName, value)
@@ -106,17 +116,17 @@
         },
 
         _handleFieldRevert: function(e, revertBtn) {
-            const fieldEl = window.Lens.core.DOM.findTarget(revertBtn, 'editable-field');
+            var fieldEl = window.Lens.core.DOM.findTarget(revertBtn, 'editable-field');
             if (!fieldEl) return;
 
-            const analysisId = fieldEl.dataset.lensAnalysisId;
-            const fieldName = fieldEl.dataset.lensField;
+            var analysisId = fieldEl.dataset.lensAnalysisId;
+            var fieldName = fieldEl.dataset.lensField;
 
             window.Lens.core.API.revertField(analysisId, fieldName).then((response) => {
                 if (response.data.success) {
                     // Update display and input
-                    const displayP = fieldEl.querySelector('[data-lens-target="field-display"] p');
-                    const input = fieldEl.querySelector('[data-lens-target="field-edit"] input, [data-lens-target="field-edit"] textarea');
+                    var displayP = fieldEl.querySelector('[data-lens-target="field-display"] p');
+                    var input = fieldEl.querySelector('[data-lens-target="field-edit"] input, [data-lens-target="field-edit"] textarea');
 
                     if (displayP) displayP.textContent = response.data.value;
                     if (input) input.value = response.data.value;
@@ -136,19 +146,19 @@
         // ================================================================
 
         _handlePeopleEdit: function(e, trigger) {
-            const fieldEl = window.Lens.core.DOM.findTarget(trigger, 'people-detection');
+            var fieldEl = window.Lens.core.DOM.findTarget(trigger, 'people-detection');
             if (!fieldEl) return;
 
-            const containsPeople = fieldEl.dataset.lensContainsPeople === '1';
-            const faceCount = parseInt(fieldEl.dataset.lensFaceCount, 10) || 0;
+            var containsPeople = fieldEl.dataset.lensContainsPeople === '1';
+            var faceCount = parseInt(fieldEl.dataset.lensFaceCount, 10) || 0;
 
             // Use service to get the mode
-            const mode = window.Lens.services.PeopleDetection.fieldsToMode(containsPeople, faceCount);
+            var mode = window.Lens.services.PeopleDetection.fieldsToMode(containsPeople, faceCount);
 
             // Select appropriate radio
-            const edit = fieldEl.querySelector('[data-lens-target="people-edit-panel"]');
+            var edit = fieldEl.querySelector('[data-lens-target="people-edit-panel"]');
             if (edit) {
-                const radios = edit.querySelectorAll('[data-lens-control="people-mode"]');
+                var radios = edit.querySelectorAll('[data-lens-control="people-mode"]');
                 radios.forEach((radio) => {
                     radio.checked = (radio.value === mode);
                 });
@@ -158,28 +168,28 @@
         },
 
         _handlePeopleCancel: function(e, trigger) {
-            const fieldEl = window.Lens.core.DOM.findTarget(trigger, 'people-detection');
+            var fieldEl = window.Lens.core.DOM.findTarget(trigger, 'people-detection');
             if (fieldEl) {
                 window.Lens.core.DOM.exitEditMode(fieldEl, 'field-display', 'people-edit-panel');
             }
         },
 
         _handlePeopleSave: function(e, saveBtn) {
-            const fieldEl = window.Lens.core.DOM.findTarget(saveBtn, 'people-detection');
+            var fieldEl = window.Lens.core.DOM.findTarget(saveBtn, 'people-detection');
             if (!fieldEl) return;
 
-            const analysisId = fieldEl.dataset.lensAnalysisId;
-            const edit = fieldEl.querySelector('[data-lens-target="people-edit-panel"]');
+            var analysisId = fieldEl.dataset.lensAnalysisId;
+            var edit = fieldEl.querySelector('[data-lens-target="people-edit-panel"]');
             if (!edit) return;
 
-            const selectedRadio = edit.querySelector('[data-lens-control="people-mode"]:checked');
+            var selectedRadio = edit.querySelector('[data-lens-control="people-mode"]:checked');
             if (!selectedRadio) {
                 Craft.cp.displayError(Craft.t('lens', 'Please select an option'));
                 return;
             }
 
             // Use service to map mode to fields
-            const fields = window.Lens.services.PeopleDetection.modeToFields(selectedRadio.value);
+            var fields = window.Lens.services.PeopleDetection.modeToFields(selectedRadio.value);
             if (!fields) {
                 Craft.cp.displayError(Craft.t('lens', 'Invalid selection'));
                 return;
@@ -199,8 +209,8 @@
         },
 
         _handlePeopleRevert: function(e, revertBtn) {
-            const analysisId = revertBtn.dataset.lensAnalysisId;
-            const promises = [
+            var analysisId = revertBtn.dataset.lensAnalysisId;
+            var promises = [
                 window.Lens.core.API.revertField(analysisId, 'containsPeople'),
                 window.Lens.core.API.revertField(analysisId, 'faceCount')
             ];
@@ -212,23 +222,100 @@
         },
 
         // ================================================================
+        // Detection Toggle Editing
+        // ================================================================
+
+        _handleDetectionEdit: function(e, trigger) {
+            var fieldEl = window.Lens.core.DOM.findTarget(trigger, 'detection-toggle');
+            if (fieldEl) {
+                window.Lens.core.DOM.enterEditMode(fieldEl, 'field-display', 'detection-edit-panel');
+            }
+        },
+
+        _handleDetectionCancel: function(e, trigger) {
+            var fieldEl = window.Lens.core.DOM.findTarget(trigger, 'detection-toggle');
+            if (!fieldEl) return;
+
+            // Restore radio to current state
+            var isDetected = fieldEl.dataset.lensDetected === '1';
+            var trueValue = fieldEl.dataset.lensTrueValue;
+            var falseValue = fieldEl.dataset.lensFalseValue;
+            var currentValue = isDetected ? trueValue : falseValue;
+
+            var radios = fieldEl.querySelectorAll('[data-lens-control="detection-radio"]');
+            radios.forEach(function(radio) {
+                radio.checked = (radio.value === currentValue);
+            });
+
+            // Restore hidden input
+            var hiddenInput = fieldEl.querySelector('[data-lens-target="detection-value"]');
+            if (hiddenInput) hiddenInput.value = currentValue;
+
+            window.Lens.core.DOM.exitEditMode(fieldEl, 'field-display', 'detection-edit-panel');
+        },
+
+        _handleDetectionRadioChange: function(e, radio) {
+            var fieldEl = window.Lens.core.DOM.findTarget(radio, 'detection-toggle');
+            if (!fieldEl) return;
+
+            var hiddenInput = fieldEl.querySelector('[data-lens-target="detection-value"]');
+            if (hiddenInput) {
+                hiddenInput.value = radio.value;
+            }
+        },
+
+        _handleDetectionSave: function(e, saveBtn) {
+            var fieldEl = window.Lens.core.DOM.findTarget(saveBtn, 'detection-toggle');
+            if (!fieldEl) return;
+
+            var analysisId = fieldEl.dataset.lensAnalysisId;
+            var fieldName = fieldEl.dataset.lensField;
+            var hiddenInput = fieldEl.querySelector('[data-lens-target="detection-value"]');
+            if (!hiddenInput) return;
+
+            var value = hiddenInput.value;
+
+            window.Lens.core.ButtonState.withLoading(saveBtn, Craft.t('lens', 'Saving...'), () => {
+                return window.Lens.core.API.updateField(analysisId, fieldName, value)
+                    .then((response) => {
+                        if (response.data.success) {
+                            Craft.cp.displayNotice(Craft.t('lens', 'Detection updated. Refreshing...'));
+                            setTimeout(() => window.location.reload(), window.Lens.config.ANIMATION.RELOAD_DELAY_MS);
+                        }
+                    });
+            });
+        },
+
+        _handleDetectionRevert: function(e, revertBtn) {
+            var analysisId = revertBtn.dataset.lensAnalysisId;
+            var fieldName = revertBtn.dataset.lensField;
+
+            window.Lens.core.API.revertField(analysisId, fieldName).then((response) => {
+                if (response.data.success) {
+                    Craft.cp.displayNotice(Craft.t('lens', 'Reverted to AI value. Refreshing...'));
+                    setTimeout(() => window.location.reload(), window.Lens.config.ANIMATION.RELOAD_DELAY_MS);
+                }
+            });
+        },
+
+        // ================================================================
         // Helper Methods
         // ================================================================
 
         _updateFieldDisplay: function(fieldEl, data) {
-            const displayP = fieldEl.querySelector('[data-lens-target="field-display"] p');
+            var displayP = fieldEl.querySelector('[data-lens-target="field-display"] p');
             if (displayP) {
                 displayP.textContent = data.value;
             }
 
             // Remove confidence badge (field is now user-edited)
-            const header = fieldEl.querySelector('.lens-field-header');
-            const badge = header ? header.querySelector('.badge') : null;
+            var header = fieldEl.querySelector('.lens-field-header');
+            var badge = header ? header.querySelector('.badge') : null;
             if (badge) badge.remove();
         },
 
         _savePeopleFields: function(analysisId, fields) {
-            const promises = [
+            var promises = [
                 window.Lens.core.API.updateField(analysisId, 'containsPeople', fields.containsPeople),
                 window.Lens.core.API.updateField(analysisId, 'faceCount', fields.faceCount)
             ];
@@ -263,9 +350,9 @@
         },
 
         _showLockIcon: function(fieldEl) {
-            const header = fieldEl.querySelector('.lens-field-header');
+            var header = fieldEl.querySelector('.lens-field-header');
             if (header && !header.querySelector('.lens-lock-icon')) {
-                const lock = document.createElement('span');
+                var lock = document.createElement('span');
                 lock.className = 'lens-lock-icon';
                 lock.title = Craft.t('lens', 'Protected from reprocessing');
                 lock.innerHTML = '&#128274;';
@@ -274,7 +361,7 @@
         },
 
         _removeLockIcon: function(fieldEl) {
-            const lock = fieldEl.querySelector('.lens-lock-icon');
+            var lock = fieldEl.querySelector('.lens-lock-icon');
             if (lock) lock.remove();
         },
 
