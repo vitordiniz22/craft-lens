@@ -1,0 +1,158 @@
+{#
+ # Alt Proxy Field — Editable alt text when AltField is NOT in the field layout
+ #
+ # Acts as a proxy for the missing native AltField. Renders the current $asset->alt
+ # as an editable field (pencil -> textarea -> save/cancel). Below the editable field,
+ # shows the AI suggestion with "Apply Suggestion" button.
+ #
+ # Expected variables:
+ #   nativeValue     - string, current $asset->alt value
+ #   suggestionValue - string|null, AI suggestion from analysis record
+ #   aiValue         - string|null, original AI value
+ #   confidence      - float|null, AI confidence (0-1)
+ #   analysisId      - int, the analysis record ID
+ #   assetId         - int|null, the asset ID
+ #   fieldState      - 'readonly'|'unlocked'|'editing'
+ #}
+
+{% set fieldState = fieldState ?? 'readonly' %}
+{% set hasSuggestion = suggestionValue is defined and suggestionValue is not empty %}
+{% set valuesMatch = hasSuggestion and nativeValue == suggestionValue %}
+
+{# ============================================================
+   READONLY — Static display of asset alt + AI suggestion text
+   ============================================================ #}
+{% if fieldState == 'readonly' %}
+
+<div class="lens-alt-proxy">
+    <div class="lens-field-header">
+        <span class="lens-field-label">{{ 'Alt Text'|t('lens') }}</span>
+        {% if confidence %}
+            <span class="badge">{{ (confidence * 100)|round }}%</span>
+        {% endif %}
+    </div>
+
+    <div class="lens-field-display">
+        {% if nativeValue %}
+            <p>{{ nativeValue }}</p>
+        {% else %}
+            <p class="light">{{ 'Empty'|t('lens') }}</p>
+        {% endif %}
+    </div>
+
+    {% if hasSuggestion and not valuesMatch %}
+        <div class="lens-native-suggestion">
+            <span class="lens-native-suggestion-label">{{ 'AI Suggestion'|t('lens') }}:</span>
+            <p>{{ suggestionValue }}</p>
+        </div>
+    {% endif %}
+</div>
+
+{# ============================================================
+   UNLOCKED — Editable field + AI suggestion + Apply Suggestion
+   ============================================================ #}
+{% elseif fieldState == 'unlocked' %}
+
+<div class="lens-alt-proxy"
+     data-lens-target="alt-proxy-field"
+     data-lens-asset-id="{{ assetId }}"
+     data-lens-analysis-id="{{ analysisId }}">
+
+    <div class="lens-field-header">
+        <span class="lens-field-label">{{ 'Alt Text'|t('lens') }}</span>
+        {% if confidence %}
+            <span class="badge">{{ (confidence * 100)|round }}%</span>
+        {% endif %}
+        <button type="button" class="lens-edit-trigger" data-lens-action="alt-proxy-edit" title="{{ 'Edit'|t('lens') }}">&#9998;</button>
+    </div>
+
+    {# Display mode — current asset alt #}
+    <div class="lens-field-display" data-lens-target="alt-proxy-display">
+        {% if nativeValue %}
+            <p>{{ nativeValue }}</p>
+        {% else %}
+            <p class="light">{{ 'Empty'|t('lens') }}</p>
+        {% endif %}
+    </div>
+
+    {# Edit mode (hidden by default) #}
+    <div class="lens-field-edit" data-lens-target="alt-proxy-edit-area" hidden>
+        <textarea class="text fullwidth" rows="3" data-lens-target="alt-proxy-input">{{ nativeValue }}</textarea>
+        <div class="lens-field-actions">
+            <button type="button" class="btn small submit" data-lens-action="alt-proxy-save">{{ 'Save'|t('lens') }}</button>
+            <button type="button" class="btn small" data-lens-action="alt-proxy-cancel">{{ 'Cancel'|t('lens') }}</button>
+        </div>
+    </div>
+
+    {# AI suggestion + Apply Suggestion button #}
+    {% if hasSuggestion and not valuesMatch %}
+        <div class="lens-native-suggestion" data-lens-target="alt-proxy-suggestion">
+            <span class="lens-native-suggestion-label">{{ 'AI Suggestion'|t('lens') }}:</span>
+            <p>{{ suggestionValue }}</p>
+        </div>
+        <div class="lens-apply-row" data-lens-target="alt-proxy-apply-row">
+            <button type="button" class="btn small submit"
+                    data-lens-action="apply-alt"
+                    data-lens-asset-id="{{ assetId }}"
+                    data-lens-analysis-id="{{ analysisId }}">
+                {{ 'Apply Suggestion'|t('lens') }}
+            </button>
+        </div>
+    {% elseif valuesMatch %}
+        <div class="lens-apply-row" data-lens-target="alt-proxy-apply-row">
+            <div class="lens-applied-indicator">
+                <span class="status on"></span>
+                <span class="smalltext">{{ 'Matches suggestion'|t('lens') }}</span>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+{# ============================================================
+   EDITING — Review page: current value as context + editable input
+   ============================================================ #}
+{% elseif fieldState == 'editing' %}
+
+<div class="lens-alt-proxy lens-native-bridge--editing">
+    <div class="lens-field-header">
+        <span class="lens-field-label">{{ 'Alt Text'|t('lens') }}</span>
+        {% if confidence and confidence < 0.8 %}
+            <span class="lens-confidence-badge lens-confidence-{{ (confidence * 100)|round >= 50 ? 'medium' : 'low' }}">
+                {{ (confidence * 100)|round }}%
+            </span>
+        {% endif %}
+    </div>
+
+    {# Current asset value (static context) #}
+    <div class="lens-native-current lens-native-current--context">
+        <span class="lens-native-current-label">{{ 'Current asset value'|t('lens') }}:</span>
+        {% if nativeValue %}
+            <span>{{ nativeValue }}</span>
+        {% else %}
+            <span class="light"><em>{{ 'Empty'|t('lens') }}</em></span>
+        {% endif %}
+    </div>
+
+    {# Editable suggestion input #}
+    <textarea class="text fullwidth" name="altText" rows="2">{{ suggestionValue }}</textarea>
+
+    {# Status line #}
+    <div class="lens-native-status">
+        {% if valuesMatch %}
+            <span class="light">{{ 'Already applied to asset'|t('lens') }}</span>
+        {% elseif nativeValue is not empty %}
+            <span class="light">{{ 'Suggestion only — current value was set manually'|t('lens') }}</span>
+        {% elseif hasSuggestion %}
+            <span class="light">{{ 'Will be applied to the asset on approval'|t('lens') }}</span>
+        {% endif %}
+    </div>
+
+    {# AI suggestion inline (informational, if user has edited the suggestion) #}
+    {% if (aiValue ?? null) and aiValue != suggestionValue %}
+        <div class="lens-ai-suggestion-inline">
+            {{ 'AI: "{value}"'|t('lens', {value: aiValue|truncate(60)}) }}
+        </div>
+    {% endif %}
+</div>
+
+{% endif %}

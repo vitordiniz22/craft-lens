@@ -141,6 +141,34 @@
         },
 
         /**
+         * Apply alt text suggestion to asset
+         * @param {string|number} assetId - Asset ID
+         * @param {string|number} analysisId - Analysis ID
+         * @param {Object} [options={}] - Additional options
+         * @returns {Promise} Promise resolving with response data
+         */
+        applyAlt: function(assetId, analysisId, options) {
+            return this.post('lens/analysis/apply-alt', {
+                assetId: assetId,
+                analysisId: analysisId
+            }, options);
+        },
+
+        /**
+         * Update asset alt text directly (proxy field)
+         * @param {string|number} assetId - Asset ID
+         * @param {string} value - New alt text value
+         * @param {Object} [options={}] - Additional options
+         * @returns {Promise} Promise resolving with response data
+         */
+        updateAssetAlt: function(assetId, value, options) {
+            return this.post('lens/analysis/update-asset-alt', {
+                assetId: assetId,
+                value: value
+            }, options);
+        },
+
+        /**
          * Apply focal point to asset
          * @param {string|number} assetId - Asset ID
          * @param {Object} focalPoint - Focal point {x, y} (0-1 normalized)

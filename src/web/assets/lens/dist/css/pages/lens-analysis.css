@@ -295,6 +295,117 @@
 }
 
 /* ==========================================================================
+   Native Field Bridge (Title/Alt suggestion-to-asset)
+   ========================================================================== */
+
+.lens-native-bridge {
+    position: relative;
+    width: 100%;
+    padding: 12px 14px;
+    border-left: 3px solid var(--gray-200);
+    border-radius: 0 var(--small-border-radius) var(--small-border-radius) 0;
+    background: var(--gray-050);
+}
+
+.lens-native-bridge + .lens-native-bridge,
+.lens-native-bridge + .lens-alt-proxy,
+.lens-native-bridge + .lens-editable-field {
+    margin-top: 16px;
+}
+
+.lens-native-bridge--editing {
+    border-left-color: var(--blue-200);
+    background: transparent;
+    padding: 0;
+}
+
+/* Current asset value context row (review page only) */
+.lens-native-current--context {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px;
+    padding: 6px 10px;
+    margin-bottom: 8px;
+    background: var(--gray-050);
+    border-radius: var(--small-border-radius);
+}
+
+.lens-native-current-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--medium-text-color);
+    flex-shrink: 0;
+}
+
+/* Status chip (review page context row) */
+.lens-native-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.6;
+    white-space: nowrap;
+}
+
+.lens-native-chip--auto {
+    background: var(--gray-200);
+    color: var(--medium-text-color);
+}
+
+/* AI suggestion section */
+.lens-native-suggestion {
+    margin-top: 6px;
+    margin-bottom: 6px;
+}
+
+.lens-native-suggestion p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-color);
+    line-height: 1.5;
+}
+
+.lens-native-suggestion-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--medium-text-color);
+}
+
+/* Status line (review page) */
+.lens-native-status {
+    margin-top: 4px;
+    font-size: 12px;
+    font-style: italic;
+}
+
+/* ==========================================================================
+   Alt Proxy Field (editable alt when AltField not in layout)
+   ========================================================================== */
+
+.lens-alt-proxy {
+    position: relative;
+    width: 100%;
+    padding: 12px 14px;
+    border-left: 3px solid var(--amber-200);
+    border-radius: 0 var(--small-border-radius) var(--small-border-radius) 0;
+    background: var(--gray-050);
+}
+
+.lens-alt-proxy + .lens-editable-field {
+    margin-top: 16px;
+}
+
+.lens-alt-proxy .lens-field-display p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-color);
+    line-height: 1.5;
+}
+
+/* ==========================================================================
    Featured Sections (Title, Focal Point)
    ========================================================================== */
 

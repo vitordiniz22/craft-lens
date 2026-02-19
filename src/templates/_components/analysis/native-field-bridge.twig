@@ -1,0 +1,181 @@
+{#
+ # Native Field Bridge — Suggestion-to-Asset Bridge Component
+ #
+ # Shows the AI suggestion with apply status. Used for title and alt text
+ # (when AltField is in layout). The current asset value is NOT shown here —
+ # the user can see it in Craft's native field above.
+ #
+ # On the review page (editing state), the current asset value IS shown as
+ # context since the reviewer doesn't have the asset editor open.
+ #
+ # Expected variables:
+ #   fieldName       - string, the analysis field key (e.g. 'suggestedTitle', 'altText')
+ #   label           - string, display label (e.g. 'Title', 'Alt Text')
+ #   nativeValue     - string, current asset value ($asset->title or $asset->alt)
+ #   isNativeDefault - bool, true if value is auto-generated/empty
+ #   suggestionValue - string|null, AI suggestion (possibly user-edited)
+ #   aiValue         - string|null, original AI value (before user edits)
+ #   confidence      - float|null, AI confidence (0-1)
+ #   editedBy        - int|null, user ID who edited the suggestion (optional)
+ #   inputType       - string, 'text' or 'textarea' (default: 'text')
+ #   analysisId      - int, the analysis record ID
+ #   assetId         - int|null, the asset ID
+ #   fieldState      - 'readonly'|'unlocked'|'editing'
+ #   applyAction     - string, the data-lens-action value (e.g. 'apply-title', 'apply-alt')
+ #}
+
+{% set inputType = inputType ?? 'text' %}
+{% set fieldState = fieldState ?? 'readonly' %}
+{% set isEdited = (editedBy ?? null) is not null %}
+
+{# Determine the status of the native value relative to the suggestion #}
+{% set hasSuggestion = suggestionValue is defined and suggestionValue is not empty %}
+{% set valuesMatch = hasSuggestion and nativeValue == suggestionValue %}
+{% set isCustom = not isNativeDefault and not valuesMatch and nativeValue is not empty %}
+
+{# ============================================================
+   READONLY — Suggestion display only. No apply buttons.
+   ============================================================ #}
+{% if fieldState == 'readonly' %}
+
+<div class="lens-native-bridge">
+    <div class="lens-field-header">
+        {% if isEdited %}
+            <span class="lens-lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
+        {% endif %}
+        <span class="lens-field-label">{{ label }}</span>
+        {% if not isEdited and confidence %}
+            <span class="badge">{{ (confidence * 100)|round }}%</span>
+        {% endif %}
+    </div>
+
+    {% if hasSuggestion %}
+        <div class="lens-field-display">
+            <p>{{ suggestionValue }}</p>
+        </div>
+        {% if valuesMatch %}
+            <div class="lens-applied-indicator">
+                <span class="status on"></span>
+                <span class="smalltext">{{ 'Applied'|t('lens') }}</span>
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="lens-field-display">
+            <p class="light">{{ 'No suggestion available'|t('lens') }}</p>
+        </div>
+    {% endif %}
+</div>
+
+{# ============================================================
+   UNLOCKED — Suggestion display + apply button
+   ============================================================ #}
+{% elseif fieldState == 'unlocked' %}
+
+<div class="lens-native-bridge"
+     data-lens-target="native-bridge"
+     data-lens-field="{{ fieldName }}">
+
+    <div class="lens-field-header">
+        {% if isEdited %}
+            <span class="lens-lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
+        {% endif %}
+        <span class="lens-field-label">{{ label }}</span>
+        {% if not isEdited and confidence %}
+            <span class="badge">{{ (confidence * 100)|round }}%</span>
+        {% endif %}
+    </div>
+
+    {% if hasSuggestion %}
+        <div class="lens-field-display">
+            <p>{{ suggestionValue }}</p>
+        </div>
+
+        {# Apply row #}
+        <div class="lens-apply-row" data-lens-target="native-apply-row">
+            {% if valuesMatch %}
+                <div class="lens-applied-indicator">
+                    <span class="status on"></span>
+                    <span class="smalltext">{{ 'Applied'|t('lens') }}</span>
+                </div>
+            {% elseif isCustom %}
+                <button type="button" class="btn small"
+                        data-lens-action="{{ applyAction }}"
+                        data-lens-asset-id="{{ assetId }}"
+                        data-lens-analysis-id="{{ analysisId }}">
+                    {{ 'Replace Current Value'|t('lens') }}
+                </button>
+                <span class="smalltext light">{{ 'Current value was set manually'|t('lens') }}</span>
+            {% else %}
+                <button type="button" class="btn small submit"
+                        data-lens-action="{{ applyAction }}"
+                        data-lens-asset-id="{{ assetId }}"
+                        data-lens-analysis-id="{{ analysisId }}">
+                    {{ 'Apply to Asset'|t('lens') }}
+                </button>
+                {% if isNativeDefault and nativeValue %}
+                    <span class="smalltext light">{{ 'Auto-generated from filename'|t('lens') }}</span>
+                {% endif %}
+            {% endif %}
+        </div>
+    {% else %}
+        <div class="lens-field-display">
+            <p class="light">{{ 'No suggestion available'|t('lens') }}</p>
+        </div>
+    {% endif %}
+</div>
+
+{# ============================================================
+   EDITING — Review page: current asset value as context + editable input
+   ============================================================ #}
+{% elseif fieldState == 'editing' %}
+
+<div class="lens-native-bridge lens-native-bridge--editing">
+    <div class="lens-field-header">
+        <span class="lens-field-label">{{ label }}</span>
+        {% if confidence and confidence < 0.8 %}
+            <span class="lens-confidence-badge lens-confidence-{{ (confidence * 100)|round >= 50 ? 'medium' : 'low' }}">
+                {{ (confidence * 100)|round }}%
+            </span>
+        {% endif %}
+    </div>
+
+    {# Current asset value (static context — reviewer needs this) #}
+    <div class="lens-native-current lens-native-current--context">
+        <span class="lens-native-current-label">{{ 'Current asset value'|t('lens') }}:</span>
+        {% if isNativeDefault %}
+            <span class="light"><em>{{ nativeValue ?: 'Empty'|t('lens') }}</em></span>
+            <span class="lens-native-chip lens-native-chip--auto">{{ nativeValue ? 'Auto-generated'|t('lens') : 'Empty'|t('lens') }}</span>
+        {% elseif nativeValue %}
+            <span>{{ nativeValue }}</span>
+        {% else %}
+            <span class="light"><em>{{ 'Empty'|t('lens') }}</em></span>
+        {% endif %}
+    </div>
+
+    {# Editable suggestion input #}
+    {% if inputType == 'textarea' %}
+        <textarea class="text fullwidth" name="{{ fieldName }}" rows="2">{{ suggestionValue }}</textarea>
+    {% else %}
+        <input type="text" class="text fullwidth" name="{{ fieldName }}" value="{{ suggestionValue }}">
+    {% endif %}
+
+    {# Status line #}
+    <div class="lens-native-status">
+        {% if valuesMatch %}
+            <span class="light">{{ 'Already applied to asset'|t('lens') }}</span>
+        {% elseif isCustom %}
+            <span class="light">{{ 'Suggestion only — current value was set manually'|t('lens') }}</span>
+        {% elseif hasSuggestion %}
+            <span class="light">{{ 'Will be applied to the asset on approval'|t('lens') }}</span>
+        {% endif %}
+    </div>
+
+    {# AI suggestion inline (informational, if user has edited the suggestion) #}
+    {% if (aiValue ?? null) and aiValue != suggestionValue %}
+        <div class="lens-ai-suggestion-inline">
+            {{ 'AI: "{value}"'|t('lens', {value: aiValue|truncate(60)}) }}
+        </div>
+    {% endif %}
+</div>
+
+{% endif %}

@@ -9,6 +9,7 @@ use craft\base\Element;
 use craft\base\Model;
 use craft\base\Plugin as BasePlugin;
 use craft\elements\Asset;
+use craft\fieldlayoutelements\assets\AltField;
 use craft\elements\conditions\assets\AssetCondition;
 use craft\elements\db\AssetQuery;
 use craft\events\DefineFieldLayoutElementsEvent;
@@ -425,6 +426,16 @@ class Plugin extends BasePlugin
 
     private function hasFieldLayoutElement(Asset $asset): bool
     {
+        return $this->fieldLayoutContains($asset, LensAnalysisElement::class);
+    }
+
+    public function hasAltFieldInLayout(Asset $asset): bool
+    {
+        return $this->fieldLayoutContains($asset, AltField::class);
+    }
+
+    private function fieldLayoutContains(Asset $asset, string $className): bool
+    {
         $fieldLayout = $asset->getFieldLayout();
 
         if ($fieldLayout === null) {
@@ -433,7 +444,7 @@ class Plugin extends BasePlugin
 
         foreach ($fieldLayout->getTabs() as $tab) {
             foreach ($tab->getElements() as $element) {
-                if ($element instanceof LensAnalysisElement) {
+                if ($element instanceof $className) {
                     return true;
                 }
             }

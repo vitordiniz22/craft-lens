@@ -86,6 +86,69 @@ class AnalysisController extends Controller
         return $this->redirectToPostedUrl();
     }
 
+    public function actionApplyAlt(): Response
+    {
+        $this->requireCpRequest();
+        $this->requirePostRequest();
+        $this->requirePermission('accessPlugin-lens');
+
+        $asset = $this->getRequiredAsset();
+
+        $analysis = Plugin::getInstance()->assetAnalysis->getAnalysis($asset->id);
+
+        if ($analysis === null || empty($analysis->altText)) {
+            throw new BadRequestHttpException('No suggested alt text available');
+        }
+
+        $asset->alt = $analysis->altText;
+        $success = Craft::$app->getElements()->saveElement($asset);
+
+        if ($this->request->getAcceptsJson()) {
+            return $this->asJson([
+                'success' => $success,
+                'alt' => $analysis->altText,
+            ]);
+        }
+
+        if ($success) {
+            Craft::$app->getSession()->setNotice(Craft::t('lens', 'Alt text applied.'));
+        } else {
+            Logger::warning(LogCategory::AssetProcessing, 'Failed to apply suggested alt text', assetId: $asset->id);
+            Craft::$app->getSession()->setError(Craft::t('lens', 'Failed to apply alt text.'));
+        }
+
+        return $this->redirectToPostedUrl();
+    }
+
+    public function actionUpdateAssetAlt(): Response
+    {
+        $this->requireCpRequest();
+        $this->requirePostRequest();
+        $this->requirePermission('accessPlugin-lens');
+
+        $asset = $this->getRequiredAsset();
+        $value = (string) $this->request->getRequiredBodyParam('value');
+
+        $asset->alt = $value;
+        $success = Craft::$app->getElements()->saveElement($asset);
+
+        if ($this->request->getAcceptsJson()) {
+            return $this->asJson([
+                'success' => $success,
+                'alt' => $value,
+            ]);
+        }
+
+        if ($success) {
+            Craft::$app->getSession()->setNotice(Craft::t('lens', 'Alt text updated.'));
+        } else {
+            Logger::warning(LogCategory::AssetProcessing, 'Failed to update asset alt text', assetId: $asset->id);
+            Craft::$app->getSession()->setError(Craft::t('lens', 'Failed to update alt text.'));
+        }
+
+        return $this->redirectToPostedUrl();
+    }
+
     public function actionApplyFocalPoint(): Response
     {
         $this->requireCpRequest();
