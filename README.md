@@ -5,7 +5,7 @@
 <h1 align="center">Lens</h1>
 
 <p align="center">
-  AI-powered asset intelligence for Craft CMS
+  AI-powered image analysis, tagging, and search for Craft CMS assets
 </p>
 
 <p align="center">
@@ -16,7 +16,11 @@
 
 ---
 
-Lens uses AI to automatically analyze and enrich your media library. Generate accessible alt text, extract dominant colors, detect faces and NSFW content, find duplicates, and organize assets with intelligent tagging. Works with **OpenAI GPT**, **Google Gemini**, and **Anthropic Claude**.
+Your asset library keeps growing, but nobody has the time to tag, describe, and organize thousands of images by hand. Finding that one photo you need means scrolling endlessly or relying on filenames like `IMG_4382.jpg`.
+
+**Lens changes that.** It uses AI to automatically tag, describe, and catalog every asset in your library — so when you need to find something, you actually can. Alt text, color palettes, focal points, detected faces, text extracted via OCR, duplicate detection, content safety flags, and more — all generated automatically, all editable, all queryable from your templates.
+
+Choose your AI provider — **OpenAI GPT**, **Google Gemini**, or **Anthropic Claude** — and let Lens turn your asset library into an organized, accessible, and fully searchable media system.
 
 <p align="center">
   <img src="./resources/screenshots/dashboard.png" alt="Lens Dashboard" width="800">
@@ -24,31 +28,37 @@ Lens uses AI to automatically analyze and enrich your media library. Generate ac
 
 ## Features
 
-### AI-Powered Analysis
-- **Alt text generation** with confidence scoring for accessibility
-- **Title suggestions** for better asset organization
-- **Long descriptions** for detailed context
-- **Tag extraction** with semantic understanding
-- **Dominant color** palette extraction
+### Search & Discovery
+- **20+ filters** — find assets by tag, color, people, quality, NSFW status, watermarks, brands, GPS location, and more
+- **Full-text search** across alt text, descriptions, tags, and OCR-extracted text
+- **Duplicate detection** — surface visually similar images via perceptual hashing so you stop re-uploading the same file
+- **Asset Browser** with saved searches and CSV export for audits and reporting
+
+### Automatic Tagging & Descriptions
+- **Alt text** generated with confidence scoring — fix your accessibility gaps without the manual grind
+- **Title suggestions** so your assets stop being called `IMG_4382.jpg`
+- **Long descriptions** for rich image context
+- **Semantic tags** that actually describe what's in the image, scored by confidence
+- **Dominant colors** extracted with palette percentages — search your library by color
 
 ### Content Detection
-- **Face detection** and people presence identification
-- **NSFW scoring** with category breakdown (violence, adult, etc.)
-- **Watermark detection** with type classification (text overlay, logo, stock provider)
-- **Brand/logo recognition** for marketing assets
-- **OCR text extraction** from images
+- **Faces and people** — individual, duo, small group, large group — know what's in every photo
+- **NSFW scoring** with category breakdown — catch unsafe content before it goes live
+- **Watermarks** identified by type (text overlay, logo, stock provider) — flag assets that shouldn't be published
+- **Brand/logo recognition** — instantly find every asset featuring a specific brand
+- **OCR** — text extracted directly from images, fully searchable
 
-### Image Quality & Metadata
-- **Quality scoring** including sharpness, exposure, and noise metrics
-- **Focal point detection** for smart cropping
-- **EXIF metadata extraction** (camera info, GPS coordinates, dates)
-- **Duplicate detection** via perceptual hashing
+### Quality & Metadata
+- **Quality scoring** — sharpness, exposure, and noise metrics so you publish your best work
+- **Focal point detection** for smart cropping that keeps the subject in frame
+- **EXIF metadata** — camera info, GPS coordinates, dates — all extracted and queryable
+- **Stock photo detection** — identify which assets came from stock providers
 
-### Human-in-the-Loop Workflow
-- **Review Queue** with three modes: Browse, Focus, and Bulk
-- **Keyboard shortcuts** for rapid review (A=Approve, S=Skip, R=Reject)
-- **Inline editing** of AI suggestions before applying
-- **Confidence thresholds** for filtering high-quality analyses
+### Review Workflow
+- **Review Queue** with three modes: Browse, Focus, and Bulk — process your backlog at your own pace
+- **Keyboard shortcuts** — approve, skip, or reject with a single keystroke (A/S/R)
+- **Inline editing** — refine any suggestion before it's applied to your assets
+- **Confidence thresholds** — auto-approve high-confidence results, review the rest
 
 ## Control Panel
 
@@ -123,7 +133,6 @@ return [
 | `autoProcessOnUpload` | `true` | Analyze assets automatically when uploaded |
 | `reprocessOnFileReplace` | `true` | Re-analyze assets when files are replaced |
 | `requireReviewBeforeApply` | `false` | Require manual approval before applying AI suggestions |
-| `detectStockProviders` | `true` | Identify stock photo provider watermarks |
 | `enabledVolumes` | `['*']` | Volume handles to process, or `['*']` for all |
 | `logRetentionDays` | `30` | Days to retain log entries |
 
@@ -182,23 +191,23 @@ Lens extends Craft's asset queries with AI-powered filtering capabilities.
 
 {# High-confidence analyses only #}
 {% set trustedAssets = craft.assets()
-    .lensConfidence('>= 0.8')
+    .lensConfidenceAbove(0.8)
     .all() %}
 
 {# Assets with watermarks detected #}
 {% set watermarkedAssets = craft.assets()
-    .lensWatermarkFlagged(true)
+    .lensHasWatermark(true)
     .all() %}
 
-{# Assets with extracted text (OCR) #}
+{# Assets containing specific text (OCR) #}
 {% set textAssets = craft.assets()
-    .lensHasExtractedText(true)
+    .lensTextSearch('keyword')
     .all() %}
 ```
 
 ### Available Condition Rules
 
-Lens registers 12 custom condition rules for use in element sources and queries:
+Lens registers 10 custom condition rules for use in element sources and queries:
 
 | Condition Rule | Description |
 |----------------|-------------|
@@ -211,9 +220,7 @@ Lens registers 12 custom condition rules for use in element sources and queries:
 | **Watermark Type** | Filter by watermark classification |
 | **Stock Provider** | Filter by detected stock photo source |
 | **Contains Brand Logo** | Filter by brand/logo detection |
-| **Has Extracted Text** | Filter by OCR text presence |
 | **Has GPS Coordinates** | Filter by EXIF location data |
-| **Usage Count** | Filter by how many times asset is referenced |
 
 ## Templating
 
@@ -285,56 +292,6 @@ Add the **Lens Analysis** element to any asset field layout to display AI metada
     {# Show duplicate detection UI #}
 {% endif %}
 ```
-
-## Events
-
-Lens dispatches events for custom integrations:
-
-```php
-use vitordiniz22\craftlens\events\AnalysisCompleteEvent;
-use vitordiniz22\craftlens\services\AssetAnalysisService;
-use yii\base\Event;
-
-// Listen for completed analyses
-Event::on(
-    AssetAnalysisService::class,
-    AssetAnalysisService::EVENT_ANALYSIS_COMPLETE,
-    function(AnalysisCompleteEvent $event) {
-        $asset = $event->asset;
-        $analysis = $event->analysis;
-
-        // Custom logic after analysis completes
-        // e.g., send notification, update external system, etc.
-    }
-);
-```
-
-## Database Schema
-
-Lens creates 8 database tables to store analysis data:
-
-| Table | Purpose |
-|-------|---------|
-| `lens_asset_analyses` | Main analysis data with all detection fields and confidence scores |
-| `lens_asset_tags` | Indexed tags for fast filtering and aggregation |
-| `lens_asset_colors` | Extracted color palettes with percentages |
-| `lens_analysis_content` | Raw AI responses and error messages |
-| `lens_ocr_content` | Extracted text from images (OCR) |
-| `lens_exif_metadata` | Camera info, GPS coordinates, and image metadata |
-| `lens_duplicate_groups` | Perceptual hash duplicate pairs with similarity scores |
-| `lens_logs` | Processing logs with retry capability |
-
-### Dual-Column Pattern
-
-Lens uses a sophisticated dual-column pattern for editable fields, preserving both AI suggestions and user edits:
-
-- `fieldName` — The active value (user-edited or AI-generated)
-- `fieldNameAi` — The original AI-generated value (never overwritten)
-- `fieldNameEditedBy` — User ID of who last edited (null = not edited)
-- `fieldNameEditedAt` — Timestamp of last edit
-- `fieldNameConfidence` — AI confidence score (0-1)
-
-This pattern enables features like "revert to AI suggestion" and audit trails.
 
 ## Cost Awareness
 
