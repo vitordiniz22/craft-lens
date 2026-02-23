@@ -12,6 +12,7 @@ use vitordiniz22\craftlens\helpers\FilterParser;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\Plugin;
 use vitordiniz22\craftlens\records\AssetAnalysisRecord;
+use vitordiniz22\craftlens\records\AssetColorRecord;
 use vitordiniz22\craftlens\records\AssetTagRecord;
 use yii\web\BadRequestHttpException;
 use yii\web\Response;
@@ -114,16 +115,36 @@ class SearchController extends Controller
             'Filename',
             'URL',
             'Alt Text',
-            'Confidence',
+            'Alt Text Confidence',
+            'Suggested Title',
+            'Title Confidence',
+            'Long Description',
+            'Long Description Confidence',
             'Tags',
+            'Colors',
             'Status',
             'Contains People',
             'Face Count',
             'Has Watermark',
             'Watermark Type',
             'Contains Brand Logo',
-            'Quality Score',
+            'Detected Brands',
+            'Sharpness Score',
+            'Exposure Score',
+            'Noise Score',
+            'Overall Quality Score',
             'NSFW Score',
+            'NSFW Flagged',
+            'NSFW Categories',
+            'Extracted Text',
+            'Focal Point X',
+            'Focal Point Y',
+            'Focal Point Confidence',
+            'Provider',
+            'Model',
+            'Input Tokens',
+            'Output Tokens',
+            'Cost',
             'Processed At',
         ]);
 
@@ -135,12 +156,18 @@ class SearchController extends Controller
             }
         }
 
-        $tagsByAnalysis = [];
         $analysisIds = array_map(fn($a) => $a->id, $analysisMap);
+
+        $tagsByAnalysis = [];
+        $colorsByAnalysis = [];
 
         if (!empty($analysisIds)) {
             foreach (AssetTagRecord::find()->where(['analysisId' => $analysisIds])->all() as $tag) {
                 $tagsByAnalysis[$tag->analysisId][] = $tag->tag;
+            }
+
+            foreach (AssetColorRecord::find()->where(['analysisId' => $analysisIds])->orderBy(['percentage' => SORT_DESC])->all() as $color) {
+                $colorsByAnalysis[$color->analysisId][] = $color->hex . ($color->percentage !== null ? ' (' . round($color->percentage * 100) . '%)' : '');
             }
         }
 
@@ -156,8 +183,15 @@ class SearchController extends Controller
             }
 
             $tags = '';
+            $colors = '';
+            $detectedBrands = '';
+            $nsfwCategories = '';
+
             if ($analysis !== null) {
                 $tags = implode(', ', $tagsByAnalysis[$analysis->id] ?? []);
+                $colors = implode(', ', $colorsByAnalysis[$analysis->id] ?? []);
+                $detectedBrands = self::flattenJsonColumn($analysis->detectedBrands);
+                $nsfwCategories = self::flattenJsonColumn($analysis->nsfwCategories);
             }
 
             fputcsv($output, [
@@ -167,16 +201,36 @@ class SearchController extends Controller
                 $asset->getUrl(),
                 $analysis?->altText ?? '',
                 $analysis?->altTextConfidence !== null ? round($analysis->altTextConfidence * 100) . '%' : '',
+                $analysis?->suggestedTitle ?? '',
+                $analysis?->titleConfidence !== null ? round($analysis->titleConfidence * 100) . '%' : '',
+                $analysis?->longDescription ?? '',
+                $analysis?->longDescriptionConfidence !== null ? round($analysis->longDescriptionConfidence * 100) . '%' : '',
                 $tags,
+                $colors,
                 $analysis?->status ?? '',
-                $analysis?->containsPeople ? 'Yes' : 'No',
-                $analysis?->faceCount ?? 0,
-                $analysis?->hasWatermark ? 'Yes' : 'No',
+                $analysis !== null ? ($analysis->containsPeople ? 'Yes' : 'No') : '',
+                $analysis?->faceCount ?? '',
+                $analysis !== null ? ($analysis->hasWatermark ? 'Yes' : 'No') : '',
                 $analysis?->watermarkType ?? '',
-                $analysis?->containsBrandLogo ? 'Yes' : 'No',
+                $analysis !== null ? ($analysis->containsBrandLogo ? 'Yes' : 'No') : '',
+                $detectedBrands,
+                $analysis?->sharpnessScore !== null ? round($analysis->sharpnessScore * 100) . '%' : '',
+                $analysis?->exposureScore !== null ? round($analysis->exposureScore * 100) . '%' : '',
+                $analysis?->noiseScore !== null ? round($analysis->noiseScore * 100) . '%' : '',
                 $analysis?->overallQualityScore !== null ? round($analysis->overallQualityScore * 100) . '%' : '',
                 $analysis?->nsfwScore !== null ? round($analysis->nsfwScore * 100) . '%' : '',
-                $analysis?->processedAt?->format('Y-m-d H:i:s') ?? '',
+                $analysis !== null ? ($analysis->isFlaggedNsfw ? 'Yes' : 'No') : '',
+                $nsfwCategories,
+                $analysis?->extractedText ?? '',
+                $analysis?->focalPointX ?? '',
+                $analysis?->focalPointY ?? '',
+                $analysis?->focalPointConfidence !== null ? round($analysis->focalPointConfidence * 100) . '%' : '',
+                $analysis?->provider ?? '',
+                $analysis?->providerModel ?? '',
+                $analysis?->inputTokens ?? '',
+                $analysis?->outputTokens ?? '',
+                $analysis?->actualCost !== null ? '$' . number_format((float) $analysis->actualCost, 4) : '',
+                $analysis?->processedAt ?? '',
             ]);
         }
 
@@ -222,5 +276,22 @@ class SearchController extends Controller
         $success = Plugin::getInstance()->duplicateDetection->resolve($groupId, $resolution, $userId);
 
         return $this->asJson(['success' => $success]);
+    }
+
+    /**
+     * Flatten a JSON-decoded array column to a CSV-friendly string.
+     * Yii2 auto-decodes JSON columns, so $value is always array|null.
+     * Elements may be scalar ("violence") or nested ({"category":"violence","score":0.8}).
+     */
+    private static function flattenJsonColumn(?array $value): string
+    {
+        if (empty($value)) {
+            return '';
+        }
+
+        return implode(', ', array_map(
+            fn($item) => is_scalar($item) ? (string) $item : json_encode($item),
+            $value,
+        ));
     }
 }
