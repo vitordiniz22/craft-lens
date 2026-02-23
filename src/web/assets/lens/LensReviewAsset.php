@@ -17,6 +17,7 @@ class LensReviewAsset extends AssetBundle
             'js/components/lens-tag-editor.js',
             'js/components/lens-color-editor.js',
             'js/pages/lens-review-page.js',
+            'js/pages/lens-bulk-review-page.js',
         ];
 
         parent::init();
