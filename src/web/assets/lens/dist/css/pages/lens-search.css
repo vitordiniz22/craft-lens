@@ -226,24 +226,16 @@
     flex-shrink: 0;
 }
 
-/* Welcome state */
-.lens-search-welcome {
-    text-align: center;
-    padding: 60px 20px;
-}
-
-.lens-welcome-icon {
-    margin-bottom: 16px;
-}
-
-.lens-search-welcome h2 {
-    margin: 0 0 8px 0;
-    font-size: 20px;
-}
-
-.lens-search-welcome p {
-    color: var(--medium-text-color);
-    margin: 0;
+/* Active filter indicator */
+.lens-active-filter-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--s);
+    margin-bottom: var(--m);
+    padding: 8px 12px;
+    background: var(--gray-050);
+    border-radius: var(--small-border-radius);
+    font-size: 13px;
 }
 
 /* Keyboard focus */

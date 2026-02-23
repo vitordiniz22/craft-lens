@@ -6,7 +6,6 @@ namespace vitordiniz22\craftlens\services;
 
 use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\migrations\Install;
-use vitordiniz22\craftlens\records\AssetAnalysisRecord;
 use vitordiniz22\craftlens\records\AssetTagRecord;
 use yii\base\Component;
 use yii\db\Query;
@@ -104,7 +103,7 @@ class TagAggregationService extends Component
 
         $results = $query->all();
 
-        return array_map(function ($row) {
+        return array_map(function($row) {
             return ['tag' => $row['tag'], 'count' => (int) $row['count']];
         }, $results);
     }

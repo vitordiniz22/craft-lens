@@ -78,7 +78,8 @@ readonly class AnalysisResult
         public ?float $focalPointX = null,
         public ?float $focalPointY = null,
         public ?float $focalPointConfidence = null,
-    ) {}
+    ) {
+    }
 
     /**
      * Return a summary of the analysis for logging purposes.

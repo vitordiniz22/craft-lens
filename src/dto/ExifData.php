@@ -48,7 +48,8 @@ readonly class ExifData
         public ?float $longitude = null,
         public ?float $altitude = null,
         public array $rawExif = [],
-    ) {}
+    ) {
+    }
 
     /**
      * Check if GPS coordinates are available.

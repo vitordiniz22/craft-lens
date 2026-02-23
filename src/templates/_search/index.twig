@@ -33,7 +33,7 @@
             <button type="button" class="btn" data-lens-action="toggle-filters">
                 {{ iconSvg('filter')|attr({width: 14, height: 14, class: 'lens-btn-icon'}) }}
                 {{ 'Filters'|t('lens') }}
-                {% if hasFilters %}
+                {% if showFilterPanel %}
                     <span class="lens-badge lens-badge--small lens-badge--info">{{ 'active'|t('lens') }}</span>
                 {% endif %}
             </button>
@@ -43,12 +43,23 @@
         {% if quickFilters|length %}
             <div class="btngroup lens-mb-12">
                 {% for key, filter in quickFilters %}
-                    <a href="{{ cpUrl('lens/search', {quickFilter: key}) }}"
+                    <a href="{{ cpUrl('lens/search', (filters.quickFilter ?? '') == key ? {} : {quickFilter: key}) }}"
                        class="btn small{% if (filters.quickFilter ?? '') == key %} active{% endif %}"
                        aria-pressed="{{ (filters.quickFilter ?? '') == key ? 'true' : 'false' }}">
                         {{ filter.label }}
                     </a>
                 {% endfor %}
+            </div>
+        {% endif %}
+
+        {# Active Quick Filter Indicator #}
+        {% if filters.quickFilter is defined and filters.quickFilter %}
+            <div class="lens-active-filter-bar">
+                <span class="light">
+                    {{ 'Filtered by'|t('lens') }}:
+                    <strong>{{ quickFilters[filters.quickFilter].label ?? filters.quickFilter }}</strong>
+                </span>
+                <a href="{{ cpUrl('lens/search') }}">{{ 'Clear'|t('lens') }}</a>
             </div>
         {% endif %}
 

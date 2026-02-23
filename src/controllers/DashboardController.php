@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace vitordiniz22\craftlens\controllers;
 
-use Craft;
 use craft\web\Controller;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\Logger;

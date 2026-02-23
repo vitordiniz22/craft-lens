@@ -53,7 +53,7 @@ class ContentStorageService extends Component
     public function saveAnalysisContent(
         AssetAnalysisRecord $analysisRecord,
         AnalysisResult $result,
-        ?string $errorMessage = null
+        ?string $errorMessage = null,
     ): AnalysisContentRecord {
         $record = $this->getAnalysisContent($analysisRecord->id);
 

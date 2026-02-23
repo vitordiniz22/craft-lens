@@ -66,7 +66,7 @@ class AnalysisException extends Exception
         string $providerName,
         int $assetId,
         int $fileSize,
-        int $maxSize
+        int $maxSize,
     ): self {
         $fileSizeMB = round($fileSize / 1024 / 1024, 1);
         $maxSizeMB = round($maxSize / 1024 / 1024, 1);

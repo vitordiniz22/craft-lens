@@ -93,7 +93,7 @@ class OpenAiProvider extends BaseAiProvider
             $payload['reasoning_effort'] = 'none';
         }
 
-        return $this->executeApiRequest(function (int $startTime) use ($settings, $payload, $assetId) {
+        return $this->executeApiRequest(function(int $startTime) use ($settings, $payload, $assetId) {
             $response = $this->client->post(self::API_URL, [
                 'headers' => [
                     'Authorization' => 'Bearer ' . $settings->getOpenaiApiKey(),

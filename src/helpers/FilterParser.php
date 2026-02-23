@@ -49,10 +49,22 @@ class FilterParser
     }
 
     /**
-     * Check if any filter is active (beyond pagination).
+     * Check if any filter is active, including quick filters.
+     */
+    public static function hasAnyFilters(array $filters): bool
+    {
+        return !empty(array_intersect_key($filters, array_flip(self::FILTER_KEYS)));
+    }
+
+    /**
+     * Check if manual (non-quick) filters are active — used for auto-opening the filter panel.
      */
     public static function hasActiveFilters(array $filters): bool
     {
+        if (isset($filters['quickFilter'])) {
+            return false;
+        }
+
         return !empty(array_intersect_key($filters, array_flip(self::FILTER_KEYS)));
     }
 
@@ -102,12 +114,12 @@ class FilterParser
             'confidence' => [
                 'min' => 'confidenceMin',
                 'max' => 'confidenceMax',
-                'transform' => fn($v) => (float) $v
+                'transform' => fn($v) => (float) $v,
             ],
             'nsfwScore' => [
                 'min' => 'nsfwScoreMin',
                 'max' => 'nsfwScoreMax',
-                'transform' => fn($v) => max(0, min(100, (int) $v)) / 100
+                'transform' => fn($v) => max(0, min(100, (int) $v)) / 100,
             ],
         ];
 

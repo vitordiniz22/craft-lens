@@ -31,7 +31,6 @@ use yii\db\ActiveQueryInterface;
  */
 class DuplicateGroupRecord extends ActiveRecord
 {
-
     public static function tableName(): string
     {
         return Install::TABLE_DUPLICATE_GROUPS;

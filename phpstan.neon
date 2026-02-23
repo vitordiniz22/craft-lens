@@ -5,3 +5,12 @@ parameters:
     level: 4
     paths:
         - src
+    treatPhpDocTypesAsCertain: false
+    stubFiles:
+        - stubs/CraftActiveRecord.stub
+    ignoreErrors:
+        # AssetQueryBehavior adds methods at runtime via Yii2 behaviors.
+        # PHPStan cannot resolve behavior-injected methods on third-party classes.
+        - '#^Call to an undefined method craft\\elements\\db\\AssetQuery::lens\w+\(\)\.$#'
+        # Craft::$app->getQueue() returns yii\queue\Queue but runtime is craft\queue\Queue.
+        - '#^Call to an undefined method yii\\queue\\Queue::run\(\)\.$#'

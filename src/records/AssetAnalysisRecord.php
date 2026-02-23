@@ -204,7 +204,7 @@ class AssetAnalysisRecord extends ActiveRecord
             [['inputTokens', 'outputTokens'], 'integer', 'min' => 0],
             [['actualCost'], 'number', 'min' => 0],
             [['altTextEditedBy', 'suggestedTitleEditedBy', 'longDescriptionEditedBy', 'faceCountEditedBy', 'containsPeopleEditedBy', 'nsfwScoreEditedBy', 'hasWatermarkEditedBy', 'containsBrandLogoEditedBy', 'focalPointEditedBy', 'extractedTextEditedBy'], 'integer'],
-            [['nsfwCategories', 'watermarkDetails', 'detectedBrands'], function (string $attribute): void {
+            [['nsfwCategories', 'watermarkDetails', 'detectedBrands'], function(string $attribute): void {
                 if ($this->$attribute !== null && !is_array($this->$attribute)) {
                     $this->addError($attribute, "{$attribute} must be an array or null.");
                 }
@@ -231,5 +231,4 @@ class AssetAnalysisRecord extends ActiveRecord
 
         return $this->watermarkDetails['stockProvider'] ?? null;
     }
-
 }

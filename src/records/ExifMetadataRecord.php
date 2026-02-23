@@ -26,7 +26,7 @@ use yii\db\ActiveQueryInterface;
  * @property string|null $shutterSpeed Shutter speed (e.g., "1/125")
  * @property int|null $iso ISO sensitivity
  * @property string|null $exposureMode Exposure mode (Auto, Manual, etc.)
- * @property \DateTime|null $dateTaken EXIF DateTimeOriginal
+ * @property string|null $dateTaken EXIF DateTimeOriginal (stored as Y-m-d H:i:s)
  * @property int|null $orientation EXIF orientation (1-8)
  * @property int|null $width Original image width
  * @property int|null $height Original image height

@@ -1,7 +1,7 @@
 {# Filter Panel — included within the search form context in index.twig #}
 {% import '_includes/forms.twig' as forms %}
 
-<div class="pane lens-search-filters{% if not hasFilters %} hidden{% endif %}" data-lens-target="filters-panel">
+<div class="pane lens-search-filters{% if not showFilterPanel %} hidden{% endif %}" data-lens-target="filters-panel">
     <div class="lens-filter-grid">
 
         {# — Row 1: Content Detection — #}
@@ -173,6 +173,8 @@
     {# Actions #}
     <div class="lens-filter-actions">
         <button type="submit" class="btn submit">{{ 'Apply Filters'|t('lens') }}</button>
-        <a href="{{ cpUrl('lens/search') }}" class="btn">{{ 'Clear All'|t('lens') }}</a>
+        {% if showFilterPanel %}
+            <a href="{{ cpUrl('lens/search') }}" class="btn">{{ 'Clear All'|t('lens') }}</a>
+        {% endif %}
     </div>
 </div>

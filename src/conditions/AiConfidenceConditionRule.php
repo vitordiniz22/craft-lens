@@ -11,7 +11,6 @@ use craft\elements\Asset;
 use craft\elements\conditions\ElementConditionRuleInterface;
 use craft\elements\db\AssetQuery;
 use craft\elements\db\ElementQueryInterface;
-use vitordiniz22\craftlens\migrations\Install;
 use vitordiniz22\craftlens\Plugin;
 
 /**

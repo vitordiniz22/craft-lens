@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace vitordiniz22\craftlens\services;
 
 use craft\elements\Asset;
+use vitordiniz22\craftlens\dto\ExifData;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\Plugin;
@@ -106,7 +107,7 @@ class ExifMetadataService extends Component
     private function createRecord(
         Asset $asset,
         AssetAnalysisRecord $analysisRecord,
-        \vitordiniz22\craftlens\dto\ExifData $exifData
+        ExifData $exifData,
     ): ?ExifMetadataRecord {
         $record = new ExifMetadataRecord();
         $record->analysisId = $analysisRecord->id;
@@ -132,7 +133,7 @@ class ExifMetadataService extends Component
      */
     private function updateRecord(
         ExifMetadataRecord $record,
-        \vitordiniz22\craftlens\dto\ExifData $exifData
+        ExifData $exifData,
     ): ?ExifMetadataRecord {
         $this->populateRecord($record, $exifData);
 
@@ -153,7 +154,7 @@ class ExifMetadataService extends Component
      */
     private function populateRecord(
         ExifMetadataRecord $record,
-        \vitordiniz22\craftlens\dto\ExifData $exifData
+        ExifData $exifData,
     ): void {
         $record->cameraMake = $exifData->cameraMake;
         $record->cameraModel = $exifData->cameraModel;

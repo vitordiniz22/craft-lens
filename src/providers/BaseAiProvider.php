@@ -11,8 +11,8 @@ use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use vitordiniz22\craftlens\dto\AnalysisResult;
-use vitordiniz22\craftlens\exceptions\AnalysisException;
 use vitordiniz22\craftlens\enums\LogLevel;
+use vitordiniz22\craftlens\exceptions\AnalysisException;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\helpers\ResponseNormalizer;
 

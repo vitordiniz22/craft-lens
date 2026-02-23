@@ -92,7 +92,7 @@ class GeminiProvider extends BaseAiProvider
             ],
         ];
 
-        return $this->executeApiRequest(function (int $startTime) use ($url, $apiKey, $payload, $assetId) {
+        return $this->executeApiRequest(function(int $startTime) use ($url, $apiKey, $payload, $assetId) {
             $response = $this->client->post($url, [
                 'headers' => [
                     'Content-Type' => 'application/json',

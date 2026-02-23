@@ -103,5 +103,4 @@ class LensAnalysisElement extends BaseUiElement
                 . '</p></div>';
         }
     }
-
 }

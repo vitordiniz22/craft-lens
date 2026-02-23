@@ -25,5 +25,4 @@ class ConfigurationException extends Exception
     {
         return new self("Required field '{$fieldName}' is not configured");
     }
-
 }

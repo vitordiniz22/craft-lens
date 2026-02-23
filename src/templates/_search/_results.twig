@@ -40,17 +40,15 @@
     } only %}
 
 {% elseif hasFilters is defined and hasFilters %}
-    <div class="zilch">
-        <p>{{ 'No assets found matching your filters.'|t('lens') }}</p>
-        <a href="{{ cpUrl('lens/search') }}" class="btn">{{ 'Clear Filters'|t('lens') }}</a>
-    </div>
+    {% include 'lens/_components/empty-state' with {
+        heading: 'No Results Found'|t('lens'),
+        description: 'No assets found matching your filters.'|t('lens'),
+        cta: {label: 'Clear Filters'|t('lens'), url: 'lens/search', style: ''},
+    } only %}
 
 {% else %}
-    <div class="lens-search-welcome">
-        <div class="lens-welcome-icon">
-            {{ iconSvg('magnifying-glass') }}
-        </div>
-        <h2>{{ 'Search Your Assets'|t('lens') }}</h2>
-        <p>{{ 'Search by alt text, title, extracted text, or tags. Use filters to narrow down results.'|t('lens') }}</p>
-    </div>
+    {% include 'lens/_components/empty-state' with {
+        heading: 'Search Your Assets'|t('lens'),
+        description: 'Search by alt text, title, extracted text, or tags. Use filters to narrow down results.'|t('lens'),
+    } only %}
 {% endif %}

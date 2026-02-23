@@ -20,7 +20,6 @@ use vitordiniz22\craftlens\records\ExifMetadataRecord;
 use yii\base\Component;
 use yii\base\InvalidArgumentException;
 
-
 /**
  * Service for managing the AI suggestions review workflow.
  */
@@ -276,7 +275,7 @@ class ReviewService extends Component
                     'shutterSpeed' => $exifRecord->shutterSpeed,
                     'iso' => $exifRecord->iso,
                     'exposureMode' => $exifRecord->exposureMode,
-                    'dateTaken' => $exifRecord->dateTaken ? (string)$exifRecord->dateTaken : null,
+                    'dateTaken' => $exifRecord->dateTaken,
                     'width' => $exifRecord->width,
                     'height' => $exifRecord->height,
                     'latitude' => $exifRecord->latitude,
@@ -301,7 +300,7 @@ class ReviewService extends Component
             ->limit(3)
             ->all();
 
-        $otherAssetIds = array_map(function ($dup) use ($record) {
+        $otherAssetIds = array_map(function($dup) use ($record) {
             return ($dup->canonicalAssetId === $record->assetId)
                 ? $dup->duplicateAssetId
                 : $dup->canonicalAssetId;
@@ -392,13 +391,13 @@ class ReviewService extends Component
             'faceCountEditedBy' => $record->faceCountEditedBy,
             'faceCountEditedAt' => $record->faceCountEditedAt,
             'faceCountEditedByName' => $record->faceCountEditedBy ? Craft::$app->getUsers()->getUserById($record->faceCountEditedBy)?->friendlyName : null,
-            'faceCountEditedAtFormatted' => $record->faceCountEditedAt ? DateTimeHelper::toDateTime($record->faceCountEditedAt)?->format('M j, Y') : null,
+            'faceCountEditedAtFormatted' => $record->faceCountEditedAt ? (DateTimeHelper::toDateTime($record->faceCountEditedAt) ?: null)?->format('M j, Y') : null,
             'containsPeople' => (bool)$record->containsPeople,
             'containsPeopleAi' => (bool)$record->containsPeopleAi,
             'containsPeopleEditedBy' => $record->containsPeopleEditedBy,
             'containsPeopleEditedAt' => $record->containsPeopleEditedAt,
             'containsPeopleEditedByName' => $record->containsPeopleEditedBy ? Craft::$app->getUsers()->getUserById($record->containsPeopleEditedBy)?->friendlyName : null,
-            'containsPeopleEditedAtFormatted' => $record->containsPeopleEditedAt ? DateTimeHelper::toDateTime($record->containsPeopleEditedAt)?->format('M j, Y') : null,
+            'containsPeopleEditedAtFormatted' => $record->containsPeopleEditedAt ? (DateTimeHelper::toDateTime($record->containsPeopleEditedAt) ?: null)?->format('M j, Y') : null,
             'nsfwScore' => $record->nsfwScore,
             'nsfwCategories' => $record->nsfwCategories,
             'isFlaggedNsfw' => (bool)$record->isFlaggedNsfw,

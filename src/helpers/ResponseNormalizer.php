@@ -6,7 +6,6 @@ namespace vitordiniz22\craftlens\helpers;
 
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\exceptions\AnalysisException;
-use vitordiniz22\craftlens\helpers\Logger;
 
 /**
  * Helper for normalizing AI provider responses.
@@ -56,7 +55,7 @@ final class ResponseNormalizer
             'Color',
             'hex',
             'percentage',
-            function ($color) {
+            function($color) {
                 $hex = $color['hex'];
 
                 if (!str_starts_with($hex, '#')) {
@@ -89,7 +88,7 @@ final class ResponseNormalizer
             'NSFW category',
             'category',
             'confidence',
-            function ($cat) use ($providerName) {
+            function($cat) use ($providerName) {
                 $category = strtolower(trim((string) $cat['category']));
 
                 if (!in_array($category, self::VALID_NSFW_CATEGORIES, true)) {
@@ -253,7 +252,7 @@ final class ResponseNormalizer
         string $itemName,
         string $requiredField,
         string $scoreField,
-        callable $transformer
+        callable $transformer,
     ): array {
         $normalized = [];
 

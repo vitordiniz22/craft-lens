@@ -514,7 +514,7 @@ class SearchService extends Component
         } else {
             $query->andWhere(['or',
                 ['lens.focalPointX' => null],
-                ['lens.focalPointY' => null]
+                ['lens.focalPointY' => null],
             ]);
         }
     }
@@ -701,5 +701,4 @@ class SearchService extends Component
 
         return $filters;
     }
-
 }

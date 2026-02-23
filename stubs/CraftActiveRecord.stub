@@ -1,0 +1,20 @@
+<?php
+
+namespace craft\db;
+
+/**
+ * @template T
+ * @phpstan-method T|null one($db = null)
+ * @phpstan-method T[] all($db = null)
+ */
+class ActiveQuery
+{
+}
+
+class ActiveRecord
+{
+    /**
+     * @phpstan-return ActiveQuery<static>
+     */
+    public static function find(): ActiveQuery;
+}

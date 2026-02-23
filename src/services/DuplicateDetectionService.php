@@ -330,7 +330,7 @@ class DuplicateDetectionService extends Component
             return [];
         }
 
-        $otherAssetIds = array_map(function ($dup) use ($assetId) {
+        $otherAssetIds = array_map(function($dup) use ($assetId) {
             return $dup->canonicalAssetId == $assetId
                 ? $dup->duplicateAssetId
                 : $dup->canonicalAssetId;

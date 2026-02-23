@@ -303,7 +303,7 @@ class BulkProcessingStatusService extends Component
         }
 
         // If no completedAt yet, check if we should mark it
-        if (!isset($session['completedAt']) || $session['completedAt'] === null) {
+        if (!isset($session['completedAt'])) {
             // Check if processing has stopped
             if (!$this->hasLensJobsInQueue() && $this->getProcessingCount() === 0) {
                 // Mark as completed
@@ -524,7 +524,6 @@ class BulkProcessingStatusService extends Component
             // Clear the session
             Craft::$app->getCache()->delete($this->getSessionCacheKey());
             Craft::$app->getCache()->delete($this->getSessionCacheKey() . '_previous_state');
-
         } catch (\Throwable $e) {
             Logger::error(LogCategory::AssetProcessing, 'Failed to cancel processing', exception: $e);
         }

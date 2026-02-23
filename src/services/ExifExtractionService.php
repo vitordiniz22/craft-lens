@@ -36,10 +36,6 @@ class ExifExtractionService extends Component
 
         $tempPath = $asset->getCopyOfFile();
 
-        if ($tempPath === null) {
-            throw new \RuntimeException("Could not get copy of file for asset {$asset->id}");
-        }
-
         try {
             return $this->extractFromFile($tempPath);
         } finally {

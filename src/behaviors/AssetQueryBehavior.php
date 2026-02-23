@@ -8,7 +8,6 @@ use craft\elements\db\AssetQuery;
 use craft\helpers\Db;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\migrations\Install;
-use vitordiniz22\craftlens\records\AssetAnalysisRecord;
 use yii\base\Behavior;
 use yii\db\Query;
 

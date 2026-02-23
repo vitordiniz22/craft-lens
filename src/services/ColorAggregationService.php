@@ -6,7 +6,6 @@ namespace vitordiniz22\craftlens\services;
 
 use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\migrations\Install;
-use vitordiniz22\craftlens\records\AssetAnalysisRecord;
 use vitordiniz22\craftlens\records\AssetColorRecord;
 use yii\base\Component;
 use yii\db\Query;

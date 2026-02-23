@@ -248,7 +248,6 @@ class AnalysisEditService extends Component
             'int' => max($rules['min'] ?? 0, (int)$value),
             'float' => min($rules['max'] ?? 1.0, max($rules['min'] ?? 0.0, (float)$value)),
             'bool' => (bool)$value,
-            default => $value,
         };
     }
 

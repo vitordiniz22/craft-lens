@@ -34,7 +34,7 @@ class AnalysisController extends Controller
         Logger::info(LogCategory::AssetProcessing, 'Asset queued for reprocessing', assetId: $asset->id);
 
         if ($this->request->getAcceptsJson()) {
-            register_shutdown_function(function () {
+            register_shutdown_function(function() {
                 try {
                     Craft::$app->getQueue()->run();
                 } catch (\Throwable $e) {
