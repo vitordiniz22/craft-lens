@@ -26,8 +26,6 @@ class DashboardController extends Controller
 
         try {
             $stats = $plugin->statistics;
-
-            // Compute overview stats once — reused by attention items, quick actions, cost projection
             $overviewStats = $stats->getOverviewStats();
             $analyzedCount = $overviewStats['analyzed'];
 
@@ -59,18 +57,14 @@ class DashboardController extends Controller
                 'taggedPercentage' => $stats->getTaggedPercentage($analyzedCount),
                 'highQualityPercentage' => $stats->getHighQualityPercentage(),
 
-                // Section 4: Quick Actions
-                'pendingReviewCount' => $overviewStats['pendingReview'],
-                'unprocessedCount' => $overviewStats['unprocessed'],
-
-                // Section 5: Quick Insights
+                // Section 4: Quick Insights
                 'topTags' => $stats->getTopTags(10),
                 'dominantColors' => $plugin->colorAggregation->getColorCounts(5),
 
-                // Section 6: Recent Activity
+                // Section 5: Recent Activity
                 'recentActivity' => $stats->getRecentActivity(10),
 
-                // Section 7: Enhanced Usage
+                // Section 6: Usage
                 'monthlyUsage' => $stats->getMonthlyUsageSummary(),
                 'lastMonthUsage' => $stats->getLastMonthUsageSummary(),
                 'allTimeUsage' => $stats->getAllTimeUsage(),

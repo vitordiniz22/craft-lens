@@ -60,7 +60,7 @@
                         {% if waiting > 0 %}
                             <span class="lens-processing__separator"> · </span>
                         {% endif %}
-                        <span class="lens-processing__review-count">{{ pendingReview|number_format }} {{ 'pending review'|t('lens') }}</span>
+                        <a href="{{ cpUrl('lens/review') }}" class="lens-processing__review-count">{{ pendingReview|number_format }} {{ 'pending review'|t('lens') }}</a>
                     {% endif %}
                     {% if failed > 0 %}
                         {% if waiting > 0 or pendingReview > 0 %}
