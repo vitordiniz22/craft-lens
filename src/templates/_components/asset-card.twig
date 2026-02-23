@@ -8,7 +8,6 @@
  #   colors    - array of color records (pre-loaded), optional
  #   dupCount  - int (pre-loaded), optional
  #   linkUrl   - string (destination URL when card is clicked)
- #   showAltText  - bool (default true)
  #   showTags     - bool (default true)
  #   showColors   - bool (default true)
  #   showMeta     - bool (show confidence badge in browse cards, default false)
@@ -16,7 +15,6 @@
  #   tagCount   - int (for browse mode tag count display, optional)
  #}
 
-{% set showAltText = showAltText ?? true %}
 {% set showTags = showTags ?? true %}
 {% set showColors = showColors ?? true %}
 {% set showMeta = showMeta ?? false %}
@@ -38,19 +36,6 @@
 
         {% if analysis %}
             <div class="lens-result-overlay">
-                {% if analysis.altTextConfidence %}
-                    <span class="lens-badge lens-badge--small lens-badge--dark" title="{{ 'Confidence'|t('lens') }}">
-                        {{ (analysis.altTextConfidence * 100)|round }}%
-                    </span>
-                {% endif %}
-                {% if analysis.containsPeople %}
-                    <span class="lens-badge lens-badge--dark" title="{{ 'Contains people'|t('lens') }}">
-                        <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M10 8a3 3 0 100-6 3 3 0 000 6zM3.465 14.493a1.23 1.23 0 00.41 1.412A9.957 9.957 0 0010 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 00-13.074.003z"/>
-                        </svg>
-                        {{ analysis.faceCount }}
-                    </span>
-                {% endif %}
                 {% if dupCount > 0 %}
                     <a href="{{ cpUrl('lens/duplicates') }}" class="lens-duplicate-badge" title="{{ '{count} duplicate(s)'|t('lens', {count: dupCount}) }}">
                         <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor">
@@ -82,30 +67,24 @@
         </a>
 
         {% if analysis %}
-            {% if showAltText and analysis.altText %}
-                <p class="lens-result-alt" title="{{ analysis.altText }}">
-                    {{ analysis.altText|truncate(60) }}
-                </p>
-            {% endif %}
-
-            {% if showTags and tags|length %}
-                <div class="chips small">
-                    {% for tag in tags|slice(0, 4) %}
-                        <a href="{{ cpUrl('lens/search', {tags: tag.tag}) }}" class="chip small">
-                            {{ tag.tag }}
-                        </a>
-                    {% endfor %}
-                    {% if tags|length > 4 %}
-                        <span class="chip small disabled">+{{ tags|length - 4 }}</span>
+            {% if (showTags and tags|length) or (showColors and colors|length) %}
+                <div class="lens-result-meta">
+                    {% if showTags and tags|length %}
+                        <span class="lens-result-tags">
+                            {%- for tag in tags|slice(0, 3) -%}
+                                <a href="{{ cpUrl('lens/search', {tags: tag.tag}) }}">{{ tag.tag }}</a>
+                                {%- if not loop.last %}, {% endif -%}
+                            {%- endfor -%}
+                            {%- if tags|length > 3 %} <span class="light">+{{ tags|length - 3 }}</span>{% endif -%}
+                        </span>
                     {% endif %}
-                </div>
-            {% endif %}
-
-            {% if showColors and colors|length %}
-                <div class="lens-result-colors">
-                    {% for color in colors|slice(0, 5) %}
-                        <span class="lens-swatch lens-swatch--sm" style="background-color: {{ color.hex }}" title="{{ color.hex }}"></span>
-                    {% endfor %}
+                    {% if showColors and colors|length %}
+                        <span class="lens-result-colors">
+                            {% for color in colors|slice(0, 5) %}
+                                <span class="lens-swatch lens-swatch--sm" style="background-color: {{ color.hex }}" title="{{ color.hex }}"></span>
+                            {% endfor %}
+                        </span>
+                    {% endif %}
                 </div>
             {% endif %}
         {% endif %}
