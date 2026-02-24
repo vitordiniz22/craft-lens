@@ -4,31 +4,35 @@
 {% set selectedSubnavItem = 'bulk' %}
 
 {% block content %}
+    {% set isConfigError = state == 'complete' and failureReason is defined and failureReason.message and failureReason.isConfigError %}
+
     <div class="lens-bulk-page">
 
-        {# Stats Grid - Always visible #}
-        <div class="lens-stats-grid">
-            <div class="lens-stat-card">
-                <div class="lens-stat-value">{{ stats.totalImages }}</div>
-                <div class="lens-stat-label">{{ 'Total Images'|t('lens') }}</div>
+        {# Stats Grid - Hidden when config error caused processing to fail #}
+        {% if not isConfigError %}
+            <div class="lens-stats-grid">
+                <div class="lens-stat-card">
+                    <div class="lens-stat-value">{{ stats.totalImages }}</div>
+                    <div class="lens-stat-label">{{ 'Total Images'|t('lens') }}</div>
+                </div>
+                <div class="lens-stat-card lens-stat-success">
+                    <div class="lens-stat-value">{{ stats.analyzed }}</div>
+                    <div class="lens-stat-label">{{ 'Analyzed'|t('lens') }}</div>
+                </div>
+                <div class="lens-stat-card lens-stat-warning">
+                    <div class="lens-stat-value">{{ stats.unprocessed }}</div>
+                    <div class="lens-stat-label">{{ 'Unprocessed'|t('lens') }}</div>
+                </div>
+                <div class="lens-stat-card">
+                    <div class="lens-stat-value">{{ stats.pendingReview }}</div>
+                    <div class="lens-stat-label">{{ 'Pending Review'|t('lens') }}</div>
+                </div>
+                <div class="lens-stat-card lens-stat-error">
+                    <div class="lens-stat-value">{{ stats.failed }}</div>
+                    <div class="lens-stat-label">{{ 'Failed'|t('lens') }}</div>
+                </div>
             </div>
-            <div class="lens-stat-card lens-stat-success">
-                <div class="lens-stat-value">{{ stats.analyzed }}</div>
-                <div class="lens-stat-label">{{ 'Analyzed'|t('lens') }}</div>
-            </div>
-            <div class="lens-stat-card lens-stat-warning">
-                <div class="lens-stat-value">{{ stats.unprocessed }}</div>
-                <div class="lens-stat-label">{{ 'Unprocessed'|t('lens') }}</div>
-            </div>
-            <div class="lens-stat-card">
-                <div class="lens-stat-value">{{ stats.pendingReview }}</div>
-                <div class="lens-stat-label">{{ 'Pending Review'|t('lens') }}</div>
-            </div>
-            <div class="lens-stat-card lens-stat-error">
-                <div class="lens-stat-value">{{ stats.failed }}</div>
-                <div class="lens-stat-label">{{ 'Failed'|t('lens') }}</div>
-            </div>
-        </div>
+        {% endif %}
 
         {# Render only the current state #}
         {% if state == 'processing' %}

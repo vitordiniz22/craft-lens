@@ -48,6 +48,16 @@ class GeminiProvider extends BaseAiProvider
         }
     }
 
+    public function testConnection(Settings $settings): void
+    {
+        $this->validateCredentials($settings);
+
+        $this->executeTestRequest(
+            'https://generativelanguage.googleapis.com/v1beta/models?key=' . $settings->getGeminiApiKey(),
+            ['Content-Type' => 'application/json']
+        );
+    }
+
     protected function extractContentText(array $response): string
     {
         return $response['candidates'][0]['content']['parts'][0]['text'] ?? '';

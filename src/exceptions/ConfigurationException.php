@@ -13,12 +13,12 @@ class ConfigurationException extends Exception
 {
     public static function missingApiKey(string $provider): self
     {
-        return new self("API key for {$provider} is not configured.");
+        return new self("The API key for {$provider} is not configured. Please add your API key in the plugin settings.");
     }
 
     public static function invalidApiKey(string $provider): self
     {
-        return new self("API key for {$provider} is invalid.");
+        return new self("The API key for {$provider} appears to be invalid. Please check your API key in the plugin settings.");
     }
 
     public static function missingField(string $fieldName): self

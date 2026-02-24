@@ -15,6 +15,7 @@ use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\enums\WatermarkType;
 use vitordiniz22\craftlens\exceptions\AnalysisException;
+use vitordiniz22\craftlens\exceptions\ConfigurationException;
 use vitordiniz22\craftlens\helpers\AssetTitleHelper;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\helpers\PerceptualHashHelper;
@@ -77,8 +78,24 @@ class AssetAnalysisService extends Component
 
         try {
             $this->processImageAsset($asset, $record);
+        } catch (ConfigurationException $e) {
+            $record->status = AnalysisStatus::Failed->value;
+            $record->processedAt = DateTimeHelper::now();
+            $record->save();
+
+            $this->getContentStorage()->saveErrorMessage($record, $e->getMessage());
+
+            Logger::error(
+                LogCategory::Configuration,
+                "Configuration error: {$e->getMessage()}",
+                $asset->id,
+                $e
+            );
+
+            throw $e;
         } catch (AnalysisException $e) {
             $record->status = AnalysisStatus::Failed->value;
+            $record->processedAt = DateTimeHelper::now();
             $record->save();
 
             $this->getContentStorage()->saveErrorMessage($record, $e->getUserMessage());
@@ -94,8 +111,8 @@ class AssetAnalysisService extends Component
                 ]
             );
         } catch (\Throwable $e) {
-            // Unexpected error - save generic message
             $record->status = AnalysisStatus::Failed->value;
+            $record->processedAt = DateTimeHelper::now();
             $record->save();
 
             $userMessage = "Analysis failed due to an unexpected error. Please try again later or contact support.";

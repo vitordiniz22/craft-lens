@@ -48,6 +48,19 @@ class ClaudeProvider extends BaseAiProvider
         }
     }
 
+    public function testConnection(Settings $settings): void
+    {
+        $this->validateCredentials($settings);
+
+        $this->executeTestRequest(
+            'https://api.anthropic.com/v1/models',
+            [
+                'x-api-key' => $settings->getClaudeApiKey(),
+                'anthropic-version' => '2023-06-01',
+            ]
+        );
+    }
+
     protected function extractContentText(array $response): string
     {
         return $response['content'][0]['text'] ?? '';

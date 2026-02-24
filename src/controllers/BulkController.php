@@ -9,6 +9,7 @@ use craft\helpers\UrlHelper;
 use craft\web\Controller;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\enums\LogCategory;
+use vitordiniz22\craftlens\exceptions\ConfigurationException;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\jobs\BulkAnalyzeAssetsJob;
 use vitordiniz22\craftlens\Plugin;
@@ -85,6 +86,9 @@ class BulkController extends Controller
 
         if ($state === 'complete') {
             $templateVars['session'] = $statusService->formatSession($session);
+            if (($stats['failed'] ?? 0) > 0) {
+                $templateVars['failureReason'] = $statusService->getFailureReason();
+            }
         }
 
         return $this->renderTemplate('lens/_bulk/index', $templateVars);
@@ -201,14 +205,18 @@ class BulkController extends Controller
         $this->requirePostRequest();
         $this->requirePermission('accessPlugin-lens');
 
+        try {
+            Plugin::getInstance()->aiProvider->testConnection();
+        } catch (ConfigurationException $e) {
+            Craft::$app->getSession()->setError($e->getMessage());
+            return $this->redirect('lens/bulk');
+        }
+
         $volumeId = $this->request->getBodyParam('volumeId');
         $volumeId = $volumeId ? (int) $volumeId : null;
-
-        // Start session tracking
         $statusService = Plugin::getInstance()->bulkProcessingStatus;
         $statusService->startSession($volumeId);
 
-        // Queue the job
         Craft::$app->getQueue()->push(new BulkAnalyzeAssetsJob([
             'volumeId' => $volumeId,
             'reprocess' => false,
@@ -228,6 +236,13 @@ class BulkController extends Controller
         $this->requireCpRequest();
         $this->requirePostRequest();
         $this->requirePermission('accessPlugin-lens');
+
+        try {
+            Plugin::getInstance()->aiProvider->testConnection();
+        } catch (ConfigurationException $e) {
+            Craft::$app->getSession()->setError($e->getMessage());
+            return $this->redirect('lens/bulk');
+        }
 
         $failedAssetIds = AssetAnalysisRecord::find()
             ->select('assetId')

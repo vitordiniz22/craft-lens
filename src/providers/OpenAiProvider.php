@@ -53,6 +53,16 @@ class OpenAiProvider extends BaseAiProvider
         }
     }
 
+    public function testConnection(Settings $settings): void
+    {
+        $this->validateCredentials($settings);
+
+        $this->executeTestRequest(
+            'https://api.openai.com/v1/models',
+            ['Authorization' => 'Bearer ' . $settings->getOpenaiApiKey()]
+        );
+    }
+
     protected function extractContentText(array $response): string
     {
         return $response['choices'][0]['message']['content'] ?? '';

@@ -31,12 +31,13 @@ class AnalysisException extends Exception
         return $this->userMessage ?? $this->getMessage();
     }
 
-    public static function apiError(string $provider, string $message, ?int $assetId = null): self
+    public static function apiError(string $provider, string $message, ?int $assetId = null, ?int $statusCode = null): self
     {
         return new self(
             message: "API error from {$provider}: {$message}",
             provider: $provider,
             assetId: $assetId,
+            statusCode: $statusCode,
         );
     }
 

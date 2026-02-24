@@ -13,6 +13,7 @@ use GuzzleHttp\Exception\RequestException;
 use vitordiniz22\craftlens\dto\AnalysisResult;
 use vitordiniz22\craftlens\enums\LogLevel;
 use vitordiniz22\craftlens\exceptions\AnalysisException;
+use vitordiniz22\craftlens\exceptions\ConfigurationException;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\helpers\ResponseNormalizer;
 
@@ -306,7 +307,8 @@ abstract class BaseAiProvider implements AiProviderInterface
                 throw AnalysisException::apiError(
                     $this->getName(),
                     $errorMessage,
-                    $assetId
+                    $assetId,
+                    $statusCode
                 );
             } catch (GuzzleException $e) {
                 $elapsed = (int) ((hrtime(true) - $startTime) / 1_000_000);
@@ -395,7 +397,7 @@ abstract class BaseAiProvider implements AiProviderInterface
     {
         return match ($statusCode) {
             400 => "Invalid request to {$this->getDisplayName()} API",
-            401 => 'Invalid API key or unauthorized access',
+            401 => "Invalid API key or unauthorized access. Please check your {$this->getDisplayName()} API key in the plugin settings.",
             403 => 'Access denied - check your API key permissions',
             404 => 'The requested model was not found',
             429 => 'Rate limit exceeded - please try again later',
@@ -436,6 +438,36 @@ abstract class BaseAiProvider implements AiProviderInterface
                 $this->getName(),
                 $body['error']['message'] ?? 'Unknown API error',
                 $assetId
+            );
+        }
+    }
+
+    /**
+     * Execute a lightweight API request to verify credentials.
+     * Subclasses provide the URL, headers, and method.
+     *
+     * @throws ConfigurationException
+     */
+    protected function executeTestRequest(string $url, array $headers, string $method = 'GET'): void
+    {
+        try {
+            $this->client->request($method, $url, [
+                'headers' => $headers,
+                'timeout' => 10,
+            ]);
+        } catch (RequestException $e) {
+            $statusCode = $e->hasResponse() ? $e->getResponse()->getStatusCode() : null;
+
+            if ($statusCode === 401 || $statusCode === 403) {
+                throw ConfigurationException::invalidApiKey($this->getDisplayName());
+            }
+
+            throw new ConfigurationException(
+                "Could not connect to {$this->getDisplayName()} API: " . $this->sanitizeErrorMessage($e->getMessage())
+            );
+        } catch (GuzzleException $e) {
+            throw new ConfigurationException(
+                "Could not connect to {$this->getDisplayName()} API: " . $this->sanitizeErrorMessage($e->getMessage())
             );
         }
     }

@@ -36,4 +36,12 @@ interface AiProviderInterface
      * @throws \vitordiniz22\craftlens\exceptions\ConfigurationException
      */
     public function validateCredentials(Settings $settings): void;
+
+    /**
+     * Tests the connection to the API with a lightweight request.
+     * Validates that the API key is accepted by the provider.
+     *
+     * @throws \vitordiniz22\craftlens\exceptions\ConfigurationException
+     */
+    public function testConnection(Settings $settings): void;
 }

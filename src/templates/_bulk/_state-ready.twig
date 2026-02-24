@@ -1,9 +1,27 @@
 <div class="pane" style="margin-top: 24px;">
+
+    {% if volumes|length > 1 %}
+        <div class="field">
+            <div class="heading">
+                <label for="volumeId">{{ 'Volume'|t('lens') }}</label>
+            </div>
+            <div class="input">
+                <select id="volumeId" class="text" onchange="window.location.href=Craft.getCpUrl('lens/bulk', this.value ? {volumeId: this.value} : {})">
+                    <option value="">{{ 'All Volumes'|t('lens') }}</option>
+                    {% for volume in volumes %}
+                        <option value="{{ volume.id }}" {% if selectedVolumeId == volume.id %}selected{% endif %}>
+                            {{ volume.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    {% endif %}
+
     {% if stats.unprocessed == 0 and stats.failed == 0 %}
         <div class="lens-all-done">
             <span class="lens-all-done-icon"></span>
             <h2>{{ 'All Assets Analyzed'|t('lens') }}</h2>
-            <p>{{ '{count} images have been analyzed.'|t('lens', {count: stats.analyzed}) }}</p>
         </div>
     {% else %}
         <h2>{{ 'Process Assets'|t('lens') }}</h2>
@@ -24,24 +42,6 @@
                 {% endif %}
             {% endif %}
         </div>
-
-        {% if volumes|length > 1 %}
-            <div class="field">
-                <div class="heading">
-                    <label for="volumeId">{{ 'Volume'|t('lens') }}</label>
-                </div>
-                <div class="input">
-                    <select id="volumeId" class="text" onchange="window.location.href=Craft.getCpUrl('lens/bulk', this.value ? {volumeId: this.value} : {})">
-                        <option value="">{{ 'All Volumes'|t('lens') }}</option>
-                        {% for volume in volumes %}
-                            <option value="{{ volume.id }}" {% if selectedVolumeId == volume.id %}selected{% endif %}>
-                                {{ volume.name }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </div>
-            </div>
-        {% endif %}
 
         <div class="lens-bulk-actions">
             {% if stats.unprocessed > 0 %}

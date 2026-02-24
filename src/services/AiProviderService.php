@@ -106,6 +106,19 @@ class AiProviderService extends Component
         $provider->validateCredentials($settings);
     }
 
+    /**
+     * Tests the connection to the configured AI provider.
+     * Performs static validation AND a lightweight API call.
+     *
+     * @throws ConfigurationException
+     */
+    public function testConnection(): void
+    {
+        $settings = $this->getSettings();
+        $provider = $this->getDefaultProvider();
+        $provider->testConnection($settings);
+    }
+
     private function registerDefaultProviders(): void
     {
         $this->registerProvider(new OpenAiProvider());

@@ -13,6 +13,7 @@ use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\jobs\AnalyzeAssetJob;
 use vitordiniz22\craftlens\jobs\BulkAnalyzeAssetsJob;
 use vitordiniz22\craftlens\Plugin;
+use vitordiniz22\craftlens\migrations\Install;
 use vitordiniz22\craftlens\records\AssetAnalysisRecord;
 use yii\base\Component;
 use yii\db\Query;
@@ -104,7 +105,7 @@ class BulkProcessingStatusService extends Component
     public function startSession(?int $volumeId = null): void
     {
         $cacheKey = $this->getSessionCacheKey();
-        $unprocessedCount = $this->getUnprocessedCount();
+        $unprocessedCount = $this->getUnprocessedCount($volumeId);
 
         Logger::info(LogCategory::JobStarted, 'Bulk processing session started', context: ['volumeId' => $volumeId, 'initialUnprocessed' => $unprocessedCount]);
 
@@ -416,7 +417,7 @@ class BulkProcessingStatusService extends Component
     private function getAnalyzedCount(null|int|array $volumeId = null): int
     {
         $query = AssetAnalysisRecord::find()
-            ->where(['in', 'status', AnalysisStatus::analyzedValues()]);
+            ->where(['in', 'status', AnalysisStatus::processedValues()]);
 
         $this->applyVolumeFilter($query, $volumeId);
 
@@ -538,6 +539,57 @@ class BulkProcessingStatusService extends Component
     {
         Craft::$app->getCache()->delete($this->getSessionCacheKey());
         Craft::$app->getCache()->delete($this->getSessionCacheKey() . '_previous_state');
+    }
+
+    /**
+     * Get the most common error message from failed analyses.
+     *
+     * @return array{message: string|null, count: int, isConfigError: bool}
+     */
+    public function getFailureReason(): array
+    {
+        $session = $this->getSessionData();
+        $query = AssetAnalysisRecord::find()
+            ->select(['id'])
+            ->where(['status' => AnalysisStatus::Failed->value]);
+
+        if ($session !== null && isset($session['startedAt'])) {
+            $query->andWhere(['>=', 'processedAt', date('Y-m-d H:i:s', $session['startedAt'])]);
+        }
+
+        $failedAnalysisIds = $query->column();
+
+        if (empty($failedAnalysisIds)) {
+            return ['message' => null, 'count' => 0, 'isConfigError' => false];
+        }
+
+        $result = (new Query())
+            ->select(['errorMessage', 'COUNT(*) as cnt'])
+            ->from(Install::TABLE_ANALYSIS_CONTENT)
+            ->where(['in', 'analysisId', $failedAnalysisIds])
+            ->andWhere(['not', ['errorMessage' => null]])
+            ->groupBy(['errorMessage'])
+            ->orderBy(['cnt' => SORT_DESC])
+            ->limit(1)
+            ->one();
+
+        if ($result === null) {
+            return ['message' => null, 'count' => 0, 'isConfigError' => false];
+        }
+
+        $message = $result['errorMessage'];
+        $count = (int) $result['cnt'];
+        $lowerMessage = strtolower($message);
+        $isConfigError = str_contains($lowerMessage, 'not configured')
+            || str_contains($lowerMessage, 'is invalid')
+            || str_contains($lowerMessage, 'api key')
+            || str_contains($lowerMessage, 'unauthorized');
+
+        return [
+            'message' => $message,
+            'count' => $count,
+            'isConfigError' => $isConfigError,
+        ];
     }
 
     /**
