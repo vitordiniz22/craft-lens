@@ -21,7 +21,7 @@ class WatermarkTypeConditionRule extends BaseMultiSelectConditionRule implements
 {
     public function getLabel(): string
     {
-        return Craft::t('lens', 'Watermark Type');
+        return Craft::t('lens', 'Lens - Watermark Type');
     }
 
     public function getExclusiveQueryParams(): array
@@ -44,6 +44,7 @@ class WatermarkTypeConditionRule extends BaseMultiSelectConditionRule implements
         }
 
         $query->lensWatermarkTypes($values);
+        $query->lensApplyWatermarkTypesFilter();
     }
 
     public function matchElement(ElementInterface $element): bool

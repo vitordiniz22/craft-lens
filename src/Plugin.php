@@ -64,6 +64,7 @@ use vitordiniz22\craftlens\web\assets\lens\LensAssetActionsAsset;
 use vitordiniz22\craftlens\web\assets\lens\LensBulkAsset;
 use vitordiniz22\craftlens\web\assets\lens\LensReviewAsset;
 use vitordiniz22\craftlens\web\assets\lens\LensSearchAsset;
+use vitordiniz22\craftlens\web\assets\lens\LensSemanticSelectorAsset;
 use yii\base\Event;
 use yii\web\Response;
 
@@ -241,6 +242,7 @@ class Plugin extends BasePlugin
         $this->registerAssetSidebarHandler();
         $this->registerFieldLayoutElements();
         $this->registerElementActions();
+        $this->registerSemanticSearch();
         $this->registerAssetBundle();
         $this->registerGarbageCollection();
     }
@@ -501,6 +503,7 @@ class Plugin extends BasePlugin
                 $event->rules['lens/bulk/cancel'] = 'lens/bulk/cancel';
                 $event->rules['lens/bulk/progress'] = 'lens/bulk/progress';
                 $event->rules['lens/bulk/dismiss'] = 'lens/bulk/dismiss';
+                $event->rules['lens/semantic-search/search'] = 'lens/semantic-search/search';
                 $event->rules['lens/search'] = 'lens/search/index';
                 $event->rules['lens/search/resolve-duplicate'] = 'lens/search/resolve-duplicate';
                 $event->rules['lens/search/export'] = 'lens/search/export';
@@ -525,6 +528,25 @@ class Plugin extends BasePlugin
             Element::EVENT_REGISTER_ACTIONS,
             function(RegisterElementActionsEvent $event) {
                 $event->actions[] = FindDuplicatesAction::class;
+            }
+        );
+    }
+
+    private function registerSemanticSearch(): void
+    {
+        if (!$this->getSettings()->enableSemanticSearch) {
+            return;
+        }
+
+        Event::on(
+            View::class,
+            View::EVENT_BEFORE_RENDER_PAGE_TEMPLATE,
+            function(TemplateEvent $event) {
+                if (!Craft::$app->getRequest()->getIsCpRequest()) {
+                    return;
+                }
+
+                Craft::$app->getView()->registerAssetBundle(LensSemanticSelectorAsset::class);
             }
         );
     }

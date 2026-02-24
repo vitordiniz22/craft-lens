@@ -1,0 +1,25 @@
+/* Lens Semantic Search — replaces native search in asset selector modal */
+
+.lens-semantic-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+}
+
+.lens-semantic-search input[type="text"] {
+    flex: 1;
+    min-width: 0;
+}
+
+.lens-semantic-search .btn {
+    flex-shrink: 0;
+}
+
+.lens-semantic-search__result-count {
+    font-size: 12px;
+    color: var(--medium-text-color);
+    white-space: nowrap;
+    flex-shrink: 0;
+}

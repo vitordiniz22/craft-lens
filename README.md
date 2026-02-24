@@ -29,6 +29,7 @@ Choose your AI provider — **OpenAI GPT**, **Google Gemini**, or **Anthropic Cl
 ## Features
 
 ### Search & Discovery
+- **Enhanced Asset Search** — adds a Lens search bar to asset selector modals that searches across AI-generated metadata (alt text, descriptions, tags, OCR text) instead of just filenames
 - **20+ filters** — find assets by tag, color, people, quality, NSFW status, watermarks, brands, GPS location, and more
 - **Full-text search** across alt text, descriptions, tags, and OCR-extracted text
 - **Duplicate detection** — surface visually similar images via perceptual hashing so you stop re-uploading the same file
@@ -70,6 +71,10 @@ Choose your AI provider — **OpenAI GPT**, **Google Gemini**, or **Anthropic Cl
 | **Bulk Processing** | Process entire volumes with real-time progress and cost estimation |
 | **Logs** | Comprehensive logging with retry capability for failed analyses |
 | **Settings** | AI provider configuration, volume selection, and workflow options |
+
+## Enhanced Asset Search
+
+Lens adds a search bar to every asset selector modal that searches across AI-generated metadata, alt text, descriptions, tags, and OCR-extracted text, instead of just filenames. Disabled by default; enable it in **Lens** → **Settings**.
 
 ## Requirements
 
@@ -134,6 +139,7 @@ return [
 | `reprocessOnFileReplace` | `true` | Re-analyze assets when files are replaced |
 | `requireReviewBeforeApply` | `false` | Require manual approval before applying AI suggestions |
 | `enabledVolumes` | `['*']` | Volume handles to process, or `['*']` for all |
+| `enableSemanticSearch` | `false` | Replace native search in asset selector modals with Lens AI search |
 | `logRetentionDays` | `30` | Days to retain log entries |
 
 ## Console Commands
@@ -211,16 +217,16 @@ Lens registers 10 custom condition rules for use in element sources and queries:
 
 | Condition Rule | Description |
 |----------------|-------------|
-| **Lens Status** | Filter by analysis status (pending, approved, rejected, failed) |
-| **AI Confidence** | Filter by confidence score threshold |
-| **Contains People** | Filter by face/person detection |
-| **Has AI Tags** | Filter assets with/without AI-generated tags |
-| **NSFW Flagged** | Filter by content safety scoring |
-| **Watermark Detected** | Filter by watermark presence |
-| **Watermark Type** | Filter by watermark classification |
-| **Stock Provider** | Filter by detected stock photo source |
-| **Contains Brand Logo** | Filter by brand/logo detection |
-| **Has GPS Coordinates** | Filter by EXIF location data |
+| **Lens - Status** | Filter by analysis status (pending, approved, rejected, failed) |
+| **Lens - AI Confidence** | Filter by confidence score threshold |
+| **Lens - Contains People** | Filter by face/person detection |
+| **Lens - Has AI Tags** | Filter assets with/without AI-generated tags |
+| **Lens - NSFW Flagged** | Filter by content safety scoring |
+| **Lens - Has Watermark** | Filter by watermark presence |
+| **Lens - Watermark Type** | Filter by watermark classification |
+| **Lens - Stock Provider** | Filter by detected stock photo source |
+| **Lens - Contains Brand Logo** | Filter by brand/logo detection |
+| **Lens - Has GPS Coordinates** | Filter by EXIF location data |
 
 ## Templating
 

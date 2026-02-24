@@ -99,6 +99,10 @@
   margin: 0;
 }
 
+.lens-setup-item-status .status.lens-status--info {
+  background-color: var(--blue-500, #3b82f6);
+}
+
 .lens-setup-item-text {
   font-size: 14px;
   color: var(--text-color);

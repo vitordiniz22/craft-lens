@@ -150,4 +150,19 @@
         errors: settings.getErrors('enabledVolumes'),
     }) }}
 
+    <hr>
+
+    {# ==================== SECTION: Semantic Search ==================== #}
+    <h2>{{ 'Semantic Search'|t('lens') }}</h2>
+    <p>{{ 'Enhance the native asset selector with AI-powered search. When enabled, the search bar in every asset selector modal is replaced with Lens semantic search — editors can describe what they\'re looking for instead of remembering filenames.'|t('lens') }}</p>
+
+    {{ forms.lightswitchField({
+        first: true,
+        label: 'Enable Semantic Asset Search'|t('lens'),
+        instructions: 'Replaces the native search in asset selector modals with Lens search. Queries match against AI-generated alt text, descriptions, tags, and extracted text.'|t('lens'),
+        id: 'enableSemanticSearch',
+        name: 'settings[enableSemanticSearch]',
+        on: settings.enableSemanticSearch,
+    }) }}
+
 {% endblock %}

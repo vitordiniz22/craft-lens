@@ -35,7 +35,7 @@ class DashboardController extends Controller
             $processingStats = $bulkStatus->getStats();
 
             return $this->renderTemplate('lens/_dashboard/index', [
-                // Setup status (keep existing)
+                // Setup status
                 'setupStatus' => $plugin->setupStatus->getSetupStatus(),
                 'criticalIssues' => $plugin->setupStatus->getCriticalIssues(),
                 'setupWarnings' => $plugin->setupStatus->getWarnings(),

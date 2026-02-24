@@ -40,6 +40,9 @@ class SetupStatusService extends Component
         // Field layout checks
         $checks[] = $this->checkAnalysisPanelConfigured();
 
+        // Feature checks
+        $checks[] = $this->checkSemanticSearchEnabled();
+
         return $checks;
     }
 
@@ -262,6 +265,23 @@ class SetupStatusService extends Component
                 : Craft::t('lens', 'The Lens Analysis UI element has not been added to any asset volume\'s field layout.'),
             'actionLabel' => Craft::t('lens', 'Add to Field Layout'),
             'actionUrl' => 'settings/assets',
+            'isResolved' => $isResolved,
+        ];
+    }
+
+    private function checkSemanticSearchEnabled(): array
+    {
+        $isResolved = $this->getSettings()->enableSemanticSearch;
+
+        return [
+            'key' => 'semantic_search_enabled',
+            'category' => self::CATEGORY_VOLUMES,
+            'severity' => SetupSeverity::Info->value,
+            'message' => $isResolved
+                ? Craft::t('lens', 'Enhanced asset search is enabled.')
+                : Craft::t('lens', 'Enhanced asset search is disabled. Asset selector modals are using Craft\'s default search.'),
+            'actionLabel' => Craft::t('lens', 'Go to Settings'),
+            'actionUrl' => 'lens/settings',
             'isResolved' => $isResolved,
         ];
     }

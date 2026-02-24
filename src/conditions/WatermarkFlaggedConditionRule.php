@@ -20,7 +20,7 @@ class WatermarkFlaggedConditionRule extends BaseLightswitchConditionRule impleme
 {
     public function getLabel(): string
     {
-        return Craft::t('lens', 'Has Watermark');
+        return Craft::t('lens', 'Lens - Has Watermark');
     }
 
     public function getExclusiveQueryParams(): array
@@ -32,6 +32,7 @@ class WatermarkFlaggedConditionRule extends BaseLightswitchConditionRule impleme
     {
         /** @var AssetQuery $query */
         $query->lensHasWatermark($this->value);
+        $query->lensApplyHasWatermarkFilter();
     }
 
     public function matchElement(ElementInterface $element): bool

@@ -33,6 +33,9 @@ class Settings extends Model
     // Volume Settings
     public array $enabledVolumes = ['*'];
 
+    // Semantic Search
+    public bool $enableSemanticSearch = false;
+
     // Logging
     public int $logRetentionDays = 30;
 
@@ -62,6 +65,7 @@ class Settings extends Model
                 'autoProcessOnUpload',
                 'reprocessOnFileReplace',
                 'requireReviewBeforeApply',
+                'enableSemanticSearch',
             ], 'boolean'],
 
             // Arrays
@@ -83,6 +87,7 @@ class Settings extends Model
             'reprocessOnFileReplace' => Craft::t('lens', 'Reprocess on File Replace'),
             'requireReviewBeforeApply' => Craft::t('lens', 'Require Human Review'),
             'enabledVolumes' => Craft::t('lens', 'Enabled Volumes'),
+            'enableSemanticSearch' => Craft::t('lens', 'Semantic Asset Search'),
         ];
     }
 

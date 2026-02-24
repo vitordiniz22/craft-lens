@@ -21,7 +21,7 @@ class HasAiTagsConditionRule extends BaseLightswitchConditionRule implements Ele
 {
     public function getLabel(): string
     {
-        return Craft::t('lens', 'Has AI Tags');
+        return Craft::t('lens', 'Lens - Has AI Tags');
     }
 
     public function getExclusiveQueryParams(): array
@@ -33,6 +33,7 @@ class HasAiTagsConditionRule extends BaseLightswitchConditionRule implements Ele
     {
         /** @var AssetQuery $query */
         $query->lensHasTags($this->value);
+        $query->lensApplyHasTagsFilter();
     }
 
     public function matchElement(ElementInterface $element): bool

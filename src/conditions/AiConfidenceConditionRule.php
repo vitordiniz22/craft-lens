@@ -22,7 +22,7 @@ class AiConfidenceConditionRule extends BaseNumberConditionRule implements Eleme
 
     public function getLabel(): string
     {
-        return Craft::t('lens', 'AI Confidence');
+        return Craft::t('lens', 'Lens - AI Confidence');
     }
 
     public function getExclusiveQueryParams(): array
@@ -39,42 +39,25 @@ class AiConfidenceConditionRule extends BaseNumberConditionRule implements Eleme
             return;
         }
 
-        $query->lensEnsureJoined();
+        $where = match ($this->operator) {
+            self::OPERATOR_EQ => ['lens.altTextConfidence' => $value],
+            self::OPERATOR_NE => ['not', ['lens.altTextConfidence' => $value]],
+            self::OPERATOR_LT => ['<', 'lens.altTextConfidence', $value],
+            self::OPERATOR_LTE => ['<=', 'lens.altTextConfidence', $value],
+            self::OPERATOR_GT => ['>', 'lens.altTextConfidence', $value],
+            self::OPERATOR_GTE => ['>=', 'lens.altTextConfidence', $value],
+            self::OPERATOR_BETWEEN => ['between', 'lens.altTextConfidence', $value, $this->maxValue],
+            self::OPERATOR_EMPTY => ['lens.altTextConfidence' => null],
+            self::OPERATOR_NOT_EMPTY => ['not', ['lens.altTextConfidence' => null]],
+            default => null,
+        };
 
-        switch ($this->operator) {
-            case self::OPERATOR_EQ:
-                $query->subQuery->andWhere(['lens.altTextConfidence' => $value]);
-                break;
-            case self::OPERATOR_NE:
-                $query->subQuery->andWhere(['not', ['lens.altTextConfidence' => $value]]);
-                break;
-            case self::OPERATOR_LT:
-                $query->subQuery->andWhere(['<', 'lens.altTextConfidence', $value]);
-                break;
-            case self::OPERATOR_LTE:
-                $query->subQuery->andWhere(['<=', 'lens.altTextConfidence', $value]);
-                break;
-            case self::OPERATOR_GT:
-                $query->subQuery->andWhere(['>', 'lens.altTextConfidence', $value]);
-                break;
-            case self::OPERATOR_GTE:
-                $query->subQuery->andWhere(['>=', 'lens.altTextConfidence', $value]);
-                break;
-            case self::OPERATOR_BETWEEN:
-                $query->subQuery->andWhere([
-                    'between',
-                    'lens.altTextConfidence',
-                    $value,
-                    $this->maxValue,
-                ]);
-                break;
-            case self::OPERATOR_EMPTY:
-                $query->subQuery->andWhere(['lens.altTextConfidence' => null]);
-                break;
-            case self::OPERATOR_NOT_EMPTY:
-                $query->subQuery->andWhere(['not', ['lens.altTextConfidence' => null]]);
-                break;
+        if ($where === null) {
+            return;
         }
+
+        $query->lensRawWhereConditions[] = $where;
+        $query->lensApplyRawWhereConditions();
     }
 
     public function matchElement(ElementInterface $element): bool

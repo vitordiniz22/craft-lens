@@ -20,7 +20,7 @@ class HasGpsCoordinatesConditionRule extends BaseLightswitchConditionRule implem
 {
     public function getLabel(): string
     {
-        return Craft::t('lens', 'Has GPS Coordinates');
+        return Craft::t('lens', 'Lens - Has GPS Coordinates');
     }
 
     public function getExclusiveQueryParams(): array
@@ -32,6 +32,7 @@ class HasGpsCoordinatesConditionRule extends BaseLightswitchConditionRule implem
     {
         /** @var AssetQuery $query */
         $query->lensHasGpsCoordinates($this->value);
+        $query->lensApplyHasGpsCoordinatesFilter();
     }
 
     public function matchElement(ElementInterface $element): bool

@@ -21,7 +21,7 @@ class LensStatusConditionRule extends BaseMultiSelectConditionRule implements El
 {
     public function getLabel(): string
     {
-        return Craft::t('lens', 'Lens Status');
+        return Craft::t('lens', 'Lens - Status');
     }
 
     public function getExclusiveQueryParams(): array
@@ -43,9 +43,8 @@ class LensStatusConditionRule extends BaseMultiSelectConditionRule implements El
             return;
         }
 
-        $query->lensEnsureJoined();
-
-        $query->subQuery->andWhere(['lens.status' => $values]);
+        $query->lensStatus($values);
+        $query->lensApplyStatusFilter();
     }
 
     public function matchElement(ElementInterface $element): bool

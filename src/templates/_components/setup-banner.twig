@@ -38,6 +38,8 @@
                             <span class="status off"></span>
                         {% elseif check.severity == 'warning' %}
                             <span class="status pending"></span>
+                        {% elseif check.severity == 'info' %}
+                            <span class="status lens-status--info"></span>
                         {% else %}
                             <span class="status"></span>
                         {% endif %}

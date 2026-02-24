@@ -20,7 +20,7 @@ class ContainsPeopleConditionRule extends BaseLightswitchConditionRule implement
 {
     public function getLabel(): string
     {
-        return Craft::t('lens', 'Contains People');
+        return Craft::t('lens', 'Lens - Contains People');
     }
 
     public function getExclusiveQueryParams(): array
@@ -32,6 +32,7 @@ class ContainsPeopleConditionRule extends BaseLightswitchConditionRule implement
     {
         /** @var AssetQuery $query */
         $query->lensContainsPeople($this->value);
+        $query->lensApplyContainsPeopleFilter();
     }
 
     public function matchElement(ElementInterface $element): bool

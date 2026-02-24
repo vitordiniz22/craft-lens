@@ -20,7 +20,7 @@ class NsfwFlaggedConditionRule extends BaseLightswitchConditionRule implements E
 {
     public function getLabel(): string
     {
-        return Craft::t('lens', 'NSFW Flagged');
+        return Craft::t('lens', 'Lens - NSFW Flagged');
     }
 
     public function getExclusiveQueryParams(): array
@@ -32,6 +32,7 @@ class NsfwFlaggedConditionRule extends BaseLightswitchConditionRule implements E
     {
         /** @var AssetQuery $query */
         $query->lensNsfwFlagged($this->value);
+        $query->lensApplyNsfwFlaggedFilter();
     }
 
     public function matchElement(ElementInterface $element): bool

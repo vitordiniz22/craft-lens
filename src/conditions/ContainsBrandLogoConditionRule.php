@@ -20,7 +20,7 @@ class ContainsBrandLogoConditionRule extends BaseLightswitchConditionRule implem
 {
     public function getLabel(): string
     {
-        return Craft::t('lens', 'Contains Brand Logo');
+        return Craft::t('lens', 'Lens - Contains Brand Logo');
     }
 
     public function getExclusiveQueryParams(): array
@@ -32,6 +32,7 @@ class ContainsBrandLogoConditionRule extends BaseLightswitchConditionRule implem
     {
         /** @var AssetQuery $query */
         $query->lensContainsBrandLogo($this->value);
+        $query->lensApplyContainsBrandLogoFilter();
     }
 
     public function matchElement(ElementInterface $element): bool

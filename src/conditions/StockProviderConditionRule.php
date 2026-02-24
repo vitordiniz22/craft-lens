@@ -20,7 +20,7 @@ class StockProviderConditionRule extends BaseMultiSelectConditionRule implements
 {
     public function getLabel(): string
     {
-        return Craft::t('lens', 'Stock Provider');
+        return Craft::t('lens', 'Lens - Stock Provider');
     }
 
     public function getExclusiveQueryParams(): array
@@ -36,7 +36,14 @@ class StockProviderConditionRule extends BaseMultiSelectConditionRule implements
     public function modifyQuery(ElementQueryInterface $query): void
     {
         /** @var AssetQuery $query */
-        $query->lensStockProvider($this->paramValue());
+        $values = $this->paramValue();
+
+        if (empty($values)) {
+            return;
+        }
+
+        $query->lensStockProvider($values);
+        $query->lensApplyStockProviderFilter();
     }
 
     public function matchElement(ElementInterface $element): bool

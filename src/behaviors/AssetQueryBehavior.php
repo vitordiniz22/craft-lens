@@ -18,7 +18,7 @@ use yii\db\Query;
  */
 class AssetQueryBehavior extends Behavior
 {
-    public ?string $lensStatus = null;
+    public string|array|null $lensStatus = null;
     public ?bool $lensContainsPeople = null;
     public ?float $lensConfidenceBelow = null;
     public ?float $lensConfidenceAbove = null;
@@ -43,6 +43,9 @@ class AssetQueryBehavior extends Behavior
     public ?bool $lensHasGpsCoordinates = null;
     public ?bool $lensHasExifData = null;
 
+    /** @var array[] Raw WHERE conditions requiring the lens join, used by complex condition rules */
+    public array $lensRawWhereConditions = [];
+
     private bool $innerJoined = false;
     private bool $leftJoined = false;
     private bool $exifMetadataJoined = false;
@@ -50,7 +53,7 @@ class AssetQueryBehavior extends Behavior
     /**
      * Sets the lens status filter.
      */
-    public function lensStatus(?string $value): AssetQuery
+    public function lensStatus(string|array|null $value): AssetQuery
     {
         $this->lensStatus = $value;
         return $this->owner;
@@ -240,15 +243,79 @@ class AssetQueryBehavior extends Behavior
         return $this->owner;
     }
 
-    /**
-     * Ensures the lens analysis table is joined to the query.
-     * Use this when you need to add custom conditions on the lens table
-     * without using the built-in filter methods.
-     */
-    public function lensEnsureJoined(): AssetQuery
+    // ------------------------------------------------------------------
+    // Public apply methods for condition rules (Flow B: subQuery exists)
+    // Each checks property + subQuery, then delegates to the private method.
+    // ------------------------------------------------------------------
+
+    public function lensApplyStatusFilter(): void
     {
-        $this->ensureJoined();
-        return $this->owner;
+        if ($this->lensStatus !== null && $this->owner->subQuery !== null) {
+            $this->applyStatusFilter();
+        }
+    }
+
+    public function lensApplyContainsPeopleFilter(): void
+    {
+        if ($this->lensContainsPeople !== null && $this->owner->subQuery !== null) {
+            $this->applyContainsPeopleFilter();
+        }
+    }
+
+    public function lensApplyHasTagsFilter(): void
+    {
+        if ($this->lensHasTags !== null && $this->owner->subQuery !== null) {
+            $this->applyHasTagsFilter();
+        }
+    }
+
+    public function lensApplyNsfwFlaggedFilter(): void
+    {
+        if ($this->lensNsfwFlagged !== null && $this->owner->subQuery !== null) {
+            $this->applyNsfwFlaggedFilter();
+        }
+    }
+
+    public function lensApplyHasWatermarkFilter(): void
+    {
+        if ($this->lensHasWatermark !== null && $this->owner->subQuery !== null) {
+            $this->applyHasWatermarkFilter();
+        }
+    }
+
+    public function lensApplyWatermarkTypesFilter(): void
+    {
+        if ($this->lensWatermarkTypes !== null && !empty($this->lensWatermarkTypes) && $this->owner->subQuery !== null) {
+            $this->applyWatermarkTypesFilter();
+        }
+    }
+
+    public function lensApplyContainsBrandLogoFilter(): void
+    {
+        if ($this->lensContainsBrandLogo !== null && $this->owner->subQuery !== null) {
+            $this->applyContainsBrandLogoFilter();
+        }
+    }
+
+    public function lensApplyStockProviderFilter(): void
+    {
+        if ($this->lensStockProvider !== null && $this->owner->subQuery !== null) {
+            $this->applyStockProviderFilter();
+        }
+    }
+
+    public function lensApplyHasGpsCoordinatesFilter(): void
+    {
+        if ($this->lensHasGpsCoordinates !== null && $this->owner->subQuery !== null) {
+            $this->applyHasGpsCoordinatesFilter();
+        }
+    }
+
+    public function lensApplyRawWhereConditions(): void
+    {
+        if (!empty($this->lensRawWhereConditions) && $this->owner->subQuery !== null) {
+            $this->applyRawWhereConditions();
+        }
     }
 
     public function events(): array
@@ -270,8 +337,7 @@ class AssetQueryBehavior extends Behavior
         }
 
         if ($this->lensContainsPeople !== null) {
-            $this->ensureJoined();
-            $this->owner->subQuery->andWhere(['lens.containsPeople' => $this->lensContainsPeople]);
+            $this->applyContainsPeopleFilter();
         }
 
         if ($this->lensConfidenceBelow !== null) {
@@ -297,28 +363,23 @@ class AssetQueryBehavior extends Behavior
         }
 
         if ($this->lensNsfwFlagged !== null) {
-            $this->ensureJoined();
-            $this->owner->subQuery->andWhere(['lens.isFlaggedNsfw' => $this->lensNsfwFlagged]);
+            $this->applyNsfwFlaggedFilter();
         }
 
         if ($this->lensHasWatermark !== null) {
-            $this->ensureJoined();
-            $this->owner->subQuery->andWhere(['lens.hasWatermark' => $this->lensHasWatermark]);
+            $this->applyHasWatermarkFilter();
         }
 
         if ($this->lensWatermarkType !== null) {
-            $this->ensureJoined();
-            $this->owner->subQuery->andWhere(['lens.watermarkType' => $this->lensWatermarkType]);
+            $this->applyWatermarkTypeFilter();
         }
 
         if ($this->lensWatermarkTypes !== null && !empty($this->lensWatermarkTypes)) {
-            $this->ensureJoined();
-            $this->owner->subQuery->andWhere(['lens.watermarkType' => $this->lensWatermarkTypes]);
+            $this->applyWatermarkTypesFilter();
         }
 
         if ($this->lensContainsBrandLogo !== null) {
-            $this->ensureJoined();
-            $this->owner->subQuery->andWhere(['lens.containsBrandLogo' => $this->lensContainsBrandLogo]);
+            $this->applyContainsBrandLogoFilter();
         }
 
         if ($this->lensDetectedBrand !== null) {
@@ -356,11 +417,22 @@ class AssetQueryBehavior extends Behavior
         if ($this->lensHasExifData !== null) {
             $this->applyHasExifDataFilter();
         }
+
+        if (!empty($this->lensRawWhereConditions)) {
+            $this->applyRawWhereConditions();
+        }
     }
 
     private function applyStatusFilter(): void
     {
         $status = $this->lensStatus;
+
+        // Array of statuses from condition rule multi-select
+        if (is_array($status)) {
+            $this->ensureJoined();
+            $this->owner->subQuery->andWhere(['lens.status' => $status]);
+            return;
+        }
 
         if ($status === 'untagged') {
             $this->ensureLeftJoined();
@@ -381,6 +453,50 @@ class AssetQueryBehavior extends Behavior
         }
     }
 
+    private function applyContainsPeopleFilter(): void
+    {
+        $this->ensureJoined();
+        $this->owner->subQuery->andWhere(['lens.containsPeople' => $this->lensContainsPeople]);
+    }
+
+    private function applyNsfwFlaggedFilter(): void
+    {
+        $this->ensureJoined();
+        $this->owner->subQuery->andWhere(['lens.isFlaggedNsfw' => $this->lensNsfwFlagged]);
+    }
+
+    private function applyHasWatermarkFilter(): void
+    {
+        $this->ensureJoined();
+        $this->owner->subQuery->andWhere(['lens.hasWatermark' => $this->lensHasWatermark]);
+    }
+
+    private function applyWatermarkTypeFilter(): void
+    {
+        $this->ensureJoined();
+        $this->owner->subQuery->andWhere(['lens.watermarkType' => $this->lensWatermarkType]);
+    }
+
+    private function applyWatermarkTypesFilter(): void
+    {
+        $this->ensureJoined();
+        $this->owner->subQuery->andWhere(['lens.watermarkType' => $this->lensWatermarkTypes]);
+    }
+
+    private function applyContainsBrandLogoFilter(): void
+    {
+        $this->ensureJoined();
+        $this->owner->subQuery->andWhere(['lens.containsBrandLogo' => $this->lensContainsBrandLogo]);
+    }
+
+    private function applyRawWhereConditions(): void
+    {
+        $this->ensureJoined();
+        foreach ($this->lensRawWhereConditions as $condition) {
+            $this->owner->subQuery->andWhere($condition);
+        }
+    }
+
     private function applyHasTagsFilter(): void
     {
         $this->ensureJoined();
@@ -388,8 +504,8 @@ class AssetQueryBehavior extends Behavior
 
         $tagSubQuery = (new Query())
             ->select(['analysisId'])
-            ->from($tagTable)
-            ->where('[[' . $tagTable . '.analysisId]] = [[lens.id]]');
+            ->from(['t' => $tagTable])
+            ->where('[[t.analysisId]] = [[lens.id]]');
 
         if ($this->lensHasTags) {
             $this->owner->subQuery->andWhere(['exists', $tagSubQuery]);
@@ -405,9 +521,9 @@ class AssetQueryBehavior extends Behavior
 
         $tagSubQuery = (new Query())
             ->select(['analysisId'])
-            ->from($tagTable)
-            ->where('[[' . $tagTable . '.analysisId]] = [[lens.id]]')
-            ->andWhere(['tag' => $this->lensTag]);
+            ->from(['t' => $tagTable])
+            ->where('[[t.analysisId]] = [[lens.id]]')
+            ->andWhere(['t.tag' => $this->lensTag]);
 
         $this->owner->subQuery->andWhere(['exists', $tagSubQuery]);
     }
@@ -419,9 +535,9 @@ class AssetQueryBehavior extends Behavior
 
         $colorSubQuery = (new Query())
             ->select(['analysisId'])
-            ->from($colorTable)
-            ->where('[[' . $colorTable . '.analysisId]] = [[lens.id]]')
-            ->andWhere(['hex' => $this->lensColor]);
+            ->from(['c' => $colorTable])
+            ->where('[[c.analysisId]] = [[lens.id]]')
+            ->andWhere(['c.hex' => $this->lensColor]);
 
         $this->owner->subQuery->andWhere(['exists', $colorSubQuery]);
     }
