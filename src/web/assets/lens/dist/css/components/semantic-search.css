@@ -22,4 +22,5 @@
     color: var(--medium-text-color);
     white-space: nowrap;
     flex-shrink: 0;
+    padding-right: 40px;
 }
