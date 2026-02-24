@@ -71,7 +71,7 @@ class BulkProcessingStatusService extends Component
     /**
      * Get all stats for display.
      */
-    public function getStats(?int $volumeId = null): array
+    public function getStats(null|int|array $volumeId = null): array
     {
         return [
             'totalImages' => $this->getTotalImageCount($volumeId),
@@ -402,7 +402,7 @@ class BulkProcessingStatusService extends Component
     // Count Methods
     // =========================================================================
 
-    private function getTotalImageCount(?int $volumeId = null): int
+    private function getTotalImageCount(null|int|array $volumeId = null): int
     {
         $query = Asset::find()->kind(Asset::KIND_IMAGE);
 
@@ -413,7 +413,7 @@ class BulkProcessingStatusService extends Component
         return (int) $query->count();
     }
 
-    private function getAnalyzedCount(?int $volumeId = null): int
+    private function getAnalyzedCount(null|int|array $volumeId = null): int
     {
         $query = AssetAnalysisRecord::find()
             ->where(['in', 'status', AnalysisStatus::analyzedValues()]);
@@ -423,7 +423,7 @@ class BulkProcessingStatusService extends Component
         return (int) $query->count();
     }
 
-    private function getUnprocessedCount(?int $volumeId = null): int
+    private function getUnprocessedCount(null|int|array $volumeId = null): int
     {
         $processedSubQuery = AssetAnalysisRecord::find()
             ->select('assetId')
@@ -445,7 +445,7 @@ class BulkProcessingStatusService extends Component
         return (int) $query->count();
     }
 
-    private function getFailedCount(?int $volumeId = null): int
+    private function getFailedCount(null|int|array $volumeId = null): int
     {
         $query = AssetAnalysisRecord::find()
             ->where(['status' => AnalysisStatus::Failed->value]);
@@ -455,7 +455,7 @@ class BulkProcessingStatusService extends Component
         return (int) $query->count();
     }
 
-    private function getProcessingCount(?int $volumeId = null): int
+    private function getProcessingCount(null|int|array $volumeId = null): int
     {
         $query = AssetAnalysisRecord::find()
             ->where(['status' => AnalysisStatus::Processing->value]);
@@ -465,7 +465,7 @@ class BulkProcessingStatusService extends Component
         return (int) $query->count();
     }
 
-    private function getPendingReviewCount(?int $volumeId = null): int
+    private function getPendingReviewCount(null|int|array $volumeId = null): int
     {
         $query = AssetAnalysisRecord::find()
             ->where(['status' => AnalysisStatus::PendingReview->value]);
@@ -476,11 +476,11 @@ class BulkProcessingStatusService extends Component
     }
 
     /**
-     * Get asset IDs belonging to a specific volume.
+     * Get asset IDs belonging to one or more volumes.
      *
      * @return int[]
      */
-    private function getAssetIdsForVolume(int $volumeId): array
+    private function getAssetIdsForVolume(int|array $volumeId): array
     {
         return Asset::find()
             ->kind(Asset::KIND_IMAGE)
@@ -544,9 +544,9 @@ class BulkProcessingStatusService extends Component
      * Apply volume filter to a query by filtering asset IDs.
      *
      * @param \yii\db\ActiveQuery $query The query to filter
-     * @param int|null $volumeId Volume ID to filter by (null = no filter)
+     * @param int|array|null $volumeId Volume ID(s) to filter by (null = no filter)
      */
-    private function applyVolumeFilter($query, ?int $volumeId): void
+    private function applyVolumeFilter($query, null|int|array $volumeId): void
     {
         if ($volumeId === null) {
             return;

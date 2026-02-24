@@ -25,21 +25,23 @@
             {% endif %}
         </div>
 
-        <div class="field">
-            <div class="heading">
-                <label for="volumeId">{{ 'Volume'|t('lens') }}</label>
+        {% if volumes|length > 1 %}
+            <div class="field">
+                <div class="heading">
+                    <label for="volumeId">{{ 'Volume'|t('lens') }}</label>
+                </div>
+                <div class="input">
+                    <select id="volumeId" class="text" onchange="window.location.href=Craft.getCpUrl('lens/bulk', this.value ? {volumeId: this.value} : {})">
+                        <option value="">{{ 'All Volumes'|t('lens') }}</option>
+                        {% for volume in volumes %}
+                            <option value="{{ volume.id }}" {% if selectedVolumeId == volume.id %}selected{% endif %}>
+                                {{ volume.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
             </div>
-            <div class="input">
-                <select id="volumeId" class="text" onchange="window.location.href=Craft.getCpUrl('lens/bulk', this.value ? {volumeId: this.value} : {})">
-                    <option value="">{{ 'All Volumes'|t('lens') }}</option>
-                    {% for volume in volumes %}
-                        <option value="{{ volume.id }}" {% if selectedVolumeId == volume.id %}selected{% endif %}>
-                            {{ volume.name }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
+        {% endif %}
 
         <div class="lens-bulk-actions">
             {% if stats.unprocessed > 0 %}

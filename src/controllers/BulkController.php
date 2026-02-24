@@ -44,11 +44,25 @@ class BulkController extends Controller
         $volumeId = $this->request->getQueryParam('volumeId');
         $volumeId = $volumeId ? (int) $volumeId : null;
 
-        $statusService = Plugin::getInstance()->bulkProcessingStatus;
-        $stats = $statusService->getStats($volumeId);
-        $volumes = Craft::$app->getVolumes()->getAllVolumes();
+        $settings = Plugin::getInstance()->getSettings();
+        $enabledVolumes = $settings->enabledVolumes;
+        $allVolumes = Craft::$app->getVolumes()->getAllVolumes();
 
-        // Determine state
+        if (in_array('*', $enabledVolumes, true)) {
+            $volumes = $allVolumes;
+        } else {
+            $volumes = array_filter($allVolumes, fn($v) => in_array($v->uid, $enabledVolumes, true));
+        }
+
+        $enabledVolumeIds = array_values(array_map(fn($v) => $v->id, $volumes));
+
+        if ($volumeId !== null && !in_array($volumeId, $enabledVolumeIds, true)) {
+            $volumeId = null;
+        }
+
+        $statusService = Plugin::getInstance()->bulkProcessingStatus;
+        $statsVolumeScope = $volumeId ?? (count($volumes) < count($allVolumes) ? $enabledVolumeIds : null);
+        $stats = $statusService->getStats($statsVolumeScope);
         $state = $statusService->determineState($stats);
         $session = $statusService->getSessionData();
 
@@ -131,8 +145,22 @@ class BulkController extends Controller
         $volumeId = $this->request->getQueryParam('volumeId');
         $volumeId = $volumeId ? (int) $volumeId : null;
 
+        $settings = Plugin::getInstance()->getSettings();
+        $enabledVolumes = $settings->enabledVolumes;
+        $allVolumes = Craft::$app->getVolumes()->getAllVolumes();
+
+        if (in_array('*', $enabledVolumes, true)) {
+            $enabledVolumeIds = null;
+        } else {
+            $enabledVolumeIds = array_values(array_map(
+                fn($v) => $v->id,
+                array_filter($allVolumes, fn($v) => in_array($v->uid, $enabledVolumes, true))
+            ));
+        }
+
         $statusService = Plugin::getInstance()->bulkProcessingStatus;
-        $stats = $statusService->getStats($volumeId);
+        $statsVolumeScope = $volumeId ?? $enabledVolumeIds;
+        $stats = $statusService->getStats($statsVolumeScope);
 
         // For full status (during processing), we need state info too
         $status = $statusService->getStatus();
