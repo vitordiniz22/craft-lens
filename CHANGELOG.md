@@ -62,7 +62,6 @@
 - `lens/retry-failed` — Retry all failed analyses.
 - `lens/validate` — Validate AI provider credentials.
 - `lens/stats`, `lens/tag-stats`, `lens/color-stats` — View statistics.
-- `lens/list-volumes` — List available volumes.
 
 #### Twig Extensions
 - `lens.getAnalysis()` — Access analysis data for any asset.

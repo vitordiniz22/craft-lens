@@ -159,9 +159,6 @@ php craft lens/process-all --reprocess
 # Process a specific volume
 php craft lens/process-volume <handle>
 
-# List all available volumes
-php craft lens/list-volumes
-
 # Validate AI provider credentials
 php craft lens/validate
 
