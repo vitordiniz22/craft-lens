@@ -26,11 +26,36 @@
         </div>
 
         <div class="lens-field-display">
-            <p>{{ 'X: {x}, Y: {y}'|t('lens', {
+            <p data-lens-target="focal-display-text">{{ 'X: {x}, Y: {y}'|t('lens', {
                 x: (analysis.focalPointX * 100)|round ~ '%',
                 y: (analysis.focalPointY * 100)|round ~ '%'
             }) }}</p>
         </div>
+
+        {# AI suggestion + revert (review editing mode only) #}
+        {% if fieldState == 'editing' and analysis.focalPointXAi is not null %}
+            {% set fpAiDiffers = analysis.focalPointEditedBy is not null
+                and (analysis.focalPointXAi|round(4) != analysis.focalPointX|round(4)
+                or analysis.focalPointYAi|round(4) != analysis.focalPointY|round(4)) %}
+
+            <div class="lens-ai-suggestion-inline" data-lens-target="focal-ai-suggestion"
+                 {% if not fpAiDiffers %}style="display: none;"{% endif %}>
+                <span class="lens-ai-suggestion-icon">{{ iconSvg('wand-magic-sparkles')|attr({width: 12, height: 12}) }}</span>
+                <span data-lens-target="focal-ai-text">
+                    {{ 'AI suggested: X: {x}, Y: {y}'|t('lens', {
+                        x: (analysis.focalPointXAi * 100)|round ~ '%',
+                        y: (analysis.focalPointYAi * 100)|round ~ '%'
+                    }) }}
+                </span>
+                &mdash;
+                <button type="button" class="lens-revert-trigger"
+                        data-lens-action="focal-revert"
+                        data-lens-focal-x-ai="{{ analysis.focalPointXAi }}"
+                        data-lens-focal-y-ai="{{ analysis.focalPointYAi }}">
+                    {{ 'Revert to AI'|t('lens') }}
+                </button>
+            </div>
+        {% endif %}
 
         {# Apply to asset row - only in unlocked mode #}
         {% if fieldState == 'unlocked' and asset is defined %}

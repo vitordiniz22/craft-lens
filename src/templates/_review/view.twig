@@ -31,23 +31,41 @@
         <div class="lens-review-panels lens-gap-24" data-lens-target="review-view">
             {# Left Panel - Image #}
             <div class="lens-review-left lens-flex-column lens-gap-12">
-                <div class="lens-review-image-container" data-lens-target="image-container">
+                <div class="lens-review-image-container" data-lens-target="image-container"
+                     data-lens-focal-x-ai="{{ analysis.focalPointXAi ?? '' }}"
+                     data-lens-focal-y-ai="{{ analysis.focalPointYAi ?? '' }}">
                     <img data-lens-target="review-image"
                          src="{{ analysis.previewUrl }}"
                          alt="{{ analysis.filename }}">
 
-                    {% if analysis.focalPointX %}
-                        <div class="lens-review-focal-marker" data-lens-target="focal-marker"
+                    <div class="lens-review-focal-marker" data-lens-target="focal-marker"
+                         {% if analysis.focalPointX %}
                              style="left: {{ (analysis.focalPointX * 100)|round(2) }}%;
-                                    top: {{ (analysis.focalPointY * 100)|round(2) }}%;"></div>
-                    {% endif %}
+                                    top: {{ (analysis.focalPointY * 100)|round(2) }}%;"
+                         {% else %}
+                             style="display: none;"
+                         {% endif %}></div>
+
+                    <span class="lens-review-focal-hint" data-lens-target="focal-hint">
+                        {{ 'Click to set focal point'|t('lens') }}
+                    </span>
                 </div>
 
-                <div class="lens-review-zoom-controls">
-                    <button type="button" class="btn small" data-lens-action="zoom-out">&minus;</button>
-                    <span data-lens-target="zoom-level">100%</span>
-                    <button type="button" class="btn small" data-lens-action="zoom-fit">{{ 'Fit'|t('lens') }}</button>
-                    <button type="button" class="btn small" data-lens-action="zoom-in">&plus;</button>
+                <div class="lens-review-focal-status" data-lens-target="focal-status">
+                    <span class="lens-review-focal-status__icon">&#9678;</span>
+                    <span data-lens-target="focal-status-text">
+                        {% if analysis.focalPointX %}
+                            {{ 'Focal: {x}, {y}'|t('lens', {
+                                x: (analysis.focalPointX * 100)|round ~ '%',
+                                y: (analysis.focalPointY * 100)|round ~ '%'
+                            }) }}
+                        {% else %}
+                            {{ 'No focal point set'|t('lens') }}
+                        {% endif %}
+                    </span>
+                    <span data-lens-target="focal-status-badge" class="lens-review-focal-badge" style="display: none;">
+                        {{ 'Modified'|t('lens') }}
+                    </span>
                 </div>
 
                 {% if analysis.similarImages is not empty %}

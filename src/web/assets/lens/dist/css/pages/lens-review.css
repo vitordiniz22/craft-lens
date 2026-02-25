@@ -30,22 +30,6 @@
   color: white;
 }
 
-.lens-kbd-hints {
-  font-size: 11px;
-  color: var(--medium-text-color);
-}
-
-.lens-kbd-hints kbd {
-  display: inline-block;
-  padding: 2px 6px;
-  background: var(--gray-100);
-  border: 1px solid var(--gray-200);
-  border-radius: 3px;
-  font-family: inherit;
-  font-size: 11px;
-  line-height: 1.3;
-  color: var(--medium-text-color);
-}
 
 /* Two-panel layout */
 .lens-review-panels {
@@ -70,15 +54,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 300px;
 }
 
 .lens-review-image-container img {
   max-width: 100%;
   max-height: 70vh;
   display: block;
-  transition: transform 0.2s ease;
-  transform-origin: center center;
 }
 
 .lens-review-focal-marker {
@@ -106,24 +87,47 @@
   transform: translate(-50%, -50%);
 }
 
-.lens-review-zoom-controls {
+.lens-review-focal-marker--pulse {
+  animation: lens-focal-pulse 0.4s ease;
+}
+
+/* Focal point hint overlay */
+.lens-review-focal-hint {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  font-size: 11px;
+  color: white;
+  background: rgba(0, 0, 0, 0.55);
+  border-radius: 12px;
+  padding: 3px 10px;
+  pointer-events: none;
+  z-index: 4;
+  transition: opacity 0.3s ease;
+}
+
+/* Focal point status bar */
+.lens-review-focal-status {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.lens-review-zoom-controls .btn {
-  min-width: 36px;
-  text-align: center;
-  padding: 4px 8px;
-}
-
-.lens-review-zoom-level {
+  gap: 6px;
   font-size: 12px;
   color: var(--medium-text-color);
-  min-width: 40px;
-  text-align: center;
+}
+
+.lens-review-focal-status__icon {
+  color: var(--red-500);
+  font-size: 14px;
+  line-height: 1;
+}
+
+.lens-review-focal-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: var(--blue-100);
+  color: var(--blue-700);
 }
 
 /* Similar images */
@@ -283,10 +287,6 @@
   .lens-review-toolbar {
     flex-direction: column;
     align-items: flex-start;
-  }
-
-  .lens-kbd-hints {
-    display: none;
   }
 
   .lens-review-action-bar {
@@ -481,12 +481,21 @@
 }
 
 .lens-ai-suggestion-inline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 12px;
-  color: var(--medium-text-color);
+  color: var(--violet-800);
   margin-top: 4px;
   padding: 6px 8px;
-  background: var(--gray-050);
+  background: var(--violet-100);
   border-radius: var(--small-border-radius);
+}
+
+.lens-ai-suggestion-icon {
+  flex-shrink: 0;
+  display: flex;
+  color: var(--violet-500);
 }
 
 @media (max-width: 768px) {

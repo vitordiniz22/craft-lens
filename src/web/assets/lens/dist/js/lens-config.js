@@ -53,26 +53,6 @@
         },
 
         /**
-         * Zoom configuration for image preview
-         */
-        ZOOM: {
-            /**
-             * Available zoom levels (1x to 4x with intermediate steps)
-             */
-            STEPS: [1, 1.25, 1.5, 2, 2.5, 3, 4],
-
-            /**
-             * Default zoom level index (1x = fit to view)
-             */
-            DEFAULT_LEVEL: 0,
-
-            /**
-             * Maximum zoom level index
-             */
-            MAX_LEVEL: 6
-        },
-
-        /**
          * Animation timing configuration
          */
         ANIMATION: {

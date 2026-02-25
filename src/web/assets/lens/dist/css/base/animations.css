@@ -37,6 +37,22 @@
 }
 
 /**
+ * Focal point pulse animation
+ * Used for the focal point marker when repositioned.
+ */
+@keyframes lens-focal-pulse {
+  0% {
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.4), 0 0 0 2px rgba(255, 255, 255, 0.8);
+  }
+  100% {
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8);
+  }
+}
+
+/**
  * Fade in animation
  * Generic fade-in effect for revealing content.
  */
