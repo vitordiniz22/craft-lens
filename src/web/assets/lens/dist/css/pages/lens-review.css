@@ -51,13 +51,14 @@
 .lens-review-panels {
   display: grid;
   grid-template-columns: 1fr 1fr;
-
   min-height: 400px;
 }
 
-/* Left panel - Image */
+/* Left panel - Image (sticky below the fixed Craft CP header) */
 .lens-review-left {
-  position: relative;
+  position: sticky;
+  top: calc(var(--header-height) + 20px);
+  align-self: start;
 }
 
 .lens-review-image-container {
@@ -178,10 +179,9 @@
 
 /* Right panel - Details */
 .lens-review-right {
-  overflow-y: auto;
-  max-height: calc(100vh - 250px);
   display: flex;
   flex-direction: column;
+  gap: 15px;
 }
 
 /* Asset header */
@@ -210,47 +210,6 @@
   color: var(--medium-text-color);
 }
 
-/* Sections using details/summary */
-.lens-review-section {
-  border-bottom: 1px solid var(--hairline-color);
-}
-
-.lens-review-section:last-child {
-  border-bottom: none;
-}
-
-.lens-review-section summary {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 0;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-color);
-  list-style: none;
-  user-select: none;
-}
-
-.lens-review-section summary::-webkit-details-marker {
-  display: none;
-}
-
-.lens-review-section summary::before {
-  content: '\25B6';
-  font-size: 10px;
-  color: var(--medium-text-color);
-  transition: transform 0.15s;
-}
-
-.lens-review-section[open] summary::before {
-  transform: rotate(90deg);
-}
-
-.lens-review-section-content {
-  padding: 0 0 16px 0;
-}
-
 /* Long description expandable */
 .lens-review-desc-preview {
   max-height: 3.5em;
@@ -271,15 +230,15 @@
   padding: 0;
 }
 
-/* Action bar (sticky bottom) */
+/* Action bar (sticky bottom, mirrors the sticky image behavior) */
 .lens-review-action-bar {
   position: sticky;
   bottom: 0;
   padding: 16px 0;
-  margin-top: 16px;
   background: var(--white);
   border-top: 1px solid var(--hairline-color);
   z-index: 10;
+  margin-top: 30px;
 }
 
 .lens-review-action-bar kbd {
@@ -300,8 +259,8 @@
     grid-template-columns: 1fr;
   }
 
-  .lens-review-right {
-    max-height: none;
+  .lens-review-left {
+    position: relative;
   }
 
   .lens-review-image-container img {
@@ -498,21 +457,6 @@
   color: var(--medium-text-color);
 }
 
-/* Review section flat layout (no collapsible) */
-.lens-review-section h4 {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-color);
-  margin: 16px 0 8px 0;
-  padding-top: 12px;
-  border-top: 1px solid var(--hairline-color);
-}
-
-.lens-review-section:first-child h4 {
-  margin-top: 0;
-  padding-top: 0;
-  border-top: none;
-}
 
 .lens-review-meta {
   font-size: 12px;

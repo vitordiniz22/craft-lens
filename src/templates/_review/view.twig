@@ -75,7 +75,7 @@
                     </div>
                 </div>
 
-                <div class="lens-review-section">
+                <div class="lens-section">
                     <div class="lens-section-header">
                         <h4 class="lens-section-header__title">{{ 'Description'|t('lens') }}</h4>
                         <p class="lens-section-header__intro">{{ 'AI-suggested metadata. Edit directly to customize.'|t('lens') }}</p>
@@ -91,8 +91,10 @@
                     } %}
                 </div>
 
-                <div class="lens-review-section">
-                    <h4>{{ 'Taxonomy'|t('lens') }}</h4>
+                <div class="lens-section">
+                    <div class="lens-section-header">
+                        <h4 class="lens-section-header__title">{{ 'Taxonomy'|t('lens') }}</h4>
+                    </div>
                     {% include 'lens/_components/analysis/taxonomy-section' with {
                         analysis: analysis,
                         analysisTags: analysis.tags,
@@ -101,23 +103,27 @@
                     } %}
                 </div>
 
-                <div class="lens-review-section">
-                    <h4>{{ 'Quality & Focal Point'|t('lens') }}</h4>
+                <div class="lens-section">
+                    <div class="lens-section-header">
+                        <h4 class="lens-section-header__title">{{ 'Quality & Focal Point'|t('lens') }}</h4>
+                    </div>
                     {% include 'lens/_components/analysis/quality-section' with {
                         analysis: analysis,
                         fieldState: 'editing'
                     } %}
                 </div>
 
-                <div class="lens-review-section">
-                    <h4>{{ 'Flags & Detection'|t('lens') }}</h4>
+                <div class="lens-section">
+                    <div class="lens-section-header">
+                        <h4 class="lens-section-header__title">{{ 'Flags & Detection'|t('lens') }}</h4>
+                    </div>
                     {% include 'lens/_components/analysis/safety-section' with {
                         analysis: analysis,
                         fieldState: 'editing'
                     } %}
                 </div>
 
-                <div class="lens-review-section">
+                <div class="lens-section">
                     {% include 'lens/_components/analysis/editable-field' with {
                         fieldName: 'extractedText',
                         label: 'Extracted Text'|t('lens'),
@@ -134,8 +140,10 @@
                 </div>
 
                 {% if analysis.exif %}
-                    <div class="lens-review-section">
-                        <h4>{{ 'Technical Info'|t('lens') }}</h4>
+                    <div class="lens-section">
+                        <div class="lens-section-header">
+                            <h4 class="lens-section-header__title">{{ 'Technical Info'|t('lens') }}</h4>
+                        </div>
                         {% include 'lens/_components/analysis/technical-section' with {
                             analysis: analysis,
                             exifData: analysis.exif
