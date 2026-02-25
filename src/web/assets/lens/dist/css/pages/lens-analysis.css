@@ -27,6 +27,7 @@
 .lens-analysis-panel {
     display: flex;
     flex-direction: column;
+    gap: 15px;
 }
 
 .lens-empty-analysis {
@@ -62,7 +63,6 @@
 .lens-panel-meta {
     font-size: 12px;
     color: var(--medium-text-color);
-    margin-top: 4px;
 }
 
 /* ==========================================================================
@@ -71,6 +71,9 @@
 
 .lens-section {
     border-bottom: 1px solid var(--hairline-color);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
 }
 
 .lens-section:last-child {
@@ -83,17 +86,14 @@
     align-items: center;
     width: 100%;
     gap: 6px;
-    margin-top: 10px;
-    margin-bottom: 30px;
 }
 
 .lens-section-header__title {
     display: block;
     font-size: 13px;
     font-weight: 700;
-    color: var(--text-color);
+    color: var(--gray-600);
     letter-spacing: 0.02em;
-    margin: 0 0 12px 0;
 }
 
 .lens-section-header__intro {
@@ -107,6 +107,9 @@
 
 .lens-section-body {
     padding-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
 /* ==========================================================================
@@ -159,9 +162,6 @@
     width: 100%;
 }
 
-.lens-editable-field + .lens-editable-field {
-    margin-top: 16px;
-}
 
 .lens-field-header {
     display: flex;
@@ -176,7 +176,6 @@
     color: var(--medium-text-color);
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin-bottom: 10px;
 }
 
 .lens-edit-trigger {
@@ -302,15 +301,9 @@
     position: relative;
     width: 100%;
     padding: 12px 14px;
-    border-left: 3px solid var(--gray-200);
+    border-left: 3px solid var(--link-color);
     border-radius: 0 var(--small-border-radius) var(--small-border-radius) 0;
     background: var(--gray-050);
-}
-
-.lens-native-bridge + .lens-native-bridge,
-.lens-native-bridge + .lens-alt-proxy,
-.lens-native-bridge + .lens-editable-field {
-    margin-top: 16px;
 }
 
 .lens-native-bridge--editing {
@@ -419,15 +412,10 @@
    Tag Editor
    ========================================================================== */
 
-.lens-tag-editor {
-    width: 100%;
-}
-
 .lens-tag-chips {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
-    margin-bottom: 8px;
 }
 
 .lens-tag-chips .chip {
@@ -447,8 +435,7 @@
     opacity: 0.6;
 }
 
-.lens-tag-remove:hover,
-.lens-color-remove:hover {
+.lens-tag-remove:hover {
     opacity: 1;
     color: var(--error-color);
 }
@@ -503,41 +490,9 @@
     color: var(--medium-text-color);
 }
 
-/* ==========================================================================
-   Color Editor
-   ========================================================================== */
-
-.lens-color-editor {
-    width: 100%;
-}
-
-.lens-color-swatches {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 8px;
-}
-
-.lens-color-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 8px;
-    border: 1px solid var(--hairline-color);
-    border-radius: var(--small-border-radius);
-    font-size: 12px;
+.lens-color-hex {
     font-family: var(--mono-font-family);
-}
-
-.lens-color-remove {
-    cursor: pointer;
-    background: none;
-    border: none;
-    padding: 0 2px;
-    font-size: 13px;
-    line-height: 1;
-    color: var(--medium-text-color);
-    opacity: 0.6;
+    font-size: 12px;
 }
 
 .lens-color-add-row {
@@ -572,7 +527,7 @@
 .lens-quality-metrics {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 1px;
     width: 100%;
 }
 

@@ -131,11 +131,18 @@
 
         {# Section 2: Taxonomy #}
         {% if analysis.status not in ['pending', 'processing', 'failed'] %}
-            <div class="lens-section">
+            <div class="lens-section" data-lens-target="taxonomy-section">
                 <div class="lens-section-header">
                     <span class="lens-section-header__title">
                         {{ 'Taxonomy'|t('lens') }}
                     </span>
+                    <p class="lens-section-header__intro">
+                        {% if readOnly %}
+                            {{ 'AI-generated tags and colors for categorization.'|t('lens') }}
+                        {% else %}
+                            {{ 'AI-generated tags and colors. Click to add, edit, or remove.'|t('lens') }}
+                        {% endif %}
+                    </p>
                 </div>
                 <div class="lens-section-body">
                     {% include 'lens/_components/analysis/taxonomy-section' with {
@@ -154,6 +161,9 @@
                     <span class="lens-section-header__title">
                         {{ 'Quality & Focal Point'|t('lens') }}
                     </span>
+                    <p class="lens-section-header__intro">
+                        {{ 'AI quality assessment score and suggested focal point for smart cropping.'|t('lens') }}
+                    </p>
                 </div>
                 <div class="lens-section-body">
                     {% include 'lens/_components/analysis/quality-section' with {

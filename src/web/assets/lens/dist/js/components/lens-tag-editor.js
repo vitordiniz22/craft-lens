@@ -115,7 +115,7 @@
             e.preventDefault();
             e.stopPropagation();
 
-            const chip = removeBtn.closest('.chip');
+            const chip = removeBtn.closest('[data-lens-tag]');
             if (!chip) return;
 
             chip.remove();
@@ -189,7 +189,7 @@
             chip.dataset.lensTag = tagName;
             chip.dataset.lensIsAi = isAi ? '1' : '0';
             chip.dataset.lensConfidence = isAi ? '' : '1';
-            chip.querySelector('.chip-label').textContent = tagName;
+            chip.querySelector('[data-lens-target="chip-label"]').textContent = tagName;
 
             chips.appendChild(chip);
         },

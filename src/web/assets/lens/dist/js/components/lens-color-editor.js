@@ -95,10 +95,9 @@
 
             var item = template.content.firstElementChild.cloneNode(true);
             item.dataset.lensHex = normalizedHex;
-            item.querySelector('.lens-swatch').style.backgroundColor = normalizedHex;
-            var link = item.querySelector('[data-lens-target="color-link"]');
-            link.href = Craft.getCpUrl('lens/search', {color: normalizedHex});
-            link.textContent = normalizedHex;
+            item.href = Craft.getCpUrl('lens/search', {color: normalizedHex});
+            item.querySelector('[data-lens-target="color-swatch"]').style.backgroundColor = normalizedHex;
+            item.querySelector('[data-lens-target="chip-label"]').textContent = normalizedHex;
 
             swatches.appendChild(item);
         },

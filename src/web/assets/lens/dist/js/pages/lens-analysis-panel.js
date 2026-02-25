@@ -55,7 +55,7 @@
             if (saveBtn.disabled) return;
 
             const analysisId = saveBtn.dataset.lensAnalysisId;
-            const section = saveBtn.closest('.lens-section');
+            const section = saveBtn.closest('[data-lens-target="taxonomy-section"]');
             if (!section) return;
 
             window.Lens.core.ButtonState.withLoading(

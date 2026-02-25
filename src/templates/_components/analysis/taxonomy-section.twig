@@ -10,8 +10,8 @@
 
 {% if showTaxonomy %}
     {# Tags #}
-    <div class="lens-tag-editor" data-lens-target="tag-editor" data-lens-analysis-id="{{ analysis.id }}">
-        <div class="flex items-center gap-s mb-xs">
+    <div class="lens-editable-field" data-lens-target="tag-editor" data-lens-analysis-id="{{ analysis.id }}">
+        <div class="lens-field-header" data-lens-target="field-header">
             <span class="lens-field-label">{{ 'Tags'|t('lens') }} ({{ analysisTags|length }})</span>
         </div>
 
@@ -20,7 +20,7 @@
                 {% for tag in analysisTags %}
                     <a href="{{ cpUrl('lens/search', {tags: tag.tag}) }}" class="chip" data-lens-tag="{{ tag.tag }}" data-lens-is-ai="{{ tag.isAi ? '1' : '0' }}" data-lens-confidence="{{ tag.confidence }}">
                         <div class="chip-content">
-                            <span class="chip-label">{{ tag.tag }}</span>
+                            <span class="chip-label" data-lens-target="chip-label">{{ tag.tag }}</span>
                             {% if tag.confidence %}
                                 <span class="badge">{{ (tag.confidence * 100)|round }}%</span>
                             {% endif %}
@@ -43,7 +43,7 @@
             <template data-lens-target="tag-chip-template">
                 <a href="" class="chip" data-lens-tag="" data-lens-is-ai="0" data-lens-confidence="">
                     <div class="chip-content">
-                        <span class="chip-label"></span>
+                        <span class="chip-label" data-lens-target="chip-label"></span>
                         <button type="button" class="lens-tag-remove" data-lens-action="tag-remove" title="{{ 'Remove'|t('lens') }}">&times;</button>
                     </div>
                 </a>
@@ -52,24 +52,26 @@
     </div>
 
     {# Colors #}
-    <div class="lens-color-editor mt-m" data-lens-target="color-editor" data-lens-analysis-id="{{ analysis.id }}">
-        <div class="flex items-center gap-s mb-xs">
-            <span class="lens-field-label">{{ 'Colors'|t('lens') }}</span>
+    <div class="lens-editable-field" data-lens-target="color-editor" data-lens-analysis-id="{{ analysis.id }}">
+        <div class="lens-field-header" data-lens-target="field-header">
+            <span class="lens-field-label">{{ 'Colors'|t('lens') }} ({{ analysisColors|length }})</span>
         </div>
 
         {% if analysisColors|length %}
-            <div class="lens-color-swatches" data-lens-target="color-swatches">
+            <div class="lens-tag-chips" data-lens-target="color-swatches">
                 {% for color in analysisColors %}
-                    <div class="lens-color-item" data-lens-target="color-item" data-lens-hex="{{ color.hex }}" data-lens-is-ai="{{ color.isAi ? '1' : '0' }}" data-lens-percentage="{{ color.percentage }}">
-                        <span class="lens-swatch lens-swatch--sm" style="background-color: {{ color.hex }}"></span>
-                        <a href="{{ cpUrl('lens/search', {color: color.hex}) }}" data-lens-target="color-link">{{ color.hex }}</a>
-                        {% if color.percentage %}
-                            <span class="badge">{{ (color.percentage * 100)|round }}%</span>
-                        {% endif %}
-                        {% if isInteractive %}
-                            <button type="button" class="lens-color-remove" data-lens-action="color-remove" title="{{ 'Remove'|t('lens') }}">&times;</button>
-                        {% endif %}
-                    </div>
+                    <a href="{{ cpUrl('lens/search', {color: color.hex}) }}" class="chip" data-lens-target="color-item" data-lens-hex="{{ color.hex }}" data-lens-is-ai="{{ color.isAi ? '1' : '0' }}" data-lens-percentage="{{ color.percentage }}">
+                        <div class="chip-content">
+                            <span class="lens-swatch lens-swatch--sm" data-lens-target="color-swatch" style="background-color: {{ color.hex }}"></span>
+                            <span class="chip-label lens-color-hex" data-lens-target="chip-label">{{ color.hex }}</span>
+                            {% if color.percentage %}
+                                <span class="badge">{{ (color.percentage * 100)|round }}%</span>
+                            {% endif %}
+                            {% if isInteractive %}
+                                <button type="button" class="lens-tag-remove" data-lens-action="color-remove" title="{{ 'Remove'|t('lens') }}">&times;</button>
+                            {% endif %}
+                        </div>
+                    </a>
                 {% endfor %}
             </div>
         {% endif %}
@@ -81,11 +83,13 @@
             </div>
 
             <template data-lens-target="color-item-template">
-                <div class="lens-color-item" data-lens-target="color-item" data-lens-hex="" data-lens-is-ai="0" data-lens-percentage="">
-                    <span class="lens-swatch lens-swatch--sm" style=""></span>
-                    <a href="" data-lens-target="color-link"></a>
-                    <button type="button" class="lens-color-remove" data-lens-action="color-remove" title="{{ 'Remove'|t('lens') }}">&times;</button>
-                </div>
+                <a href="" class="chip" data-lens-target="color-item" data-lens-hex="" data-lens-is-ai="0" data-lens-percentage="">
+                    <div class="chip-content">
+                        <span class="lens-swatch lens-swatch--sm" data-lens-target="color-swatch" style=""></span>
+                        <span class="chip-label lens-color-hex" data-lens-target="chip-label"></span>
+                        <button type="button" class="lens-tag-remove" data-lens-action="color-remove" title="{{ 'Remove'|t('lens') }}">&times;</button>
+                    </div>
+                </a>
             </template>
         {% endif %}
     </div>

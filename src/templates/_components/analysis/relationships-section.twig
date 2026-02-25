@@ -7,20 +7,25 @@
 {% set isProcessing = isProcessing ?? false %}
 
 {# Similar / Duplicate Assets #}
-{% if similarImages|length %}
-    <div class="flex items-center gap-s mb-xs">
-        <span class="lens-field-label">{{ 'Similar Assets'|t('lens') }}</span>
-    </div>
-    <div class="lens-similar-strip">
-        {% for img in similarImages %}
-            <a href="{{ img.editUrl }}" title="{{ img.filename }} ({{ (img.similarity * 100)|round }}% similar)">
-                <img src="{{ img.thumbnailUrl }}" alt="{{ img.filename }}" class="lens-similar-thumb" loading="lazy">
-            </a>
-        {% endfor %}
-    </div>
-{% else %}
-    <p class="light smalltext">{{ 'No similar assets found'|t('lens') }}</p>
-{% endif %}
+<div class="lens-editable-field">
+    {% if similarImages|length %}
+        <div class="lens-field-header">
+            <span class="lens-field-label">{{ 'Similar Assets'|t('lens') }}</span>
+        </div>
+        <div class="lens-similar-strip">
+            {% for img in similarImages %}
+                <a href="{{ img.editUrl }}" title="{{ img.filename }} ({{ (img.similarity * 100)|round }}% similar)">
+                    <img src="{{ img.thumbnailUrl }}" alt="{{ img.filename }}" class="lens-similar-thumb" loading="lazy">
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="lens-field-header">
+            <span class="lens-field-label">{{ 'Similar Assets'|t('lens') }}</span>
+        </div>
+        <p class="light smalltext">{{ 'No similar assets found'|t('lens') }}</p>
+    {% endif %}
+</div>
 
 {# Find Similar button #}
 {% if not (static ?? false) and not isProcessing %}

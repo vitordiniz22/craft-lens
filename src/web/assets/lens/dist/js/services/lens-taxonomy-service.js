@@ -22,7 +22,7 @@
         isDuplicateTag: function(container, tagName) {
             if (!container || !tagName) return false;
 
-            const existing = container.querySelectorAll('.chip');
+            const existing = container.querySelectorAll('[data-lens-tag]');
             const normalizedTag = tagName.toLowerCase();
 
             for (let i = 0; i < existing.length; i++) {
@@ -88,7 +88,7 @@
         collectTags: function(container) {
             if (!container) return [];
 
-            const chips = container.querySelectorAll('.chip');
+            const chips = container.querySelectorAll('[data-lens-tag]');
             const tags = [];
 
             chips.forEach(function(chip) {
@@ -136,7 +136,7 @@
          * @param {HTMLElement} el - Any element inside the .lens-section
          */
         markDirty: function(el) {
-            var section = el.closest('.lens-section');
+            var section = el.closest('[data-lens-target="taxonomy-section"]');
             if (!section) return;
 
             var saveBtn = section.querySelector('[data-lens-action="taxonomy-save"]');
@@ -164,7 +164,7 @@
          * @returns {HTMLElement|null} Swatches container
          */
         getOrCreateSwatchesContainer: function(editor) {
-            return this._getOrCreateContainer(editor, 'color-swatches', 'lens-color-swatches');
+            return this._getOrCreateContainer(editor, 'color-swatches', 'lens-tag-chips');
         },
 
         /**
@@ -177,14 +177,14 @@
             var container = editor.querySelector('[data-lens-target="' + targetName + '"]');
             if (!container) {
                 // Remove empty state ("No tags" / "No colors" message)
-                var emptyState = editor.querySelector('p.light');
+                var emptyState = editor.querySelector('[data-lens-target="empty-state"]');
                 if (emptyState) emptyState.remove();
 
                 container = document.createElement('div');
                 container.className = className;
                 container.dataset.lensTarget = targetName;
 
-                var labelRow = editor.querySelector('.flex');
+                var labelRow = editor.querySelector('[data-lens-target="field-header"]');
                 if (labelRow) {
                     labelRow.parentNode.insertBefore(container, labelRow.nextSibling);
                 }

@@ -5,7 +5,7 @@
  # Expected variables: analysis, asset, static
  #}
 
-<div class="lens-panel-heading flex flex-justify items-center pb-s mb-s">
+<div class="lens-panel-heading flex flex-justify items-center pb-s">
     <div class="field width-100">
         <div class="heading">
             <label class="alt-label">{{ 'Lens Analysis'|t('lens') }}</label>
@@ -41,7 +41,7 @@
 </div>
 
 {% if analysis and analysis.processedAt %}
-    <div class="lens-panel-meta mb-s">
+    <div class="lens-panel-meta">
         {% set providerNames = {
             'openai': 'OpenAI',
             'gemini': 'Google Gemini',
