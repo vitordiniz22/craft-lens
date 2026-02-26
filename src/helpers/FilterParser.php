@@ -162,7 +162,7 @@ class FilterParser
 
         $colorTolerance = $request->getQueryParam('colorTolerance');
 
-        if ($colorTolerance !== null && is_numeric($colorTolerance)) {
+        if ($colorTolerance !== null && is_numeric($colorTolerance) && isset($filters['color'])) {
             $filters['colorTolerance'] = max(0, min(100, (int) $colorTolerance));
         }
     }

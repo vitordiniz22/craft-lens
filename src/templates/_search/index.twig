@@ -6,7 +6,7 @@
 {% block content %}
 <div class="lens-search-page">
     {# Search Header #}
-    <form method="get" action="{{ cpUrl('lens/search') }}" data-lens-target="search-form">
+    <form method="get" action="{{ cpUrl('lens/search') }}" class="lens-search-form" data-lens-target="search-form">
         {# Search Toolbar #}
         <div class="lens-search-toolbar">
             <div class="flex-grow">
@@ -33,7 +33,7 @@
             <button type="button" class="btn" data-lens-action="toggle-filters">
                 {{ iconSvg('filter')|attr({width: 14, height: 14, class: 'lens-btn-icon'}) }}
                 {{ 'Filters'|t('lens') }}
-                {% if showFilterPanel %}
+                {% if hasActiveFilters %}
                     <span class="lens-badge lens-badge--small lens-badge--info">{{ 'active'|t('lens') }}</span>
                 {% endif %}
             </button>
@@ -41,7 +41,7 @@
 
         {# Quick Filters #}
         {% if quickFilters|length %}
-            <div class="btngroup lens-mb-12">
+            <div class="btngroup">
                 {% for key, filter in quickFilters %}
                     <a href="{{ cpUrl('lens/search', (filters.quickFilter ?? '') == key ? {} : {quickFilter: key}) }}"
                        class="btn small{% if (filters.quickFilter ?? '') == key %} active{% endif %}"
@@ -52,14 +52,80 @@
             </div>
         {% endif %}
 
-        {# Active Quick Filter Indicator #}
-        {% if filters.quickFilter is defined and filters.quickFilter %}
-            <div class="lens-active-filter-bar">
-                <span class="light">
-                    {{ 'Filtered by'|t('lens') }}:
-                    <strong>{{ quickFilters[filters.quickFilter].label ?? filters.quickFilter }}</strong>
-                </span>
-                <a href="{{ cpUrl('lens/search') }}">{{ 'Clear'|t('lens') }}</a>
+        {# Active Filters Chips Bar #}
+        {% if hasActiveFilters or (filters.quickFilter is defined and filters.quickFilter) %}
+            <div class="lens-filter-chips-bar" data-lens-target="filter-chips-bar">
+                <span class="lens-filter-chips-label light">{{ 'Filtered by'|t('lens') }}:</span>
+                <div class="lens-filter-chips">
+                    {% if filters.quickFilter is defined and filters.quickFilter %}
+                        <span class="lens-filter-chip" data-lens-filter-param="quickFilter">
+                            <strong>{{ quickFilters[filters.quickFilter].label ?? filters.quickFilter }}</strong>
+                            <button type="button" data-lens-action="remove-filter-chip" data-lens-filter-param="quickFilter" title="{{ 'Remove filter'|t('lens') }}">&times;</button>
+                        </span>
+                    {% endif %}
+                    {% if filters.query is defined and filters.query %}
+                        <span class="lens-filter-chip" data-lens-filter-param="q">
+                            {{ 'Search'|t('lens') }}: <strong>{{ filters.query }}</strong>
+                            <button type="button" data-lens-action="remove-filter-chip" data-lens-filter-param="q" title="{{ 'Remove filter'|t('lens') }}">&times;</button>
+                        </span>
+                    {% endif %}
+                    {% if filters.containsPeople is defined and filters.containsPeople is not null %}
+                        <span class="lens-filter-chip" data-lens-filter-param="containsPeople">
+                            {{ 'People'|t('lens') }}: <strong>{{ filters.containsPeople ? 'Yes'|t('lens') : 'No'|t('lens') }}</strong>
+                            <button type="button" data-lens-action="remove-filter-chip" data-lens-filter-param="containsPeople" title="{{ 'Remove filter'|t('lens') }}">&times;</button>
+                        </span>
+                    {% endif %}
+                    {% if (filters.faceCountPreset ?? '') != '' %}
+                        <span class="lens-filter-chip" data-lens-filter-param="faceCountPreset">
+                            {{ 'Face Count'|t('lens') }}: <strong>{{ filters.faceCountPreset }}</strong>
+                            <button type="button" data-lens-action="remove-filter-chip" data-lens-filter-param="faceCountPreset" title="{{ 'Remove filter'|t('lens') }}">&times;</button>
+                        </span>
+                    {% endif %}
+                    {% if filters.qualityPreset is defined and filters.qualityPreset %}
+                        <span class="lens-filter-chip" data-lens-filter-param="qualityPreset">
+                            {{ 'Quality'|t('lens') }}: <strong>{{ filters.qualityPreset|capitalize }}</strong>
+                            <button type="button" data-lens-action="remove-filter-chip" data-lens-filter-param="qualityPreset" title="{{ 'Remove filter'|t('lens') }}">&times;</button>
+                        </span>
+                    {% endif %}
+                    {% if filters.hasWatermark is defined and filters.hasWatermark is not null %}
+                        <span class="lens-filter-chip" data-lens-filter-param="hasWatermark">
+                            {{ 'Watermark'|t('lens') }}: <strong>{{ filters.hasWatermark ? 'Yes'|t('lens') : 'No'|t('lens') }}</strong>
+                            <button type="button" data-lens-action="remove-filter-chip" data-lens-filter-param="hasWatermark" title="{{ 'Remove filter'|t('lens') }}">&times;</button>
+                        </span>
+                    {% endif %}
+                    {% if filters.containsBrandLogo is defined and filters.containsBrandLogo is not null %}
+                        <span class="lens-filter-chip" data-lens-filter-param="containsBrandLogo">
+                            {{ 'Brand Logo'|t('lens') }}: <strong>{{ filters.containsBrandLogo ? 'Yes'|t('lens') : 'No'|t('lens') }}</strong>
+                            <button type="button" data-lens-action="remove-filter-chip" data-lens-filter-param="containsBrandLogo" title="{{ 'Remove filter'|t('lens') }}">&times;</button>
+                        </span>
+                    {% endif %}
+                    {% if filters.color is defined and filters.color %}
+                        <span class="lens-filter-chip" data-lens-filter-param="color,colorTolerance">
+                            <span class="lens-filter-chip-swatch" style="background:{{ filters.color }}"></span>
+                            {{ 'Color'|t('lens') }}: <strong>{{ filters.color }}{% if filters.colorTolerance is defined and filters.colorTolerance != 30 %} ({{ filters.colorTolerance }}%){% endif %}</strong>
+                            <button type="button" data-lens-action="remove-filter-chip" data-lens-filter-param="color,colorTolerance" title="{{ 'Remove filter'|t('lens') }}">&times;</button>
+                        </span>
+                    {% endif %}
+                    {% if filters.status is defined and filters.status|length %}
+                        <span class="lens-filter-chip" data-lens-filter-param="status">
+                            {{ 'Status'|t('lens') }}: <strong>{{ filters.status|join(', ') }}</strong>
+                            <button type="button" data-lens-action="remove-filter-chip" data-lens-filter-param="status" title="{{ 'Remove filter'|t('lens') }}">&times;</button>
+                        </span>
+                    {% endif %}
+                    {% if filters.processedFrom is defined or filters.processedTo is defined %}
+                        <span class="lens-filter-chip" data-lens-filter-param="processedFrom,processedTo">
+                            {{ 'Date'|t('lens') }}: <strong>{% if filters.processedFrom is defined %}{{ filters.processedFrom|date('Y-m-d') }}{% endif %} {{ 'to'|t('lens') }} {% if filters.processedTo is defined %}{{ filters.processedTo|date('Y-m-d') }}{% endif %}</strong>
+                            <button type="button" data-lens-action="remove-filter-chip" data-lens-filter-param="processedFrom,processedTo" title="{{ 'Remove filter'|t('lens') }}">&times;</button>
+                        </span>
+                    {% endif %}
+                    {% if filters.hasDuplicates is defined and filters.hasDuplicates is not null %}
+                        <span class="lens-filter-chip" data-lens-filter-param="hasDuplicates">
+                            {{ 'Duplicates'|t('lens') }}: <strong>{{ filters.hasDuplicates ? 'Yes'|t('lens') : 'No'|t('lens') }}</strong>
+                            <button type="button" data-lens-action="remove-filter-chip" data-lens-filter-param="hasDuplicates" title="{{ 'Remove filter'|t('lens') }}">&times;</button>
+                        </span>
+                    {% endif %}
+                </div>
+                <a href="{{ cpUrl('lens/search') }}" class="lens-filter-chips-clear" data-lens-action="clear-all-filters">{{ 'Clear all'|t('lens') }}</a>
             </div>
         {% endif %}
 

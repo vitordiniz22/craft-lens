@@ -173,7 +173,7 @@
     {# Actions #}
     <div class="lens-filter-actions">
         <button type="submit" class="btn submit">{{ 'Apply Filters'|t('lens') }}</button>
-        {% if showFilterPanel %}
+        {% if hasActiveFilters %}
             <a href="{{ cpUrl('lens/search') }}" class="btn">{{ 'Clear All'|t('lens') }}</a>
         {% endif %}
     </div>

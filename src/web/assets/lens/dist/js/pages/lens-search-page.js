@@ -17,6 +17,7 @@
                 return;
 
             this.initFilterToggle();
+            this.initFilterChips();
             this.initClearSearch();
             this.initFormCleanup();
             this.initSearchEnterKey();
@@ -38,6 +39,23 @@
                 'click',
                 (e, btn) => {
                     if (panel) window.Lens.core.DOM.toggleClass(panel);
+                },
+            );
+        },
+
+        initFilterChips: function () {
+            window.Lens.core.DOM.delegate(
+                '[data-lens-action="remove-filter-chip"]',
+                'click',
+                function (e, btn) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    var params = btn.dataset.lensFilterParam.split(',');
+                    var url = new URL(window.location.href);
+                    params.forEach(function (param) {
+                        url.searchParams.delete(param.trim());
+                    });
+                    window.location.assign(url.toString());
                 },
             );
         },

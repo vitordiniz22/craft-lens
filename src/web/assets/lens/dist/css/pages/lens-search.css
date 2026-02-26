@@ -52,12 +52,18 @@
     color: var(--text-color);
 }
 
+/* Search form layout */
+.lens-search-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--m);
+}
+
 /* Search toolbar — single row for input + filter button + submit */
 .lens-search-toolbar {
     display: flex;
     align-items: center;
     gap: var(--m);
-    margin-bottom: var(--m);
 }
 
 /* Icon spacing inside buttons */
@@ -66,11 +72,7 @@
     vertical-align: -1px;
 }
 
-/* Filter panel overrides */
-.lens-search-filters {
-    margin-bottom: var(--m);
-}
-
+/* Filter panel */
 .lens-filter-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -238,16 +240,79 @@
     flex-shrink: 0;
 }
 
-/* Active filter indicator */
-.lens-active-filter-bar {
+/* Active filter chips bar */
+.lens-filter-chips-bar {
     display: flex;
     align-items: center;
-    gap: var(--s);
-    margin-bottom: var(--m);
-    padding: 8px 12px;
-    background: var(--gray-050);
-    border-radius: var(--small-border-radius);
+    gap: 8px;
+    flex-wrap: wrap;
     font-size: 13px;
+}
+
+.lens-filter-chips-label {
+    flex-shrink: 0;
+    color: var(--medium-text-color);
+    font-size: 12px;
+}
+
+.lens-filter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+}
+
+.lens-filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 4px 2px 8px;
+    background: color-mix(in srgb, var(--link-color) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--link-color) 25%, transparent);
+    border-radius: 10px;
+    font-size: 11px;
+    color: var(--medium-dark-text-color);
+    white-space: nowrap;
+    line-height: 1.4;
+}
+
+.lens-filter-chip button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: 50%;
+    color: color-mix(in srgb, var(--link-color) 60%, transparent);
+    cursor: pointer;
+    font-size: 13px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.lens-filter-chip button:hover {
+    background: color-mix(in srgb, var(--link-color) 20%, transparent);
+    color: var(--link-color);
+}
+
+.lens-filter-chip-swatch {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    flex-shrink: 0;
+}
+
+.lens-filter-chips-clear {
+    flex-shrink: 0;
+    font-size: 11px;
+    color: var(--medium-text-color);
+    margin-left: auto;
 }
 
 /* Keyboard focus */
