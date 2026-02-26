@@ -11,13 +11,13 @@
     {% set processed = analyzed + pendingReview + failed %}
     {% set waiting = max(0, unprocessed - failed) %}
 
-    <div class="lens-processing__status lens-flex-column lens-gap-12" data-state="{{ processingState }}">
+    <div class="lens-processing__status" data-state="{{ processingState }}">
         {% if processingState == 'processing' %}
             {# Processing state #}
             <div class="lens-processing-active">
                 {% set progress = processingProgress %}
                 {% set percentComplete = progress.percentComplete|default(0) %}
-                <div class="lens-processing__progress-header lens-flex-between lens-gap-12">
+                <div class="lens-processing__progress-header">
                     <span class="lens-processing__progress-label">{{ 'Processing'|t('lens') }}</span>
                     <span class="lens-processing__progress-text">
                         {{ progress.completed|default(0)|number_format }} {{ 'of'|t('lens') }} {{ progress.total|default(totalImages)|number_format }}
@@ -32,7 +32,7 @@
                         {{ 'Estimated: ~{minutes} minutes remaining'|t('lens', {minutes: queueInfo.estimatedMinutes}) }}
                     </div>
                 {% endif %}
-                <div class="lens-actions__grid lens-gap-12">
+                <div class="lens-actions__grid">
                     <form method="post" action="{{ actionUrl('lens/bulk/cancel') }}">
                         {{ csrfInput() }}
                         <button type="submit" class="btn">{{ 'Pause'|t('lens') }}</button>
@@ -43,7 +43,7 @@
             {# Assets waiting state #}
             <div class="lens-processing-waiting">
                 {% set percentComplete = totalImages > 0 ? ((processed / totalImages) * 100) : 0 %}
-                <div class="lens-processing__progress-header lens-flex-between lens-gap-12">
+                <div class="lens-processing__progress-header">
                     <span class="lens-processing__progress-text">
                         {{ processed|number_format }} {{ 'of'|t('lens') }} {{ totalImages|number_format }}
                         ({{ percentComplete|round }}%)
@@ -69,15 +69,15 @@
                         <span class="lens-processing__failed-count">{{ failed|number_format }} {{ 'failed'|t('lens') }}</span>
                     {% endif %}
                 </div>
-                <div class="lens-actions__grid lens-gap-12">
+                <div class="lens-actions__grid">
                     {% if waiting > 0 %}
-                        <form method="post" action="{{ actionUrl('lens/bulk/process') }}" style="display: inline;">
+                        <form method="post" action="{{ actionUrl('lens/bulk/process') }}">
                             {{ csrfInput() }}
                             <button type="submit" class="btn submit">{{ 'Start Analysis'|t('lens') }}</button>
                         </form>
                     {% endif %}
                     {% if failed > 0 %}
-                        <form method="post" action="{{ actionUrl('lens/bulk/retry-failed') }}" style="display: inline;">
+                        <form method="post" action="{{ actionUrl('lens/bulk/retry-failed') }}">
                             {{ csrfInput() }}
                             <button type="submit" class="btn{% if waiting == 0 %} submit{% endif %}">{{ 'Retry Failed'|t('lens') }}</button>
                         </form>
@@ -87,13 +87,13 @@
         {% else %}
             {# Idle/Complete state #}
             <div class="lens-processing--complete">
-                <div class="lens-processing__progress-header lens-flex-between lens-gap-12">
+                <div class="lens-processing__progress-header">
                     <span class="lens-processing__progress-text">
                         {{ processed|number_format }} {{ 'of'|t('lens') }} {{ totalImages|number_format }} {{ 'complete'|t('lens') }}
                     </span>
                     <span class="lens-processing__complete-icon">{{ iconSvg('check') }}</span>
                 </div>
-                <div class="lens-progress lens-progress--small lens-simple-progress--complete">
+                <div class="lens-progress lens-progress--small lens-progress--complete">
                     <div class="lens-progress-fill" style="width: 100%"></div>
                 </div>
             </div>

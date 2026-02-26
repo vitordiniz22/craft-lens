@@ -1,0 +1,12 @@
+/**
+ * Pagination Component
+ * Reusable pagination bar with prev/next buttons and page info.
+ */
+
+.lens-pagination {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 15px;
+  border-top: 1px solid var(--hairline-color);
+}

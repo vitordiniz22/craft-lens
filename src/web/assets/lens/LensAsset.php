@@ -30,6 +30,7 @@ class LensAsset extends AssetBundle
             'css/components/confidence-badge.css',
             'css/components/empty-state.css',
             'css/components/inline-notice.css',
+            'css/components/pagination.css',
             'css/components/progress-bar.css',
             'css/components/setup-banner.css',
             'css/components/stat-card.css',

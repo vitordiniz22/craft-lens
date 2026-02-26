@@ -96,7 +96,7 @@
                 </div>
             </div>
         {% else %}
-            <div class="lens-detection-item lens-detection-empty">
+            <div class="lens-detection-item">
                 <div class="flex items-center gap-s">
                     <span class="status off"></span>
                     <span>{{ _self.peopleDetectionText(false, 0) }}</span>
@@ -147,7 +147,7 @@
             </div>
         </div>
 
-        <div class="lens-detection-item lens-detection-empty" data-lens-target="people-absent"{% if analysis.containsPeople %} hidden{% endif %}>
+        <div class="lens-detection-item" data-lens-target="people-absent"{% if analysis.containsPeople %} hidden{% endif %}>
             <div class="flex items-center gap-s">
                 <span class="status off"></span>
                 <span data-lens-target="people-display-text">{{ _self.peopleDetectionText(false, 0) }}</span>

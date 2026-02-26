@@ -65,11 +65,6 @@
   color: var(--blue-700);
 }
 
-.lens-badge--dark {
-  background: rgba(0, 0, 0, 0.6);
-  color: white;
-}
-
 /* Size modifier */
 .lens-badge--small {
   font-size: 10px;

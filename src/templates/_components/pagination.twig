@@ -20,7 +20,7 @@
     {% set page = page ?? 1 %}
 
     {% if totalPages > 1 %}
-        <div class="flex flex-center" style="gap: var(--m); margin-top: var(--xl); padding-top: var(--xl); border-top: 1px solid var(--hairline-color);">
+        <div class="lens-pagination">
             {% if page > 1 %}
                 <a href="{{ cpUrl(baseUrl, (urlParams ?? {})|merge({page: page - 1})) }}" class="btn small">
                     {{ 'Previous'|t('lens') }}
@@ -45,7 +45,7 @@
         {% set totalPages = ((total / limit)|round(0, 'ceil'))|number_format(0, '', '') %}
         {% set currentPage = ((offset / limit) + 1)|number_format(0, '', '') %}
 
-        <div class="flex flex-center" style="gap: var(--m); margin-top: var(--xl); padding-top: var(--xl); border-top: 1px solid var(--hairline-color);">
+        <div class="lens-pagination">
             {% if offset > 0 %}
                 <a href="{{ cpUrl(baseUrl, (urlParams ?? {})|merge({offset: max(0, offset - limit)})) }}" class="btn">
                     {{ 'Previous'|t('lens') }}

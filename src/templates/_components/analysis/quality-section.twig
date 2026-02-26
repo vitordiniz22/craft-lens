@@ -108,7 +108,7 @@
                     <div class="lens-metric-bar">
                         <div class="lens-metric-fill" style="width: {{ analysis.sharpnessScore * 100 }}%"></div>
                     </div>
-                    <span class="smalltext light" style="min-width:32px;text-align:right">{{ (analysis.sharpnessScore * 100)|round }}%</span>
+                    <span class="lens-metric-value">{{ (analysis.sharpnessScore * 100)|round }}%</span>
                 </div>
             {% endif %}
             {% if analysis.exposureScore is not null %}
@@ -117,7 +117,7 @@
                     <div class="lens-metric-bar">
                         <div class="lens-metric-fill" style="width: {{ analysis.exposureScore * 100 }}%"></div>
                     </div>
-                    <span class="smalltext light" style="min-width:32px;text-align:right">{{ (analysis.exposureScore * 100)|round }}%</span>
+                    <span class="lens-metric-value">{{ (analysis.exposureScore * 100)|round }}%</span>
                 </div>
             {% endif %}
             {% if analysis.noiseScore is not null %}
@@ -126,7 +126,7 @@
                     <div class="lens-metric-bar">
                         <div class="lens-metric-fill" style="width: {{ analysis.noiseScore * 100 }}%"></div>
                     </div>
-                    <span class="smalltext light" style="min-width:32px;text-align:right">{{ (analysis.noiseScore * 100)|round }}%</span>
+                    <span class="lens-metric-value">{{ (analysis.noiseScore * 100)|round }}%</span>
                 </div>
             {% endif %}
         </div>

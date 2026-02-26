@@ -9,9 +9,19 @@
 
 /* Toolbar */
 .lens-review-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   padding: 12px 0;
   margin-bottom: 16px;
   border-bottom: 1px solid var(--hairline-color);
+}
+
+.lens-review-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .lens-review-counter {
@@ -35,11 +45,15 @@
 .lens-review-panels {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  gap: 24px;
   min-height: 400px;
 }
 
 /* Left panel - Image (sticky below the fixed Craft CP header) */
 .lens-review-left {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   position: sticky;
   top: calc(var(--header-height) + 20px);
   align-self: start;
@@ -89,6 +103,12 @@
 
 .lens-review-focal-marker--pulse {
   animation: lens-focal-pulse 0.4s ease;
+}
+
+@keyframes lens-focal-pulse {
+  0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  50% { transform: translate(-50%, -50%) scale(1.4); opacity: 0.7; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
 }
 
 /* Focal point hint overlay */
@@ -150,37 +170,6 @@
   overflow-x: auto;
 }
 
-.lens-review-similar-item {
-  flex-shrink: 0;
-  width: 80px;
-  text-align: center;
-  text-decoration: none;
-}
-
-.lens-review-similar-item img {
-  width: 80px;
-  height: 80px;
-  object-fit: cover;
-  border-radius: var(--small-border-radius);
-  border: 1px solid var(--hairline-color);
-}
-
-.lens-review-similar-score {
-  font-size: 10px;
-  color: var(--medium-text-color);
-  margin-top: 4px;
-}
-
-.lens-review-similar-more {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  color: var(--link-color);
-  text-decoration: none;
-  min-width: 60px;
-}
-
 /* Right panel - Details */
 .lens-review-right {
   display: flex;
@@ -214,28 +203,11 @@
   color: var(--medium-text-color);
 }
 
-/* Long description expandable */
-.lens-review-desc-preview {
-  max-height: 3.5em;
-  overflow: hidden;
-  position: relative;
-}
-
-.lens-review-desc-preview.expanded {
-  max-height: none;
-}
-
-.lens-review-desc-toggle {
-  font-size: 12px;
-  color: var(--link-color);
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-}
-
 /* Action bar (sticky bottom, mirrors the sticky image behavior) */
 .lens-review-action-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   position: sticky;
   bottom: 0;
   padding: 16px 0;
@@ -276,11 +248,6 @@
   margin-top: 24px;
   padding-top: 24px;
   border-top: 1px solid var(--hairline-color);
-}
-
-.lens-browse-pagination .lens-page-info {
-  color: var(--medium-text-color);
-  font-size: 14px;
 }
 
 @media (max-width: 768px) {
@@ -461,23 +428,6 @@
 .lens-review-meta {
   font-size: 12px;
   color: var(--medium-text-color);
-}
-
-/* Review mode editable fields */
-.lens-review-editable {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid var(--hairline-color);
-  border-radius: var(--small-border-radius);
-  font-size: 13px;
-  font-family: inherit;
-  transition: border-color 0.15s;
-}
-
-.lens-review-editable:focus {
-  outline: none;
-  border-color: var(--link-color);
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
 }
 
 .lens-ai-suggestion-inline {

@@ -11,8 +11,8 @@
 {% set currentMode = currentMode ?? 'browse' %}
 {% set totalCount = totalCount ?? 0 %}
 
-<div class="lens-review-toolbar lens-flex-between lens-gap-12">
-    <div class="lens-review-toolbar-left lens-flex-center lens-gap-12">
+<div class="lens-review-toolbar">
+    <div class="lens-review-toolbar-left">
         <span class="lens-review-counter">
             {{ '{count} pending'|t('lens', {count: totalCount}) }}
             {% if currentMode == 'focus' and currentIndex is defined %}

@@ -23,7 +23,7 @@ use yii\db\Query;
  */
 class SearchService extends Component
 {
-    private const DEFAULT_LIMIT = 20;
+    private const DEFAULT_LIMIT = 50;
 
     /**
      * Quick filter presets for one-click filtering.

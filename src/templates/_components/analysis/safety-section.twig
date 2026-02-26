@@ -30,11 +30,11 @@
 
 {# NSFW contextual info — always displayed when data exists (read-only) #}
 {% if analysis.isFlaggedNsfw or (analysis.nsfwScore is defined and analysis.nsfwScore >= 0.2) %}
-    <div class="lens-detection-item" style="padding-left: 8px;">
+    <div class="lens-detection-item lens-detection-item--nested">
         <div>
             <span class="lens-badge lens-badge--{{ analysis.isFlaggedNsfw ? 'error-solid' : 'amber' }}">{{ (analysis.nsfwScore * 100)|round }}%</span>
             {% if analysis.nsfwCategories|length %}
-                <div class="chips" style="margin-top: 4px;">
+                <div class="chips">
                     {% for cat in analysis.nsfwCategories %}
                         <div class="chip small lens-nsfw-chip{% if not analysis.isFlaggedNsfw %} lens-nsfw-chip--caution{% endif %}">
                             <div class="chip-content">
@@ -66,7 +66,7 @@
 
 {# Watermark contextual info — always displayed when data exists (read-only) #}
 {% if analysis.hasWatermark %}
-    <div class="lens-detection-item" style="padding-left: 8px;">
+    <div class="lens-detection-item lens-detection-item--nested">
         <div class="lens-watermark-info">
             {% set watermarkTypes = {
                 'stock': 'Stock Photo'|t('lens'),
@@ -104,7 +104,7 @@
 
 {# Brand contextual info — always displayed when data exists (read-only) #}
 {% if analysis.containsBrandLogo and analysis.detectedBrands|length %}
-    <div class="lens-detection-item" style="padding-left: 8px;">
+    <div class="lens-detection-item lens-detection-item--nested">
         <div class="chips">
             {% for brand in analysis.detectedBrands %}
                 <div class="chip" title="{{ (brand.confidence * 100)|round }}% confidence">

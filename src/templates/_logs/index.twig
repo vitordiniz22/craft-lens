@@ -5,8 +5,8 @@
 
 {% block content %}
     {# Filters #}
-    <div class="lens-log-filters" style="display: flex; gap: 8px; align-items: center; margin-bottom: 24px; flex-wrap: wrap;">
-        <form method="get" action="{{ cpUrl('lens/logs') }}" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+    <div class="lens-log-filters">
+        <form method="get" action="{{ cpUrl('lens/logs') }}">
             <div class="select">
                 <select name="level">
                     <option value="">{{ 'All Levels'|t('lens') }}</option>
@@ -31,7 +31,7 @@
             <a href="{{ cpUrl('lens/logs') }}" class="btn">{{ 'Reset'|t('lens') }}</a>
         </form>
 
-        <div style="margin-left: auto;">
+        <div class="lens-log-filters-end">
             <form method="post">
                 {{ csrfInput() }}
                 {{ actionInput('lens/log/delete-all') }}
@@ -43,7 +43,7 @@
     </div>
 
     {# Summary #}
-    <div style="margin-bottom: 16px; color: var(--gray-500);">
+    <div class="lens-log-summary">
         {{ '{total} log entries'|t('lens', {total: total}) }}
         {% if filters.level or filters.category or filters.assetId %}
             <span>({{ 'filtered'|t('lens') }})</span>
@@ -77,18 +77,18 @@
                         critical: '#dc2626',
                     } %}
                     <tr class="lens-log-row" data-log-id="{{ log.id }}">
-                        <td style="white-space: nowrap; font-size: 12px; color: var(--gray-500);">
+                        <td class="lens-log-date">
                             {{ log.dateCreated|date('Y-m-d H:i:s') }}
                         </td>
                         <td>
                             <span class="status" style="background-color: {{ levelColors[log.level] ?? '#6b7280' }};"></span>
-                            <span style="font-size: 12px; font-weight: 600; text-transform: uppercase;">{{ log.level }}</span>
+                            <span class="lens-log-level-text">{{ log.level }}</span>
                         </td>
                         <td>
-                            <span style="font-size: 12px;">{{ log.category|replace({'_': ' '})|title }}</span>
+                            <span class="lens-log-category">{{ log.category|replace({'_': ' '})|title }}</span>
                         </td>
-                        <td style="max-width: 400px;">
-                            <span style="font-size: 13px;">{{ log.message|truncate(200) }}</span>
+                        <td class="lens-log-message">
+                            <span class="lens-log-message-text">{{ log.message|truncate(200) }}</span>
                         </td>
                         <td>
                             {% if log.assetId %}
@@ -96,52 +96,52 @@
                                 {% if asset %}
                                     <a href="{{ asset.cpEditUrl }}">{{ asset.filename|truncate(20) }}</a>
                                 {% else %}
-                                    <span style="color: var(--gray-400);">#{{ log.assetId }}</span>
+                                    <span class="lens-log-missing-asset">#{{ log.assetId }}</span>
                                 {% endif %}
                             {% else %}
-                                <span style="color: var(--gray-300);">—</span>
+                                <span class="lens-log-placeholder">—</span>
                             {% endif %}
                         </td>
                         <td>
                             {% if log.provider %}
-                                <span style="font-size: 12px;">{{ log.provider }}</span>
+                                <span class="lens-log-provider">{{ log.provider }}</span>
                             {% else %}
-                                <span style="color: var(--gray-300);">—</span>
+                                <span class="lens-log-placeholder">—</span>
                             {% endif %}
                         </td>
                         {% if isDevMode %}
                             <td>
                                 {% if log.httpStatusCode %}
-                                    <code style="font-size: 11px;">{{ log.httpStatusCode }}</code>
+                                    <code class="lens-log-http-code">{{ log.httpStatusCode }}</code>
                                 {% else %}
-                                    <span style="color: var(--gray-300);">—</span>
+                                    <span class="lens-log-placeholder">—</span>
                                 {% endif %}
                             </td>
                             <td>
                                 {% if log.responseTimeMs %}
-                                    <span style="font-size: 12px;">{{ log.responseTimeMs }}ms</span>
+                                    <span class="lens-log-response-time">{{ log.responseTimeMs }}ms</span>
                                 {% else %}
-                                    <span style="color: var(--gray-300);">—</span>
+                                    <span class="lens-log-placeholder">—</span>
                                 {% endif %}
                             </td>
                             <td>
                                 {% if log.inputTokens or log.outputTokens %}
-                                    <span style="font-size: 11px;" title="{{ 'In: {input}, Out: {output}'|t('lens', {input: log.inputTokens ?? 0, output: log.outputTokens ?? 0}) }}">
+                                    <span class="lens-log-tokens" title="{{ 'In: {input}, Out: {output}'|t('lens', {input: log.inputTokens ?? 0, output: log.outputTokens ?? 0}) }}">
                                         {{ (log.inputTokens ?? 0) + (log.outputTokens ?? 0) }}
                                     </span>
                                 {% else %}
-                                    <span style="color: var(--gray-300);">—</span>
+                                    <span class="lens-log-placeholder">—</span>
                                 {% endif %}
                             </td>
                         {% endif %}
-                        <td style="white-space: nowrap;">
+                        <td class="lens-log-actions">
                             {% if log.stackTrace or log.context or (isDevMode and (log.requestPayload or log.responsePayload)) %}
                                 <button type="button" class="btn small lens-toggle-detail" data-target="lens-detail-{{ log.id }}">
                                     {{ 'Details'|t('lens') }}
                                 </button>
                             {% endif %}
                             {% if log.isRetryable %}
-                                <form method="post" style="display: inline;">
+                                <form method="post" class="lens-log-inline-form">
                                     {{ csrfInput() }}
                                     {{ actionInput('lens/log/retry') }}
                                     {{ hiddenInput('logId', log.id) }}
@@ -151,30 +151,30 @@
                         </td>
                     </tr>
                     {% if log.stackTrace or log.context or (isDevMode and (log.requestPayload or log.responsePayload)) %}
-                        <tr id="lens-detail-{{ log.id }}" class="lens-log-detail" style="display: none;">
-                            <td colspan="{{ isDevMode ? 10 : 7 }}" style="padding: 16px; background: var(--gray-050);">
+                        <tr id="lens-detail-{{ log.id }}" class="lens-log-detail">
+                            <td colspan="{{ isDevMode ? 10 : 7 }}" class="lens-log-detail-cell">
                                 {% if log.stackTrace %}
-                                    <div style="margin-bottom: 12px;">
+                                    <div class="lens-log-detail-section">
                                         <strong>{{ 'Stack Trace'|t('lens') }}</strong>
-                                        <pre style="font-size: 11px; max-height: 200px; overflow: auto; margin-top: 4px; padding: 8px; background: var(--gray-100); border-radius: 4px;">{{ log.stackTrace }}</pre>
+                                        <pre class="lens-log-code-block lens-log-code-block--short">{{ log.stackTrace }}</pre>
                                     </div>
                                 {% endif %}
                                 {% if log.requestPayload %}
-                                    <div style="margin-bottom: 12px;">
+                                    <div class="lens-log-detail-section">
                                         <strong>{{ 'Request Payload'|t('lens') }}</strong>
-                                        <pre style="font-size: 11px; max-height: 300px; overflow: auto; margin-top: 4px; padding: 8px; background: var(--gray-100); border-radius: 4px;">{{ log.requestPayload|json_encode(constant('JSON_PRETTY_PRINT') b-or constant('JSON_UNESCAPED_SLASHES')) }}</pre>
+                                        <pre class="lens-log-code-block">{{ log.requestPayload|json_encode(constant('JSON_PRETTY_PRINT') b-or constant('JSON_UNESCAPED_SLASHES')) }}</pre>
                                     </div>
                                 {% endif %}
                                 {% if log.responsePayload %}
-                                    <div style="margin-bottom: 12px;">
+                                    <div class="lens-log-detail-section">
                                         <strong>{{ 'Response Payload'|t('lens') }}</strong>
-                                        <pre style="font-size: 11px; max-height: 300px; overflow: auto; margin-top: 4px; padding: 8px; background: var(--gray-100); border-radius: 4px;">{{ log.responsePayload|json_encode(constant('JSON_PRETTY_PRINT') b-or constant('JSON_UNESCAPED_SLASHES')) }}</pre>
+                                        <pre class="lens-log-code-block">{{ log.responsePayload|json_encode(constant('JSON_PRETTY_PRINT') b-or constant('JSON_UNESCAPED_SLASHES')) }}</pre>
                                     </div>
                                 {% endif %}
                                 {% if log.context %}
-                                    <div>
+                                    <div class="lens-log-detail-section">
                                         <strong>{{ 'Context'|t('lens') }}</strong>
-                                        <pre style="font-size: 11px; max-height: 200px; overflow: auto; margin-top: 4px; padding: 8px; background: var(--gray-100); border-radius: 4px;">{{ log.context|json_encode(constant('JSON_PRETTY_PRINT') b-or constant('JSON_UNESCAPED_SLASHES')) }}</pre>
+                                        <pre class="lens-log-code-block lens-log-code-block--short">{{ log.context|json_encode(constant('JSON_PRETTY_PRINT') b-or constant('JSON_UNESCAPED_SLASHES')) }}</pre>
                                     </div>
                                 {% endif %}
                             </td>

@@ -1,4 +1,4 @@
-<div class="pane" style="margin-top: 24px;">
+<div class="pane">
 
     {% if volumes|length > 1 %}
         <div class="field">
@@ -58,7 +58,7 @@
             {% endif %}
 
             {% if stats.failed > 0 %}
-                <form method="post" style="display: inline-block;">
+                <form method="post" class="lens-bulk-inline-form">
                     {{ csrfInput() }}
                     {{ actionInput('lens/bulk/retry-failed') }}
                     <button type="submit" class="btn">

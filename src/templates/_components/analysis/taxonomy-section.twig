@@ -36,7 +36,7 @@
         {% if isInteractive %}
             <div class="lens-tag-input-row">
                 <input type="text" class="text small lens-tag-input" data-lens-control="tag-input" placeholder="{{ 'Add tag'|t('lens') }}">
-                <button type="button" class="btn small lens-tag-add" data-lens-action="tag-add">{{ 'Add'|t('lens') }}</button>
+                <button type="button" class="btn small" data-lens-action="tag-add">{{ 'Add'|t('lens') }}</button>
                 <div class="lens-tag-suggestions" data-lens-target="tag-suggestions"></div>
             </div>
 
@@ -79,13 +79,13 @@
         {% if isInteractive %}
             <div class="lens-color-add-row">
                 <input type="color" class="lens-color-picker" data-lens-control="color-picker" value="#000000" title="{{ 'Pick color'|t('lens') }}">
-                <button type="button" class="btn small lens-color-add" data-lens-action="color-add">{{ 'Add'|t('lens') }}</button>
+                <button type="button" class="btn small" data-lens-action="color-add">{{ 'Add'|t('lens') }}</button>
             </div>
 
             <template data-lens-target="color-item-template">
                 <a href="" class="chip" data-lens-target="color-item" data-lens-hex="" data-lens-is-ai="0" data-lens-percentage="">
                     <div class="chip-content">
-                        <span class="lens-swatch lens-swatch--sm" data-lens-target="color-swatch" style=""></span>
+                        <span class="lens-swatch lens-swatch--sm" data-lens-target="color-swatch"></span>
                         <span class="chip-label lens-color-hex" data-lens-target="chip-label"></span>
                         <button type="button" class="lens-tag-remove" data-lens-action="color-remove" title="{{ 'Remove'|t('lens') }}">&times;</button>
                     </div>
@@ -97,10 +97,10 @@
     {# Save changes button (tags + colors) - only in unlocked mode #}
     {% if fieldState == 'unlocked' %}
         <div class="lens-taxonomy-save">
-            <button type="button" class="btn small submit lens-taxonomy-save-btn" data-lens-action="taxonomy-save" data-lens-analysis-id="{{ analysis.id }}" disabled>
+            <button type="button" class="btn small submit" data-lens-action="taxonomy-save" data-lens-analysis-id="{{ analysis.id }}" disabled>
                 {{ 'Save Changes'|t('lens') }}
             </button>
-            <span class="lens-taxonomy-status smalltext light" data-lens-target="taxonomy-status" style="margin-left: 8px"></span>
+            <span class="smalltext light" data-lens-target="taxonomy-status"></span>
         </div>
     {% endif %}
 {% endif %}

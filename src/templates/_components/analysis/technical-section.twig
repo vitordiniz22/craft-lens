@@ -38,7 +38,7 @@
         {% if exifData.latitude and exifData.longitude %}
             <span class="lens-exif-label">{{ 'Location'|t('lens') }}</span>
             <span class="lens-exif-value">
-                <a href="https://www.openstreetmap.org/?mlat={{ exifData.latitude }}&mlon={{ exifData.longitude }}#map=15/{{ exifData.latitude }}/{{ exifData.longitude }}" target="_blank" rel="noopener" style="font-family:var(--mono-font-family);font-size:12px">
+                <a href="https://www.openstreetmap.org/?mlat={{ exifData.latitude }}&mlon={{ exifData.longitude }}#map=15/{{ exifData.latitude }}/{{ exifData.longitude }}" target="_blank" rel="noopener">
                     {{ exifData.latitude|round(4) }}, {{ exifData.longitude|round(4) }}
                 </a>
             </span>

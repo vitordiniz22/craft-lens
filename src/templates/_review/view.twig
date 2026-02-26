@@ -28,9 +28,9 @@
         <input type="hidden" name="hasWatermark" data-lens-control="field-hasWatermark" value="{{ analysis.hasWatermark ? '1' : '0' }}">
         <input type="hidden" name="containsBrandLogo" data-lens-control="field-containsBrandLogo" value="{{ analysis.containsBrandLogo ? '1' : '0' }}">
 
-        <div class="lens-review-panels lens-gap-24" data-lens-target="review-view">
+        <div class="lens-review-panels" data-lens-target="review-view">
             {# Left Panel - Image #}
-            <div class="lens-review-left lens-flex-column lens-gap-12">
+            <div class="lens-review-left">
                 <div class="lens-review-image-container" data-lens-target="image-container"
                      data-lens-focal-x-ai="{{ analysis.focalPointXAi ?? '' }}"
                      data-lens-focal-y-ai="{{ analysis.focalPointYAi ?? '' }}">
@@ -171,7 +171,7 @@
             </div>
         </div>
 
-        <div class="lens-review-action-bar lens-flex-center lens-gap-8">
+        <div class="lens-review-action-bar">
             {% if prevId %}
                 <a href="{{ cpUrl('lens/review/' ~ prevId) }}" class="btn">
                     &larr; {{ 'Previous'|t('lens') }}

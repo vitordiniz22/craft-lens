@@ -1,0 +1,131 @@
+/**
+ * Logs Page
+ * Styles for the plugin log viewer.
+ */
+
+/* ==========================================================================
+   Filters
+   ========================================================================== */
+
+.lens-log-filters {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.lens-log-filters form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.lens-log-filters-end {
+  margin-left: auto;
+}
+
+/* ==========================================================================
+   Summary
+   ========================================================================== */
+
+.lens-log-summary {
+  margin-bottom: 16px;
+  color: var(--gray-500);
+}
+
+/* ==========================================================================
+   Table cells
+   ========================================================================== */
+
+.lens-log-date {
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--gray-500);
+}
+
+.lens-log-level-text {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.lens-log-category {
+  font-size: 12px;
+}
+
+.lens-log-message {
+  max-width: 400px;
+}
+
+.lens-log-message-text {
+  font-size: 13px;
+}
+
+.lens-log-placeholder {
+  color: var(--gray-300);
+}
+
+.lens-log-missing-asset {
+  color: var(--gray-400);
+}
+
+.lens-log-provider {
+  font-size: 12px;
+}
+
+.lens-log-http-code {
+  font-size: 11px;
+}
+
+.lens-log-response-time {
+  font-size: 12px;
+}
+
+.lens-log-tokens {
+  font-size: 11px;
+}
+
+.lens-log-actions {
+  white-space: nowrap;
+}
+
+.lens-log-inline-form {
+  display: inline;
+}
+
+/* ==========================================================================
+   Detail row
+   ========================================================================== */
+
+.lens-log-detail {
+  display: none;
+}
+
+.lens-log-detail-cell {
+  padding: 16px;
+  background: var(--gray-050);
+}
+
+.lens-log-detail-section {
+  margin-bottom: 12px;
+}
+
+.lens-log-detail-section:last-child {
+  margin-bottom: 0;
+}
+
+.lens-log-code-block {
+  font-size: 11px;
+  max-height: 300px;
+  overflow: auto;
+  margin-top: 4px;
+  padding: 8px;
+  background: var(--gray-100);
+  border-radius: 4px;
+}
+
+.lens-log-code-block--short {
+  max-height: 200px;
+}

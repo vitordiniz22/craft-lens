@@ -2,7 +2,7 @@
 <div class="lens-dashboard-section lens-health pane">
     <h2 class="lens-section-header__title">{{ 'Library Health'|t('lens') }}</h2>
 
-    <div class="lens-health__metrics lens-gap-24">
+    <div class="lens-health__metrics">
         {# Alt Text Coverage #}
         <div class="lens-health__metric">
             <div class="lens-health__metric-header">
@@ -11,7 +11,7 @@
                     {{ altTextCoverage.percentage }}%
                 </span>
             </div>
-            <div class="lens-health__metric-detail lens-flex-center lens-gap-8">
+            <div class="lens-health__metric-detail">
                 <span class="lens-health__metric-counts">({{ altTextCoverage.withAltText }} {{ 'of'|t('lens') }} {{ altTextCoverage.total }})</span>
                 {% if altTextCoverage.total - altTextCoverage.withAltText > 0 %}
                     <a href="{{ cpUrl('lens/search', {missingAltText: 1}) }}" class="lens-health__metric-link">
@@ -27,7 +27,7 @@
                 <span class="lens-health__metric-label lens-health__metric-label--lg">{{ 'With tags'|t('lens') }}</span>
                 <span class="lens-health__metric-value">{{ taggedPercentage.percentage }}%</span>
             </div>
-            <div class="lens-health__metric-detail lens-flex-center lens-gap-8">
+            <div class="lens-health__metric-detail">
                 <span class="lens-health__metric-counts">({{ taggedPercentage.withTags }} {{ 'of'|t('lens') }} {{ taggedPercentage.total }})</span>
             </div>
         </div>
@@ -40,7 +40,7 @@
                     {{ highQualityPercentage.percentage }}%
                 </span>
             </div>
-            <div class="lens-health__metric-detail lens-flex-center lens-gap-8">
+            <div class="lens-health__metric-detail">
                 <span class="lens-health__metric-counts">({{ highQualityPercentage.highQuality }} {{ 'of'|t('lens') }} {{ highQualityPercentage.total }})</span>
                 {% if highQualityPercentage.total - highQualityPercentage.highQuality > 0 %}
                     <a href="{{ cpUrl('lens/search', {qualityBelow: '0.7'}) }}" class="lens-health__metric-link">

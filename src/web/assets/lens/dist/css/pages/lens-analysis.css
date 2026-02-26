@@ -11,15 +11,6 @@
     margin-top: 12px;
 }
 
-.lens-provider-icon {
-    opacity: 0.6;
-}
-
-.lens-model-name {
-    opacity: 0.7;
-    margin-left: 2px;
-}
-
 /* ==========================================================================
    Analysis Panel Container
    ========================================================================== */
@@ -132,6 +123,11 @@
 .lens-processing-spinner {
     flex-shrink: 0;
     margin-top: 2px;
+}
+
+@keyframes lens-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
 .lens-spinner-icon {
@@ -551,6 +547,13 @@
     overflow: hidden;
 }
 
+.lens-metric-value {
+    min-width: 32px;
+    text-align: right;
+    font-size: 11px;
+    color: var(--light-text-color);
+}
+
 .lens-metric-fill {
     height: 100%;
     background: linear-gradient(
@@ -598,6 +601,10 @@
 
 .lens-detection-item + .lens-detection-item {
     border-top: 1px solid var(--hairline-color);
+}
+
+.lens-detection-item--nested {
+    padding-left: 8px;
 }
 
 /* ==========================================================================
@@ -654,26 +661,6 @@
 .lens-people-option:has(input[type="radio"]:checked) {
     background-color: var(--blue-050);
     border-color: var(--blue-300);
-}
-
-/* Pending review notice */
-.lens-pending-notice {
-    display: flex;
-    align-items: flex-start;
-    gap: 6px;
-    padding: 8px 10px;
-    margin-top: 8px;
-    background-color: var(--gray-050);
-    border: 1px solid var(--hairline-color);
-    border-radius: var(--small-border-radius);
-    font-size: 12px;
-    color: var(--medium-text-color);
-}
-
-.lens-info-icon {
-    font-size: 14px;
-    line-height: 1;
-    opacity: 0.7;
 }
 
 /* ==========================================================================

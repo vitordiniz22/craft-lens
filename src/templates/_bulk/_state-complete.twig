@@ -2,7 +2,7 @@
 
 {% if isConfigError %}
     {# Configuration error: show error with CTA to settings + retry action #}
-    <div class="pane" style="margin-top: 24px;">
+    <div class="pane">
         {% include 'lens/_components/inline-notice' with {
             type: 'error',
             title: 'Processing failed'|t('lens'),
@@ -14,8 +14,8 @@
             },
         } only %}
 
-        <div class="lens-complete-actions" style="margin-top: 16px;">
-            <form method="post" style="display: inline-block;">
+        <div class="lens-complete-actions">
+            <form method="post" class="lens-bulk-inline-form">
                 {{ csrfInput() }}
                 {{ actionInput('lens/bulk/retry-failed') }}
                 <button type="submit" class="btn submit">
@@ -30,7 +30,7 @@
     </div>
 {% else %}
     {# Normal completion: show summary stats and actions #}
-    <div class="pane lens-state-complete" style="margin-top: 24px;">
+    <div class="pane lens-state-complete">
         <div class="lens-complete-header">
             <span class="lens-complete-icon"></span>
             <h2>{{ 'Processing Complete'|t('lens') }}</h2>
@@ -74,7 +74,7 @@
             {% endif %}
 
             {% if stats.failed > 0 %}
-                <form method="post" style="display: inline-block;">
+                <form method="post" class="lens-bulk-inline-form">
                     {{ csrfInput() }}
                     {{ actionInput('lens/bulk/retry-failed') }}
                     <button type="submit" class="btn">

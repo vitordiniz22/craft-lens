@@ -3,7 +3,7 @@
 <div class="lens-dashboard-section lens-insights pane">
     <h2 class="lens-section-header__title">{{ 'Quick Insights'|t('lens') }}</h2>
 
-    <div class="lens-insights__grid lens-gap-24">
+    <div class="lens-insights__grid">
         {# Top Tags - compact inline list #}
         {% if topTags|length %}
         <div class="lens-insights__block">
@@ -25,7 +25,7 @@
         {% if dominantColors|length %}
         <div class="lens-insights__block">
             <h3 class="lens-insights__label">{{ 'Dominant Colors'|t('lens') }}</h3>
-            <div class="lens-insights__colors lens-gap-8">
+            <div class="lens-insights__colors">
                 {% for color in dominantColors %}
                     <a href="{{ cpUrl('lens/search', {color: color.hex}) }}"
                        class="lens-swatch lens-swatch--md lens-swatch--interactive"

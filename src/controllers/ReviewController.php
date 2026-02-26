@@ -21,6 +21,8 @@ use yii\web\Response;
  */
 class ReviewController extends Controller
 {
+    private const PER_PAGE = 50;
+
     protected array|int|bool $allowAnonymous = false;
 
     public function beforeAction($action): bool
@@ -47,11 +49,10 @@ class ReviewController extends Controller
 
         $reviewService = Plugin::getInstance()->review;
         $page = max(1, (int) ($this->request->getParam('page') ?? 1));
-        $perPage = 24;
-        $offset = ($page - 1) * $perPage;
+        $offset = ($page - 1) * self::PER_PAGE;
 
         $totalCount = $reviewService->getPendingReviewCount();
-        $totalPages = max(1, (int) ceil($totalCount / $perPage));
+        $totalPages = max(1, (int) ceil($totalCount / self::PER_PAGE));
 
         if ($totalCount === 0) {
             return $this->renderTemplate('lens/_review/browse', [
@@ -59,7 +60,7 @@ class ReviewController extends Controller
             ]);
         }
 
-        $pendingReviews = $reviewService->getPendingReviews($perPage, $offset);
+        $pendingReviews = $reviewService->getPendingReviews(self::PER_PAGE, $offset);
         $ids = $this->extractIdsFromAnalyses($pendingReviews);
         $assets = Asset::find()->id($ids['assetIds'])->indexBy('id')->all();
         $tagCounts = $this->getTagCounts($ids['analysisIds']);

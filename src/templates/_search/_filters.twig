@@ -105,9 +105,9 @@
                 {% set toleranceValue = filters.colorTolerance ?? 30 %}
                 {% set toleranceLabel = toleranceValue <= 20 ? 'Exact' : (toleranceValue <= 50 ? 'Similar' : (toleranceValue <= 75 ? 'Broad' : 'Very broad')) %}
                 <div class="lens-filter-tolerance{% if not (filters.color ?? false) %} hidden{% endif %}" data-lens-target="color-tolerance-wrap">
-                    <label class="light lens-text-sm">
+                    <label class="light">
                         {{ 'Tolerance'|t('lens') }}: <span data-lens-target="tolerance-value">{{ toleranceValue }}</span>%
-                        <span class="light" data-lens-target="tolerance-label" style="margin-left: var(--xs);">({{ toleranceLabel|t('lens') }})</span>
+                        <span class="light" data-lens-target="tolerance-label">({{ toleranceLabel|t('lens') }})</span>
                     </label>
                     <input type="range"
                            name="colorTolerance"
@@ -133,7 +133,7 @@
         <div class="field">
             <div class="heading"><label>{{ 'Date Analyzed'|t('lens') }}</label></div>
             <div class="input">
-                <div class="lens-flex-center lens-gap-8">
+                <div class="lens-filter-display">
                     <div class="datewrapper">
                         <input type="text"
                                class="text"

@@ -7,6 +7,19 @@
   max-width: 800px;
 }
 
+.lens-bulk-page .pane {
+  margin-top: 24px;
+}
+
+.lens-bulk-inline-form {
+  display: inline-block;
+}
+
+.lens-bulk-center {
+  text-align: center;
+  margin-top: 20px;
+}
+
 /* Bulk Summary */
 .lens-bulk-summary {
   margin-bottom: 20px;
