@@ -108,7 +108,7 @@
                     {% endif %}
                     {% if filters.status is defined and filters.status|length %}
                         <span class="lens-filter-chip" data-lens-filter-param="status">
-                            {{ 'Status'|t('lens') }}: <strong>{{ filters.status|join(', ') }}</strong>
+                            {{ 'Status'|t('lens') }}: <strong>{{ filters.status|map(s => lens.statusLabel(s))|join(', ') }}</strong>
                             <button type="button" data-lens-action="remove-filter-chip" data-lens-filter-param="status" title="{{ 'Remove filter'|t('lens') }}">&times;</button>
                         </span>
                     {% endif %}

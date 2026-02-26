@@ -84,11 +84,17 @@
          * @returns {Promise} Promise resolving with response data
          */
         updateField: function(analysisId, field, value, options) {
-            return this.post('lens/analysis/update-field', {
+            var data = {
                 analysisId: analysisId,
                 field: field,
                 value: value
-            }, options);
+            };
+
+            if (options && options.siteId) {
+                data.siteId = options.siteId;
+            }
+
+            return this.post('lens/analysis/update-field', data, options);
         },
 
         /**
@@ -99,10 +105,16 @@
          * @returns {Promise} Promise resolving with response data
          */
         revertField: function(analysisId, field, options) {
-            return this.post('lens/analysis/revert-field', {
+            var data = {
                 analysisId: analysisId,
                 field: field
-            }, options);
+            };
+
+            if (options && options.siteId) {
+                data.siteId = options.siteId;
+            }
+
+            return this.post('lens/analysis/revert-field', data, options);
         },
 
         /**
@@ -127,10 +139,16 @@
          * @returns {Promise} Promise resolving with response data
          */
         applyTitle: function(assetId, analysisId, options) {
-            return this.post('lens/analysis/apply-title', {
+            var data = {
                 assetId: assetId,
                 analysisId: analysisId
-            }, options);
+            };
+
+            if (options && options.siteId) {
+                data.siteId = options.siteId;
+            }
+
+            return this.post('lens/analysis/apply-title', data, options);
         },
 
         /**
@@ -141,10 +159,16 @@
          * @returns {Promise} Promise resolving with response data
          */
         applyAlt: function(assetId, analysisId, options) {
-            return this.post('lens/analysis/apply-alt', {
+            var data = {
                 assetId: assetId,
                 analysisId: analysisId
-            }, options);
+            };
+
+            if (options && options.siteId) {
+                data.siteId = options.siteId;
+            }
+
+            return this.post('lens/analysis/apply-alt', data, options);
         },
 
         /**

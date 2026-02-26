@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace vitordiniz22\craftlens\twig;
 
 use craft\elements\Asset;
+use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\helpers\AssetTitleHelper;
 use vitordiniz22\craftlens\Plugin;
 use vitordiniz22\craftlens\records\AssetAnalysisRecord;
@@ -14,6 +15,51 @@ use vitordiniz22\craftlens\records\AssetAnalysisRecord;
  */
 class LensTwigGlobal
 {
+    /**
+     * Expose AnalysisStatus enum values for Twig templates.
+     * Usage: `lens.status.pendingReview`, `lens.status.failed`, etc.
+     *
+     * @return array<string, string>
+     */
+    public function getStatus(): array
+    {
+        return [
+            'pending' => AnalysisStatus::Pending->value,
+            'processing' => AnalysisStatus::Processing->value,
+            'completed' => AnalysisStatus::Completed->value,
+            'failed' => AnalysisStatus::Failed->value,
+            'pendingReview' => AnalysisStatus::PendingReview->value,
+            'approved' => AnalysisStatus::Approved->value,
+            'rejected' => AnalysisStatus::Rejected->value,
+        ];
+    }
+
+    /**
+     * Map of status values to translated labels.
+     * Usage: `lens.statusLabels[statusValue]` or `lens.statusLabel(statusValue)`
+     *
+     * @return array<string, string>
+     */
+    public function getStatusLabels(): array
+    {
+        $labels = [];
+
+        foreach (AnalysisStatus::cases() as $case) {
+            $labels[$case->value] = $case->label();
+        }
+
+        return $labels;
+    }
+
+    /**
+     * Get translated label for a single status value.
+     * Usage: `lens.statusLabel('pending_review')` → 'Pending Review'
+     */
+    public function statusLabel(string $value): string
+    {
+        return AnalysisStatus::tryFrom($value)?->label() ?? $value;
+    }
+
     public function getAnalysis(int $assetId): ?AssetAnalysisRecord
     {
         return Plugin::getInstance()->assetAnalysis->getAnalysis($assetId);

@@ -7,6 +7,7 @@ namespace vitordiniz22\craftlens\controllers;
 use Craft;
 use craft\helpers\UrlHelper;
 use craft\web\Controller;
+use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\FilterParser;
 use vitordiniz22\craftlens\helpers\Logger;
@@ -209,7 +210,7 @@ class SearchController extends Controller
                 $analysis?->longDescriptionConfidence !== null ? round($analysis->longDescriptionConfidence * 100) . '%' : '',
                 $tags,
                 $colors,
-                $analysis?->status ?? '',
+                $analysis ? AnalysisStatus::from($analysis->status)->label() : '',
                 $analysis !== null ? ($analysis->containsPeople ? 'Yes' : 'No') : '',
                 $analysis?->faceCount ?? '',
                 $analysis !== null ? ($analysis->hasWatermark ? 'Yes' : 'No') : '',

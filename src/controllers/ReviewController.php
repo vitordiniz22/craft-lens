@@ -178,18 +178,18 @@ class ReviewController extends Controller
             }
         }
 
-        // Numeric fields
         $faceCount = $this->request->getBodyParam('faceCount');
+
         if ($faceCount !== null) {
             $modifications['faceCount'] = (int) $faceCount;
         }
 
         $nsfwScore = $this->request->getBodyParam('nsfwScore');
+
         if ($nsfwScore !== null) {
             $modifications['nsfwScore'] = (float) $nsfwScore;
         }
 
-        // Boolean fields
         foreach (['containsPeople', 'hasWatermark', 'containsBrandLogo'] as $field) {
             $value = $this->request->getBodyParam($field);
             if ($value !== null) {
@@ -197,12 +197,21 @@ class ReviewController extends Controller
             }
         }
 
-        // Focal point
         $focalX = $this->request->getBodyParam('focalPointX');
         $focalY = $this->request->getBodyParam('focalPointY');
+
         if ($focalX !== null && $focalY !== null) {
             $modifications['focalPointX'] = (float) $focalX;
             $modifications['focalPointY'] = (float) $focalY;
+        }
+
+        $siteContentJson = $this->request->getBodyParam('siteContent');
+
+        if ($siteContentJson !== null) {
+            $siteContent = is_string($siteContentJson) ? json_decode($siteContentJson, true) : $siteContentJson;
+            if (is_array($siteContent) && !empty($siteContent)) {
+                $modifications['siteContent'] = $siteContent;
+            }
         }
 
         $userId = Craft::$app->getUser()->getId();

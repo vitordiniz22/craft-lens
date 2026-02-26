@@ -15,26 +15,27 @@
         {% if analysis %}
             <div class="flex items-center gap-2xs">
                 {% switch analysis.status %}
-                    {% case 'pending' %}
+                    {% case lens.status.pending %}
                         <span class="status"></span>{{ 'Pending'|t('lens') }}
-                    {% case 'processing' %}
+                    {% case lens.status.processing %}
                         <span class="status pending"></span>{{ 'Processing'|t('lens') }}
-                    {% case 'completed' %}
+                    {% case lens.status.completed %}
                         <span class="status on"></span>{{ 'Completed'|t('lens') }}
-                    {% case 'failed' %}
+                    {% case lens.status.failed %}
                         <span class="status off"></span>{{ 'Failed'|t('lens') }}
-                    {% case 'pending_review' %}
+                    {% case lens.status.pendingReview %}
                         <span class="status pending"></span>{{ 'Pending Review'|t('lens') }}
-                    {% case 'approved' %}
+                    {% case lens.status.approved %}
                         <span class="status on"></span>{{ 'Approved'|t('lens') }}
-                    {% case 'rejected' %}
+                    {% case lens.status.rejected %}
                         <span class="status off"></span>{{ 'Rejected'|t('lens') }}
                 {% endswitch %}
             </div>
         {% endif %}
-        {% if analysis and not static and analysis.status != 'processing' %}
-            <button type="button" class="btn small" data-lens-action="reprocess" data-lens-asset-id="{{ asset.id }}">
-                <span data-lens-target="button-label">{{ 'Re-analyze'|t('lens') }}</span>
+        {% if analysis and not static and analysis.status != lens.status.processing %}
+            <button type="button" class="btn small" data-lens-action="reprocess" data-lens-asset-id="{{ asset.id }}" data-lens-loading-text="{{ 'Processing'|t('lens') }}">
+                <div class="spinner small"></div>
+                <span class="label" data-lens-target="button-label">{{ 'Re-analyze'|t('lens') }}</span>
             </button>
         {% endif %}
     </div>

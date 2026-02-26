@@ -29,12 +29,16 @@ class OpenAiProvider extends BaseAiProvider
         return 'OpenAI Vision';
     }
 
-    public function analyze(Asset $asset, Settings $settings): AnalysisResult
-    {
+    public function analyze(
+        Asset $asset,
+        Settings $settings,
+        string $primaryLanguage,
+        array $additionalLanguages = [],
+    ): AnalysisResult {
         $this->validateCredentials($settings);
 
         $imageData = $this->getBase64ImageData($asset);
-        $prompt = $this->buildPrompt();
+        $prompt = $this->buildPrompt($primaryLanguage, $additionalLanguages);
         $response = $this->sendRequest($settings, $imageData, $prompt, $asset->id);
 
         return $this->parseResponse($response);

@@ -18,6 +18,7 @@ use vitordiniz22\craftlens\exceptions\AnalysisException;
 use vitordiniz22\craftlens\exceptions\ConfigurationException;
 use vitordiniz22\craftlens\helpers\AssetTitleHelper;
 use vitordiniz22\craftlens\helpers\Logger;
+use vitordiniz22\craftlens\helpers\MultisiteHelper;
 use vitordiniz22\craftlens\helpers\PerceptualHashHelper;
 use vitordiniz22\craftlens\jobs\AnalyzeAssetJob;
 use vitordiniz22\craftlens\jobs\BulkAnalyzeAssetsJob;
@@ -331,6 +332,7 @@ class AssetAnalysisService extends Component
         // Delete content from content tables first (FK cascade should handle this,
         // but explicit deletion ensures cleanup even if cascades fail)
         if ($record !== null) {
+            Plugin::getInstance()->siteContent->deleteAllForAnalysis($record->id);
             $this->getContentStorage()->deleteAllContent($record->id);
         }
 
@@ -350,8 +352,13 @@ class AssetAnalysisService extends Component
         // Extract EXIF metadata first (fast, local, no API cost)
         $this->extractExifMetadata($asset, $record);
 
+        // Determine language context for AI call
+        $primaryLanguage = MultisiteHelper::getPrimarySiteLanguage();
+        $additionalLanguages = MultisiteHelper::getAdditionalLanguages($asset);
+        $sites = MultisiteHelper::getSitesNeedingContent($asset);
+
         // AI call is external HTTP — keep outside transaction to avoid long-held locks
-        $result = Plugin::getInstance()->aiProvider->analyzeAsset($asset);
+        $result = Plugin::getInstance()->aiProvider->analyzeAsset($asset, $primaryLanguage, $additionalLanguages);
         $settings = $this->getSettings();
         $providerModel = $this->getProviderModel();
         $contentStorage = $this->getContentStorage();
@@ -384,6 +391,18 @@ class AssetAnalysisService extends Component
             // Sync tags and colors to indexed tables (respects user-added items)
             $this->syncTagsFromAiResult($record, $result->tags);
             $this->syncColorsFromAiResult($record, $result->dominantColors);
+
+            // Save per-site content (translated alt text and title for non-primary sites)
+            if (!empty($sites) && !empty($result->siteContent)) {
+                $volumeId = $asset->getVolume()->id;
+                Plugin::getInstance()->siteContent->saveFromAnalysisResult(
+                    $record,
+                    $sites,
+                    $result,
+                    altTranslatable: MultisiteHelper::isAltTranslatable($volumeId),
+                    titleTranslatable: MultisiteHelper::isTitleTranslatable($volumeId),
+                );
+            }
 
             $this->computePerceptualHash($asset, $record);
             $this->findDuplicatesForAsset($asset, $record);
@@ -564,6 +583,9 @@ class AssetAnalysisService extends Component
                 Logger::warning(LogCategory::AssetProcessing, 'Failed to auto-apply fields after approval', assetId: $asset->id);
             }
         }
+
+        // Auto-apply per-site alt text and title for non-primary sites
+        $this->autoApplyPerSiteContent($asset, $record);
     }
 
     /**
@@ -600,6 +622,71 @@ class AssetAnalysisService extends Component
         if ($needsSave) {
             if (!Craft::$app->getElements()->saveElement($asset)) {
                 Logger::warning(LogCategory::AssetProcessing, 'Failed to auto-apply fields to asset', assetId: $asset->id);
+            }
+        }
+
+        // Auto-apply per-site alt text and title for non-primary sites
+        $this->autoApplyPerSiteContent($asset, $record);
+    }
+
+    /**
+     * Auto-apply per-site alt text and title to non-primary site assets.
+     *
+     * Only writes fields that are actually translatable on the volume.
+     * Non-translatable fields are handled by Craft's propagation.
+     */
+    private function autoApplyPerSiteContent(Asset $asset, AssetAnalysisRecord $record): void
+    {
+        $sites = MultisiteHelper::getSitesNeedingContent($asset);
+
+        if (empty($sites)) {
+            return;
+        }
+
+        $volumeId = $asset->getVolume()->id;
+        $altTranslatable = MultisiteHelper::isAltTranslatable($volumeId);
+        $titleTranslatable = MultisiteHelper::isTitleTranslatable($volumeId);
+        $siteContentService = Plugin::getInstance()->siteContent;
+
+        foreach ($sites as $siteInfo) {
+            $siteAsset = Asset::find()
+                ->id($asset->id)
+                ->siteId($siteInfo['siteId'])
+                ->status(null)
+                ->one();
+
+            if ($siteAsset === null) {
+                continue;
+            }
+
+            $needsSave = false;
+
+            // Apply per-site alt text only if alt is translatable and empty
+            if ($altTranslatable && empty($siteAsset->alt)) {
+                $altText = $siteContentService->resolveAltText($record, $siteInfo['siteId']);
+                if (!empty($altText)) {
+                    $siteAsset->alt = $altText;
+                    $needsSave = true;
+                }
+            }
+
+            // Apply per-site title only if title is translatable and auto-generated
+            if ($titleTranslatable && AssetTitleHelper::isAutoGenerated($siteAsset)) {
+                $title = $siteContentService->resolveSuggestedTitle($record, $siteInfo['siteId']);
+                if (!empty($title)) {
+                    $siteAsset->title = $title;
+                    $needsSave = true;
+                }
+            }
+
+            if ($needsSave) {
+                if (!Craft::$app->getElements()->saveElement($siteAsset)) {
+                    Logger::warning(
+                        LogCategory::AssetProcessing,
+                        "Failed to auto-apply per-site content for site {$siteInfo['siteId']}",
+                        assetId: $asset->id,
+                    );
+                }
             }
         }
     }

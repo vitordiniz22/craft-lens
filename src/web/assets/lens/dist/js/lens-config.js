@@ -104,6 +104,19 @@
         },
 
         /**
+         * Analysis status values (mirrors AnalysisStatus PHP enum)
+         */
+        STATUS: {
+            PENDING: 'pending',
+            PROCESSING: 'processing',
+            COMPLETED: 'completed',
+            FAILED: 'failed',
+            PENDING_REVIEW: 'pending_review',
+            APPROVED: 'approved',
+            REJECTED: 'rejected'
+        },
+
+        /**
          * Storage keys for localStorage
          */
         STORAGE: {

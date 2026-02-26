@@ -10,11 +10,15 @@
  #   isAltEmpty       - bool
  #   altFieldInLayout - bool
  #   fieldState       - 'readonly'|'unlocked'|'editing'
+ #   isAltTranslatable   - bool (optional, default true)
+ #   isTitleTranslatable - bool (optional, default true)
  #
  # Note: In the analysis panel, `analysis` is an AssetAnalysisRecord (use .id).
  #       On the review page, `analysis` is a plain array (use .analysisId).
  #}
 {% set fieldState = fieldState ?? 'readonly' %}
+{% set isAltTranslatable = isAltTranslatable ?? true %}
+{% set isTitleTranslatable = isTitleTranslatable ?? true %}
 
 {# Resolve IDs once — record uses .id, review array uses .analysisId #}
 {% set resolvedAnalysisId = fieldState == 'editing' ? analysis.analysisId : analysis.id %}
@@ -64,6 +68,64 @@
         assetId: resolvedAssetId,
         fieldState: fieldState
     } %}
+{% endif %}
+
+{# ── Per-site Translations ── #}
+{% if (siteContent ?? [])|length %}
+    <div class="lens-translations-section" data-lens-target="translations-section">
+        <div class="lens-field-header">
+            <span class="lens-field-label">{{ 'Translations'|t('lens') }}</span>
+        </div>
+
+        {% for site in siteContent %}
+            <div class="lens-translation-group" data-lens-site-id="{{ site.siteId }}">
+                <div class="lens-translation-group__header">
+                    <strong>{{ site.siteName }}</strong>
+                    <span class="light">({{ site.language }})</span>
+                </div>
+
+                {# Per-site Title (only if title is translatable) #}
+                {% if isTitleTranslatable %}
+                    {% include 'lens/_components/analysis/native-field-bridge' with {
+                        fieldName: 'suggestedTitle',
+                        label: 'Title'|t('lens'),
+                        nativeValue: '',
+                        isNativeDefault: true,
+                        suggestionValue: site.suggestedTitle,
+                        aiValue: site.suggestedTitleAi,
+                        confidence: site.titleConfidence,
+                        editedBy: site.suggestedTitleEditedBy ?? null,
+                        inputType: 'text',
+                        analysisId: resolvedAnalysisId,
+                        assetId: resolvedAssetId,
+                        fieldState: fieldState,
+                        applyAction: 'apply-title',
+                        siteId: site.siteId
+                    } %}
+                {% endif %}
+
+                {# Per-site Alt Text (only if alt is translatable) #}
+                {% if isAltTranslatable %}
+                    {% include 'lens/_components/analysis/native-field-bridge' with {
+                        fieldName: 'altText',
+                        label: 'Alt Text'|t('lens'),
+                        nativeValue: '',
+                        isNativeDefault: true,
+                        suggestionValue: site.altText,
+                        aiValue: site.altTextAi,
+                        confidence: site.altTextConfidence,
+                        editedBy: site.altTextEditedBy ?? null,
+                        inputType: 'textarea',
+                        analysisId: resolvedAnalysisId,
+                        assetId: resolvedAssetId,
+                        fieldState: fieldState,
+                        applyAction: 'apply-alt',
+                        siteId: site.siteId
+                    } %}
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
 {% endif %}
 
 {# ── Long Description (no native Craft equivalent) ── #}

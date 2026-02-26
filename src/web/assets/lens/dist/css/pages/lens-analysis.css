@@ -35,7 +35,16 @@
     gap: 6px;
 }
 
-.lens-empty-analysis .btn.loading .label {
+/* Loading state for all analysis panel buttons */
+.lens-analysis-panel .btn.loading {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: wait !important;
+    opacity: 0.65;
+}
+
+.lens-analysis-panel .btn.loading .label {
     visibility: visible;
 }
 

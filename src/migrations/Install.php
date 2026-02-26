@@ -18,6 +18,7 @@ class Install extends Migration
     public const TABLE_DUPLICATE_GROUPS = '{{%lens_duplicate_groups}}';
     public const TABLE_ANALYSIS_CONTENT = '{{%lens_analysis_content}}';
     public const TABLE_EXIF_METADATA = '{{%lens_exif_metadata}}';
+    public const TABLE_ANALYSIS_SITE_CONTENT = '{{%lens_analysis_site_content}}';
     public const TABLE_LOGS = '{{%lens_logs}}';
 
     public function safeUp(): bool
@@ -30,6 +31,7 @@ class Install extends Migration
 
     public function safeDown(): bool
     {
+        $this->dropTableIfExists(self::TABLE_ANALYSIS_SITE_CONTENT);
         $this->dropTableIfExists(self::TABLE_EXIF_METADATA);
         $this->dropTableIfExists(self::TABLE_ANALYSIS_CONTENT);
         $this->dropTableIfExists(self::TABLE_LOGS);
@@ -235,6 +237,32 @@ class Install extends Migration
             'uid' => $this->uid(),
         ]);
 
+        // Per-site content for multilingual alt text and title
+        $this->createTable(self::TABLE_ANALYSIS_SITE_CONTENT, [
+            'id' => $this->primaryKey(),
+            'analysisId' => $this->integer()->notNull(),
+            'siteId' => $this->integer()->notNull(),
+            'language' => $this->string(10)->notNull(),
+
+            // Alt text (editable, per-site)
+            'altText' => $this->text()->null(),
+            'altTextAi' => $this->text()->null(),
+            'altTextConfidence' => $this->decimal(3, 2)->null(),
+            'altTextEditedBy' => $this->integer()->null(),
+            'altTextEditedAt' => $this->dateTime()->null(),
+
+            // Suggested title (editable, per-site)
+            'suggestedTitle' => $this->text()->null(),
+            'suggestedTitleAi' => $this->text()->null(),
+            'titleConfidence' => $this->decimal(3, 2)->null(),
+            'suggestedTitleEditedBy' => $this->integer()->null(),
+            'suggestedTitleEditedAt' => $this->dateTime()->null(),
+
+            'dateCreated' => $this->dateTime()->notNull(),
+            'dateUpdated' => $this->dateTime()->notNull(),
+            'uid' => $this->uid(),
+        ]);
+
         $this->createTable(self::TABLE_LOGS, [
             'id' => $this->primaryKey(),
             'level' => $this->string(10)->notNull(),
@@ -302,6 +330,11 @@ class Install extends Migration
         $this->createIndex(null, self::TABLE_ASSET_COLORS, ['analysisId']);
         $this->createIndex(null, self::TABLE_ASSET_COLORS, ['hex']);
         $this->createIndex(null, self::TABLE_ASSET_COLORS, ['isAi']);
+
+        // Analysis site content indexes
+        $this->createIndex(null, self::TABLE_ANALYSIS_SITE_CONTENT, ['analysisId', 'siteId'], true);
+        $this->createIndex(null, self::TABLE_ANALYSIS_SITE_CONTENT, ['siteId']);
+        $this->createIndex(null, self::TABLE_ANALYSIS_SITE_CONTENT, ['language']);
 
         // Duplicate groups indexes
         $this->createIndex(null, self::TABLE_DUPLICATE_GROUPS, ['canonicalAssetId', 'duplicateAssetId'], true);
@@ -428,6 +461,39 @@ class Install extends Migration
             'CASCADE',
             'CASCADE'
         );
+
+        // Analysis site content foreign keys
+        $this->addForeignKey(
+            null,
+            self::TABLE_ANALYSIS_SITE_CONTENT,
+            ['analysisId'],
+            self::TABLE_ASSET_ANALYSES,
+            ['id'],
+            'CASCADE',
+            'CASCADE'
+        );
+
+        $this->addForeignKey(
+            null,
+            self::TABLE_ANALYSIS_SITE_CONTENT,
+            ['siteId'],
+            Table::SITES,
+            ['id'],
+            'CASCADE',
+            'CASCADE'
+        );
+
+        foreach (['altTextEditedBy', 'suggestedTitleEditedBy'] as $column) {
+            $this->addForeignKey(
+                null,
+                self::TABLE_ANALYSIS_SITE_CONTENT,
+                [$column],
+                Table::USERS,
+                ['id'],
+                'SET NULL',
+                'CASCADE'
+            );
+        }
 
         // Duplicate groups foreign keys
         $this->addForeignKey(

@@ -166,9 +166,13 @@ class StatisticsService extends Component
     /**
      * Get alt text coverage statistics.
      *
+     * When $siteId is provided, counts coverage from the per-site content table
+     * for that specific site. Otherwise counts from the main analysis record
+     * (primary site).
+     *
      * @return array{percentage: float, withAltText: int, total: int}
      */
-    public function getAltTextCoverage(?int $precomputedAnalyzedCount = null): array
+    public function getAltTextCoverage(?int $precomputedAnalyzedCount = null, ?int $siteId = null): array
     {
         $analyzedStatuses = AnalysisStatus::analyzedValues();
 
@@ -180,11 +184,23 @@ class StatisticsService extends Component
             return ['percentage' => 0.0, 'withAltText' => 0, 'total' => 0];
         }
 
-        $withAltText = (int) AssetAnalysisRecord::find()
-            ->where(['in', 'status', $analyzedStatuses])
-            ->andWhere(['not', ['altText' => null]])
-            ->andWhere(['!=', 'altText', ''])
-            ->count();
+        if ($siteId !== null) {
+            $withAltText = (int) (new Query())
+                ->select(['COUNT(*)'])
+                ->from(Install::TABLE_ANALYSIS_SITE_CONTENT . ' sc')
+                ->innerJoin(Install::TABLE_ASSET_ANALYSES . ' a', '[[sc.analysisId]] = [[a.id]]')
+                ->where(['in', 'a.status', $analyzedStatuses])
+                ->andWhere(['sc.siteId' => $siteId])
+                ->andWhere(['not', ['sc.altText' => null]])
+                ->andWhere(['!=', 'sc.altText', ''])
+                ->scalar();
+        } else {
+            $withAltText = (int) AssetAnalysisRecord::find()
+                ->where(['in', 'status', $analyzedStatuses])
+                ->andWhere(['not', ['altText' => null]])
+                ->andWhere(['!=', 'altText', ''])
+                ->count();
+        }
 
         return [
             'percentage' => round(($withAltText / $total) * 100, 1),
@@ -452,7 +468,7 @@ class StatisticsService extends Component
                 'type' => 'pending_review',
                 'label' => Craft::t('lens', 'Pending Review'),
                 'count' => $overview['pendingReview'],
-                'url' => 'lens/search?status=pending_review',
+                'url' => 'lens/search?status=' . AnalysisStatus::PendingReview->value,
                 'color' => 'blue',
                 'icon' => 'eye',
             ];
@@ -463,7 +479,7 @@ class StatisticsService extends Component
                 'type' => 'failed',
                 'label' => Craft::t('lens', 'Failed Analyses'),
                 'count' => $overview['failed'],
-                'url' => 'lens/search?status=failed',
+                'url' => 'lens/search?status=' . AnalysisStatus::Failed->value,
                 'color' => 'red',
                 'icon' => 'triangle-exclamation',
             ];

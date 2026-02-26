@@ -56,6 +56,7 @@ use vitordiniz22\craftlens\services\PricingService;
 use vitordiniz22\craftlens\services\ReviewService;
 use vitordiniz22\craftlens\services\SearchService;
 use vitordiniz22\craftlens\services\SetupStatusService;
+use vitordiniz22\craftlens\services\SiteContentService;
 use vitordiniz22\craftlens\services\StatisticsService;
 use vitordiniz22\craftlens\services\TagAggregationService;
 use vitordiniz22\craftlens\twig\LensTwigExtension;
@@ -86,6 +87,7 @@ use yii\web\Response;
  * @property-read DuplicateDetectionService $duplicateDetection
  * @property-read SearchService $search
  * @property-read SetupStatusService $setupStatus
+ * @property-read SiteContentService $siteContent
  * @property-read ExifExtractionService $exifExtraction
  * @property-read ExifMetadataService $exifMetadata
  * @property-read BulkProcessingStatusService $bulkProcessingStatus
@@ -123,6 +125,7 @@ class Plugin extends BasePlugin
                 'duplicateDetection' => DuplicateDetectionService::class,
                 'search' => SearchService::class,
                 'setupStatus' => SetupStatusService::class,
+                'siteContent' => SiteContentService::class,
                 'exifExtraction' => ExifExtractionService::class,
                 'exifMetadata' => ExifMetadataService::class,
                 'log' => LogService::class,
@@ -299,6 +302,10 @@ class Plugin extends BasePlugin
             function(ModelEvent $event) {
                 /** @var Asset $asset */
                 $asset = $event->sender;
+
+                if ($asset->propagating) {
+                    return;
+                }
 
                 if (!$this->assetAnalysis->shouldAutoProcessOnUpload($asset, $event->isNew)) {
                     return;

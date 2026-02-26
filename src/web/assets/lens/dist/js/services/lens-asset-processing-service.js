@@ -70,10 +70,12 @@
                     const status = response.data.status;
 
                     // Handle terminal states
-                    if (status === 'completed' || status === 'approved' || status === 'failed' || status === 'pending_review') {
+                    var S = window.Lens.config.STATUS;
+
+                    if (status === S.COMPLETED || status === S.APPROVED || status === S.FAILED || status === S.PENDING_REVIEW) {
                         self._clearPoll(assetId);
 
-                        if (status === 'failed' && options.onError) {
+                        if (status === S.FAILED && options.onError) {
                             options.onError(response.data);
                         } else if (options.onComplete) {
                             options.onComplete(response.data);
@@ -81,7 +83,7 @@
 
                         // Auto reload if requested
                         if (options.autoReload !== false) {
-                            const message = status === 'failed'
+                            const message = status === S.FAILED
                                 ? Craft.t('lens', 'Analysis failed. Refreshing to show error...')
                                 : Craft.t('lens', 'Analysis complete. Refreshing...');
                             Craft.cp.displayNotice(message);

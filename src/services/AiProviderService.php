@@ -33,13 +33,19 @@ class AiProviderService extends Component
 
     /**
      * Analyzes an asset using the configured AI provider.
+     *
+     * @param string $primaryLanguage Language code for all generated text
+     * @param string[] $additionalLanguages Extra languages for per-site alt text and title
      */
-    public function analyzeAsset(Asset $asset): AnalysisResult
-    {
+    public function analyzeAsset(
+        Asset $asset,
+        string $primaryLanguage,
+        array $additionalLanguages = [],
+    ): AnalysisResult {
         $settings = $this->getSettings();
         $provider = $this->getDefaultProvider();
 
-        return $provider->analyze($asset, $settings);
+        return $provider->analyze($asset, $settings, $primaryLanguage, $additionalLanguages);
     }
 
     /**

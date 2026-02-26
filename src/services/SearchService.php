@@ -28,48 +28,51 @@ class SearchService extends Component
     /**
      * Quick filter presets for one-click filtering.
      */
-    public const QUICK_FILTERS = [
-        'untagged' => [
-            'label' => 'Untagged',
-            'icon' => 'tag',
-            'specialCondition' => 'noTags',
-        ],
-        'low-confidence' => [
-            'label' => 'Low Confidence',
-            'icon' => 'alert',
-            'filters' => ['confidenceMax' => 0.7],
-        ],
-        'needs-review' => [
-            'label' => 'Needs Review',
-            'icon' => 'eye',
-            'filters' => ['status' => ['pending_review']],
-        ],
-        'with-people' => [
-            'label' => 'With People',
-            'icon' => 'users',
-            'filters' => ['containsPeople' => true],
-        ],
-        'nsfw-flagged' => [
-            'label' => 'NSFW Flagged',
-            'icon' => 'warning',
-            'filters' => ['nsfwScoreMin' => 0.5],
-        ],
-        'nsfw-caution' => [
-            'label' => 'NSFW Caution',
-            'icon' => 'warning',
-            'filters' => ['nsfwScoreMin' => 0.2, 'nsfwScoreMax' => 0.499],
-        ],
-        'recent-7d' => [
-            'label' => 'Last 7 Days',
-            'icon' => 'clock',
-            'relativeDays' => 7,
-        ],
-        'has-duplicates' => [
-            'label' => 'Has Duplicates',
-            'icon' => 'copy',
-            'filters' => ['hasDuplicates' => true],
-        ],
-    ];
+    public static function quickFilters(): array
+    {
+        return [
+            'untagged' => [
+                'label' => 'Untagged',
+                'icon' => 'tag',
+                'specialCondition' => 'noTags',
+            ],
+            'low-confidence' => [
+                'label' => 'Low Confidence',
+                'icon' => 'alert',
+                'filters' => ['confidenceMax' => 0.7],
+            ],
+            'needs-review' => [
+                'label' => 'Needs Review',
+                'icon' => 'eye',
+                'filters' => ['status' => [AnalysisStatus::PendingReview->value]],
+            ],
+            'with-people' => [
+                'label' => 'With People',
+                'icon' => 'users',
+                'filters' => ['containsPeople' => true],
+            ],
+            'nsfw-flagged' => [
+                'label' => 'NSFW Flagged',
+                'icon' => 'warning',
+                'filters' => ['nsfwScoreMin' => 0.5],
+            ],
+            'nsfw-caution' => [
+                'label' => 'NSFW Caution',
+                'icon' => 'warning',
+                'filters' => ['nsfwScoreMin' => 0.2, 'nsfwScoreMax' => 0.499],
+            ],
+            'recent-7d' => [
+                'label' => 'Last 7 Days',
+                'icon' => 'clock',
+                'relativeDays' => 7,
+            ],
+            'has-duplicates' => [
+                'label' => 'Has Duplicates',
+                'icon' => 'copy',
+                'filters' => ['hasDuplicates' => true],
+            ],
+        ];
+    }
 
     /**
      * Search assets using combined filters.
@@ -150,6 +153,10 @@ class SearchService extends Component
             $query->leftJoin(Install::TABLE_ASSET_TAGS . ' tags', '[[lens.id]] = [[tags.analysisId]]');
         }
 
+        if ($this->needsSiteContentJoin($filters)) {
+            $query->leftJoin(Install::TABLE_ANALYSIS_SITE_CONTENT . ' site_content', '[[lens.id]] = [[site_content.analysisId]]');
+        }
+
         $this->applyTextSearch($query, $filters['query'] ?? null);
         $this->applyTagFilters($query, $filters['tags'] ?? [], $filters['tagOperator'] ?? 'or');
         $this->applyStatusFilter($query, $filters['status'] ?? []);
@@ -179,9 +186,18 @@ class SearchService extends Component
     }
 
     /**
+     * Check if we need to join the site content table for text search.
+     */
+    private function needsSiteContentJoin(array $filters): bool
+    {
+        return !empty($filters['query']);
+    }
+
+    /**
      * Apply full-text search across Craft fields and Lens data.
      *
-     * Searches: asset title, Lens alt text, long description, tags, extracted text
+     * Searches: asset title, Lens alt text, long description, tags, extracted text,
+     * and per-site translated alt text / suggested title.
      */
     private function applyTextSearch(Query $query, ?string $searchQuery): void
     {
@@ -208,6 +224,9 @@ class SearchService extends Component
 
             $conditions[] = ['like', 'tags.tag', $escapedTerm, false];
             $conditions[] = ['like', 'lens.extractedText', $escapedTerm, false];
+
+            $conditions[] = ['like', 'site_content.altText', $escapedTerm, false];
+            $conditions[] = ['like', 'site_content.suggestedTitle', $escapedTerm, false];
         }
 
         $query->andWhere($conditions);
@@ -665,7 +684,7 @@ class SearchService extends Component
     {
         $filters = [];
 
-        foreach (self::QUICK_FILTERS as $key => $def) {
+        foreach (self::quickFilters() as $key => $def) {
             $filters[$key] = [
                 'key' => $key,
                 'label' => Craft::t('lens', $def['label']),
@@ -681,7 +700,7 @@ class SearchService extends Component
      */
     public function applyQuickFilter(string $key, array $filters): array
     {
-        $preset = self::QUICK_FILTERS[$key] ?? null;
+        $preset = self::quickFilters()[$key] ?? null;
 
         if ($preset === null) {
             return $filters;

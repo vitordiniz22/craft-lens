@@ -57,8 +57,11 @@ abstract class BaseAiProvider implements AiProviderInterface
 
     /**
      * Builds the analysis prompt for image analysis.
+     *
+     * @param string $primaryLanguage Language code for all generated text
+     * @param string[] $additionalLanguages Extra languages for per-site alt text and title
      */
-    protected function buildPrompt(): string
+    protected function buildPrompt(string $primaryLanguage, array $additionalLanguages = []): string
     {
         $instructions = ['Analyze this image and provide the following information in JSON format:'];
 
@@ -140,6 +143,29 @@ abstract class BaseAiProvider implements AiProviderInterface
         $instructions[] = '- "detectedBrands": Array of objects with "brand" (company/brand name), "confidence" (0.0-1.0), and "position" (location in image)';
 
         $instructions[] = '';
+        $instructions[] = sprintf(
+            'IMPORTANT: All text fields (altText, suggestedTitle, longDescription, tags, extractedText) MUST be written in %s.',
+            $primaryLanguage
+        );
+
+        if (!empty($additionalLanguages)) {
+            $langList = implode(', ', $additionalLanguages);
+            $instructions[] = '';
+            $instructions[] = sprintf(
+                'Additionally, describe the image natively in these languages and include a "siteContent" object keyed by language code: %s.',
+                $langList
+            );
+            $instructions[] = '"siteContent": {';
+            foreach ($additionalLanguages as $lang) {
+                $instructions[] = sprintf(
+                    '  "%s": {"altText": "...", "altTextConfidence": 0.0-1.0, "suggestedTitle": "...", "titleConfidence": 0.0-1.0},',
+                    $lang
+                );
+            }
+            $instructions[] = '}';
+        }
+
+        $instructions[] = '';
         $instructions[] = 'Respond ONLY with valid JSON, no markdown or explanation.';
 
         return implode("\n", $instructions);
@@ -194,7 +220,48 @@ abstract class BaseAiProvider implements AiProviderInterface
             focalPointX: isset($data['focalPointX']) ? ResponseNormalizer::clampConfidence((float) $data['focalPointX']) : null,
             focalPointY: isset($data['focalPointY']) ? ResponseNormalizer::clampConfidence((float) $data['focalPointY']) : null,
             focalPointConfidence: isset($data['focalPointConfidence']) ? ResponseNormalizer::clampConfidence((float) $data['focalPointConfidence']) : null,
+            siteContent: $this->parseSiteContent($data['siteContent'] ?? []),
         );
+    }
+
+    /**
+     * Parse and validate the siteContent structure from AI response.
+     *
+     * @return array<string, array{altText: string, suggestedTitle: string, altTextConfidence?: float, titleConfidence?: float}>
+     */
+    private function parseSiteContent(mixed $raw): array
+    {
+        if (!is_array($raw)) {
+            return [];
+        }
+
+        $result = [];
+
+        foreach ($raw as $lang => $entry) {
+            if (!is_string($lang) || !is_array($entry)) {
+                continue;
+            }
+
+            $altText = $entry['altText'] ?? '';
+            $suggestedTitle = $entry['suggestedTitle'] ?? '';
+
+            if ($altText === '' && $suggestedTitle === '') {
+                continue;
+            }
+
+            $result[$lang] = [
+                'altText' => (string) $altText,
+                'suggestedTitle' => (string) $suggestedTitle,
+                'altTextConfidence' => isset($entry['altTextConfidence'])
+                    ? ResponseNormalizer::clampConfidence((float) $entry['altTextConfidence'])
+                    : null,
+                'titleConfidence' => isset($entry['titleConfidence'])
+                    ? ResponseNormalizer::clampConfidence((float) $entry['titleConfidence'])
+                    : null,
+            ];
+        }
+
+        return $result;
     }
 
     /**

@@ -11,6 +11,7 @@ use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\AssetTitleHelper;
 use vitordiniz22\craftlens\helpers\Logger;
+use vitordiniz22\craftlens\helpers\MultisiteHelper;
 use vitordiniz22\craftlens\Plugin;
 use vitordiniz22\craftlens\records\AssetAnalysisRecord;
 use vitordiniz22\craftlens\records\AssetColorRecord;
@@ -165,6 +166,32 @@ class ReviewService extends Component
         // Handle colors modifications
         if (isset($modifications['dominantColors']) && is_array($modifications['dominantColors'])) {
             $editService->updateColors($analysisId, $modifications['dominantColors']);
+        }
+
+        // Handle per-site content modifications (respecting per-field translatability)
+        if (isset($modifications['siteContent']) && is_array($modifications['siteContent'])) {
+            $asset = Asset::find()->id($record->assetId)->one();
+            $volumeId = $asset?->getVolume()->id;
+            $altTranslatable = $volumeId !== null && MultisiteHelper::isAltTranslatable($volumeId);
+            $titleTranslatable = $volumeId !== null && MultisiteHelper::isTitleTranslatable($volumeId);
+
+            $siteContentService = Plugin::getInstance()->siteContent;
+
+            foreach ($modifications['siteContent'] as $siteId => $fields) {
+                $siteId = (int) $siteId;
+
+                if (!is_array($fields)) {
+                    continue;
+                }
+
+                foreach ($fields as $field => $value) {
+                    if ($field === 'altText' && $altTranslatable) {
+                        $siteContentService->updateSiteField($analysisId, $siteId, $field, $value, $userId);
+                    } elseif ($field === 'suggestedTitle' && $titleTranslatable) {
+                        $siteContentService->updateSiteField($analysisId, $siteId, $field, $value, $userId);
+                    }
+                }
+            }
         }
 
         Logger::info(LogCategory::Review, 'Analysis edited and approved', assetId: $record->assetId, context: [
@@ -419,7 +446,52 @@ class ReviewService extends Component
             // EXIF, duplicates
             'exif' => $exifData,
             'similarImages' => $similarImages,
+
+            // Per-site content
+            'siteContent' => $this->loadSiteContentData($record->id),
+            'hasMultisiteContent' => !empty(Plugin::getInstance()->siteContent->getAllSiteContent($record->id)),
+            'isAltTranslatable' => MultisiteHelper::isAltTranslatable($asset->getVolume()->id),
+            'isTitleTranslatable' => MultisiteHelper::isTitleTranslatable($asset->getVolume()->id),
         ];
+    }
+
+    /**
+     * Load per-site content data for an analysis, structured for templates/JS.
+     *
+     * @return array<int, array{siteId: int, language: string, siteName: string, altText: string|null, altTextAi: string|null, altTextConfidence: float|null, altTextEditedBy: int|null, suggestedTitle: string|null, suggestedTitleAi: string|null, titleConfidence: float|null, suggestedTitleEditedBy: int|null}>
+     */
+    private function loadSiteContentData(int $analysisId): array
+    {
+        $records = Plugin::getInstance()->siteContent->getAllSiteContent($analysisId);
+
+        if (empty($records)) {
+            return [];
+        }
+
+        $allSites = Craft::$app->getSites()->getAllSites();
+        $siteNames = [];
+        foreach ($allSites as $site) {
+            $siteNames[$site->id] = $site->name;
+        }
+
+        $data = [];
+        foreach ($records as $siteId => $record) {
+            $data[] = [
+                'siteId' => $siteId,
+                'language' => $record->language,
+                'siteName' => $siteNames[$siteId] ?? "Site {$siteId}",
+                'altText' => $record->altText,
+                'altTextAi' => $record->altTextAi,
+                'altTextConfidence' => $record->altTextConfidence,
+                'altTextEditedBy' => $record->altTextEditedBy,
+                'suggestedTitle' => $record->suggestedTitle,
+                'suggestedTitleAi' => $record->suggestedTitleAi,
+                'titleConfidence' => $record->titleConfidence,
+                'suggestedTitleEditedBy' => $record->suggestedTitleEditedBy,
+            ];
+        }
+
+        return $data;
     }
 
     /**

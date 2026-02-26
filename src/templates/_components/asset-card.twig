@@ -45,13 +45,13 @@
                         {{ dupCount }}
                     </a>
                 {% endif %}
-                {% if analysis.status == 'pending_review' %}
+                {% if analysis.status == lens.status.pendingReview %}
                     <span class="lens-badge lens-badge--small lens-badge--info" title="{{ 'Pending Review'|t('lens') }}">
                         {{ iconSvg('eye')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
                         {{ 'Review'|t('lens') }}
                     </span>
                 {% endif %}
-                {% if analysis.status == 'failed' %}
+                {% if analysis.status == lens.status.failed %}
                     <span class="lens-badge lens-badge--small lens-badge--error">
                         {{ iconSvg('circle-xmark')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
                         {{ 'Failed'|t('lens') }}

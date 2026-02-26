@@ -78,6 +78,7 @@ readonly class AnalysisResult
         public ?float $focalPointX = null,
         public ?float $focalPointY = null,
         public ?float $focalPointConfidence = null,
+        public array $siteContent = [],
     ) {
     }
 
@@ -120,6 +121,7 @@ readonly class AnalysisResult
             'focalPointX' => $this->focalPointX,
             'focalPointY' => $this->focalPointY,
             'focalPointConfidence' => $this->focalPointConfidence,
+            'siteContent' => $this->siteContent,
         ];
 
         foreach ($context as $key => $value) {

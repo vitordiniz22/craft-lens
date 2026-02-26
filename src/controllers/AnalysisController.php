@@ -9,6 +9,7 @@ use craft\elements\Asset;
 use craft\web\Controller;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\Logger;
+use vitordiniz22\craftlens\helpers\MultisiteHelper;
 use vitordiniz22\craftlens\Plugin;
 use yii\web\BadRequestHttpException;
 use yii\web\NotFoundHttpException;
@@ -59,20 +60,42 @@ class AnalysisController extends Controller
         $this->requirePermission('accessPlugin-lens');
 
         $asset = $this->getRequiredAsset();
+        $siteId = $this->request->getBodyParam('siteId');
 
         $analysis = Plugin::getInstance()->assetAnalysis->getAnalysis($asset->id);
 
-        if ($analysis === null || empty($analysis->suggestedTitle)) {
+        if ($analysis === null) {
+            throw new BadRequestHttpException('No analysis available');
+        }
+
+        if ($siteId !== null) {
+            $siteId = (int) $siteId;
+
+            if (!MultisiteHelper::isTitleTranslatable($asset->getVolume()->id)) {
+                throw new BadRequestHttpException('Title is not translatable for this volume');
+            }
+
+            $title = Plugin::getInstance()->siteContent->resolveSuggestedTitle($analysis, $siteId);
+            $asset = Asset::find()->id($asset->id)->siteId($siteId)->status(null)->one();
+
+            if ($asset === null) {
+                throw new BadRequestHttpException('Asset not found for this site');
+            }
+        } else {
+            $title = $analysis->suggestedTitle;
+        }
+
+        if (empty($title)) {
             throw new BadRequestHttpException('No suggested title available');
         }
 
-        $asset->title = $analysis->suggestedTitle;
+        $asset->title = $title;
         $success = Craft::$app->getElements()->saveElement($asset);
 
         if ($this->request->getAcceptsJson()) {
             return $this->asJson([
                 'success' => $success,
-                'title' => $analysis->suggestedTitle,
+                'title' => $title,
             ]);
         }
 
@@ -93,20 +116,40 @@ class AnalysisController extends Controller
         $this->requirePermission('accessPlugin-lens');
 
         $asset = $this->getRequiredAsset();
+        $siteId = $this->request->getBodyParam('siteId');
 
         $analysis = Plugin::getInstance()->assetAnalysis->getAnalysis($asset->id);
 
-        if ($analysis === null || empty($analysis->altText)) {
+        if ($analysis === null) {
+            throw new BadRequestHttpException('No analysis available');
+        }
+
+        // Resolve alt text for specific site or primary
+        if ($siteId !== null) {
+            $siteId = (int) $siteId;
+            if (!MultisiteHelper::isAltTranslatable($asset->getVolume()->id)) {
+                throw new BadRequestHttpException('Alt text is not translatable for this volume');
+            }
+            $altText = Plugin::getInstance()->siteContent->resolveAltText($analysis, $siteId);
+            $asset = Asset::find()->id($asset->id)->siteId($siteId)->status(null)->one();
+            if ($asset === null) {
+                throw new BadRequestHttpException('Asset not found for this site');
+            }
+        } else {
+            $altText = $analysis->altText;
+        }
+
+        if (empty($altText)) {
             throw new BadRequestHttpException('No suggested alt text available');
         }
 
-        $asset->alt = $analysis->altText;
+        $asset->alt = $altText;
         $success = Craft::$app->getElements()->saveElement($asset);
 
         if ($this->request->getAcceptsJson()) {
             return $this->asJson([
                 'success' => $success,
-                'alt' => $analysis->altText,
+                'alt' => $altText,
             ]);
         }
 
@@ -254,13 +297,20 @@ class AnalysisController extends Controller
         $analysisId = (int) $this->request->getRequiredBodyParam('analysisId');
         $field = $this->request->getRequiredBodyParam('field');
         $value = $this->request->getRequiredBodyParam('value');
+        $siteId = $this->request->getBodyParam('siteId');
 
         if ($analysisId < 1) {
             throw new BadRequestHttpException('Invalid analysis ID');
         }
 
         try {
-            $result = Plugin::getInstance()->analysisEdit->updateSingleField($analysisId, $field, $value);
+            if ($siteId !== null && in_array($field, ['altText', 'suggestedTitle'], true)) {
+                $result = Plugin::getInstance()->siteContent->updateSiteField(
+                    $analysisId, (int) $siteId, $field, $value
+                );
+            } else {
+                $result = Plugin::getInstance()->analysisEdit->updateSingleField($analysisId, $field, $value);
+            }
             return $this->asJson(['success' => true] + $result);
         } catch (\InvalidArgumentException $e) {
             throw new BadRequestHttpException($e->getMessage());
@@ -278,13 +328,20 @@ class AnalysisController extends Controller
 
         $analysisId = (int) $this->request->getRequiredBodyParam('analysisId');
         $field = $this->request->getRequiredBodyParam('field');
+        $siteId = $this->request->getBodyParam('siteId');
 
         if ($analysisId < 1) {
             throw new BadRequestHttpException('Invalid analysis ID');
         }
 
         try {
-            $result = Plugin::getInstance()->analysisEdit->revertField($analysisId, $field);
+            if ($siteId !== null && in_array($field, ['altText', 'suggestedTitle'], true)) {
+                $result = Plugin::getInstance()->siteContent->revertSiteField(
+                    $analysisId, (int) $siteId, $field
+                );
+            } else {
+                $result = Plugin::getInstance()->analysisEdit->revertField($analysisId, $field);
+            }
             return $this->asJson(['success' => true] + $result);
         } catch (\InvalidArgumentException $e) {
             throw new BadRequestHttpException($e->getMessage());

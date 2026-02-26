@@ -22,9 +22,11 @@
  #   assetId         - int|null, the asset ID
  #   fieldState      - 'readonly'|'unlocked'|'editing'
  #   applyAction     - string, the data-lens-action value (e.g. 'apply-title', 'apply-alt')
+ #   siteId          - int|null, optional site ID for per-site content (omit for primary site)
  #}
 
 {% set inputType = inputType ?? 'text' %}
+{% set siteId = siteId ?? null %}
 {% set fieldState = fieldState ?? 'readonly' %}
 {% set isEdited = (editedBy ?? null) is not null %}
 
@@ -73,7 +75,8 @@
 
 <div class="lens-native-bridge"
      data-lens-target="native-bridge"
-     data-lens-field="{{ fieldName }}">
+     data-lens-field="{{ fieldName }}"
+     {% if siteId %}data-lens-site-id="{{ siteId }}"{% endif %}>
 
     <div class="lens-field-header" data-lens-target="field-header">
         {% if isEdited %}
@@ -101,7 +104,8 @@
                 <button type="button" class="btn small"
                         data-lens-action="{{ applyAction }}"
                         data-lens-asset-id="{{ assetId }}"
-                        data-lens-analysis-id="{{ analysisId }}">
+                        data-lens-analysis-id="{{ analysisId }}"
+                        {% if siteId %}data-lens-site-id="{{ siteId }}"{% endif %}>
                     {{ 'Replace Current Value'|t('lens') }}
                 </button>
                 <span class="smalltext light">{{ 'Current value was set manually'|t('lens') }}</span>
@@ -109,7 +113,8 @@
                 <button type="button" class="btn small submit"
                         data-lens-action="{{ applyAction }}"
                         data-lens-asset-id="{{ assetId }}"
-                        data-lens-analysis-id="{{ analysisId }}">
+                        data-lens-analysis-id="{{ analysisId }}"
+                        {% if siteId %}data-lens-site-id="{{ siteId }}"{% endif %}>
                     {{ 'Apply to Asset'|t('lens') }}
                 </button>
                 {% if isNativeDefault and nativeValue %}

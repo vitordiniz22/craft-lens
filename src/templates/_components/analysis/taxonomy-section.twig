@@ -6,7 +6,7 @@
  #}
 {% set fieldState = fieldState ?? 'readonly' %}
 {% set isInteractive = fieldState in ['unlocked', 'editing'] %}
-{% set showTaxonomy = analysis.status not in ['pending', 'processing', 'failed'] %}
+{% set showTaxonomy = analysis.status not in [lens.status.pending, lens.status.processing, lens.status.failed] %}
 
 {% if showTaxonomy %}
     {# Tags #}

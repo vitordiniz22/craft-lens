@@ -199,6 +199,7 @@
 
             const assetId = btn.dataset.lensAssetId;
             const analysisId = btn.dataset.lensAnalysisId;
+            const siteId = btn.dataset.lensSiteId || null;
 
             window.Lens.core.ButtonState.withLoading(
                 btn,
@@ -207,13 +208,16 @@
                     return window.Lens.core.API.applyTitle(
                         assetId,
                         analysisId,
+                        { siteId: siteId },
                     ).then((response) => {
                         if (response.data.success) {
                             Craft.cp.displayNotice(
                                 Craft.t('lens', 'Title applied to asset.'),
                             );
                             this._updateBridgeAfterApply(btn, response.data.title);
-                            this._syncNativeField('title', response.data.title);
+                            if (!siteId) {
+                                this._syncNativeField('title', response.data.title);
+                            }
                         }
                     });
                 },
@@ -225,6 +229,7 @@
 
             const assetId = btn.dataset.lensAssetId;
             const analysisId = btn.dataset.lensAnalysisId;
+            const siteId = btn.dataset.lensSiteId || null;
 
             window.Lens.core.ButtonState.withLoading(
                 btn,
@@ -233,6 +238,7 @@
                     return window.Lens.core.API.applyAlt(
                         assetId,
                         analysisId,
+                        { siteId: siteId },
                     ).then((response) => {
                         if (response.data.success) {
                             Craft.cp.displayNotice(
@@ -242,7 +248,9 @@
                             // self-selects via .closest() and no-ops if not found
                             this._updateBridgeAfterApply(btn, response.data.alt);
                             this._updateProxyDisplayAfterApply(btn, response.data.alt);
-                            this._syncNativeField('alt', response.data.alt);
+                            if (!siteId) {
+                                this._syncNativeField('alt', response.data.alt);
+                            }
                         }
                     });
                 },
@@ -464,7 +472,9 @@
             const assetId = panel.dataset.lensAssetId;
 
             // If analysis is pending or processing, start polling using service
-            if (status === 'pending' || status === 'processing') {
+            var S = window.Lens.config.STATUS;
+
+            if (status === S.PENDING || status === S.PROCESSING) {
                 window.Lens.services.AssetProcessing.poll(
                     parseInt(assetId, 10),
                 );

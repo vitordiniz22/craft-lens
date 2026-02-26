@@ -11,6 +11,7 @@ use craft\fieldlayoutelements\BaseUiElement;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\AssetTitleHelper;
 use vitordiniz22\craftlens\helpers\Logger;
+use vitordiniz22\craftlens\helpers\MultisiteHelper;
 use vitordiniz22\craftlens\Plugin;
 use vitordiniz22\craftlens\web\assets\lens\LensAssetActionsAsset;
 
@@ -67,6 +68,7 @@ class LensAnalysisElement extends BaseUiElement
             $colors = [];
             $exifData = null;
             $similarImages = [];
+            $siteContent = [];
 
             if ($analysis) {
                 $tags = $plugin->tagAggregation->getTagsForAnalysis($analysis->id);
@@ -77,6 +79,32 @@ class LensAnalysisElement extends BaseUiElement
                 }
 
                 $similarImages = $plugin->duplicateDetection->getSimilarAssetsForDisplay($element->id);
+
+                if (MultisiteHelper::needsMultisiteContent($element)) {
+                    $siteRecords = $plugin->siteContent->getAllSiteContent($analysis->id);
+                    $allSites = Craft::$app->getSites()->getAllSites();
+                    $siteNames = [];
+
+                    foreach ($allSites as $site) {
+                        $siteNames[$site->id] = $site->name;
+                    }
+
+                    foreach ($siteRecords as $siteId => $record) {
+                        $siteContent[] = [
+                            'siteId' => $siteId,
+                            'language' => $record->language,
+                            'siteName' => $siteNames[$siteId] ?? "Site {$siteId}",
+                            'altText' => $record->altText,
+                            'altTextAi' => $record->altTextAi,
+                            'altTextConfidence' => $record->altTextConfidence,
+                            'altTextEditedBy' => $record->altTextEditedBy,
+                            'suggestedTitle' => $record->suggestedTitle,
+                            'suggestedTitleAi' => $record->suggestedTitleAi,
+                            'titleConfidence' => $record->titleConfidence,
+                            'suggestedTitleEditedBy' => $record->suggestedTitleEditedBy,
+                        ];
+                    }
+                }
             }
 
             return Craft::$app->view->renderTemplate(
@@ -94,6 +122,9 @@ class LensAnalysisElement extends BaseUiElement
                     'analysisColors' => $colors,
                     'exifData' => $exifData,
                     'similarImages' => $similarImages,
+                    'siteContent' => $siteContent,
+                    'isAltTranslatable' => MultisiteHelper::isAltTranslatable($element->getVolume()->id),
+                    'isTitleTranslatable' => MultisiteHelper::isTitleTranslatable($element->getVolume()->id),
                 ]
             );
         } catch (\Throwable $e) {

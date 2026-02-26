@@ -36,8 +36,8 @@ Choose your AI provider — **OpenAI GPT**, **Google Gemini**, or **Anthropic Cl
 - **Asset Browser** with saved searches and CSV export for audits and reporting
 
 ### Automatic Tagging & Descriptions
-- **Alt text** generated with confidence scoring — fix your accessibility gaps without the manual grind
-- **Title suggestions** so your assets stop being called `IMG_4382.jpg`
+- **Alt text** generated in your site's language with confidence scoring, fix your accessibility gaps without the manual grind
+- **Title suggestions** in your site's language so your assets stop being called `IMG_4382.jpg`
 - **Long descriptions** for rich image context
 - **Semantic tags** that actually describe what's in the image, scored by confidence
 - **Dominant colors** extracted with palette percentages — search your library by color
@@ -60,6 +60,11 @@ Choose your AI provider — **OpenAI GPT**, **Google Gemini**, or **Anthropic Cl
 - **Keyboard shortcuts** — approve, skip, or reject with a single keystroke (A/S/R)
 - **Inline editing** — refine any suggestion before it's applied to your assets
 - **Confidence thresholds** — auto-approve high-confidence results, review the rest
+
+### Language & Multisite
+- **Language-aware AI** — all generated text respects your primary site's language. English site gets English alt text, add a Spanish site and it gets Spanish too
+- **Per-site alt text & titles** — multisite installs with different languages get native alt text and titles for each site, only for fields marked as translatable on the volume, generated in a single AI request at no extra cost
+- **Zero configuration** — Lens reads your site languages and volume translation settings automatically
 
 ## Control Panel
 

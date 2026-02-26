@@ -26,9 +26,16 @@ interface AiProviderInterface
     /**
      * Analyzes an image asset and returns the analysis result.
      *
+     * @param string $primaryLanguage Language code for all generated text (e.g., "en-US", "fr-FR")
+     * @param string[] $additionalLanguages Extra languages for per-site alt text and title
      * @throws \vitordiniz22\craftlens\exceptions\AnalysisException
      */
-    public function analyze(Asset $asset, Settings $settings): AnalysisResult;
+    public function analyze(
+        Asset $asset,
+        Settings $settings,
+        string $primaryLanguage,
+        array $additionalLanguages = [],
+    ): AnalysisResult;
 
     /**
      * Validates that the provider credentials are configured correctly.
