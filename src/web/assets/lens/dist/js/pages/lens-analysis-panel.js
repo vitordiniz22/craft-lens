@@ -36,7 +36,7 @@
          * @private
          */
         _shouldInit: function () {
-            return document.querySelector('.lens-analysis-panel') !== null;
+            return document.querySelector('[data-lens-target="analysis-panel"]') !== null;
         },
 
         // ================================================================
@@ -167,10 +167,10 @@
             var restoreBtn = window.Lens.core.ButtonState.setLoading(
                 btn,
                 loadingText,
-                { labelSelector: '.label', loadingClass: 'loading' },
+                { labelSelector: '[data-lens-target="button-label"]', loadingClass: 'loading' },
             );
 
-            var label = btn.querySelector('.label');
+            var label = btn.querySelector('[data-lens-target="button-label"]');
 
             window.Lens.core.API.post('lens/analysis/reprocess', {
                 assetId: assetId,
@@ -457,7 +457,7 @@
         // ================================================================
 
         initAutoPolling: function () {
-            const panel = document.querySelector('.lens-analysis-panel');
+            const panel = document.querySelector('[data-lens-target="analysis-panel"]');
             if (!panel) return;
 
             const status = panel.dataset.lensAnalysisStatus;

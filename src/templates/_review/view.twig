@@ -180,17 +180,19 @@
                 <button type="button" class="btn" disabled>&larr; {{ 'Previous'|t('lens') }}</button>
             {% endif %}
 
-            <button type="submit" class="btn submit">
+            <button type="submit" class="btn submit" data-lens-action="review-approve">
                 {{ 'Approve & Next'|t('lens') }} <kbd>A</kbd>
             </button>
 
             <button type="submit" class="btn"
-                    formaction="{{ actionUrl('lens/review/skip') }}">
+                    formaction="{{ actionUrl('lens/review/skip') }}"
+                    data-lens-action="review-skip">
                 {{ 'Skip'|t('lens') }} <kbd>S</kbd>
             </button>
 
             <button type="submit" class="btn"
-                    formaction="{{ actionUrl('lens/review/reject') }}">
+                    formaction="{{ actionUrl('lens/review/reject') }}"
+                    data-lens-action="review-reject">
                 {{ 'Reject'|t('lens') }} <kbd>R</kbd>
             </button>
 

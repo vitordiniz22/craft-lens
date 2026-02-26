@@ -272,7 +272,7 @@
                     '[data-lens-target="result-card"].focused',
                 );
                 if (focused) {
-                    var link = focused.querySelector('.lens-result-preview');
+                    var link = focused.querySelector('[data-lens-target="result-link"]');
                     if (link) link.click();
                 }
             }

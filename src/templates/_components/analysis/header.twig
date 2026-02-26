@@ -34,7 +34,7 @@
         {% endif %}
         {% if analysis and not static and analysis.status != 'processing' %}
             <button type="button" class="btn small" data-lens-action="reprocess" data-lens-asset-id="{{ asset.id }}">
-                {{ 'Re-analyze'|t('lens') }}
+                <span data-lens-target="button-label">{{ 'Re-analyze'|t('lens') }}</span>
             </button>
         {% endif %}
     </div>

@@ -25,10 +25,10 @@
 {% if fieldState == 'readonly' %}
 
 <div class="lens-alt-proxy">
-    <div class="lens-field-header">
+    <div class="lens-field-header" data-lens-target="field-header">
         <span class="lens-field-label">{{ 'Alt Text'|t('lens') }}</span>
         {% if confidence %}
-            <span class="badge">{{ (confidence * 100)|round }}%</span>
+            <span class="badge" data-lens-target="confidence-badge">{{ (confidence * 100)|round }}%</span>
         {% endif %}
     </div>
 
@@ -58,10 +58,10 @@
      data-lens-asset-id="{{ assetId }}"
      data-lens-analysis-id="{{ analysisId }}">
 
-    <div class="lens-field-header">
+    <div class="lens-field-header" data-lens-target="field-header">
         <span class="lens-field-label">{{ 'Alt Text'|t('lens') }}</span>
         {% if confidence %}
-            <span class="badge">{{ (confidence * 100)|round }}%</span>
+            <span class="badge" data-lens-target="confidence-badge">{{ (confidence * 100)|round }}%</span>
         {% endif %}
         <button type="button" class="lens-edit-trigger" data-lens-action="alt-proxy-edit" title="{{ 'Edit'|t('lens') }}">&#9998;</button>
     </div>
@@ -114,7 +114,7 @@
 {% elseif fieldState == 'editing' %}
 
 <div class="lens-alt-proxy lens-native-bridge--editing">
-    <div class="lens-field-header">
+    <div class="lens-field-header" data-lens-target="field-header">
         <span class="lens-field-label">{{ 'Alt Text'|t('lens') }}</span>
         {% if confidence and confidence < 0.8 %}
             <span class="lens-confidence-badge lens-confidence-{{ (confidence * 100)|round >= 50 ? 'medium' : 'low' }}">

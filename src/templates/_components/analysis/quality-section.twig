@@ -15,13 +15,13 @@
     {% set fpEdited = analysis.focalPointEditedBy is not null %}
 
     <div class="lens-native-bridge">
-        <div class="lens-field-header">
+        <div class="lens-field-header" data-lens-target="field-header">
             {% if fpEdited %}
-                <span class="lens-lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
+                <span class="lens-lock-icon" data-lens-target="lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
             {% endif %}
             <span class="lens-field-label">{{ 'Focal Point'|t('lens') }}</span>
             {% if not fpEdited and analysis.focalPointConfidence %}
-                <span class="badge">{{ (analysis.focalPointConfidence * 100)|round }}%</span>
+                <span class="badge" data-lens-target="confidence-badge">{{ (analysis.focalPointConfidence * 100)|round }}%</span>
             {% endif %}
         </div>
 
@@ -82,7 +82,7 @@
     </div>
 {% else %}
     <div class="lens-native-bridge">
-        <div class="lens-field-header">
+        <div class="lens-field-header" data-lens-target="field-header">
             <span class="lens-field-label">{{ 'Focal Point'|t('lens') }}</span>
         </div>
         <div class="lens-field-display">
@@ -94,7 +94,7 @@
 {# Quality Metrics — always read-only #}
 {% if analysis.overallQualityScore is not null %}
     <div class="lens-editable-field">
-        <div class="lens-field-header">
+        <div class="lens-field-header" data-lens-target="field-header">
             <span class="lens-field-label">{{ 'Image Quality'|t('lens') }}</span>
             <span class="badge badge--{{ analysis.overallQualityScore >= 0.7 ? 'success' : (analysis.overallQualityScore >= 0.4 ? 'warning' : 'error') }}">
                 {{ (analysis.overallQualityScore * 100)|round }}%
@@ -133,7 +133,7 @@
     </div>
 {% else %}
     <div class="lens-editable-field lens-detection-item lens-detection-item--clear">
-        <div class="lens-field-header">
+        <div class="lens-field-header" data-lens-target="field-header">
             <span class="lens-field-label">{{ 'Image Quality'|t('lens') }}</span>
         </div>
         <p class="light smalltext">{{ 'Quality metrics not available'|t('lens') }}</p>

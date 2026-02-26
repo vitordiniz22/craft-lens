@@ -80,9 +80,9 @@
 {% if fieldState == 'readonly' %}
 
 <div class="lens-people-detection lens-editable-field">
-    <div class="lens-field-header">
+    <div class="lens-field-header" data-lens-target="field-header">
         {% if isEdited %}
-            <span class="lens-lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
+            <span class="lens-lock-icon" data-lens-target="lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
         {% endif %}
         <span class="lens-field-label">{{ 'People Detection'|t('lens') }}</span>
     </div>
@@ -119,9 +119,9 @@
      data-lens-contains-people-ai="{{ analysis.containsPeopleAi ? '1' : '0' }}"
      data-lens-face-count-ai="{{ analysis.faceCountAi }}">
 
-    <div class="lens-field-header">
+    <div class="lens-field-header" data-lens-target="field-header">
         {% if isEdited %}
-            <span class="lens-lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
+            <span class="lens-lock-icon" data-lens-target="lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
         {% endif %}
         <span class="lens-field-label">{{ 'People Detection'|t('lens') }}</span>
         <button type="button" class="lens-edit-trigger" data-lens-action="people-edit" title="{{ 'Edit'|t('lens') }}">&#9998;</button>
@@ -214,7 +214,7 @@
      data-lens-contains-people="{{ analysis.containsPeople ? '1' : '0' }}"
      data-lens-face-count="{{ analysis.faceCount }}">
 
-    <div class="lens-field-header">
+    <div class="lens-field-header" data-lens-target="field-header">
         <span class="lens-field-label">{{ 'People Detection'|t('lens') }}</span>
     </div>
 

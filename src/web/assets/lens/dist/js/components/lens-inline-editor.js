@@ -309,8 +309,8 @@
             }
 
             // Remove confidence badge (field is now user-edited)
-            var header = fieldEl.querySelector('.lens-field-header');
-            var badge = header ? header.querySelector('.badge') : null;
+            var header = fieldEl.querySelector('[data-lens-target="field-header"]');
+            var badge = header ? header.querySelector('[data-lens-target="confidence-badge"]') : null;
             if (badge) badge.remove();
         },
 
@@ -350,10 +350,11 @@
         },
 
         _showLockIcon: function(fieldEl) {
-            var header = fieldEl.querySelector('.lens-field-header');
-            if (header && !header.querySelector('.lens-lock-icon')) {
+            var header = fieldEl.querySelector('[data-lens-target="field-header"]');
+            if (header && !header.querySelector('[data-lens-target="lock-icon"]')) {
                 var lock = document.createElement('span');
                 lock.className = 'lens-lock-icon';
+                lock.dataset.lensTarget = 'lock-icon';
                 lock.title = Craft.t('lens', 'Protected from reprocessing');
                 lock.innerHTML = '&#128274;';
                 header.insertBefore(lock, header.firstChild);
@@ -361,7 +362,7 @@
         },
 
         _removeLockIcon: function(fieldEl) {
-            var lock = fieldEl.querySelector('.lens-lock-icon');
+            var lock = fieldEl.querySelector('[data-lens-target="lock-icon"]');
             if (lock) lock.remove();
         },
 

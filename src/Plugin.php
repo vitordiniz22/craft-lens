@@ -62,6 +62,7 @@ use vitordiniz22\craftlens\twig\LensTwigExtension;
 use vitordiniz22\craftlens\web\assets\lens\LensAsset;
 use vitordiniz22\craftlens\web\assets\lens\LensAssetActionsAsset;
 use vitordiniz22\craftlens\web\assets\lens\LensBulkAsset;
+use vitordiniz22\craftlens\web\assets\lens\LensLogsAsset;
 use vitordiniz22\craftlens\web\assets\lens\LensReviewAsset;
 use vitordiniz22\craftlens\web\assets\lens\LensSearchAsset;
 use vitordiniz22\craftlens\web\assets\lens\LensSemanticSelectorAsset;
@@ -283,6 +284,8 @@ class Plugin extends BasePlugin
                     $view->registerAssetBundle(LensSearchAsset::class);
                 } elseif (str_starts_with($template, 'lens/_bulk')) {
                     $view->registerAssetBundle(LensBulkAsset::class);
+                } elseif (str_starts_with($template, 'lens/_logs')) {
+                    $view->registerAssetBundle(LensLogsAsset::class);
                 }
             }
         );

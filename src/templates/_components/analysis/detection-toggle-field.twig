@@ -26,9 +26,9 @@
 {% if fieldState == 'readonly' %}
 
 <div class="lens-editable-field">
-    <div class="lens-field-header">
+    <div class="lens-field-header" data-lens-target="field-header">
         {% if isEdited %}
-            <span class="lens-lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
+            <span class="lens-lock-icon" data-lens-target="lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
         {% endif %}
         <span class="lens-field-label">{{ label }}</span>
     </div>
@@ -57,9 +57,9 @@
      data-lens-true-value="{{ trueValue }}"
      data-lens-false-value="{{ falseValue }}">
 
-    <div class="lens-field-header">
+    <div class="lens-field-header" data-lens-target="field-header">
         {% if isEdited %}
-            <span class="lens-lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
+            <span class="lens-lock-icon" data-lens-target="lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
         {% endif %}
         <span class="lens-field-label">{{ label }}</span>
         <button type="button" class="lens-edit-trigger" data-lens-action="detection-edit" title="{{ 'Edit'|t('lens') }}">&#9998;</button>
@@ -133,7 +133,7 @@
      data-lens-target="detection-toggle"
      data-lens-field="{{ fieldName }}">
 
-    <div class="lens-field-header">
+    <div class="lens-field-header" data-lens-target="field-header">
         <span class="lens-field-label">{{ label }}</span>
     </div>
 

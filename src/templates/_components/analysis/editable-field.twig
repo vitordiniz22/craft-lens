@@ -26,15 +26,15 @@
 {% if fieldState == 'readonly' %}
 
 <div class="lens-editable-field{% if featured %} lens-panel-featured{% endif %}">
-    <div class="lens-field-header">
+    <div class="lens-field-header" data-lens-target="field-header">
         {% if isEdited %}
-            <span class="lens-lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
+            <span class="lens-lock-icon" data-lens-target="lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
         {% endif %}
         {% if label is defined and label %}
             <span class="lens-field-label">{{ label }}</span>
         {% endif %}
         {% if not isEdited and confidence %}
-            <span class="badge">{{ (confidence * 100)|round }}%</span>
+            <span class="badge" data-lens-target="confidence-badge">{{ (confidence * 100)|round }}%</span>
         {% endif %}
     </div>
 
@@ -61,15 +61,15 @@
      data-lens-field="{{ fieldName }}"
      data-lens-analysis-id="{{ analysisId }}">
 
-    <div class="lens-field-header">
+    <div class="lens-field-header" data-lens-target="field-header">
         {% if isEdited %}
-            <span class="lens-lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
+            <span class="lens-lock-icon" data-lens-target="lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
         {% endif %}
         {% if label is defined and label %}
             <span class="lens-field-label">{{ label }}</span>
         {% endif %}
         {% if not isEdited and confidence %}
-            <span class="badge">{{ (confidence * 100)|round }}%</span>
+            <span class="badge" data-lens-target="confidence-badge">{{ (confidence * 100)|round }}%</span>
         {% endif %}
         <button type="button" class="lens-edit-trigger" data-lens-action="field-edit" title="{{ 'Edit'|t('lens') }}">&#9998;</button>
     </div>
@@ -132,7 +132,7 @@
 {% elseif fieldState == 'editing' %}
 
 <div class="lens-editable-field{% if featured %} lens-panel-featured{% endif %}">
-    <div class="lens-field-header">
+    <div class="lens-field-header" data-lens-target="field-header">
         {% if label is defined and label %}
             <span class="lens-field-label">{{ label }}</span>
         {% endif %}

@@ -6,7 +6,7 @@
                 <label for="volumeId">{{ 'Volume'|t('lens') }}</label>
             </div>
             <div class="input">
-                <select id="volumeId" class="text" onchange="window.location.href=Craft.getCpUrl('lens/bulk', this.value ? {volumeId: this.value} : {})">
+                <select id="volumeId" class="text" data-lens-control="bulk-volume-select">
                     <option value="">{{ 'All Volumes'|t('lens') }}</option>
                     {% for volume in volumes %}
                         <option value="{{ volume.id }}" {% if selectedVolumeId == volume.id %}selected{% endif %}>

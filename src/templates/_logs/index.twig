@@ -35,7 +35,7 @@
             <form method="post">
                 {{ csrfInput() }}
                 {{ actionInput('lens/log/delete-all') }}
-                <button type="submit" class="btn" onclick="return confirm('{{ 'Are you sure you want to delete all logs?'|t('lens')|e('js') }}')">
+                <button type="submit" class="btn" data-lens-action="delete-all-logs">
                     {{ 'Delete All'|t('lens') }}
                 </button>
             </form>
@@ -136,7 +136,7 @@
                         {% endif %}
                         <td class="lens-log-actions">
                             {% if log.stackTrace or log.context or (isDevMode and (log.requestPayload or log.responsePayload)) %}
-                                <button type="button" class="btn small lens-toggle-detail" data-target="lens-detail-{{ log.id }}">
+                                <button type="button" class="btn small" data-lens-action="toggle-log-detail" data-target="lens-detail-{{ log.id }}">
                                     {{ 'Details'|t('lens') }}
                                 </button>
                             {% endif %}
@@ -204,13 +204,3 @@
     {% endif %}
 {% endblock %}
 
-{% js %}
-document.querySelectorAll('.lens-toggle-detail').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-        var target = document.getElementById(this.dataset.target);
-        if (target) {
-            target.style.display = target.style.display === 'none' ? '' : 'none';
-        }
-    });
-});
-{% endjs %}

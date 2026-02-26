@@ -39,13 +39,13 @@
 {% if fieldState == 'readonly' %}
 
 <div class="lens-native-bridge">
-    <div class="lens-field-header">
+    <div class="lens-field-header" data-lens-target="field-header">
         {% if isEdited %}
-            <span class="lens-lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
+            <span class="lens-lock-icon" data-lens-target="lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
         {% endif %}
         <span class="lens-field-label">{{ label }}</span>
         {% if not isEdited and confidence %}
-            <span class="badge">{{ (confidence * 100)|round }}%</span>
+            <span class="badge" data-lens-target="confidence-badge">{{ (confidence * 100)|round }}%</span>
         {% endif %}
     </div>
 
@@ -75,13 +75,13 @@
      data-lens-target="native-bridge"
      data-lens-field="{{ fieldName }}">
 
-    <div class="lens-field-header">
+    <div class="lens-field-header" data-lens-target="field-header">
         {% if isEdited %}
-            <span class="lens-lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
+            <span class="lens-lock-icon" data-lens-target="lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
         {% endif %}
         <span class="lens-field-label">{{ label }}</span>
         {% if not isEdited and confidence %}
-            <span class="badge">{{ (confidence * 100)|round }}%</span>
+            <span class="badge" data-lens-target="confidence-badge">{{ (confidence * 100)|round }}%</span>
         {% endif %}
     </div>
 
@@ -130,7 +130,7 @@
 {% elseif fieldState == 'editing' %}
 
 <div class="lens-native-bridge lens-native-bridge--editing">
-    <div class="lens-field-header">
+    <div class="lens-field-header" data-lens-target="field-header">
         <span class="lens-field-label">{{ label }}</span>
         {% if confidence and confidence < 0.8 %}
             <span class="lens-confidence-badge lens-confidence-{{ (confidence * 100)|round >= 50 ? 'medium' : 'low' }}">

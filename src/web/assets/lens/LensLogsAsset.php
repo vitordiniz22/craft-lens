@@ -6,16 +6,13 @@ namespace vitordiniz22\craftlens\web\assets\lens;
 
 use craft\web\AssetBundle;
 
-class LensBulkAsset extends AssetBundle
+class LensLogsAsset extends AssetBundle
 {
     public function init(): void
     {
         $this->sourcePath = __DIR__ . '/dist';
         $this->depends = [LensAsset::class];
-        $this->js = [
-            'js/pages/lens-bulk-page.js',
-            'js/pages/lens-bulk-processing.js',
-        ];
+        $this->js = ['js/pages/lens-logs.js'];
 
         parent::init();
     }

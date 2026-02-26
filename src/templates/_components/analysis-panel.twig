@@ -27,7 +27,7 @@
 ) %}
 {% set isReprocessing = isProcessing and hasExistingData %}
 
-<div class="lens-analysis-panel">
+<div class="lens-analysis-panel" data-lens-target="analysis-panel">
 
     {# Header: Status + Re-analyze + Meta + Cost #}
     {% include 'lens/_components/analysis/header' with {analysis: analysis, asset: asset, static: readOnly} %}

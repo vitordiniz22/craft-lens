@@ -9,7 +9,7 @@
 {# Similar / Duplicate Assets #}
 <div class="lens-editable-field">
     {% if similarImages|length %}
-        <div class="lens-field-header">
+        <div class="lens-field-header" data-lens-target="field-header">
             <span class="lens-field-label">{{ 'Similar Assets'|t('lens') }}</span>
         </div>
         <div class="lens-similar-strip">
@@ -20,7 +20,7 @@
             {% endfor %}
         </div>
     {% else %}
-        <div class="lens-field-header">
+        <div class="lens-field-header" data-lens-target="field-header">
             <span class="lens-field-label">{{ 'Similar Assets'|t('lens') }}</span>
         </div>
         <p class="light smalltext">{{ 'No similar assets found'|t('lens') }}</p>

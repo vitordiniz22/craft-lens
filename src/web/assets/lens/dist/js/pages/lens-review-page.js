@@ -35,15 +35,15 @@
 
                 if (key === 'a') {
                     e.preventDefault();
-                    var approveBtn = document.querySelector('button[type="submit"].submit');
+                    var approveBtn = document.querySelector('[data-lens-action="review-approve"]');
                     if (approveBtn && !approveBtn.disabled) approveBtn.click();
                 } else if (key === 's') {
                     e.preventDefault();
-                    var skipBtn = document.querySelector('button[formaction*="skip"]');
+                    var skipBtn = document.querySelector('[data-lens-action="review-skip"]');
                     if (skipBtn && !skipBtn.disabled) skipBtn.click();
                 } else if (key === 'r') {
                     e.preventDefault();
-                    var rejectBtn = document.querySelector('button[formaction*="reject"]');
+                    var rejectBtn = document.querySelector('[data-lens-action="review-reject"]');
                     if (rejectBtn && !rejectBtn.disabled) rejectBtn.click();
                 }
             });
