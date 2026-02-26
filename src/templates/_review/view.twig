@@ -19,8 +19,8 @@
         {# Text fields use named inputs directly (no hidden duplication needed) #}
         <input type="hidden" name="tags" data-lens-control="field-tags">
         <input type="hidden" name="dominantColors" data-lens-control="field-colors">
-        <input type="hidden" name="focalPointX" data-lens-control="focal-x">
-        <input type="hidden" name="focalPointY" data-lens-control="focal-y">
+        <input type="hidden" name="focalPointX" data-lens-control="focal-x" value="{{ analysis.focalPointX ?? '' }}">
+        <input type="hidden" name="focalPointY" data-lens-control="focal-y" value="{{ analysis.focalPointY ?? '' }}">
         <input type="hidden" name="containsPeople" data-lens-control="field-containsPeople">
         <input type="hidden" name="faceCount" data-lens-control="field-faceCount">
         {# Detection toggle hidden inputs — synced by JS from radio selections #}
@@ -31,24 +31,46 @@
         <div class="lens-review-panels" data-lens-target="review-view">
             {# Left Panel - Image #}
             <div class="lens-review-left">
-                <div class="lens-review-image-container" data-lens-target="image-container"
-                     data-lens-focal-x-ai="{{ analysis.focalPointXAi ?? '' }}"
-                     data-lens-focal-y-ai="{{ analysis.focalPointYAi ?? '' }}">
-                    <img data-lens-target="review-image"
-                         src="{{ analysis.previewUrl }}"
-                         alt="{{ analysis.filename }}">
+                <div class="lens-review-image-container">
+                    <div class="lens-review-image-inner" data-lens-target="image-container"
+                         data-lens-focal-x-ai="{{ analysis.focalPointXAi ?? '' }}"
+                         data-lens-focal-y-ai="{{ analysis.focalPointYAi ?? '' }}"
+                         data-lens-asset-has-focal-point="{{ analysis.assetHasFocalPoint ? '1' : '0' }}"
+                         {% if analysis.assetFocalPoint %}
+                             data-lens-asset-focal-x="{{ analysis.assetFocalPoint.x }}"
+                             data-lens-asset-focal-y="{{ analysis.assetFocalPoint.y }}"
+                         {% endif %}>
+                        <img data-lens-target="review-image"
+                             src="{{ analysis.previewUrl }}"
+                             alt="{{ analysis.filename }}">
 
-                    <div class="lens-review-focal-marker" data-lens-target="focal-marker"
-                         {% if analysis.focalPointX %}
-                             style="left: {{ (analysis.focalPointX * 100)|round(2) }}%;
-                                    top: {{ (analysis.focalPointY * 100)|round(2) }}%;"
-                         {% else %}
-                             style="display: none;"
-                         {% endif %}></div>
+                        {% set fpMatchesAsset = analysis.assetHasFocalPoint
+                            and analysis.assetFocalPoint
+                            and analysis.focalPointX
+                            and (analysis.focalPointX|round(2) == analysis.assetFocalPoint.x|round(2))
+                            and (analysis.focalPointY|round(2) == analysis.assetFocalPoint.y|round(2)) %}
 
-                    <span class="lens-review-focal-hint" data-lens-target="focal-hint">
-                        {{ 'Click to set focal point'|t('lens') }}
-                    </span>
+                        {# Active focal point marker (red = AI/editing, Craft-native = matches asset) #}
+                        <div class="lens-review-focal-marker{{ fpMatchesAsset ? ' lens-review-focal-marker--current' : '' }}" data-lens-target="focal-marker"
+                             {% if analysis.focalPointX is not null %}
+                                 style="left: {{ (analysis.focalPointX * 100)|round(2) }}%;
+                                        top: {{ (analysis.focalPointY * 100)|round(2) }}%;"
+                             {% else %}
+                                 style="display: none;"
+                             {% endif %}></div>
+
+                        {# Static reference — asset's current FP in Craft-native style (hidden when they overlap or no analysis FP) #}
+                        {% if analysis.assetHasFocalPoint and analysis.assetFocalPoint %}
+                            <div class="lens-review-focal-ref" data-lens-target="focal-ref"
+                                 style="left: {{ (analysis.assetFocalPoint.x * 100)|round(2) }}%;
+                                        top: {{ (analysis.assetFocalPoint.y * 100)|round(2) }}%;
+                                        {{ (fpMatchesAsset or analysis.focalPointX is null) ? 'display: none;' : '' }}"></div>
+                        {% endif %}
+
+                        <span class="lens-review-focal-hint" data-lens-target="focal-hint">
+                            {{ 'Click to set focal point'|t('lens') }}
+                        </span>
+                    </div>
                 </div>
 
                 <div class="lens-review-focal-status" data-lens-target="focal-status">
@@ -63,10 +85,40 @@
                             {{ 'No focal point set'|t('lens') }}
                         {% endif %}
                     </span>
-                    <span data-lens-target="focal-status-badge" class="lens-review-focal-badge" style="display: none;">
-                        {{ 'Modified'|t('lens') }}
-                    </span>
+                    {% if analysis.focalPointX and analysis.assetHasFocalPoint and not fpMatchesAsset %}
+                        <span data-lens-target="focal-status-badge" class="lens-review-focal-badge">
+                            {{ 'AI'|t('lens') }}
+                        </span>
+                    {% else %}
+                        <span data-lens-target="focal-status-badge" class="lens-review-focal-badge" style="display: none;"></span>
+                    {% endif %}
                 </div>
+
+                {# Focal point action bar — visible when review FP differs from asset's existing FP #}
+                {% if analysis.assetHasFocalPoint and analysis.assetFocalPoint %}
+                    <div class="lens-review-fp-actions" data-lens-target="fp-actions"
+                         {{ fpMatchesAsset ? 'style="display: none;"' : '' }}>
+                        <span class="lens-review-fp-actions__icon lens-review-fp-actions__icon--ai">{{ iconSvg('wand-magic-sparkles')|attr({width: 12, height: 12}) }}</span>
+                        <span class="lens-review-fp-actions__icon lens-review-fp-actions__icon--action">{{ iconSvg('triangle-exclamation')|attr({width: 12, height: 12}) }}</span>
+                        <span class="lens-review-fp-actions__text" data-lens-target="fp-actions-text">
+                            {{ 'Different focal point suggested'|t('lens') }}
+                        </span>
+                        <span class="lens-review-fp-actions__sep">&middot;</span>
+                        <button type="button" class="lens-review-fp-actions__btn"
+                                data-lens-action="focal-accept">
+                            {{ 'Accept'|t('lens') }}
+                        </button>
+                        <span class="lens-review-fp-actions__undo-group">
+                            <span class="lens-review-fp-actions__sep">&middot;</span>
+                            <button type="button" class="lens-review-fp-actions__btn"
+                                    data-lens-action="focal-use-current"
+                                    data-lens-asset-focal-x="{{ analysis.assetFocalPoint.x }}"
+                                    data-lens-asset-focal-y="{{ analysis.assetFocalPoint.y }}">
+                                {{ 'Undo'|t('lens') }}
+                            </button>
+                        </span>
+                    </div>
+                {% endif %}
 
                 {% if analysis.similarImages is not empty %}
                     <div class="lens-review-similar">

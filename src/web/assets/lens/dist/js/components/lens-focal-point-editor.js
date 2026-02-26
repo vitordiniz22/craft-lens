@@ -41,6 +41,8 @@
         _bindEvents: function() {
             this._bindFocalPointClick();
             this._bindFocalRevert();
+            this._bindFocalUseCurrent();
+            this._bindFocalAccept();
         },
 
         // ================================================================
@@ -62,6 +64,9 @@
                 // Clamp to 0-1 range
                 x = Math.max(0, Math.min(1, x));
                 y = Math.max(0, Math.min(1, y));
+
+                // Clear accepted flag — manual click is a new decision
+                delete imgContainer.dataset.lensFpAccepted;
 
                 this._updateFocalPoint(x, y);
             });
@@ -109,27 +114,104 @@
                 });
             }
 
-            // Show/hide "Modified" badge and AI suggestion row
+            // Parse reference coordinates once
             var container = document.querySelector('[data-lens-target="image-container"]');
-            if (container) {
-                var aiX = parseFloat(container.dataset.lensFocalXAi);
-                var aiY = parseFloat(container.dataset.lensFocalYAi);
-                var hasAi = !isNaN(aiX) && !isNaN(aiY);
-                var isModified = hasAi && (Math.abs(x - aiX) > 0.005 || Math.abs(y - aiY) > 0.005);
+            var aiX, aiY, hasAi, isAiMatch, assetX, assetY, hasAsset, isAssetMatch;
 
+            if (container) {
+                aiX = parseFloat(container.dataset.lensFocalXAi);
+                aiY = parseFloat(container.dataset.lensFocalYAi);
+                hasAi = !isNaN(aiX) && !isNaN(aiY);
+                isAiMatch = hasAi && Math.abs(x - aiX) < 0.005 && Math.abs(y - aiY) < 0.005;
+
+                assetX = parseFloat(container.dataset.lensAssetFocalX);
+                assetY = parseFloat(container.dataset.lensAssetFocalY);
+                hasAsset = container.dataset.lensAssetHasFocalPoint === '1'
+                    && !isNaN(assetX) && !isNaN(assetY);
+                isAssetMatch = hasAsset && Math.abs(x - assetX) < 0.005 && Math.abs(y - assetY) < 0.005;
+
+                // Source badge: AI (violet), Edited (amber), hidden when matches asset
                 var badge = document.querySelector('[data-lens-target="focal-status-badge"]');
                 if (badge) {
-                    badge.style.display = isModified ? '' : 'none';
+                    if (isAssetMatch) {
+                        badge.style.display = 'none';
+                    } else if (isAiMatch) {
+                        badge.textContent = Craft.t('lens', 'AI');
+                        badge.className = 'lens-review-focal-badge';
+                        badge.style.display = '';
+                    } else {
+                        badge.textContent = Craft.t('lens', 'Edited');
+                        badge.className = 'lens-review-focal-badge lens-review-focal-badge--edited';
+                        badge.style.display = '';
+                    }
                 }
 
+                // Show AI suggestion revert row when value differs from AI
                 var aiSuggestion = document.querySelector('[data-lens-target="focal-ai-suggestion"]');
                 if (aiSuggestion) {
-                    aiSuggestion.style.display = isModified ? '' : 'none';
+                    aiSuggestion.style.display = (!isAiMatch && hasAi) ? '' : 'none';
                 }
             }
 
+            // Update focal point state (marker color, reference, action bars)
+            this._updateFocalPointState(container, isAiMatch, isAssetMatch);
+
             // Dismiss hint on first interaction
             this._dismissHint();
+        },
+
+        /**
+         * Update marker style, reference indicator, and action bars based on
+         * whether the focal point matches the asset's existing one.
+         *
+         * @param {Element|null} container - The image container element
+         * @param {boolean} isAiMatch - Whether current FP matches the AI suggestion
+         * @param {boolean} isAssetMatch - Whether current FP matches the asset's existing FP
+         * @private
+         */
+        _updateFocalPointState: function(container, isAiMatch, isAssetMatch) {
+            if (!container || container.dataset.lensAssetHasFocalPoint !== '1') return;
+
+            var accepted = container.dataset.lensFpAccepted === '1';
+            var shouldHide = isAssetMatch || accepted;
+
+            // Toggle active marker style (red vs Craft-native)
+            var marker = document.querySelector('[data-lens-target="focal-marker"]');
+            if (marker) {
+                marker.classList.toggle('lens-review-focal-marker--current', isAssetMatch);
+            }
+
+            // Show/hide static reference marker
+            var ref = document.querySelector('[data-lens-target="focal-ref"]');
+            if (ref) {
+                ref.style.display = shouldHide ? 'none' : '';
+            }
+
+            var contextText = isAiMatch
+                ? Craft.t('lens', 'Different focal point suggested')
+                : Craft.t('lens', 'Replaces asset focal point');
+
+            // Show/hide left-panel action bar + update text + color
+            var actions = document.querySelector('[data-lens-target="fp-actions"]');
+            var actionsText = document.querySelector('[data-lens-target="fp-actions-text"]');
+            if (actions) {
+                actions.style.display = shouldHide ? 'none' : '';
+                actions.classList.toggle('lens-review-fp-actions--warning', !isAiMatch);
+            }
+            if (actionsText && !shouldHide) {
+                actionsText.textContent = contextText;
+            }
+
+            // Show/hide right-panel conflict bar + update text + color
+            var conflict = document.querySelector('[data-lens-target="focal-asset-conflict"]');
+            var conflictText = document.querySelector('[data-lens-target="focal-asset-conflict-text"]');
+            if (conflict) {
+                conflict.style.display = shouldHide ? 'none' : '';
+                conflict.classList.toggle('lens-ai-suggestion-inline--warning', !isAiMatch);
+            }
+            if (conflictText && !shouldHide) {
+                conflictText.textContent = contextText;
+            }
         },
 
         // ================================================================
@@ -161,6 +243,46 @@
                 var aiY = parseFloat(btn.dataset.lensFocalYAi);
                 if (isNaN(aiX) || isNaN(aiY)) return;
                 this._updateFocalPoint(aiX, aiY);
+            }.bind(this));
+        },
+
+        /**
+         * Bind "Accept" button — confirms the current focal point so it
+         * gets submitted on approve (overrides asset FP).
+         * Reads from the hidden inputs (always up-to-date from _updateFocalPoint).
+         * @private
+         */
+        _bindFocalAccept: function() {
+            var DOM = window.Lens.core.DOM;
+            DOM.delegate('[data-lens-action="focal-accept"]', 'click', function() {
+                var container = document.querySelector('[data-lens-target="image-container"]');
+                if (!container) return;
+
+                var focalXInput = window.Lens.core.DOM.findControl('focal-x');
+                var focalYInput = window.Lens.core.DOM.findControl('focal-y');
+                if (!focalXInput || !focalYInput) return;
+
+                var x = parseFloat(focalXInput.value);
+                var y = parseFloat(focalYInput.value);
+                if (isNaN(x) || isNaN(y)) return;
+
+                // Mark as accepted so the action bar + ref stay hidden
+                container.dataset.lensFpAccepted = '1';
+                this._updateFocalPoint(x, y);
+            }.bind(this));
+        },
+
+        /**
+         * Bind "Undo" button to restore the asset's existing focal point
+         * @private
+         */
+        _bindFocalUseCurrent: function() {
+            var DOM = window.Lens.core.DOM;
+            DOM.delegate('[data-lens-action="focal-use-current"]', 'click', function(e, btn) {
+                var assetX = parseFloat(btn.dataset.lensAssetFocalX);
+                var assetY = parseFloat(btn.dataset.lensAssetFocalY);
+                if (isNaN(assetX) || isNaN(assetY)) return;
+                this._updateFocalPoint(assetX, assetY);
             }.bind(this));
         }
     };

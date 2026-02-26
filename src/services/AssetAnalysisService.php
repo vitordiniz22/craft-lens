@@ -530,7 +530,8 @@ class AssetAnalysisService extends Component
      * Reads from the record's current values (which may include user edits).
      *
      * Title: only applied if the current title is auto-generated from filename.
-     * Focal point: only applied if no focal point is currently set.
+     * Focal point: applied if no focal point is currently set, OR if a reviewer
+     *   explicitly edited it during review (focalPointEditedBy is set).
      * Alt text: only applied if the asset's native alt field is empty.
      */
     public function autoApplyFromRecord(Asset $asset, AssetAnalysisRecord $record): void
@@ -542,7 +543,10 @@ class AssetAnalysisService extends Component
             $needsSave = true;
         }
 
-        if ($record->focalPointX !== null && $record->focalPointY !== null && !$asset->getHasFocalPoint()) {
+        $reviewerEditedFocalPoint = $record->focalPointEditedBy !== null;
+
+        if ($record->focalPointX !== null && $record->focalPointY !== null
+            && (!$asset->getHasFocalPoint() || $reviewerEditedFocalPoint)) {
             $asset->setFocalPoint([
                 'x' => $record->focalPointX,
                 'y' => $record->focalPointY,

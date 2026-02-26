@@ -44,8 +44,8 @@
 /* Two-panel layout */
 .lens-review-panels {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
+  grid-template-columns: minmax(0, 600px) 1fr;
+  gap: 30px;
   min-height: 400px;
 }
 
@@ -53,52 +53,56 @@
 .lens-review-left {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 6px;
   position: sticky;
   top: calc(var(--header-height) + 20px);
   align-self: start;
 }
 
 .lens-review-image-container {
-  position: relative;
-  background: var(--gray-100);
-  border-radius: var(--medium-border-radius);
-  overflow: hidden;
-  cursor: crosshair;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.lens-review-image-container img {
+.lens-review-image-inner {
+  position: relative;
+  cursor: crosshair;
+  line-height: 0;
+  border-radius: var(--medium-border-radius);
+  overflow: hidden;
+}
+
+.lens-review-image-inner img {
   max-width: 100%;
   max-height: 70vh;
   display: block;
 }
 
+/* Active focal point marker — Craft native shape in red (high visibility) */
 .lens-review-focal-marker {
   position: absolute;
-  width: 24px;
-  height: 24px;
-  border: 3px solid var(--red-500);
-  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--red-500);
+  background: rgba(255, 0, 0, 0.25);
+  border-radius: 20px;
   pointer-events: none;
   transform: translate(-50%, -50%);
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8);
   z-index: 5;
-  transition: left 0.15s, top 0.15s;
+  transition: left 0.15s, top 0.15s, border-color 0.15s, background 0.15s;
 }
 
 .lens-review-focal-marker::after {
   content: '';
   position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 6px;
-  height: 6px;
-  background: var(--red-500);
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
+  width: 0;
+  height: 0;
+  left: 6px;
+  top: 6px;
+  border: 2px solid var(--red-500);
+  border-radius: 4px;
+  transition: border-color 0.15s;
 }
 
 .lens-review-focal-marker--pulse {
@@ -111,12 +115,38 @@
   100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
 }
 
+/* Static reference marker — Craft native focal point style (familiar) */
+.lens-review-focal-ref {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 20px;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  z-index: 4;
+}
+
+.lens-review-focal-ref::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 0;
+  left: 6px;
+  top: 6px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  border-radius: 4px;
+}
+
 /* Focal point hint overlay */
 .lens-review-focal-hint {
   position: absolute;
   bottom: 8px;
   left: 8px;
   font-size: 11px;
+  line-height: normal;
   color: white;
   background: rgba(0, 0, 0, 0.55);
   border-radius: 12px;
@@ -136,7 +166,7 @@
 }
 
 .lens-review-focal-status__icon {
-  color: var(--red-500);
+  color: var(--medium-text-color);
   font-size: 14px;
   line-height: 1;
 }
@@ -146,8 +176,92 @@
   font-weight: 600;
   padding: 1px 6px;
   border-radius: 8px;
-  background: var(--blue-100);
-  color: var(--blue-700);
+  background: var(--violet-100);
+  color: var(--violet-700);
+}
+
+.lens-review-focal-badge--edited {
+  background: var(--amber-100);
+  color: var(--amber-700);
+}
+
+/* Active marker — Craft native colors when matching asset's current FP */
+.lens-review-focal-marker--current {
+  border-color: rgba(255, 255, 255, 0.8);
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.lens-review-focal-marker--current::after {
+  border-color: rgba(255, 255, 255, 0.8);
+}
+
+/* Focal point action bar — shows when review FP differs from asset's existing FP */
+/* Default = AI context (violet), --warning = manual override (amber) */
+.lens-review-fp-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  padding: 6px 10px;
+  background: var(--violet-100);
+  border-radius: var(--small-border-radius);
+  color: var(--violet-800);
+}
+
+.lens-review-fp-actions--warning {
+  background: var(--amber-100);
+  color: var(--amber-800);
+}
+
+.lens-review-fp-actions__sep {
+  color: var(--violet-400);
+}
+
+.lens-review-fp-actions--warning .lens-review-fp-actions__sep {
+  color: var(--amber-400);
+}
+
+.lens-review-fp-actions__icon {
+  flex-shrink: 0;
+  display: flex;
+  color: var(--violet-500);
+}
+
+.lens-review-fp-actions__icon--action {
+  display: none;
+}
+
+.lens-review-fp-actions--warning .lens-review-fp-actions__icon--ai {
+  display: none;
+}
+
+.lens-review-fp-actions--warning .lens-review-fp-actions__icon--action {
+  display: flex;
+  color: var(--amber-500);
+}
+
+/* Undo group — hidden in AI state, visible only after manual click (warning) */
+.lens-review-fp-actions__undo-group {
+  display: none;
+}
+
+.lens-review-fp-actions--warning .lens-review-fp-actions__undo-group {
+  display: contents;
+}
+
+.lens-review-fp-actions__btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--violet-700);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.lens-review-fp-actions--warning .lens-review-fp-actions__btn {
+  color: var(--amber-700);
 }
 
 /* Similar images */
@@ -442,10 +556,49 @@
   border-radius: var(--small-border-radius);
 }
 
+.lens-ai-suggestion-inline--warning {
+  background: var(--amber-100);
+  color: var(--amber-800);
+}
+
 .lens-ai-suggestion-icon {
   flex-shrink: 0;
   display: flex;
   color: var(--violet-500);
+}
+
+/* Icon toggle — show wand (AI) by default, exclamation (action) in warning state */
+.lens-ai-suggestion-icon--action {
+  display: none;
+}
+
+.lens-ai-suggestion-inline--warning .lens-ai-suggestion-icon--ai {
+  display: none;
+}
+
+.lens-ai-suggestion-inline--warning .lens-ai-suggestion-icon--action {
+  display: flex;
+  color: var(--amber-500);
+}
+
+/* Right-panel undo group — hidden in AI state, visible after manual click */
+.lens-focal-undo-group {
+  display: none;
+}
+
+.lens-ai-suggestion-inline--warning .lens-focal-undo-group {
+  display: contents;
+}
+
+/* Right-panel focal point buttons — match container context colors */
+.lens-ai-suggestion-inline .lens-revert-trigger {
+  color: var(--violet-700);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.lens-ai-suggestion-inline--warning .lens-revert-trigger {
+  color: var(--amber-700);
 }
 
 @media (max-width: 768px) {
