@@ -23,7 +23,6 @@
          * @param {string} [options.successMessage] - Custom success message
          * @param {boolean} [options.showErrorNotice=true] - Show error notification
          * @param {string} [options.errorMessage] - Custom error message
-         * @param {boolean} [options.logErrors=true] - Log errors to console
          * @returns {Promise} Promise resolving with response data
          */
         request: function(method, action, data, options) {
@@ -41,11 +40,6 @@
                     return response;
                 })
                 .catch(function(error) {
-                    // Log error if requested
-                    if (options.logErrors !== false) {
-                        console.error('[Lens API] ' + action + ' failed:', error);
-                    }
-
                     // Show error notice if requested
                     if (options.showErrorNotice !== false) {
                         const message = options.errorMessage ||
@@ -119,8 +113,7 @@
          */
         fetchTagSuggestions: function(query, options) {
             const suggestOptions = Object.assign({}, options, {
-                showErrorNotice: false,
-                logErrors: false
+                showErrorNotice: false
             });
 
             return this.get('lens/analysis/tag-suggestions', { query: query }, suggestOptions);

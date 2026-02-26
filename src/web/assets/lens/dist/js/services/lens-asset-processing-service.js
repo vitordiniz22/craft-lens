@@ -111,8 +111,6 @@
                 }).catch(function(err) {
                     if (stopped) return;
 
-                    console.error('Lens: Failed to check analysis status', err);
-
                     // Retry a few times on network errors
                     if (attempts < 3) {
                         scheduleNext();
