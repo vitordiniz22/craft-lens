@@ -20,6 +20,7 @@ class Install extends Migration
     public const TABLE_EXIF_METADATA = '{{%lens_exif_metadata}}';
     public const TABLE_ANALYSIS_SITE_CONTENT = '{{%lens_analysis_site_content}}';
     public const TABLE_LOGS = '{{%lens_logs}}';
+    public const TABLE_SEARCH_INDEX = '{{%lens_search_index}}';
 
     public function safeUp(): bool
     {
@@ -31,6 +32,7 @@ class Install extends Migration
 
     public function safeDown(): bool
     {
+        $this->dropTableIfExists(self::TABLE_SEARCH_INDEX);
         $this->dropTableIfExists(self::TABLE_ANALYSIS_SITE_CONTENT);
         $this->dropTableIfExists(self::TABLE_EXIF_METADATA);
         $this->dropTableIfExists(self::TABLE_ANALYSIS_CONTENT);
@@ -285,6 +287,21 @@ class Install extends Migration
             'dateUpdated' => $this->dateTime()->notNull(),
             'uid' => $this->uid(),
         ]);
+
+        // Full-text search index (pre-stemmed tokens with BM25 scoring data)
+        $this->createTable(self::TABLE_SEARCH_INDEX, [
+            'id' => $this->primaryKey(),
+            'assetId' => $this->integer()->notNull(),
+            'analysisId' => $this->integer()->notNull(),
+            'token' => $this->string(100)->notNull(),
+            'tokenRaw' => $this->string(100)->notNull(),
+            'field' => $this->string(30)->notNull(),
+            'fieldWeight' => $this->decimal(3, 2)->notNull(),
+            'tf' => $this->smallInteger()->notNull()->defaultValue(1),
+            'dateCreated' => $this->dateTime()->notNull(),
+            'dateUpdated' => $this->dateTime()->notNull(),
+            'uid' => $this->uid(),
+        ]);
     }
 
     private function createIndexes(): void
@@ -347,6 +364,12 @@ class Install extends Migration
         $this->createIndex(null, self::TABLE_LOGS, ['assetId']);
         $this->createIndex(null, self::TABLE_LOGS, ['dateCreated']);
         $this->createIndex(null, self::TABLE_LOGS, ['level', 'category', 'dateCreated']);
+
+        // Search index indexes — token is the primary lookup column
+        $this->createIndex(null, self::TABLE_SEARCH_INDEX, ['token']);
+        $this->createIndex(null, self::TABLE_SEARCH_INDEX, ['token', 'assetId']);
+        $this->createIndex(null, self::TABLE_SEARCH_INDEX, ['assetId']);
+        $this->createIndex(null, self::TABLE_SEARCH_INDEX, ['analysisId']);
     }
 
     private function addForeignKeys(): void
@@ -534,6 +557,27 @@ class Install extends Migration
             Table::ELEMENTS,
             ['id'],
             'SET NULL',
+            'CASCADE'
+        );
+
+        // Search index foreign keys
+        $this->addForeignKey(
+            null,
+            self::TABLE_SEARCH_INDEX,
+            ['assetId'],
+            Table::ELEMENTS,
+            ['id'],
+            'CASCADE',
+            'CASCADE'
+        );
+
+        $this->addForeignKey(
+            null,
+            self::TABLE_SEARCH_INDEX,
+            ['analysisId'],
+            self::TABLE_ASSET_ANALYSES,
+            ['id'],
+            'CASCADE',
             'CASCADE'
         );
     }

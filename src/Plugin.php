@@ -28,8 +28,11 @@ use craft\services\Gc;
 use craft\web\UrlManager;
 use craft\web\View;
 use Psr\Log\LogLevel;
+use Throwable;
 use vitordiniz22\craftlens\actions\FindDuplicatesAction;
 use vitordiniz22\craftlens\behaviors\AssetQueryBehavior;
+use vitordiniz22\craftlens\enums\LogCategory;
+use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\conditions\AiConfidenceConditionRule;
 use vitordiniz22\craftlens\conditions\ContainsBrandLogoConditionRule;
 use vitordiniz22\craftlens\conditions\ContainsPeopleConditionRule;
@@ -41,7 +44,9 @@ use vitordiniz22\craftlens\conditions\StockProviderConditionRule;
 use vitordiniz22\craftlens\conditions\WatermarkFlaggedConditionRule;
 use vitordiniz22\craftlens\conditions\WatermarkTypeConditionRule;
 use vitordiniz22\craftlens\fieldlayoutelements\LensAnalysisElement;
+use vitordiniz22\craftlens\jobs\RebuildSearchIndexJob;
 use vitordiniz22\craftlens\models\Settings;
+use vitordiniz22\craftlens\records\AssetAnalysisRecord;
 use vitordiniz22\craftlens\services\AiProviderService;
 use vitordiniz22\craftlens\services\AnalysisEditService;
 use vitordiniz22\craftlens\services\AssetAnalysisService;
@@ -54,6 +59,7 @@ use vitordiniz22\craftlens\services\ExifMetadataService;
 use vitordiniz22\craftlens\services\LogService;
 use vitordiniz22\craftlens\services\PricingService;
 use vitordiniz22\craftlens\services\ReviewService;
+use vitordiniz22\craftlens\services\SearchIndexService;
 use vitordiniz22\craftlens\services\SearchService;
 use vitordiniz22\craftlens\services\SetupStatusService;
 use vitordiniz22\craftlens\services\SiteContentService;
@@ -92,6 +98,7 @@ use yii\web\Response;
  * @property-read ExifMetadataService $exifMetadata
  * @property-read BulkProcessingStatusService $bulkProcessingStatus
  * @property-read LogService $log
+ * @property-read SearchIndexService $searchIndex
  * @author Vitor Diniz <vitordiniz22@gmail.com>
  * @copyright Vitor Diniz
  * @license Proprietary
@@ -129,6 +136,7 @@ class Plugin extends BasePlugin
                 'exifExtraction' => ExifExtractionService::class,
                 'exifMetadata' => ExifMetadataService::class,
                 'log' => LogService::class,
+                'searchIndex' => SearchIndexService::class,
             ],
         ];
     }
@@ -155,7 +163,30 @@ class Plugin extends BasePlugin
         Craft::$app->onInit(function() {
             $this->registerCpRoutes();
             $this->registerTwigExtensions();
+            $this->maybeQueueSearchIndexRebuild();
         });
+    }
+
+    /**
+     * Auto-queue a background search index rebuild when the index table exists
+     * but is empty and there are analyzed assets (e.g. after a fresh deploy to
+     * an existing install or after re-installing the plugin).
+     */
+    private function maybeQueueSearchIndexRebuild(): void
+    {
+        try {
+            if (!$this->searchIndex->isIndexPopulated()) {
+                $hasAnalyzedAssets = AssetAnalysisRecord::find()
+                    ->where(['NOT', ['processedAt' => null]])
+                    ->exists();
+
+                if ($hasAnalyzedAssets) {
+                    Craft::$app->getQueue()->push(new RebuildSearchIndexJob());
+                }
+            }
+        } catch (Throwable) {
+            // Table may not exist yet (fresh install before migration runs); ignore silently
+        }
     }
 
     public function getCpNavItem(): ?array
@@ -307,11 +338,22 @@ class Plugin extends BasePlugin
                     return;
                 }
 
-                if (!$this->assetAnalysis->shouldAutoProcessOnUpload($asset, $event->isNew)) {
+                if ($this->assetAnalysis->shouldAutoProcessOnUpload($asset, $event->isNew)) {
+                    $this->assetAnalysis->queueAsset($asset);
                     return;
                 }
 
-                $this->assetAnalysis->queueAsset($asset);
+                if (!$event->isNew) {
+                    $record = $this->assetAnalysis->getAnalysis($asset->id);
+                    if ($record !== null) {
+                        try {
+                            $this->searchIndex->reindexField($record, 'title');
+                            $this->searchIndex->reindexField($record, 'alt');
+                        } catch (Throwable $e) {
+                            Logger::warning(LogCategory::SearchIndex, 'Title/alt reindex failed on asset save: ' . $e->getMessage(), assetId: $asset->id);
+                        }
+                    }
+                }
             }
         );
 

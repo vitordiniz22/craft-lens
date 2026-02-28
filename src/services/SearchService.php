@@ -10,6 +10,7 @@ use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\migrations\Install;
+use vitordiniz22\craftlens\Plugin;
 use yii\base\Component;
 use yii\db\Query;
 
@@ -98,7 +99,40 @@ class SearchService extends Component
         $limit = $filters['limit'] ?? self::DEFAULT_LIMIT;
         $offset = $filters['offset'] ?? 0;
 
-        $baseQuery = $this->buildMatchingQuery($filters);
+        // BM25 index path: resolve ranked IDs first when a text query is present.
+        $rankedAssetIds = null;
+        $usedBm25 = false;
+        $rawQuery = $filters['query'] ?? null;
+
+        if ($rawQuery !== null && trim($rawQuery) !== '') {
+            $terms = $this->parseSearchTerms($rawQuery);
+
+            if (!empty($terms)) {
+                $scores = Plugin::getInstance()->searchIndex->search($terms);
+
+                if (!empty($scores)) {
+                    // Index returned matches — use BM25 relevance ordering.
+                    $rankedAssetIds = array_keys($scores);
+                    $usedBm25 = true;
+                } elseif (Plugin::getInstance()->searchIndex->isIndexPopulated()) {
+                    // Index is populated but no tokens matched — genuine zero results.
+                    Logger::info(LogCategory::AssetProcessing, 'Asset search executed (BM25, zero results)', context: [
+                        'query' => $rawQuery,
+                        'resultsCount' => 0,
+                    ]);
+
+                    return [
+                        'assets' => [],
+                        'total' => 0,
+                        'offset' => $offset,
+                        'limit' => $limit,
+                    ];
+                }
+                // else: index is empty — fall through to legacy LIKE search below.
+            }
+        }
+
+        $baseQuery = $this->buildMatchingQuery($filters, $rankedAssetIds);
 
         $total = (int) (clone $baseQuery)->count();
 
@@ -111,11 +145,21 @@ class SearchService extends Component
             ];
         }
 
-        $paginatedIds = (clone $baseQuery)
-            ->orderBy(['MAX([[lens.processedAt]])' => SORT_DESC])
-            ->offset($offset)
-            ->limit($limit)
-            ->column();
+        if ($usedBm25 && $rankedAssetIds !== null) {
+            // Preserve BM25 relevance order using MySQL FIELD().
+            $fieldList = implode(',', array_map('intval', $rankedAssetIds));
+            $paginatedIds = (clone $baseQuery)
+                ->orderBy(new \yii\db\Expression('FIELD(assets.id, ' . $fieldList . ')'))
+                ->offset($offset)
+                ->limit($limit)
+                ->column();
+        } else {
+            $paginatedIds = (clone $baseQuery)
+                ->orderBy(['MAX([[lens.processedAt]])' => SORT_DESC])
+                ->offset($offset)
+                ->limit($limit)
+                ->column();
+        }
 
         $paginatedIds = array_map('intval', $paginatedIds);
 
@@ -124,7 +168,11 @@ class SearchService extends Component
             ->fixedOrder()
             ->all();
 
-        Logger::info(LogCategory::AssetProcessing, 'Asset search executed', context: ['resultsCount' => $total]);
+        Logger::info(LogCategory::AssetProcessing, 'Asset search executed', context: [
+            'query' => $rawQuery,
+            'usedBm25' => $usedBm25,
+            'resultsCount' => $total,
+        ]);
 
         return [
             'assets' => $assets,
@@ -138,7 +186,7 @@ class SearchService extends Component
      * Build the base query for matching assets. Returns a grouped query
      * selecting asset IDs that can be used for both counting and pagination.
      */
-    private function buildMatchingQuery(array $filters): Query
+    private function buildMatchingQuery(array $filters, ?array $rankedAssetIds = null): Query
     {
         $query = (new Query())
             ->select(['assets.id'])
@@ -148,16 +196,23 @@ class SearchService extends Component
             ->where(['elements.dateDeleted' => null])
             ->groupBy(['assets.id']);
 
-        if ($this->needsTextSearchJoins($filters)) {
-            $query->leftJoin('{{%elements_sites}} elements_sites', '[[assets.id]] = [[elements_sites.elementId]]');
-            $query->leftJoin(Install::TABLE_ASSET_TAGS . ' tags', '[[lens.id]] = [[tags.analysisId]]');
+        if ($rankedAssetIds !== null) {
+            // BM25 path: filter to pre-ranked IDs — no text-search table joins needed.
+            $query->andWhere(['assets.id' => $rankedAssetIds]);
+        } else {
+            // Legacy LIKE path: join tables needed for text search.
+            if ($this->needsTextSearchJoins($filters)) {
+                $query->leftJoin('{{%elements_sites}} elements_sites', '[[assets.id]] = [[elements_sites.elementId]]');
+                $query->leftJoin(Install::TABLE_ASSET_TAGS . ' tags', '[[lens.id]] = [[tags.analysisId]]');
+            }
+
+            if ($this->needsSiteContentJoin($filters)) {
+                $query->leftJoin(Install::TABLE_ANALYSIS_SITE_CONTENT . ' site_content', '[[lens.id]] = [[site_content.analysisId]]');
+            }
+
+            $this->applyTextSearchLegacy($query, $filters['query'] ?? null);
         }
 
-        if ($this->needsSiteContentJoin($filters)) {
-            $query->leftJoin(Install::TABLE_ANALYSIS_SITE_CONTENT . ' site_content', '[[lens.id]] = [[site_content.analysisId]]');
-        }
-
-        $this->applyTextSearch($query, $filters['query'] ?? null);
         $this->applyTagFilters($query, $filters['tags'] ?? [], $filters['tagOperator'] ?? 'or');
         $this->applyStatusFilter($query, $filters['status'] ?? []);
         $this->applyPeopleFilter($query, $filters);
@@ -194,12 +249,12 @@ class SearchService extends Component
     }
 
     /**
-     * Apply full-text search across Craft fields and Lens data.
+     * Legacy LIKE-based full-text search. Used as fallback when the BM25 index is empty.
      *
      * Searches: asset title, Lens alt text, long description, tags, extracted text,
      * and per-site translated alt text / suggested title.
      */
-    private function applyTextSearch(Query $query, ?string $searchQuery): void
+    private function applyTextSearchLegacy(Query $query, ?string $searchQuery): void
     {
         if ($searchQuery === null || trim($searchQuery) === '') {
             return;

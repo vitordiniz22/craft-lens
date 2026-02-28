@@ -12,7 +12,8 @@
   },
   "require": {
     "php": ">=8.3",
-    "craftcms/cms": "^5.8.0"
+    "craftcms/cms": "^5.8.0",
+    "wamania/php-stemmer": "4.0"
   },
   "require-dev": {
     "craftcms/ecs": "dev-main",

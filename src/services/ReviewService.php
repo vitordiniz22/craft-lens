@@ -46,6 +46,13 @@ class ReviewService extends Component
         Logger::info(LogCategory::Review, 'Analysis approved', assetId: $record->assetId);
 
         $this->autoApplyAfterApproval($record);
+
+        try {
+            Plugin::getInstance()->searchIndex->reindexField($record, 'title');
+            Plugin::getInstance()->searchIndex->reindexField($record, 'alt');
+        } catch (\Throwable $e) {
+            Logger::warning(LogCategory::SearchIndex, 'Search index update failed (non-fatal): ' . $e->getMessage(), assetId: $record->assetId);
+        }
     }
 
     /**

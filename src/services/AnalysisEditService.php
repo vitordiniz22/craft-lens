@@ -8,6 +8,7 @@ use Craft;
 use craft\helpers\DateTimeHelper;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\Logger;
+use vitordiniz22\craftlens\Plugin;
 use vitordiniz22\craftlens\records\AssetAnalysisRecord;
 use vitordiniz22\craftlens\records\AssetColorRecord;
 use vitordiniz22\craftlens\records\AssetTagRecord;
@@ -79,6 +80,12 @@ class AnalysisEditService extends Component
 
         Logger::info(LogCategory::Review, "Field '{$field}' updated via panel", assetId: $record->assetId);
 
+        try {
+            Plugin::getInstance()->searchIndex->reindexField($record, $field);
+        } catch (\Throwable $e) {
+            Logger::warning(LogCategory::SearchIndex, 'Search index update failed (non-fatal): ' . $e->getMessage(), assetId: $record->assetId);
+        }
+
         return [
             'value' => $record->$field,
             'aiValue' => $record->$aiColumn ?? null,
@@ -120,6 +127,12 @@ class AnalysisEditService extends Component
         }
 
         Logger::info(LogCategory::Review, "Field '{$field}' reverted to AI value", assetId: $record->assetId);
+
+        try {
+            Plugin::getInstance()->searchIndex->reindexField($record, $field);
+        } catch (\Throwable $e) {
+            Logger::warning(LogCategory::SearchIndex, 'Search index update failed (non-fatal): ' . $e->getMessage(), assetId: $record->assetId);
+        }
 
         return [
             'value' => $record->$field,
@@ -176,6 +189,12 @@ class AnalysisEditService extends Component
         Logger::info(LogCategory::Review, 'Tags updated via panel', assetId: $record->assetId, context: [
             'tagCount' => count($result),
         ]);
+
+        try {
+            Plugin::getInstance()->searchIndex->reindexTags($record);
+        } catch (\Throwable $e) {
+            Logger::warning(LogCategory::SearchIndex, 'Search index update failed (non-fatal): ' . $e->getMessage(), assetId: $record->assetId);
+        }
 
         return $result;
     }

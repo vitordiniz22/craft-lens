@@ -336,6 +336,7 @@ class AssetAnalysisService extends Component
             $this->getContentStorage()->deleteAllContent($record->id);
         }
 
+        Plugin::getInstance()->searchIndex->deleteIndex($assetId);
         AssetAnalysisRecord::deleteAll(['assetId' => $assetId]);
 
         if ($hadAnalysis) {
@@ -414,13 +415,19 @@ class AssetAnalysisService extends Component
             throw $e;
         }
 
-        Logger::info(LogCategory::AssetProcessing, 'Analysis completed', assetId: $asset->id, context: array_merge(
+        Logger::info(LogCategory::AssetProcessing, 'Analysis completed', assetId:
+
+        $asset->id, context: array_merge(
             ['provider' => $settings->aiProvider, 'model' => $providerModel, 'status' => $record->status, 'cost' => $record->actualCost],
             $result->toLogContext(),
         ));
 
-        // Auto-apply title and focal point to the asset (only when not pending review)
-        // Runs after transaction — Craft's saveElement() manages its own transaction
+        try {
+            Plugin::getInstance()->searchIndex->indexAsset($record);
+        } catch (\Throwable $e) {
+            Logger::warning(LogCategory::AssetProcessing, 'Search index update failed (non-fatal): ' . $e->getMessage(), assetId: $asset->id);
+        }
+
         if ($record->status !== AnalysisStatus::PendingReview->value) {
             $this->autoApplyToAsset($asset, $record, $result);
         }

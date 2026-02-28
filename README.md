@@ -31,7 +31,9 @@ Choose your AI provider — **OpenAI GPT**, **Google Gemini**, or **Anthropic Cl
 ### Search & Discovery
 - **Enhanced Asset Search** — adds a Lens search bar to asset selector modals that searches across AI-generated metadata (alt text, descriptions, tags, OCR text) instead of just filenames
 - **20+ filters** — find assets by tag, color, people, quality, NSFW status, watermarks, brands, GPS location, and more
-- **Full-text search** across alt text, descriptions, tags, and OCR-extracted text
+- **Smart relevance ranking** — BM25 scoring surfaces the most relevant results first, not just anything that contains your keyword
+- **Multilingual stemming** — search "animals" and find assets tagged "animal", in 14 languages including English, French, Spanish, German, and more
+- **Typo tolerance** — fuzzy matching catches the inevitable misspelling so "photgraphy" still finds "photography"
 - **Duplicate detection** — surface visually similar images via perceptual hashing so you stop re-uploading the same file
 - **Asset Browser** with saved searches and CSV export for audits and reporting
 
@@ -79,7 +81,7 @@ Choose your AI provider — **OpenAI GPT**, **Google Gemini**, or **Anthropic Cl
 
 ## Enhanced Asset Search
 
-Lens adds a search bar to every asset selector modal that searches across AI-generated metadata, alt text, descriptions, tags, and OCR-extracted text, instead of just filenames. Disabled by default; enable it in **Lens** → **Settings**.
+Disabled by default. Enable it in **Lens** → **Settings**.
 
 ## Requirements
 
@@ -178,6 +180,9 @@ php craft lens/tag-stats
 
 # View color palette statistics
 php craft lens/color-stats
+
+# Rebuild the full-text search index
+php craft lens/search-index/rebuild
 ```
 
 ## Asset Query Extensions
