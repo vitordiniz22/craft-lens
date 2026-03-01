@@ -322,6 +322,12 @@
     box-shadow: 0 0 0 4px rgba(0, 102, 204, 0.2);
 }
 
+/* Arrow-key navigation highlight */
+.lens-asset-card.focused {
+    outline: 2px solid var(--focus-ring-color);
+    outline-offset: 2px;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .lens-results-grid {

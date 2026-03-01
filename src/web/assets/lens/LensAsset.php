@@ -43,8 +43,6 @@ class LensAsset extends AssetBundle
             'css/pages/lens-dashboard.css',
             'css/pages/lens-review.css',
             'css/pages/lens-search.css',
-            'css/pages/lens-statistics.css',
-            'css/pages/lens-widgets.css',
         ];
         $this->js = [
             'js/lens-base.js',
