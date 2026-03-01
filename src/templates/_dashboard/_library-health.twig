@@ -15,7 +15,7 @@
                 </span>
             </div>
             <div class="lens-coverage__metric-row">
-                <div class="lens-progress lens-progress--small">
+                <div class="lens-progress">
                     <div class="lens-progress-fill" style="width: {{ altTextCoverage.percentage }}%; background-color: {{ altColor }}"></div>
                 </div>
                 {% if altTextCoverage.total - altTextCoverage.withAltText > 0 %}
@@ -37,7 +37,7 @@
                 </span>
             </div>
             <div class="lens-coverage__metric-row">
-                <div class="lens-progress lens-progress--small">
+                <div class="lens-progress">
                     <div class="lens-progress-fill" style="width: {{ taggedPercentage.percentage }}%; background-color: {{ tagColor }}"></div>
                 </div>
                 {% if taggedPercentage.total - taggedPercentage.withTags > 0 %}
@@ -59,7 +59,7 @@
                 </span>
             </div>
             <div class="lens-coverage__metric-row">
-                <div class="lens-progress lens-progress--small">
+                <div class="lens-progress">
                     <div class="lens-progress-fill" style="width: {{ highQualityPercentage.percentage }}%; background-color: {{ qualityColor }}"></div>
                 </div>
                 {% if highQualityPercentage.total - highQualityPercentage.highQuality > 0 %}

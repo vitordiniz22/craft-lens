@@ -1,41 +1,27 @@
 /**
  * Progress Bar Component
- * Unified progress bar system with size and style variants.
+ * Fixed-size progress bar with style variants.
  *
  * Usage:
- *   <div class="lens-progress lens-progress--small">
+ *   <div class="lens-progress">
  *     <div class="lens-progress-fill" style="width: 50%"></div>
  *   </div>
  *
- *   <div class="lens-progress lens-progress--large lens-progress--animated">
+ *   <div class="lens-progress lens-progress--animated">
  *     <div class="lens-progress-fill" style="width: 75%"></div>
  *   </div>
  */
 
 /* Base progress bar container */
 .lens-progress {
-  background: var(--gray-200);
-  border-radius: 4px;
+  height: 10px;
+  background: var(--gray-100);
+  border-radius: 12px;
   overflow: hidden;
   position: relative;
 }
 
-/* Size variants */
-.lens-progress--small {
-  height: 8px;
-}
-
-.lens-progress--large {
-  height: 14px;
-  border-radius: 12px;
-  background: var(--gray-100);
-}
-
 /* Complete state (success color) */
-.lens-progress--complete {
-  background: var(--gray-100);
-}
-
 .lens-progress--complete .lens-progress-fill {
   background: var(--success-color);
 }
