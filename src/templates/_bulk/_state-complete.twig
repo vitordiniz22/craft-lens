@@ -30,9 +30,9 @@
     </div>
 {% else %}
     {# Normal completion: show summary stats and actions #}
-    <div class="pane lens-state-complete">
+    <div class="pane">
         <div class="lens-complete-header">
-            <span class="lens-complete-icon"></span>
+            <span class="lens-complete-icon">{{ iconSvg('check') }}</span>
             <h2>{{ 'Processing Complete'|t('lens') }}</h2>
         </div>
 

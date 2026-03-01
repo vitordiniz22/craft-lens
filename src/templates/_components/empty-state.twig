@@ -8,7 +8,6 @@
  #   - description: (optional) Secondary description text
  #   - cta: (optional) Primary action object with 'label' and 'url'
  #   - secondaryCta: (optional) Secondary action object with 'label' and 'url'
- #   - compact: (optional) Use compact styling, defaults to false
  #}
 
 {% set defaultIcon %}
@@ -17,7 +16,7 @@
 </svg>
 {% endset %}
 
-<div class="lens-empty-state {{ compact ?? false ? 'lens-empty-state--compact' : '' }}">
+<div class="lens-empty-state">
     <div class="lens-empty-icon">
         {{ icon ?? defaultIcon|raw }}
     </div>

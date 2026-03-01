@@ -122,11 +122,15 @@
         {# — Row 4: Metadata — #}
 
         {# Status Filter #}
-        {{ forms.checkboxSelectField({
+        {{ forms.selectizeField({
             label: 'Status'|t('lens'),
             name: 'status',
             options: statusOptions,
             values: filters.status ?? [],
+            multi: true,
+            selectizeOptions: {
+                placeholder: 'Any'|t('lens'),
+            },
         }) }}
 
         {# Date Analyzed Range #}

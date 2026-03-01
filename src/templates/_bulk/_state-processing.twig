@@ -1,5 +1,8 @@
 <div class="pane">
-    <h2>{{ 'Processing in Progress'|t('lens') }}</h2>
+    <div class="lens-processing-header">
+        <span class="lens-processing-pulse"></span>
+        <h2>{{ 'Processing in Progress'|t('lens') }}</h2>
+    </div>
 
     <div data-lens-target="progress-container">
         {% include 'lens/_bulk/_progress' %}

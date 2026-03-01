@@ -16,56 +16,57 @@
                 </select>
             </div>
         </div>
+        <hr class="lens-bulk-divider">
     {% endif %}
 
     {% if stats.unprocessed == 0 and stats.failed == 0 %}
-        <div class="lens-all-done">
-            <span class="lens-all-done-icon"></span>
-            <h2>{{ 'All Assets Analyzed'|t('lens') }}</h2>
-        </div>
+        {% set selectedVolume = selectedVolumeId ? volumes|filter(v => v.id == selectedVolumeId)|first : null %}
+        {% set doneDescription = selectedVolume
+            ? 'Every image in {volume} has been analyzed.'|t('lens', {volume: selectedVolume.name})
+            : 'Every image across all volumes has been analyzed.'|t('lens')
+        %}
+        {% if autoProcessOnUpload is defined and autoProcessOnUpload %}
+            {% set doneDescription = doneDescription ~ ' ' ~ 'New uploads will be analyzed automatically.'|t('lens') %}
+        {% endif %}
+
+        {% include 'lens/_components/empty-state' with {
+            heading: 'All Assets Analyzed'|t('lens'),
+            description: doneDescription,
+        } only %}
     {% else %}
-        <h2>{{ 'Process Assets'|t('lens') }}</h2>
+        <h2 class="lens-section-header__title">{{ 'Process Assets'|t('lens') }}</h2>
 
-        <div class="lens-bulk-summary">
+        <div class="lens-bulk-status">
             {% if stats.unprocessed > 0 %}
-                <p>
-                    <strong>{{ stats.unprocessed }}</strong>
-                    {{ 'images ready for analysis.'|t('lens') }}
-                </p>
-
-                {% if estimatedCost is defined and estimatedCost > 0 %}
-                    <div class="lens-estimated-cost">
-                        <span class="lens-cost-label">{{ 'Estimated cost:'|t('lens') }}</span>
-                        <strong>${{ estimatedCost|number_format(4) }}</strong>
-                        <span class="light">{{ '(based on current provider settings)'|t('lens') }}</span>
-                    </div>
-                {% endif %}
-            {% endif %}
-        </div>
-
-        <div class="lens-bulk-actions">
-            {% if stats.unprocessed > 0 %}
-                <form method="post">
-                    {{ csrfInput() }}
-                    {{ actionInput('lens/bulk/process') }}
-                    {% if selectedVolumeId %}
-                        <input type="hidden" name="volumeId" value="{{ selectedVolumeId }}">
+                <div class="lens-bulk-status__info">
+                    <span class="lens-bulk-status__count">{{ stats.unprocessed|number_format }}</span> {{ 'images ready for analysis'|t('lens') }}
+                    {% if estimatedCost is defined and estimatedCost > 0 %}
+                        <span class="lens-processing__separator"> · </span>
+                        <span class="lens-bulk-status__cost">{{ 'Est.'|t('lens') }} ${{ estimatedCost|number_format(4) }}</span>
                     {% endif %}
-                    <button type="submit" class="btn submit">
-                        {{ 'Start Processing'|t('lens') }}
-                    </button>
-                </form>
+                </div>
             {% endif %}
 
-            {% if stats.failed > 0 %}
-                <form method="post" class="lens-bulk-inline-form">
-                    {{ csrfInput() }}
-                    {{ actionInput('lens/bulk/retry-failed') }}
-                    <button type="submit" class="btn">
-                        {{ 'Retry {count} Failed'|t('lens', {count: stats.failed}) }}
-                    </button>
-                </form>
-            {% endif %}
+            <div class="lens-actions__grid">
+                {% if stats.unprocessed > 0 %}
+                    <form method="post">
+                        {{ csrfInput() }}
+                        {{ actionInput('lens/bulk/process') }}
+                        {% if selectedVolumeId %}
+                            <input type="hidden" name="volumeId" value="{{ selectedVolumeId }}">
+                        {% endif %}
+                        <button type="submit" class="btn submit">{{ 'Start Processing'|t('lens') }}</button>
+                    </form>
+                {% endif %}
+
+                {% if stats.failed > 0 %}
+                    <form method="post">
+                        {{ csrfInput() }}
+                        {{ actionInput('lens/bulk/retry-failed') }}
+                        <button type="submit" class="btn">{{ 'Retry {count} Failed'|t('lens', {count: stats.failed}) }}</button>
+                    </form>
+                {% endif %}
+            </div>
         </div>
     {% endif %}
 </div>

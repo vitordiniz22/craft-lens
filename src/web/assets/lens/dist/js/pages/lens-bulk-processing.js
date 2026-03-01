@@ -22,7 +22,8 @@
         })
         .then(function(r) {
             var state = r.headers.get('X-Lens-State');
-            return r.text().then(function(html) { return {html: html, state: state}; });
+            var statsJson = r.headers.get('X-Lens-Stats');
+            return r.text().then(function(html) { return {html: html, state: state, statsJson: statsJson}; });
         })
         .then(function(result) {
             if (result.state !== 'processing') {
@@ -31,7 +32,31 @@
                 return;
             }
             container.innerHTML = result.html;
+            updateStatCards(result.statsJson);
         })
         .catch(function() {});
+    }
+
+    function updateStatCards(statsJson) {
+        if (!statsJson) return;
+        try {
+            var stats = JSON.parse(statsJson);
+        } catch (e) {
+            return;
+        }
+
+        var cards = document.querySelectorAll('[data-lens-stat]');
+        for (var i = 0; i < cards.length; i++) {
+            var card = cards[i];
+            var key = card.dataset.lensStat;
+            if (stats[key] === undefined) continue;
+
+            var value = stats[key];
+            card.dataset.lensCount = String(value);
+            var valueEl = card.querySelector('.lens-stat-value');
+            if (valueEl) {
+                valueEl.textContent = Number(value).toLocaleString();
+            }
+        }
     }
 })();

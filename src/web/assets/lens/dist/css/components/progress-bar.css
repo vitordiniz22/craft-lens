@@ -26,7 +26,7 @@
 }
 
 .lens-progress--large {
-  height: 24px;
+  height: 14px;
   border-radius: 12px;
   background: var(--gray-100);
 }

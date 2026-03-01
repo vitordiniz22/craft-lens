@@ -8,6 +8,7 @@
   border-radius: var(--medium-border-radius);
   padding: 20px;
   text-align: center;
+  border-left: 3px solid transparent;
 }
 
 .lens-stat-value {
@@ -22,12 +23,51 @@
   margin-top: 4px;
 }
 
+/* Status variants: colored left border + tinted background */
+.lens-stat-neutral {
+  border-left-color: var(--hairline-color);
+}
+
+.lens-stat-success {
+  border-left-color: var(--success-color);
+  background: var(--bg-success);
+}
+
 .lens-stat-success .lens-stat-value {
   color: var(--success-color);
 }
+
+.lens-stat-warning {
+  border-left-color: var(--warning-color);
+  background: var(--bg-warning);
+}
+
 .lens-stat-warning .lens-stat-value {
   color: var(--warning-color);
 }
+
+.lens-stat-error {
+  border-left-color: var(--error-color);
+  background: var(--bg-error);
+}
+
 .lens-stat-error .lens-stat-value {
   color: var(--error-color);
+}
+
+.lens-stat-info {
+  border-left-color: var(--link-color);
+}
+
+.lens-stat-info .lens-stat-value {
+  color: var(--link-color);
+}
+
+/* Zero-value dimming */
+.lens-stat-card[data-lens-count="0"] {
+  opacity: 0.5;
+}
+
+.lens-stat-card[data-lens-count="0"] .lens-stat-value {
+  color: var(--medium-text-color);
 }

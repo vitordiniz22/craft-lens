@@ -20,31 +20,50 @@
   margin-top: 20px;
 }
 
-/* Bulk Summary */
-.lens-bulk-summary {
-  margin-bottom: 20px;
+/* Bulk Status (mirrors dashboard processing status pattern) */
+.lens-bulk-status {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.lens-bulk-summary p {
-  margin: 8px 0;
-}
-
-/* Estimated Cost Display */
-.lens-estimated-cost {
-  background: var(--gray-050);
-  padding: 12px 16px;
-  border-radius: var(--medium-border-radius);
-  margin: 16px 0;
-}
-
-.lens-cost-label {
-  margin-right: 4px;
-}
-
-.lens-estimated-cost .light {
-  font-size: 12px;
+.lens-bulk-status__info {
+  font-size: 13px;
   color: var(--medium-text-color);
-  margin-left: 8px;
+}
+
+.lens-bulk-status__count {
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.lens-bulk-status__cost {
+  color: var(--medium-text-color);
+}
+
+/* Processing header with pulse indicator */
+.lens-processing-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lens-processing-header h2 {
+  margin: 0;
+}
+
+.lens-processing-pulse {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--link-color);
+  animation: lens-pulse 1.5s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+@keyframes lens-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
 }
 
 /* Progress Bar */
@@ -63,8 +82,11 @@
 .lens-progress-counters {
   display: flex;
   justify-content: center;
-  gap: 32px;
+  gap: 24px;
   margin: 24px 0;
+  padding: 16px;
+  background: var(--gray-050);
+  border-radius: var(--medium-border-radius);
 }
 
 .lens-counter {
@@ -107,11 +129,6 @@
 }
 
 /* Complete State */
-#lens-state-complete {
-  background: linear-gradient(135deg, var(--green-050) 0%, var(--green-100) 100%);
-  border-color: var(--success-color);
-}
-
 .lens-complete-header {
   display: flex;
   align-items: center;
@@ -120,20 +137,17 @@
 }
 
 .lens-complete-icon {
-  display: flex;
+  color: var(--success-color);
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  background: var(--success-color);
-  color: white;
-  border-radius: 50%;
-  font-size: 20px;
-  font-weight: bold;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
 }
 
-.lens-complete-icon::before {
-  content: '\2713';
+.lens-complete-icon svg {
+  width: 20px !important;
+  height: 20px !important;
 }
 
 .lens-complete-header h2 {
@@ -142,24 +156,22 @@
 }
 
 .lens-summary-grid {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 24px;
-  margin-bottom: 16px;
 }
 
 .lens-summary-item {
-  flex: 1;
   text-align: center;
-  padding: 16px;
-  background: white;
-  border-radius: var(--medium-border-radius);
+  padding: 12px 8px;
 }
 
 .lens-summary-value {
   display: block;
-  font-size: 28px;
-  font-weight: 600;
-  color: var(--success-color);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-color);
+  line-height: 1.2;
 }
 
 .lens-summary-warning .lens-summary-value {
@@ -168,15 +180,18 @@
 
 .lens-summary-label {
   display: block;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--medium-text-color);
   margin-top: 4px;
 }
 
 .lens-total-cost {
   text-align: center;
-  font-size: 16px;
-  margin: 16px 0;
+  font-size: 13px;
+  color: var(--medium-text-color);
+  padding: 12px 0;
+  margin: 0;
+  border-top: 1px solid var(--hairline-color);
 }
 
 .lens-complete-actions {
@@ -186,38 +201,6 @@
   margin-top: 20px;
 }
 
-/* All Done State */
-.lens-all-done {
-  text-align: center;
-  padding: 24px 0;
-}
-
-.lens-all-done-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  background: var(--success-color);
-  color: white;
-  border-radius: 50%;
-  font-size: 24px;
-  margin-bottom: 16px;
-}
-
-.lens-all-done-icon::before {
-  content: '\2713';
-}
-
-.lens-all-done h2 {
-  margin: 0 0 8px 0;
-  color: var(--success-color);
-}
-
-.lens-all-done p {
-  margin: 0;
-  color: var(--medium-text-color);
-}
 
 @media (max-width: 640px) {
   .lens-progress-counters {
@@ -229,11 +212,20 @@
   }
 
   .lens-summary-grid {
-    flex-direction: column;
-    gap: 12px;
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .lens-summary-item {
+    text-align: left;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 8px 0;
   }
 
   .lens-complete-actions {
     flex-direction: column;
   }
+
 }

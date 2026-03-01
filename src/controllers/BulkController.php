@@ -72,6 +72,7 @@ class BulkController extends Controller
             'volumes' => $volumes,
             'state' => $state,
             'selectedVolumeId' => $volumeId,
+            'autoProcessOnUpload' => $settings->autoProcessOnUpload,
         ];
 
         if ($state === 'ready') {
@@ -103,9 +104,10 @@ class BulkController extends Controller
         $this->requirePermission('accessPlugin-lens');
 
         $statusService = Plugin::getInstance()->bulkProcessingStatus;
-        $stats = $statusService->getStats();
-        $state = $statusService->determineState($stats);
         $session = $statusService->getSessionData();
+        $volumeId = $session['volumeId'] ?? null;
+        $stats = $statusService->getStats($volumeId);
+        $state = $statusService->determineState($stats);
 
         $html = Craft::$app->getView()->renderTemplate('lens/_bulk/_progress', [
             'progress' => $statusService->getProgress($session, $stats),
@@ -115,6 +117,7 @@ class BulkController extends Controller
 
         $response = Craft::$app->getResponse();
         $response->getHeaders()->set('X-Lens-State', $state);
+        $response->getHeaders()->set('X-Lens-Stats', json_encode($stats));
         $response->format = Response::FORMAT_HTML;
         $response->data = $html;
 
