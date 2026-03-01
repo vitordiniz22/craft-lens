@@ -63,7 +63,7 @@
 
     <div class="lens-result-info">
         <a href="{{ linkUrl }}" class="lens-result-title" title="{{ asset.filename }}">
-            {{ (analysis.suggestedTitle ?? asset.title)|truncate(30) }}
+            {{ asset.title|truncate(30) }}
         </a>
 
         {% if analysis %}

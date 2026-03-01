@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace vitordiniz22\craftlens\controllers;
 
 use Craft;
+use craft\elements\Asset;
 use craft\helpers\UrlHelper;
 use craft\web\Controller;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
@@ -107,7 +108,7 @@ class SearchController extends Controller
         $assetIds = array_map(fn($asset) => $asset->id, $results['assets']);
 
         if (!empty($assetIds)) {
-            $results['assets'] = \craft\elements\Asset::find()->id($assetIds)->with('volume')->all();
+            $results['assets'] = Asset::find()->id($assetIds)->siteId(Craft::$app->getSites()->getPrimarySite()->id)->with('volume')->all();
         }
 
         $output = fopen('php://temp', 'r+');

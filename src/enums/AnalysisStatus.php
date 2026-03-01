@@ -42,6 +42,18 @@ enum AnalysisStatus: string
     }
 
     /**
+     * Statuses where AI metadata exists and can be measured for coverage.
+     * Includes pending_review because those assets have tags, alt text, etc.
+     * Used by dashboard coverage metrics.
+     *
+     * @return string[]
+     */
+    public static function withMetadataValues(): array
+    {
+        return [self::Completed->value, self::PendingReview->value, self::Approved->value];
+    }
+
+    /**
      * Statuses where the AI provider was called and cost was incurred.
      * Used for usage/cost tracking — includes pending_review and rejected
      * assets that analyzedValues() excludes.

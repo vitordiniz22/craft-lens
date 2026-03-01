@@ -137,67 +137,60 @@
 }
 
 /* ==========================================================================
-   Section 3: Library Health
+   Section 3: Metadata Coverage
    ========================================================================== */
 
-.lens-health__metrics {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 24px;
+.lens-coverage__metrics {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
 
-.lens-health__metric {
-    min-width: 0;
-}
-
-.lens-health__metric-header {
+.lens-coverage__metric-header {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
 }
 
-.lens-health__metric-label {
-    font-size: 12px;
-    color: var(--medium-text-color);
-}
-
-.lens-health__metric-label--lg {
+.lens-coverage__metric-label {
     font-size: 13px;
+    font-weight: 500;
+    color: var(--text-color);
 }
 
-.lens-health__metric-value {
-    font-size: 20px;
+.lens-coverage__metric-stat {
+    font-size: 14px;
     font-weight: 600;
     color: var(--text-color);
 }
 
-.lens-health__metric-value--good {
-    color: var(--success-color);
-}
-
-.lens-health__metric-value--warning {
-    color: var(--warning-color);
-}
-
-.lens-health__metric-detail {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+.lens-coverage__metric-counts {
+    font-weight: 400;
     font-size: 12px;
-    color: var(--light-text-color);
-}
-
-.lens-health__metric-counts {
     color: var(--medium-text-color);
 }
 
-.lens-health__metric-link {
-    color: var(--link-color);
-    text-decoration: none;
+.lens-coverage__metric-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
-.lens-health__metric-link:hover {
+.lens-coverage__metric-row .lens-progress {
+    flex: 1;
+    min-width: 0;
+}
+
+.lens-coverage__metric-link {
+    font-size: 12px;
+    color: var(--link-color);
+    text-decoration: none;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.lens-coverage__metric-link:hover {
     text-decoration: underline;
 }
 
@@ -436,10 +429,6 @@
    ========================================================================== */
 
 @media (max-width: 768px) {
-    .lens-health__metrics {
-        grid-template-columns: 1fr;
-        gap: 16px;
-    }
     .lens-insights__grid {
         grid-template-columns: 1fr;
     }

@@ -62,7 +62,7 @@ class ReviewController extends Controller
 
         $pendingReviews = $reviewService->getPendingReviews(self::PER_PAGE, $offset);
         $ids = $this->extractIdsFromAnalyses($pendingReviews);
-        $assets = Asset::find()->id($ids['assetIds'])->indexBy('id')->all();
+        $assets = Asset::find()->id($ids['assetIds'])->siteId(Craft::$app->getSites()->getPrimarySite()->id)->indexBy('id')->all();
         $tagCounts = $this->getTagCounts($ids['analysisIds']);
         $items = $this->buildReviewItems($pendingReviews, $assets, $tagCounts);
 
@@ -345,7 +345,7 @@ class ReviewController extends Controller
         $pendingReviews = $reviewService->getPendingReviews(100, 0);
         $ids = $this->extractIdsFromAnalyses($pendingReviews);
 
-        $assets = Asset::find()->id($ids['assetIds'])->indexBy('id')->all();
+        $assets = Asset::find()->id($ids['assetIds'])->siteId(Craft::$app->getSites()->getPrimarySite()->id)->indexBy('id')->all();
         $tagCounts = $this->getTagCounts($ids['analysisIds']);
 
         $items = $this->buildReviewItems($pendingReviews, $assets, $tagCounts);

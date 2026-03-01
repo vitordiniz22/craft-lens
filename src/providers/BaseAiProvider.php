@@ -11,6 +11,7 @@ use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use vitordiniz22\craftlens\dto\AnalysisResult;
+use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\enums\LogLevel;
 use vitordiniz22\craftlens\exceptions\AnalysisException;
 use vitordiniz22\craftlens\exceptions\ConfigurationException;
@@ -63,19 +64,25 @@ abstract class BaseAiProvider implements AiProviderInterface
      */
     protected function buildPrompt(string $primaryLanguage, array $additionalLanguages = []): string
     {
-        $instructions = ['Analyze this image and provide the following information in JSON format:'];
+        $primaryName = $this->languageDisplayName($primaryLanguage);
 
-        $instructions[] = '- "altText": A natural, descriptive alt text for accessibility (1-2 sentences)';
+        $instructions = [sprintf(
+            'Analyze this image and provide the following information in JSON format. LANGUAGE: Write ALL text fields in %s (%s) only.',
+            $primaryName,
+            $primaryLanguage
+        )];
+
+        $instructions[] = sprintf('- "altText": A natural, descriptive alt text for accessibility (1-2 sentences, in %s)', $primaryName);
         $instructions[] = '- "altTextConfidence": Your confidence in the alt text (0.0-1.0)';
 
-        $instructions[] = '- "longDescription": A detailed, paragraph-length description (2-4 sentences) providing rich context about the image content, composition, subjects, setting, and notable details';
+        $instructions[] = sprintf('- "longDescription": A detailed, paragraph-length description (2-4 sentences) providing rich context about the image content, composition, subjects, setting, and notable details (in %s)', $primaryName);
         $instructions[] = '- "longDescriptionConfidence": Your confidence in the long description (0.0-1.0)';
 
-        $instructions[] = '- "suggestedTitle": A concise title (2-6 words, Title Case, specific not generic)';
+        $instructions[] = sprintf('- "suggestedTitle": A concise title (2-6 words, Title Case, specific not generic, in %s)', $primaryName);
         $instructions[] = '- "titleConfidence": Your confidence in the title (0.0-1.0)';
         $instructions[] = '  Title rules: NO "Image of/Photo of" prefixes, NO file extensions, be SPECIFIC';
 
-        $instructions[] = '- "tags": An array of objects with "tag" (lowercase single word or short phrase) and "confidence" (0.0-1.0), max 25 tags';
+        $instructions[] = sprintf('- "tags": An array of objects with "tag" (lowercase single word or short phrase, in %s) and "confidence" (0.0-1.0), max 25 tags', $primaryName);
         $instructions[] = '  Tag vocabulary guidelines for DAM (Digital Asset Management) systems:';
         $instructions[] = '  • Prefer COMMON, GENERAL-PURPOSE tags that are widely understood and searchable (e.g., "beach", "sunset", "portrait", "food", "architecture", "business")';
         $instructions[] = '  • Avoid overly specific or technical terms unless they are the PRIMARY subject (e.g., prefer "flower" over "chrysanthemum", "car" over "sedan", "building" over "skyscraper" unless specificity is critical)';
@@ -142,24 +149,25 @@ abstract class BaseAiProvider implements AiProviderInterface
         $instructions[] = '- "containsBrandLogo": Whether the image contains any recognizable brand logos (boolean)';
         $instructions[] = '- "detectedBrands": Array of objects with "brand" (company/brand name), "confidence" (0.0-1.0), and "position" (location in image)';
 
-        $instructions[] = '';
-        $instructions[] = sprintf(
-            'IMPORTANT: All text fields (altText, suggestedTitle, longDescription, tags, extractedText) MUST be written in %s.',
-            $primaryLanguage
-        );
-
         if (!empty($additionalLanguages)) {
-            $langList = implode(', ', $additionalLanguages);
+            $langEntries = array_map(fn(string $code) => sprintf('%s (%s)', $this->languageDisplayName($code), $code), $additionalLanguages);
+            $langList = implode(', ', $langEntries);
             $instructions[] = '';
             $instructions[] = sprintf(
-                'Additionally, describe the image natively in these languages and include a "siteContent" object keyed by language code: %s.',
-                $langList
+                'Additionally, provide TRANSLATIONS in a separate "siteContent" object keyed by language code for: %s. '
+                . 'The top-level fields above MUST remain in %s — siteContent contains the translations only.',
+                $langList,
+                $primaryName
             );
             $instructions[] = '"siteContent": {';
+
             foreach ($additionalLanguages as $lang) {
+                $langName = $this->languageDisplayName($lang);
                 $instructions[] = sprintf(
-                    '  "%s": {"altText": "...", "altTextConfidence": 0.0-1.0, "suggestedTitle": "...", "titleConfidence": 0.0-1.0},',
-                    $lang
+                    '  "%s": {"altText": "... (in %s)", "altTextConfidence": 0.0-1.0, "suggestedTitle": "... (in %s)", "titleConfidence": 0.0-1.0},',
+                    $lang,
+                    $langName,
+                    $langName
                 );
             }
             $instructions[] = '}';
@@ -183,6 +191,11 @@ abstract class BaseAiProvider implements AiProviderInterface
         }
 
         $data = ResponseNormalizer::safeJsonDecode($content, $this->getName());
+
+        // Detect language mixing: if a top-level text field is identical to a
+        // siteContent translation, the AI used the wrong language. Clear the
+        // top-level value so it does not overwrite the main record.
+        $data = $this->fixLanguageMixing($data);
 
         $nsfwScore = ResponseNormalizer::clampConfidence($data['nsfwScore'] ?? 0.0);
         $detectedBrands = ResponseNormalizer::normalizeDetectedBrands($data['detectedBrands'] ?? [], $this->getName());
@@ -225,6 +238,56 @@ abstract class BaseAiProvider implements AiProviderInterface
     }
 
     /**
+     * Detect and fix language mixing in the AI response.
+     *
+     * When the AI returns the same text in a top-level field and in a
+     * siteContent translation entry, it almost certainly used the wrong
+     * language for the top-level field. Clear the top-level value so
+     * the downstream dual-write logic keeps the previous (correct) value.
+     *
+     * @param array<string, mixed> $data Decoded JSON response
+     * @return array<string, mixed> Sanitized response
+     */
+    private function fixLanguageMixing(array $data): array
+    {
+        $siteContent = $data['siteContent'] ?? [];
+
+        if (!is_array($siteContent) || empty($siteContent)) {
+            return $data;
+        }
+
+        foreach ($siteContent as $lang => $entry) {
+            if (!is_array($entry)) {
+                continue;
+            }
+
+            // Title: if top-level matches a translation, the AI used the wrong language
+            $scTitle = $entry['suggestedTitle'] ?? '';
+            $topTitle = $data['suggestedTitle'] ?? '';
+            if ($scTitle !== '' && $topTitle !== '' && mb_strtolower($topTitle) === mb_strtolower($scTitle)) {
+                $data['suggestedTitle'] = '';
+                Logger::warning(
+                    LogCategory::AssetProcessing,
+                    sprintf('AI returned identical suggestedTitle in top-level and siteContent[%s] — cleared top-level to prevent wrong language', $lang),
+                );
+            }
+
+            // Alt text: same check
+            $scAlt = $entry['altText'] ?? '';
+            $topAlt = $data['altText'] ?? '';
+            if ($scAlt !== '' && $topAlt !== '' && mb_strtolower($topAlt) === mb_strtolower($scAlt)) {
+                $data['altText'] = '';
+                Logger::warning(
+                    LogCategory::AssetProcessing,
+                    sprintf('AI returned identical altText in top-level and siteContent[%s] — cleared top-level to prevent wrong language', $lang),
+                );
+            }
+        }
+
+        return $data;
+    }
+
+    /**
      * Parse and validate the siteContent structure from AI response.
      *
      * @return array<string, array{altText: string, suggestedTitle: string, altTextConfidence?: float, titleConfidence?: float}>
@@ -262,6 +325,24 @@ abstract class BaseAiProvider implements AiProviderInterface
         }
 
         return $result;
+    }
+
+    /**
+     * Convert a locale code (e.g. "en", "pt-BR") to a human-readable language name.
+     *
+     * Uses PHP's Locale class when intl is available, otherwise falls back to
+     * the locale code itself — still clearer than a bare code in the prompt.
+     */
+    private function languageDisplayName(string $code): string
+    {
+        if (class_exists(\Locale::class)) {
+            $name = \Locale::getDisplayLanguage($code, 'en');
+            if ($name !== '' && $name !== $code) {
+                return $name;
+            }
+        }
+
+        return $code;
     }
 
     /**

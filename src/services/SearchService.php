@@ -163,8 +163,11 @@ class SearchService extends Component
 
         $paginatedIds = array_map('intval', $paginatedIds);
 
+        $primarySiteId = Craft::$app->getSites()->getPrimarySite()->id;
+
         $assets = Asset::find()
             ->id($paginatedIds)
+            ->siteId($primarySiteId)
             ->fixedOrder()
             ->all();
 

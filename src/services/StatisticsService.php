@@ -174,10 +174,10 @@ class StatisticsService extends Component
      */
     public function getAltTextCoverage(?int $precomputedAnalyzedCount = null, ?int $siteId = null): array
     {
-        $analyzedStatuses = AnalysisStatus::analyzedValues();
+        $metadataStatuses = AnalysisStatus::withMetadataValues();
 
         $total = $precomputedAnalyzedCount ?? (int) AssetAnalysisRecord::find()
-            ->where(['in', 'status', $analyzedStatuses])
+            ->where(['in', 'status', $metadataStatuses])
             ->count();
 
         if ($total === 0) {
@@ -189,14 +189,14 @@ class StatisticsService extends Component
                 ->select(['COUNT(*)'])
                 ->from(Install::TABLE_ANALYSIS_SITE_CONTENT . ' sc')
                 ->innerJoin(Install::TABLE_ASSET_ANALYSES . ' a', '[[sc.analysisId]] = [[a.id]]')
-                ->where(['in', 'a.status', $analyzedStatuses])
+                ->where(['in', 'a.status', $metadataStatuses])
                 ->andWhere(['sc.siteId' => $siteId])
                 ->andWhere(['not', ['sc.altText' => null]])
                 ->andWhere(['!=', 'sc.altText', ''])
                 ->scalar();
         } else {
             $withAltText = (int) AssetAnalysisRecord::find()
-                ->where(['in', 'status', $analyzedStatuses])
+                ->where(['in', 'status', $metadataStatuses])
                 ->andWhere(['not', ['altText' => null]])
                 ->andWhere(['!=', 'altText', ''])
                 ->count();
@@ -216,10 +216,10 @@ class StatisticsService extends Component
      */
     public function getTaggedPercentage(?int $precomputedAnalyzedCount = null): array
     {
-        $analyzedStatuses = AnalysisStatus::analyzedValues();
+        $metadataStatuses = AnalysisStatus::withMetadataValues();
 
         $total = $precomputedAnalyzedCount ?? (int) AssetAnalysisRecord::find()
-            ->where(['in', 'status', $analyzedStatuses])
+            ->where(['in', 'status', $metadataStatuses])
             ->count();
 
         if ($total === 0) {
@@ -231,7 +231,7 @@ class StatisticsService extends Component
             ->select(['COUNT(DISTINCT [[tags.analysisId]])'])
             ->from(Install::TABLE_ASSET_TAGS . ' tags')
             ->innerJoin(Install::TABLE_ASSET_ANALYSES . ' lens', '[[tags.analysisId]] = [[lens.id]]')
-            ->where(['in', 'lens.status', $analyzedStatuses])
+            ->where(['in', 'lens.status', $metadataStatuses])
             ->scalar();
 
         return [
@@ -248,11 +248,11 @@ class StatisticsService extends Component
      */
     public function getHighQualityPercentage(?int $precomputedScoredCount = null): array
     {
-        $analyzedStatuses = AnalysisStatus::analyzedValues();
+        $metadataStatuses = AnalysisStatus::withMetadataValues();
 
         // Only count assets that have a quality score (not null)
         $total = $precomputedScoredCount ?? (int) AssetAnalysisRecord::find()
-            ->where(['in', 'status', $analyzedStatuses])
+            ->where(['in', 'status', $metadataStatuses])
             ->andWhere(['not', ['overallQualityScore' => null]])
             ->count();
 
@@ -261,7 +261,7 @@ class StatisticsService extends Component
         }
 
         $highQuality = (int) AssetAnalysisRecord::find()
-            ->where(['in', 'status', $analyzedStatuses])
+            ->where(['in', 'status', $metadataStatuses])
             ->andWhere(['>=', 'overallQualityScore', 0.7])
             ->count();
 

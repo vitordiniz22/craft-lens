@@ -159,11 +159,12 @@ class AnalysisEditService extends Component
 
         $result = [];
         foreach ($tags as $tagData) {
-            if (!is_array($tagData) || !isset($tagData['tag'])) {
+            if (!is_array($tagData)) {
                 continue;
             }
 
-            $tagName = trim((string)$tagData['tag']);
+            $tagName = trim((string)($tagData['tag'] ?? $tagData['name'] ?? ''));
+
             if ($tagName === '') {
                 continue;
             }

@@ -29,6 +29,7 @@
 {% set siteId = siteId ?? null %}
 {% set fieldState = fieldState ?? 'readonly' %}
 {% set isEdited = (editedBy ?? null) is not null %}
+{% set isSecondarySite = siteId and siteId != craft.app.sites.primarySite.id %}
 
 {# Determine the status of the native value relative to the suggestion #}
 {% set hasSuggestion = suggestionValue is defined and suggestionValue is not empty %}
@@ -93,35 +94,37 @@
             <p>{{ suggestionValue }}</p>
         </div>
 
-        {# Apply row #}
-        <div class="lens-apply-row" data-lens-target="native-apply-row">
-            {% if valuesMatch %}
-                <div class="lens-applied-indicator">
-                    <span class="status on"></span>
-                    <span class="smalltext">{{ 'Applied'|t('lens') }}</span>
-                </div>
-            {% elseif isCustom %}
-                <button type="button" class="btn small"
-                        data-lens-action="{{ applyAction }}"
-                        data-lens-asset-id="{{ assetId }}"
-                        data-lens-analysis-id="{{ analysisId }}"
-                        {% if siteId %}data-lens-site-id="{{ siteId }}"{% endif %}>
-                    {{ 'Replace Current Value'|t('lens') }}
-                </button>
-                <span class="smalltext light">{{ 'Current value was set manually'|t('lens') }}</span>
-            {% else %}
-                <button type="button" class="btn small submit"
-                        data-lens-action="{{ applyAction }}"
-                        data-lens-asset-id="{{ assetId }}"
-                        data-lens-analysis-id="{{ analysisId }}"
-                        {% if siteId %}data-lens-site-id="{{ siteId }}"{% endif %}>
-                    {{ 'Apply to Asset'|t('lens') }}
-                </button>
-                {% if isNativeDefault and nativeValue %}
-                    <span class="smalltext light">{{ 'Auto-generated from filename'|t('lens') }}</span>
+        {# Apply row — hidden for secondary site translations #}
+        {% if not isSecondarySite %}
+            <div class="lens-apply-row" data-lens-target="native-apply-row">
+                {% if valuesMatch %}
+                    <div class="lens-applied-indicator">
+                        <span class="status on"></span>
+                        <span class="smalltext">{{ 'Applied'|t('lens') }}</span>
+                    </div>
+                {% elseif isCustom %}
+                    <button type="button" class="btn small"
+                            data-lens-action="{{ applyAction }}"
+                            data-lens-asset-id="{{ assetId }}"
+                            data-lens-analysis-id="{{ analysisId }}"
+                            {% if siteId %}data-lens-site-id="{{ siteId }}"{% endif %}>
+                        {{ 'Replace Current Value'|t('lens') }}
+                    </button>
+                    <span class="smalltext light">{{ 'Current value was set manually'|t('lens') }}</span>
+                {% else %}
+                    <button type="button" class="btn small submit"
+                            data-lens-action="{{ applyAction }}"
+                            data-lens-asset-id="{{ assetId }}"
+                            data-lens-analysis-id="{{ analysisId }}"
+                            {% if siteId %}data-lens-site-id="{{ siteId }}"{% endif %}>
+                        {{ 'Apply to Asset'|t('lens') }}
+                    </button>
+                    {% if isNativeDefault and nativeValue %}
+                        <span class="smalltext light">{{ 'Auto-generated from filename'|t('lens') }}</span>
+                    {% endif %}
                 {% endif %}
-            {% endif %}
-        </div>
+            </div>
+        {% endif %}
     {% else %}
         <div class="lens-field-display">
             <p class="light">{{ 'No suggestion available'|t('lens') }}</p>

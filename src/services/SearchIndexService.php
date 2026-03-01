@@ -125,8 +125,8 @@ class SearchIndexService extends Component
     }
 
     /**
-     * Re-indexes a single field for an asset. For the 'title' field, fetches
-     * the current value from elements_sites (not the analysis record).
+     * Re-indexes a single field for an asset. For 'title' and 'alt' fields,
+     * fetches the current value from Craft's native tables (not the analysis record).
      */
     public function reindexField(AssetAnalysisRecord $record, string $field): void
     {
@@ -588,7 +588,10 @@ class SearchIndexService extends Component
     }
 
     /**
-     * Fetch the primary-site native alt text from elements_sites and build token rows.
+     * Fetch the primary-site native alt text and build token rows.
+     *
+     * Craft 5 stores alt in two places: assets_sites.alt (per-site override)
+     * and assets.alt (default fallback). We check per-site first.
      *
      * @return array<array<string, mixed>>
      */
@@ -598,9 +601,17 @@ class SearchIndexService extends Component
 
         $alt = (new Query())
             ->select(['alt'])
-            ->from('{{%elements_sites}}')
-            ->where(['elementId' => $assetId, 'siteId' => $primarySiteId])
+            ->from('{{%assets_sites}}')
+            ->where(['assetId' => $assetId, 'siteId' => $primarySiteId])
             ->scalar();
+
+        if (empty($alt)) {
+            $alt = (new Query())
+                ->select(['alt'])
+                ->from('{{%assets}}')
+                ->where(['id' => $assetId])
+                ->scalar();
+        }
 
         if (empty($alt)) {
             return [];

@@ -52,9 +52,9 @@ class DashboardController extends Controller
                 'processingProgress' => $processingStatus['progress'] ?? null,
                 'queueInfo' => $processingStatus['queueInfo'] ?? null,
 
-                // Section 3: Library Health
-                'altTextCoverage' => $stats->getAltTextCoverage($analyzedCount),
-                'taggedPercentage' => $stats->getTaggedPercentage($analyzedCount),
+                // Section 3: Metadata Coverage
+                'altTextCoverage' => $stats->getAltTextCoverage(),
+                'taggedPercentage' => $stats->getTaggedPercentage(),
                 'highQualityPercentage' => $stats->getHighQualityPercentage(),
 
                 // Section 4: Quick Insights
