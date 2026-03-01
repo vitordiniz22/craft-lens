@@ -37,9 +37,18 @@
             pageParam: 'page',
         } only %}
     {% else %}
-        {% include 'lens/_components/empty-state' with {
-            heading: 'No Pending Reviews'|t('lens'),
-            description: 'All AI suggestions have been reviewed.'|t('lens')
-        } %}
+        {% if hasAnalyses %}
+            {% include 'lens/_components/empty-state' with {
+                heading: 'No Pending Reviews'|t('lens'),
+                description: 'All AI suggestions have been reviewed.'|t('lens'),
+                cta: {label: 'Go to Dashboard'|t('lens'), url: 'lens'}
+            } %}
+        {% else %}
+            {% include 'lens/_components/empty-state' with {
+                heading: 'No Pending Reviews'|t('lens'),
+                description: 'Analyze your images to generate AI suggestions for review.'|t('lens'),
+                cta: {label: 'Go to Dashboard'|t('lens'), url: 'lens'}
+            } %}
+        {% endif %}
     {% endif %}
 {% endblock %}

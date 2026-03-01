@@ -12,6 +12,7 @@ use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\Plugin;
+use vitordiniz22\craftlens\records\AssetAnalysisRecord;
 use vitordiniz22\craftlens\records\AssetTagRecord;
 use yii\web\BadRequestHttpException;
 use yii\web\Response;
@@ -57,6 +58,7 @@ class ReviewController extends Controller
         if ($totalCount === 0) {
             return $this->renderTemplate('lens/_review/browse', [
                 'pendingCount' => 0,
+                'hasAnalyses' => AssetAnalysisRecord::find()->exists(),
             ]);
         }
 
@@ -338,6 +340,7 @@ class ReviewController extends Controller
         if ($totalCount === 0) {
             return $this->renderTemplate('lens/_review/bulk', [
                 'totalCount' => 0,
+                'hasAnalyses' => AssetAnalysisRecord::find()->exists(),
             ]);
         }
 
