@@ -14,4 +14,14 @@
         var params = select.value ? { volumeId: select.value } : {};
         window.location.href = Craft.getCpUrl('lens/bulk', params);
     });
+
+    DOM.delegate('[data-lens-action="toggle-error-group"]', 'click', function(e, btn) {
+        var group = btn.closest('[data-lens-target="error-group"]');
+        if (!group) return;
+        var detail = group.querySelector('[data-lens-target="error-group-detail"]');
+        if (!detail) return;
+        var isExpanded = detail.style.display !== 'none';
+        detail.style.display = isExpanded ? 'none' : '';
+        group.classList.toggle('lens-error-group--expanded', !isExpanded);
+    });
 })();

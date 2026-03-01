@@ -88,7 +88,7 @@ class BulkController extends Controller
         if ($state === 'complete') {
             $templateVars['session'] = $statusService->formatSession($session);
             if (($stats['failed'] ?? 0) > 0) {
-                $templateVars['failureReason'] = $statusService->getFailureReason();
+                $templateVars['failureReasons'] = $statusService->getFailureReasons();
             }
         }
 

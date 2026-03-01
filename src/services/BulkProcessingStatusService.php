@@ -129,7 +129,7 @@ class BulkProcessingStatusService extends Component
             return 'processing';
         }
 
-        if ($this->isRecentlyCompleted()) {
+        if ($this->isRecentlyCompleted($stats)) {
             return 'complete';
         }
 
@@ -295,7 +295,7 @@ class BulkProcessingStatusService extends Component
     /**
      * Check if processing recently completed (within COMPLETE_STATE_DURATION).
      */
-    private function isRecentlyCompleted(): bool
+    private function isRecentlyCompleted(array $stats): bool
     {
         $session = $this->getSessionData();
 
@@ -303,11 +303,8 @@ class BulkProcessingStatusService extends Component
             return false;
         }
 
-        // If no completedAt yet, check if we should mark it
         if (!isset($session['completedAt'])) {
-            // Check if processing has stopped
             if (!$this->hasLensJobsInQueue() && $this->getProcessingCount() === 0) {
-                // Mark as completed
                 $session['completedAt'] = time();
                 Craft::$app->getCache()->set($this->getSessionCacheKey(), $session, 3600);
                 return true;
@@ -315,7 +312,10 @@ class BulkProcessingStatusService extends Component
             return false;
         }
 
-        // Check if within the display window
+        if (($stats['failed'] ?? 0) > 0) {
+            return true;
+        }
+
         return (time() - $session['completedAt']) < self::COMPLETE_STATE_DURATION;
     }
 
@@ -542,8 +542,126 @@ class BulkProcessingStatusService extends Component
     }
 
     /**
+     * Maximum number of asset details to include per error group.
+     */
+    private const MAX_ASSETS_PER_GROUP = 10;
+
+    /**
+     * Get all error groups from failed analyses with asset details.
+     *
+     * Returns error messages grouped by distinct message, each with a count
+     * and a list of affected assets (capped at MAX_ASSETS_PER_GROUP).
+     *
+     * @return array{groups: array, totalFailed: int}
+     */
+    public function getFailureReasons(): array
+    {
+        $session = $this->getSessionData();
+        $query = AssetAnalysisRecord::find()
+            ->select(['id'])
+            ->where(['status' => AnalysisStatus::Failed->value]);
+
+        if ($session !== null && isset($session['startedAt'])) {
+            $query->andWhere(['>=', 'processedAt', date('Y-m-d H:i:s', $session['startedAt'])]);
+        }
+
+        $failedAnalysisIds = $query->column();
+
+        if (empty($failedAnalysisIds)) {
+            return ['groups' => [], 'totalFailed' => 0, 'hasConfigError' => false];
+        }
+
+        $errorGroups = (new Query())
+            ->select(['errorMessage', 'COUNT(*) as cnt'])
+            ->from(Install::TABLE_ANALYSIS_CONTENT)
+            ->where(['in', 'analysisId', $failedAnalysisIds])
+            ->andWhere(['not', ['errorMessage' => null]])
+            ->groupBy(['errorMessage'])
+            ->orderBy(['cnt' => SORT_DESC])
+            ->all();
+
+        if (empty($errorGroups)) {
+            return ['groups' => [], 'totalFailed' => 0, 'hasConfigError' => false];
+        }
+
+        $failedDetails = (new Query())
+            ->select(['a.assetId', 'c.errorMessage'])
+            ->from([Install::TABLE_ASSET_ANALYSES . ' a'])
+            ->innerJoin(Install::TABLE_ANALYSIS_CONTENT . ' c', 'c.[[analysisId]] = a.[[id]]')
+            ->where(['in', 'a.id', $failedAnalysisIds])
+            ->andWhere(['not', ['c.errorMessage' => null]])
+            ->all();
+
+        $assetIdsByMessage = [];
+
+        foreach ($failedDetails as $row) {
+            $assetIdsByMessage[$row['errorMessage']][] = (int) $row['assetId'];
+        }
+
+        $allAssetIds = array_unique(array_column($failedDetails, 'assetId'));
+        $assets = !empty($allAssetIds)
+            ? Asset::find()->id($allAssetIds)->status(null)->indexBy('id')->all()
+            : [];
+        $totalFailed = 0;
+        $groups = [];
+
+        foreach ($errorGroups as $eg) {
+            $message = $eg['errorMessage'];
+            $count = (int) $eg['cnt'];
+            $totalFailed += $count;
+
+            $groupAssetIds = $assetIdsByMessage[$message] ?? [];
+            $assetList = [];
+
+            foreach (array_slice($groupAssetIds, 0, self::MAX_ASSETS_PER_GROUP) as $assetId) {
+                $asset = $assets[$assetId] ?? null;
+
+                if ($asset !== null) {
+                    $assetList[] = [
+                        'id' => $asset->id,
+                        'filename' => $asset->filename,
+                        'editUrl' => $asset->getCpEditUrl(),
+                    ];
+                } else {
+                    $assetList[] = [
+                        'id' => $assetId,
+                        'filename' => null,
+                        'editUrl' => null,
+                    ];
+                }
+            }
+
+            $groups[] = [
+                'message' => $message,
+                'count' => $count,
+                'assets' => $assetList,
+                'hasMore' => max(0, $count - self::MAX_ASSETS_PER_GROUP),
+            ];
+        }
+
+        return [
+            'groups' => $groups,
+            'totalFailed' => $totalFailed,
+        ];
+    }
+
+    /**
+     * Check whether an error message indicates a configuration problem.
+     */
+    private function isConfigurationError(string $message): bool
+    {
+        $lower = strtolower($message);
+
+        return str_contains($lower, 'not configured')
+            || str_contains($lower, 'is invalid')
+            || str_contains($lower, 'api key')
+            || str_contains($lower, 'unauthorized');
+    }
+
+    /**
      * Get the most common error message from failed analyses.
      *
+     * @deprecated Use getFailureReasons() instead.
      * @return array{message: string|null, count: int, isConfigError: bool}
      */
     public function getFailureReason(): array
@@ -579,16 +697,11 @@ class BulkProcessingStatusService extends Component
 
         $message = $result['errorMessage'];
         $count = (int) $result['cnt'];
-        $lowerMessage = strtolower($message);
-        $isConfigError = str_contains($lowerMessage, 'not configured')
-            || str_contains($lowerMessage, 'is invalid')
-            || str_contains($lowerMessage, 'api key')
-            || str_contains($lowerMessage, 'unauthorized');
 
         return [
             'message' => $message,
             'count' => $count,
-            'isConfigError' => $isConfigError,
+            'isConfigError' => $this->isConfigurationError($message),
         ];
     }
 

@@ -58,11 +58,86 @@
                 </p>
             {% endif %}
 
-            {% if failureReason is defined and failureReason.message %}
-                {% include 'lens/_components/inline-notice' with {
-                    type: 'warning',
-                    message: failureReason.message ~ (failureReason.count < stats.failed ? ' (' ~ ('{count} of {total} failures'|t('lens', {count: failureReason.count, total: stats.failed})) ~ ')' : ''),
-                } only %}
+            {% if failureReasons is defined and failureReasons.groups|length > 0 %}
+                {% set groups = failureReasons.groups %}
+
+                {% if groups|length == 1 %}
+                    {# Single error type: one cohesive notice box with asset list inside #}
+                    {% set group = groups[0] %}
+
+                    <div class="lens-inline-notice lens-inline-notice--warning" data-lens-target="error-groups">
+                        <div class="lens-notice-header">
+                            <span class="lens-notice-icon">{{ iconSvg('triangle-exclamation') }}</span>
+                            <h4 class="lens-notice-title">{{ 'Attention needed'|t('lens') }}</h4>
+                        </div>
+
+                        <div class="lens-notice-content">
+                            {{ group.message }}
+                        </div>
+
+                        {% if group.assets|length > 0 %}
+                            <div class="lens-error-asset-list">
+                                {% for asset in group.assets %}
+                                    <div class="lens-error-asset">
+                                        {% if asset.editUrl %}
+                                            <a href="{{ asset.editUrl }}" class="lens-error-asset-link">{{ asset.filename }}</a>
+                                        {% else %}
+                                            <span class="lens-error-asset-deleted">{{ 'Deleted asset (ID: {id})'|t('lens', {id: asset.id}) }}</span>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                                {% if group.hasMore > 0 %}
+                                    <div class="lens-error-asset-more">
+                                        {{ 'and {count} more'|t('lens', {count: group.hasMore}) }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    {# Multiple error types: grouped with expand/collapse #}
+                    <div class="lens-error-groups" data-lens-target="error-groups">
+                        <div class="lens-error-groups-header">
+                            <span class="lens-notice-icon">{{ iconSvg('triangle-exclamation') }}</span>
+                            <h4 class="lens-notice-title">{{ '{count} errors across {groups} error types'|t('lens', {count: failureReasons.totalFailed, groups: groups|length}) }}</h4>
+                        </div>
+
+                        {% for group in groups %}
+                            <div class="lens-error-group" data-lens-target="error-group">
+                                <button type="button" class="lens-error-group-header" data-lens-action="toggle-error-group">
+                                    <span class="lens-error-group-toggle">{{ iconSvg('chevron-right') }}</span>
+                                    <span class="lens-error-group-count">{{ group.count }}</span>
+                                    <span class="lens-error-group-message">{{ group.message }}</span>
+                                </button>
+
+                                <div class="lens-error-group-detail" style="display: none;" data-lens-target="error-group-detail">
+                                    {% if group.assets|length > 0 %}
+                                        <div class="lens-error-asset-list">
+                                            {% for asset in group.assets %}
+                                                <div class="lens-error-asset">
+                                                    {% if asset.editUrl %}
+                                                        <a href="{{ asset.editUrl }}" class="lens-error-asset-link">{{ asset.filename }}</a>
+                                                    {% else %}
+                                                        <span class="lens-error-asset-deleted">{{ 'Deleted asset (ID: {id})'|t('lens', {id: asset.id}) }}</span>
+                                                    {% endif %}
+                                                </div>
+                                            {% endfor %}
+                                            {% if group.hasMore > 0 %}
+                                                <div class="lens-error-asset-more">
+                                                    {{ 'and {count} more'|t('lens', {count: group.hasMore}) }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    {% else %}
+                                        <div class="lens-error-no-assets">
+                                            {{ 'Asset details unavailable.'|t('lens') }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
             {% endif %}
         </div>
 
@@ -84,7 +159,7 @@
             {% endif %}
 
             <a href="{{ cpUrl('lens/bulk/dismiss') }}" class="btn">
-                {{ 'Process More'|t('lens') }}
+                {{ 'Start New Batch'|t('lens') }}
             </a>
 
             <a href="{{ cpUrl('lens/search') }}" class="btn">
