@@ -1,6 +1,6 @@
 /**
  * Bulk Processing Page
- * Progress states, counters, complete/all-done states.
+ * Progress states, complete/all-done states.
  */
 
 .lens-bulk-page {
@@ -76,45 +76,6 @@
   margin-top: 8px;
   font-size: 14px;
   color: var(--medium-text-color);
-}
-
-/* Progress Counters */
-.lens-progress-counters {
-  display: flex;
-  justify-content: center;
-  gap: 24px;
-  margin: 24px 0;
-  padding: 16px;
-  background: var(--gray-050);
-  border-radius: var(--medium-border-radius);
-}
-
-.lens-counter {
-  text-align: center;
-}
-
-.lens-counter__value {
-  display: block;
-  font-size: 32px;
-  font-weight: 600;
-  color: var(--text-color);
-}
-
-.lens-counter--success .lens-counter__value {
-  color: var(--success-color);
-}
-
-.lens-counter--error .lens-counter__value {
-  color: var(--error-color);
-}
-
-.lens-counter__label {
-  display: block;
-  font-size: 12px;
-  color: var(--medium-text-color);
-  margin-top: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 .lens-progress-details {
@@ -203,14 +164,6 @@
 
 
 @media (max-width: 640px) {
-  .lens-progress-counters {
-    gap: 16px;
-  }
-
-  .lens-counter__value {
-    font-size: 24px;
-  }
-
   .lens-summary-grid {
     grid-template-columns: 1fr;
     gap: 8px;
@@ -227,7 +180,6 @@
   .lens-complete-actions {
     flex-direction: column;
   }
-
 }
 
 
