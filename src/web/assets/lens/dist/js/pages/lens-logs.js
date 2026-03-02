@@ -32,7 +32,8 @@
 
                 var row = document.getElementById(targetId);
                 if (row) {
-                    row.style.display = row.style.display === 'none' ? '' : 'none';
+                    var isHidden = window.getComputedStyle(row).display === 'none';
+                    row.style.display = isHidden ? 'table-row' : 'none';
                 }
             });
         },

@@ -89,9 +89,7 @@
                             Craft.cp.displayNotice(message);
 
                             const delay = options.reloadDelay || window.Lens.config.ANIMATION.RELOAD_DELAY_MS;
-                            setTimeout(function() {
-                                window.location.reload();
-                            }, delay);
+                            window.Lens.utils.safeReload(delay);
                         }
 
                     // Handle pending states

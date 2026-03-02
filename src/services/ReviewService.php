@@ -154,15 +154,15 @@ class ReviewService extends Component
             AssetAnalysisRecord::EDITABLE_FIELDS
         );
 
-        // Handle focal point as a pair
+        // Handle focal point as a pair — pass $record to avoid redundant queries
         if (isset($modifications['focalPointX']) && isset($modifications['focalPointY'])) {
-            $editService->updateSingleField($analysisId, 'focalPointX', $modifications['focalPointX'], $userId);
-            $editService->updateSingleField($analysisId, 'focalPointY', $modifications['focalPointY'], $userId);
+            $editService->updateSingleField($analysisId, 'focalPointX', $modifications['focalPointX'], $userId, $record);
+            $editService->updateSingleField($analysisId, 'focalPointY', $modifications['focalPointY'], $userId, $record);
             unset($fieldKeys['focalPointX'], $fieldKeys['focalPointY']);
         }
 
         foreach ($fieldKeys as $field => $value) {
-            $editService->updateSingleField($analysisId, $field, $value, $userId);
+            $editService->updateSingleField($analysisId, $field, $value, $userId, $record);
         }
 
         // Handle tags modifications
@@ -178,7 +178,12 @@ class ReviewService extends Component
         // Handle per-site content modifications (respecting per-field translatability)
         if (isset($modifications['siteContent']) && is_array($modifications['siteContent'])) {
             $asset = Asset::find()->id($record->assetId)->one();
-            $volumeId = $asset?->getVolume()->id;
+
+            if ($asset === null) {
+                throw new InvalidArgumentException("Asset not found for analysis record {$analysisId}");
+            }
+
+            $volumeId = $asset->getVolume()->id;
             $altTranslatable = $volumeId !== null && MultisiteHelper::isAltTranslatable($volumeId);
             $titleTranslatable = $volumeId !== null && MultisiteHelper::isTitleTranslatable($volumeId);
 

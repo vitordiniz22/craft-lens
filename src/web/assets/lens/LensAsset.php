@@ -20,11 +20,8 @@ class LensAsset extends AssetBundle
         $this->css = [
             // Base (must load first)
             'css/base/lens.css',
-            'css/base/utilities.css',
-            'css/base/animations.css',
 
             // Components (alphabetical)
-            'css/components/alert-section.css',
             'css/components/badge.css',
             'css/components/card.css',
             'css/components/confidence-badge.css',

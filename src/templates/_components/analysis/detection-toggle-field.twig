@@ -36,7 +36,7 @@
     <div class="lens-field-display">
         <div class="lens-detection-item{% if not detected %} lens-detection-item--clear{% endif %}">
             <div class="flex items-center gap-s">
-                <span class="status {{ detected ? 'on' : 'on' }}"></span>
+                <span class="status {{ detected ? 'on' : 'off' }}"></span>
                 <span>{{ detected ? detectedLabel : clearedLabel }}</span>
             </div>
         </div>
@@ -69,7 +69,7 @@
     <div class="lens-field-display" data-lens-target="field-display">
         <div class="lens-detection-item{% if not detected %} lens-detection-item--clear{% endif %}">
             <div class="flex items-center gap-s">
-                <span class="status {{ detected ? 'on' : 'on' }}"></span>
+                <span class="status {{ detected ? 'on' : 'off' }}"></span>
                 <span data-lens-target="detection-display-text">{{ detected ? detectedLabel : clearedLabel }}</span>
             </div>
         </div>

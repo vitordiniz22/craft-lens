@@ -71,22 +71,6 @@
   color: var(--gray-400);
 }
 
-.lens-log-provider {
-  font-size: 12px;
-}
-
-.lens-log-http-code {
-  font-size: 11px;
-}
-
-.lens-log-response-time {
-  font-size: 12px;
-}
-
-.lens-log-tokens {
-  font-size: 11px;
-}
-
 .lens-log-actions {
   white-space: nowrap;
 }

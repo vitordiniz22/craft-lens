@@ -11,6 +11,14 @@
     /**
      * Focal Point Editor Component
      */
+    /** Tolerance for focal point coordinate matching */
+    const FP_EPSILON = 0.005;
+
+    function isFocalPointMatch(x, y, refX, refY) {
+        return !isNaN(refX) && !isNaN(refY) &&
+            Math.abs(x - refX) < FP_EPSILON && Math.abs(y - refY) < FP_EPSILON;
+    }
+
     const LensFocalPointEditor = {
         _initialized: false,
 
@@ -58,6 +66,8 @@
                 if (!img) return;
 
                 var rect = img.getBoundingClientRect();
+                if (rect.width === 0 || rect.height === 0) return;
+
                 var x = (e.clientX - rect.left) / rect.width;
                 var y = (e.clientY - rect.top) / rect.height;
 
@@ -122,13 +132,13 @@
                 aiX = parseFloat(container.dataset.lensFocalXAi);
                 aiY = parseFloat(container.dataset.lensFocalYAi);
                 hasAi = !isNaN(aiX) && !isNaN(aiY);
-                isAiMatch = hasAi && Math.abs(x - aiX) < 0.005 && Math.abs(y - aiY) < 0.005;
+                isAiMatch = hasAi && isFocalPointMatch(x, y, aiX, aiY);
 
                 assetX = parseFloat(container.dataset.lensAssetFocalX);
                 assetY = parseFloat(container.dataset.lensAssetFocalY);
                 hasAsset = container.dataset.lensAssetHasFocalPoint === '1'
                     && !isNaN(assetX) && !isNaN(assetY);
-                isAssetMatch = hasAsset && Math.abs(x - assetX) < 0.005 && Math.abs(y - assetY) < 0.005;
+                isAssetMatch = hasAsset && isFocalPointMatch(x, y, assetX, assetY);
 
                 // Source badge: AI (violet), Edited (amber), hidden when matches asset
                 var badge = document.querySelector('[data-lens-target="focal-status-badge"]');

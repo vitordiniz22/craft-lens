@@ -17,22 +17,6 @@
   white-space: nowrap;
 }
 
-/* Color modifiers for Craft's native .badge */
-.badge--success {
-  background: var(--bg-success);
-  color: var(--fg-success);
-}
-
-.badge--warning {
-  background: var(--bg-warning);
-  color: var(--fg-warning);
-}
-
-.badge--error {
-  background: var(--bg-error);
-  color: var(--fg-error);
-}
-
 /* Semantic color modifiers */
 .lens-badge--success {
   background: var(--bg-success);

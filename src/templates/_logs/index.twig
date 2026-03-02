@@ -59,12 +59,6 @@
                     <th>{{ 'Category'|t('lens') }}</th>
                     <th>{{ 'Message'|t('lens') }}</th>
                     <th>{{ 'Asset'|t('lens') }}</th>
-                    <th>{{ 'Provider'|t('lens') }}</th>
-                    {% if isDevMode %}
-                        <th>{{ 'HTTP'|t('lens') }}</th>
-                        <th>{{ 'Time'|t('lens') }}</th>
-                        <th>{{ 'Tokens'|t('lens') }}</th>
-                    {% endif %}
                     <th>{{ 'Actions'|t('lens') }}</th>
                 </tr>
             </thead>
@@ -102,40 +96,8 @@
                                 <span class="lens-log-placeholder">—</span>
                             {% endif %}
                         </td>
-                        <td>
-                            {% if log.provider %}
-                                <span class="lens-log-provider">{{ log.provider }}</span>
-                            {% else %}
-                                <span class="lens-log-placeholder">—</span>
-                            {% endif %}
-                        </td>
-                        {% if isDevMode %}
-                            <td>
-                                {% if log.httpStatusCode %}
-                                    <code class="lens-log-http-code">{{ log.httpStatusCode }}</code>
-                                {% else %}
-                                    <span class="lens-log-placeholder">—</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if log.responseTimeMs %}
-                                    <span class="lens-log-response-time">{{ log.responseTimeMs }}ms</span>
-                                {% else %}
-                                    <span class="lens-log-placeholder">—</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if log.inputTokens or log.outputTokens %}
-                                    <span class="lens-log-tokens" title="{{ 'In: {input}, Out: {output}'|t('lens', {input: log.inputTokens ?? 0, output: log.outputTokens ?? 0}) }}">
-                                        {{ (log.inputTokens ?? 0) + (log.outputTokens ?? 0) }}
-                                    </span>
-                                {% else %}
-                                    <span class="lens-log-placeholder">—</span>
-                                {% endif %}
-                            </td>
-                        {% endif %}
                         <td class="lens-log-actions">
-                            {% if log.stackTrace or log.context or (isDevMode and (log.requestPayload or log.responsePayload)) %}
+                            {% if log.stackTrace or log.context or log.requestPayload or log.responsePayload %}
                                 <button type="button" class="btn small" data-lens-action="toggle-log-detail" data-target="lens-detail-{{ log.id }}">
                                     {{ 'Details'|t('lens') }}
                                 </button>
@@ -150,9 +112,9 @@
                             {% endif %}
                         </td>
                     </tr>
-                    {% if log.stackTrace or log.context or (isDevMode and (log.requestPayload or log.responsePayload)) %}
+                    {% if log.stackTrace or log.context or log.requestPayload or log.responsePayload %}
                         <tr id="lens-detail-{{ log.id }}" class="lens-log-detail">
-                            <td colspan="{{ isDevMode ? 10 : 7 }}" class="lens-log-detail-cell">
+                            <td colspan="6" class="lens-log-detail-cell">
                                 {% if log.stackTrace %}
                                     <div class="lens-log-detail-section">
                                         <strong>{{ 'Stack Trace'|t('lens') }}</strong>

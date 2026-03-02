@@ -47,9 +47,11 @@ class AnalysisEditService extends Component
      * @throws InvalidArgumentException If record not found or field not editable
      * @throws \RuntimeException If save fails
      */
-    public function updateSingleField(int $analysisId, string $field, mixed $value, ?int $userId = null): array
+    public function updateSingleField(int $analysisId, string $field, mixed $value, ?int $userId = null, ?AssetAnalysisRecord $record = null): array
     {
-        $record = AssetAnalysisRecord::findOne($analysisId);
+        if ($record === null) {
+            $record = AssetAnalysisRecord::findOne($analysisId);
+        }
 
         if ($record === null) {
             throw new InvalidArgumentException("Analysis record {$analysisId} not found");
@@ -178,7 +180,13 @@ class AnalysisEditService extends Component
             $tagRecord->tagNormalized = mb_strtolower($tagName);
             $tagRecord->confidence = $isAi ? ($tagData['confidence'] ?? null) : 1.0;
             $tagRecord->isAi = $isAi;
-            $tagRecord->save(false);
+
+            if (!$tagRecord->save(false)) {
+                Logger::warning(LogCategory::Review, 'Failed to save tag record', assetId: $record->assetId, context: [
+                    'tag' => $tagName,
+                ]);
+                continue;
+            }
 
             $result[] = [
                 'tag' => $tagName,
@@ -236,7 +244,13 @@ class AnalysisEditService extends Component
             $colorRecord->hex = $hex;
             $colorRecord->percentage = $colorData['percentage'] ?? null;
             $colorRecord->isAi = $isAi;
-            $colorRecord->save(false);
+
+            if (!$colorRecord->save(false)) {
+                Logger::warning(LogCategory::Review, 'Failed to save color record', assetId: $record->assetId, context: [
+                    'hex' => $hex,
+                ]);
+                continue;
+            }
 
             $result[] = [
                 'hex' => $hex,

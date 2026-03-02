@@ -29,6 +29,7 @@ use vitordiniz22\craftlens\records\AssetColorRecord;
 use vitordiniz22\craftlens\records\AssetTagRecord;
 use vitordiniz22\craftlens\records\DuplicateGroupRecord;
 use yii\base\Component;
+use yii\db\IntegrityException;
 
 /**
  * Service for managing asset analysis workflow.
@@ -415,9 +416,7 @@ class AssetAnalysisService extends Component
             throw $e;
         }
 
-        Logger::info(LogCategory::AssetProcessing, 'Analysis completed', assetId:
-
-        $asset->id, context: array_merge(
+        Logger::info(LogCategory::AssetProcessing, 'Analysis completed', assetId: $asset->id, context: array_merge(
             ['provider' => $settings->aiProvider, 'model' => $providerModel, 'status' => $record->status, 'cost' => $record->actualCost],
             $result->toLogContext(),
         ));
@@ -429,7 +428,11 @@ class AssetAnalysisService extends Component
         }
 
         if ($record->status !== AnalysisStatus::PendingReview->value) {
-            $this->autoApplyToAsset($asset, $record, $result);
+            try {
+                $this->autoApplyToAsset($asset, $record, $result);
+            } catch (\Throwable $e) {
+                Logger::warning(LogCategory::AssetProcessing, 'Auto-apply failed (non-fatal): ' . $e->getMessage(), assetId: $asset->id);
+            }
         }
     }
 
@@ -462,11 +465,18 @@ class AssetAnalysisService extends Component
             return $record;
         }
 
-        // Create new record
-        $record = new AssetAnalysisRecord();
-        $record->assetId = $asset->id;
-        $record->status = AnalysisStatus::Pending->value;
-        $record->save();
+        try {
+            $record = new AssetAnalysisRecord();
+            $record->assetId = $asset->id;
+            $record->status = AnalysisStatus::Pending->value;
+            $record->save();
+        } catch (IntegrityException) {
+            $record = $this->getAnalysis($asset->id);
+
+            if ($record === null) {
+                throw new \RuntimeException("Failed to create or find analysis record for asset {$asset->id}");
+            }
+        }
 
         return $record;
     }
@@ -826,7 +836,12 @@ class AssetAnalysisService extends Component
             $tagRecord->tagNormalized = $normalized;
             $tagRecord->confidence = $tagData['confidence'] ?? null;
             $tagRecord->isAi = true;
-            $tagRecord->save(false);
+
+            if (!$tagRecord->save(false)) {
+                Logger::warning(LogCategory::AssetProcessing, 'Failed to save AI tag record', assetId: $record->assetId, context: [
+                    'tag' => $tagName,
+                ]);
+            }
 
             $existingSet[$normalized] = true;
         }
@@ -862,7 +877,12 @@ class AssetAnalysisService extends Component
             $colorRecord->hex = $hex;
             $colorRecord->percentage = $colorData['percentage'] ?? null;
             $colorRecord->isAi = true;
-            $colorRecord->save(false);
+
+            if (!$colorRecord->save(false)) {
+                Logger::warning(LogCategory::AssetProcessing, 'Failed to save AI color record', assetId: $record->assetId, context: [
+                    'hex' => $hex,
+                ]);
+            }
         }
     }
 

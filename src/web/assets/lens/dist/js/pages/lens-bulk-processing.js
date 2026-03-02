@@ -28,13 +28,16 @@
         .then(function(result) {
             if (result.state !== 'processing') {
                 clearInterval(pollTimer);
-                window.location.reload();
+                window.Lens.utils.safeReload();
                 return;
             }
             container.innerHTML = result.html;
             updateStatCards(result.statsJson);
         })
-        .catch(function() {});
+        .catch(function() {
+            clearInterval(pollTimer);
+            Craft.cp.displayError(Craft.t('lens', 'Failed to load progress. Please refresh the page.'));
+        });
     }
 
     function updateStatCards(statsJson) {

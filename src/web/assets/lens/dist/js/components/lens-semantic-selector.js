@@ -19,7 +19,9 @@
     }
 
     var SEARCH_ACTION = 'lens/semantic-search/search';
-    var DEBOUNCE_MS = 350;
+    var DEBOUNCE_MS = window.Lens && window.Lens.config
+        ? window.Lens.config.POLLING.SEMANTIC_SEARCH_DEBOUNCE_MS
+        : 350;
     var SEARCH_LIMIT = 50;
     var MIN_QUERY_LENGTH = 2;
 

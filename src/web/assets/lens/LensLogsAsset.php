@@ -12,6 +12,7 @@ class LensLogsAsset extends AssetBundle
     {
         $this->sourcePath = __DIR__ . '/dist';
         $this->depends = [LensAsset::class];
+        $this->css = ['css/pages/lens-logs.css'];
         $this->js = ['js/pages/lens-logs.js'];
 
         parent::init();

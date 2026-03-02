@@ -48,6 +48,21 @@
             }
 
             return '';
+        },
+
+        /**
+         * Safely reload the page, preventing multiple simultaneous reloads.
+         * @param {number} [delay=0] - Optional delay in ms before reload
+         */
+        safeReload: function(delay) {
+            if (window._lensReloading) return;
+            window._lensReloading = true;
+
+            if (delay) {
+                setTimeout(function() { window.location.reload(); }, delay);
+            } else {
+                window.location.reload();
+            }
         }
     };
 })();

@@ -217,7 +217,7 @@
 
             Promise.all(promises).then(() => {
                 Craft.cp.displayNotice(Craft.t('lens', 'Reverted to AI values. Refreshing...'));
-                setTimeout(() => window.location.reload(), window.Lens.config.ANIMATION.RELOAD_DELAY_MS);
+                window.Lens.utils.safeReload(window.Lens.config.ANIMATION.RELOAD_DELAY_MS);
             });
         },
 
@@ -280,7 +280,7 @@
                     .then((response) => {
                         if (response.data.success) {
                             Craft.cp.displayNotice(Craft.t('lens', 'Detection updated. Refreshing...'));
-                            setTimeout(() => window.location.reload(), window.Lens.config.ANIMATION.RELOAD_DELAY_MS);
+                            window.Lens.utils.safeReload(window.Lens.config.ANIMATION.RELOAD_DELAY_MS);
                         }
                     });
             });
@@ -293,7 +293,7 @@
             window.Lens.core.API.revertField(analysisId, fieldName).then((response) => {
                 if (response.data.success) {
                     Craft.cp.displayNotice(Craft.t('lens', 'Reverted to AI value. Refreshing...'));
-                    setTimeout(() => window.location.reload(), window.Lens.config.ANIMATION.RELOAD_DELAY_MS);
+                    window.Lens.utils.safeReload(window.Lens.config.ANIMATION.RELOAD_DELAY_MS);
                 }
             });
         },

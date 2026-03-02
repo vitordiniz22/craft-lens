@@ -96,44 +96,6 @@
                 restore();
                 return Promise.reject(error);
             }
-        },
-
-        /**
-         * Set multiple buttons to same state
-         * @param {HTMLElement[]} buttons - Array of button elements
-         * @param {string} loadingText - Loading text to display
-         * @returns {Function} Restore function for all buttons
-         */
-        setMultipleLoading: function(buttons, loadingText) {
-            if (!buttons || !buttons.length) return function() {};
-
-            const restoreFunctions = buttons.map(function(button) {
-                return this.setLoading(button, loadingText);
-            }, this);
-
-            // Return combined restore function
-            return function() {
-                restoreFunctions.forEach(function(restore) {
-                    restore();
-                });
-            };
-        },
-
-        /**
-         * Temporarily disable a button for specified duration
-         * Useful for preventing double-clicks
-         * @param {HTMLElement} button - Button element
-         * @param {number} [duration=1000] - Duration in milliseconds
-         */
-        temporarilyDisable: function(button, duration) {
-            if (!button) return;
-
-            const originalDisabled = button.disabled;
-            button.disabled = true;
-
-            setTimeout(function() {
-                button.disabled = originalDisabled;
-            }, duration || 1000);
         }
     };
 })();

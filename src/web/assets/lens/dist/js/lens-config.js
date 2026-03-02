@@ -29,7 +29,12 @@
             /**
              * Debounce delay for tag autocomplete (milliseconds)
              */
-            TAG_AUTOCOMPLETE_DEBOUNCE_MS: 250
+            TAG_AUTOCOMPLETE_DEBOUNCE_MS: 250,
+
+            /**
+             * Debounce delay for semantic search (milliseconds)
+             */
+            SEMANTIC_SEARCH_DEBOUNCE_MS: 350
         },
 
         /**

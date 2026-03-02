@@ -186,12 +186,21 @@
 
                         // Keep loading state throughout polling — only release on failure
                         window.Lens.services.AssetProcessing.poll(assetId, {
-                            onError: restoreBtn,
-                            onMaxAttempts: restoreBtn,
+                            onError: function() {
+                                restoreBtn();
+                                Craft.cp.displayError(Craft.t('lens', 'Analysis failed. Please try again.'));
+                            },
+                            onMaxAttempts: function() {
+                                restoreBtn();
+                                Craft.cp.displayError(Craft.t('lens', 'Analysis is taking longer than expected. Please refresh the page.'));
+                            },
                         });
                     }
                 })
-                .catch(restoreBtn);
+                .catch(function() {
+                    restoreBtn();
+                    Craft.cp.displayError(Craft.t('lens', 'Failed to start analysis. Please try again.'));
+                });
         },
 
         _handleApplyTitle: function (e, btn) {
