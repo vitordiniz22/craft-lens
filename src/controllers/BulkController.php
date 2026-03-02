@@ -123,48 +123,6 @@ class BulkController extends Controller
     }
 
     /**
-     * AJAX endpoint for bulk processing status.
-     */
-    public function actionStatus(): Response
-    {
-        $this->requireCpRequest();
-        $this->requirePermission('accessPlugin-lens');
-
-        if (!$this->request->getAcceptsJson()) {
-            return $this->redirect('lens/bulk');
-        }
-
-        $volumeId = $this->request->getQueryParam('volumeId');
-        $volumeId = $volumeId ? (int) $volumeId : null;
-
-        $settings = Plugin::getInstance()->getSettings();
-        $enabledVolumes = $settings->enabledVolumes;
-        $allVolumes = Craft::$app->getVolumes()->getAllVolumes();
-
-        if (in_array('*', $enabledVolumes, true)) {
-            $enabledVolumeIds = null;
-        } else {
-            $enabledVolumeIds = array_values(array_map(
-                fn($v) => $v->id,
-                array_filter($allVolumes, fn($v) => in_array($v->uid, $enabledVolumes, true))
-            ));
-        }
-
-        $statusService = Plugin::getInstance()->bulkProcessingStatus;
-        $statsVolumeScope = $volumeId ?? $enabledVolumeIds;
-        $stats = $statusService->getStats($statsVolumeScope);
-
-        // For full status (during processing), we need state info too
-        $status = $statusService->getStatus();
-        $status['stats'] = $stats;
-
-        // Add volume-specific estimated cost
-        $status['estimatedCost'] = $statusService->getEstimatedCost($stats['unprocessed']);
-
-        return $this->asJson($status);
-    }
-
-    /**
      * Cancel bulk processing.
      */
     public function actionCancel(): Response

@@ -544,7 +544,6 @@ class Plugin extends BasePlugin
                 $event->rules['lens/analysis/apply-focal-point'] = 'lens/analysis/apply-focal-point';
                 $event->rules['lens/bulk'] = 'lens/bulk/index';
                 $event->rules['lens/bulk/process'] = 'lens/bulk/process';
-                $event->rules['lens/bulk/status'] = 'lens/bulk/status';
                 $event->rules['lens/bulk/retry-failed'] = 'lens/bulk/retry-failed';
                 $event->rules['lens/bulk/cancel'] = 'lens/bulk/cancel';
                 $event->rules['lens/bulk/progress'] = 'lens/bulk/progress';
