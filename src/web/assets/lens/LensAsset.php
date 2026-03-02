@@ -31,7 +31,7 @@ class LensAsset extends AssetBundle
             'css/components/pagination.css',
             'css/components/progress-bar.css',
             'css/components/setup-banner.css',
-            'css/components/stat-card.css',
+            'css/components/metric-card.css',
             'css/components/stats-grid.css',
             'css/components/swatch.css',
 

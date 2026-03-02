@@ -4,10 +4,10 @@
     <h2 class="lens-section-header__title">{{ 'Needs Attention'|t('lens') }}</h2>
     <div class="lens-attention__cards">
         {% for item in attentionItems %}
-            <a href="{{ cpUrl(item.url) }}" class="lens-attention__card">
-                <span class="lens-attention__icon" data-icon="{{ item.icon }}"></span>
-                <span class="lens-attention__count">{{ item.count }}</span>
-                <span class="lens-attention__label">{{ item.label }}</span>
+            <a href="{{ cpUrl(item.url) }}" class="lens-metric-card lens-metric-card--inline">
+                <span class="lens-metric-card__icon" data-icon="{{ item.icon }}"></span>
+                <span class="lens-metric-card__value">{{ item.count }}</span>
+                <span class="lens-metric-card__label">{{ item.label }}</span>
             </a>
         {% endfor %}
     </div>

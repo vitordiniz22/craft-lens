@@ -1,0 +1,133 @@
+/**
+ * Metric Card Component
+ * Displays a numeric value + label. Two layout variants:
+ *   --stacked  (vertical, centered, large text) for dashboards/bulk stats
+ *   --inline   (horizontal, compact, interactive) for attention items
+ */
+
+/* ==========================================================================
+   Block: Base shared styles
+   ========================================================================== */
+
+.lens-metric-card {
+    background: var(--gray-050);
+    border-radius: var(--medium-border-radius);
+    border-left: 3px solid transparent;
+}
+
+/* ==========================================================================
+   Elements
+   ========================================================================== */
+
+.lens-metric-card__value {
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.lens-metric-card__label {
+    font-size: 13px;
+    color: var(--medium-text-color);
+}
+
+.lens-metric-card__icon {
+    color: var(--medium-text-color);
+}
+
+/* ==========================================================================
+   Layout modifier: --stacked (vertical, centered, large)
+   ========================================================================== */
+
+.lens-metric-card--stacked {
+    padding: 20px;
+    text-align: center;
+}
+
+.lens-metric-card--stacked .lens-metric-card__value {
+    font-size: 32px;
+}
+
+.lens-metric-card--stacked .lens-metric-card__label {
+    margin-top: 4px;
+}
+
+/* ==========================================================================
+   Layout modifier: --inline (horizontal, compact, interactive)
+   ========================================================================== */
+
+.lens-metric-card--inline {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    text-decoration: none;
+    border-left-color: var(--link-color);
+    transition:
+        transform 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+.lens-metric-card--inline .lens-metric-card__value {
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.lens-metric-card--inline:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    text-decoration: none;
+}
+
+/* ==========================================================================
+   Status modifiers
+   ========================================================================== */
+
+.lens-metric-card--neutral {
+    border-left-color: var(--hairline-color);
+}
+
+.lens-metric-card--success {
+    border-left-color: var(--success-color);
+    background: var(--bg-success);
+}
+
+.lens-metric-card--success .lens-metric-card__value {
+    color: var(--success-color);
+}
+
+.lens-metric-card--warning {
+    border-left-color: var(--warning-color);
+    background: var(--bg-warning);
+}
+
+.lens-metric-card--warning .lens-metric-card__value {
+    color: var(--warning-color);
+}
+
+.lens-metric-card--error {
+    border-left-color: var(--error-color);
+    background: var(--bg-error);
+}
+
+.lens-metric-card--error .lens-metric-card__value {
+    color: var(--error-color);
+}
+
+.lens-metric-card--info {
+    border-left-color: var(--link-color);
+}
+
+.lens-metric-card--info .lens-metric-card__value {
+    color: var(--link-color);
+}
+
+/* ==========================================================================
+   Zero-value dimming
+   ========================================================================== */
+
+.lens-metric-card[data-lens-count="0"] {
+    opacity: 0.5;
+}
+
+.lens-metric-card[data-lens-count="0"] .lens-metric-card__value {
+    color: var(--medium-text-color);
+}
