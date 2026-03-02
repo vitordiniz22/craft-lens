@@ -5,10 +5,10 @@
 
     <div class="lens-coverage__metrics">
         {# Alt Text Coverage #}
-        {% set altColor = altTextCoverage.percentage >= 80 ? 'var(--success-color)' : (altTextCoverage.percentage >= 50 ? 'var(--warning-color)' : 'var(--error-color)') %}
+        {% set altColor = altTextCoverage.percentage >= 66 ? 'var(--green-500)' : (altTextCoverage.percentage >= 33 ? 'var(--amber-400)' : 'var(--red-500)') %}
         <div class="lens-coverage__metric">
             <div class="lens-coverage__metric-header">
-                <span class="lens-coverage__metric-label">{{ 'Alt text coverage'|t('lens') }}</span>
+                <span class="lens-field-label">{{ 'Alt Text'|t('lens') }}</span>
                 <span class="lens-coverage__metric-stat">
                     {{ altTextCoverage.percentage }}%
                     <span class="lens-coverage__metric-counts">({{ altTextCoverage.withAltText }} {{ 'of'|t('lens') }} {{ altTextCoverage.total }})</span>
@@ -19,7 +19,7 @@
                     <div class="lens-progress-fill" style="width: {{ altTextCoverage.percentage }}%; background-color: {{ altColor }}"></div>
                 </div>
                 {% if altTextCoverage.total - altTextCoverage.withAltText > 0 %}
-                    <a href="{{ cpUrl('lens/search', {missingAltText: 1}) }}" class="lens-coverage__metric-link">
+                    <a href="{{ cpUrl('lens/search', {missingAltText: 1}) }}" class="lens-link">
                         {{ 'View missing'|t('lens') }} &rarr;
                     </a>
                 {% endif %}
@@ -27,10 +27,10 @@
         </div>
 
         {# Tag Coverage #}
-        {% set tagColor = taggedPercentage.percentage >= 80 ? 'var(--success-color)' : (taggedPercentage.percentage >= 50 ? 'var(--warning-color)' : 'var(--error-color)') %}
+        {% set tagColor = taggedPercentage.percentage >= 66 ? 'var(--green-500)' : (taggedPercentage.percentage >= 33 ? 'var(--amber-400)' : 'var(--red-500)') %}
         <div class="lens-coverage__metric">
             <div class="lens-coverage__metric-header">
-                <span class="lens-coverage__metric-label">{{ 'With tags'|t('lens') }}</span>
+                <span class="lens-field-label">{{ 'Tags'|t('lens') }}</span>
                 <span class="lens-coverage__metric-stat">
                     {{ taggedPercentage.percentage }}%
                     <span class="lens-coverage__metric-counts">({{ taggedPercentage.withTags }} {{ 'of'|t('lens') }} {{ taggedPercentage.total }})</span>
@@ -41,7 +41,7 @@
                     <div class="lens-progress-fill" style="width: {{ taggedPercentage.percentage }}%; background-color: {{ tagColor }}"></div>
                 </div>
                 {% if taggedPercentage.total - taggedPercentage.withTags > 0 %}
-                    <a href="{{ cpUrl('lens/search', {quickFilter: 'untagged'}) }}" class="lens-coverage__metric-link">
+                    <a href="{{ cpUrl('lens/search', {quickFilter: 'untagged'}) }}" class="lens-link">
                         {{ 'View untagged'|t('lens') }} &rarr;
                     </a>
                 {% endif %}
@@ -49,10 +49,10 @@
         </div>
 
         {# Quality (70%+ passing) #}
-        {% set qualityColor = highQualityPercentage.percentage >= 70 ? 'var(--success-color)' : (highQualityPercentage.percentage >= 40 ? 'var(--warning-color)' : 'var(--error-color)') %}
+        {% set qualityColor = highQualityPercentage.percentage >= 66 ? 'var(--green-500)' : (highQualityPercentage.percentage >= 33 ? 'var(--amber-400)' : 'var(--red-500)') %}
         <div class="lens-coverage__metric">
             <div class="lens-coverage__metric-header">
-                <span class="lens-coverage__metric-label">{{ 'Quality (70%+ passing)'|t('lens') }}</span>
+                <span class="lens-field-label">{{ 'Quality'|t('lens') }}</span>
                 <span class="lens-coverage__metric-stat">
                     {{ highQualityPercentage.percentage }}%
                     <span class="lens-coverage__metric-counts">({{ highQualityPercentage.highQuality }} {{ 'of'|t('lens') }} {{ highQualityPercentage.total }})</span>
@@ -63,7 +63,7 @@
                     <div class="lens-progress-fill" style="width: {{ highQualityPercentage.percentage }}%; background-color: {{ qualityColor }}"></div>
                 </div>
                 {% if highQualityPercentage.total - highQualityPercentage.highQuality > 0 %}
-                    <a href="{{ cpUrl('lens/search', {qualityBelow: '0.7'}) }}" class="lens-coverage__metric-link">
+                    <a href="{{ cpUrl('lens/search', {qualityBelow: '0.7'}) }}" class="lens-link">
                         {{ 'View low quality'|t('lens') }} &rarr;
                     </a>
                 {% endif %}

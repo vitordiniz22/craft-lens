@@ -1,0 +1,18 @@
+/**
+ * Link Component
+ * Small secondary-action link.
+ *
+ * Usage:
+ *   <a href="/path" class="lens-link">View missing &rarr;</a>
+ */
+
+.lens-link {
+    font-size: 12px;
+    color: var(--link-color);
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.lens-link:hover {
+    text-decoration: underline;
+}

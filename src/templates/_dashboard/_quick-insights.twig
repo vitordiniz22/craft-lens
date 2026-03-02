@@ -7,7 +7,7 @@
         {# Top Tags - compact inline list #}
         {% if topTags|length %}
         <div class="lens-insights__block">
-            <h3 class="lens-insights__label">{{ 'Top Tags'|t('lens') }}</h3>
+            <h3 class="lens-field-label">{{ 'Top Tags'|t('lens') }}</h3>
             <div class="inline-chips">
                 {% for item in topTags %}
                 <a href="{{ cpUrl('lens/search', {tags: item.tag}) }}" class="chip">
@@ -24,7 +24,7 @@
         {# Dominant Colors - 5 small swatches #}
         {% if dominantColors|length %}
         <div class="lens-insights__block">
-            <h3 class="lens-insights__label">{{ 'Dominant Colors'|t('lens') }}</h3>
+            <h3 class="lens-field-label">{{ 'Dominant Colors'|t('lens') }}</h3>
             <div class="lens-insights__colors">
                 {% for color in dominantColors %}
                     <a href="{{ cpUrl('lens/search', {color: color.hex}) }}"
