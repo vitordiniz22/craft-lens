@@ -163,13 +163,7 @@
 
     window.Lens.pages.ReviewPage = LensReviewPage;
 
-    function init() {
+    Lens.utils.onReady(function() {
         LensReviewPage.init();
-    }
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
-    }
+    });
 })();

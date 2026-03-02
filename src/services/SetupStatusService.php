@@ -22,6 +22,8 @@ class SetupStatusService extends Component
     public const CATEGORY_VOLUMES = 'volumes';
     public const CATEGORY_FIELD_LAYOUT = 'field_layout';
 
+    private ?array $cachedStatus = null;
+
     /**
      * Get all setup status checks.
      *
@@ -29,21 +31,18 @@ class SetupStatusService extends Component
      */
     public function getSetupStatus(): array
     {
-        $checks = [];
+        if ($this->cachedStatus !== null) {
+            return $this->cachedStatus;
+        }
 
-        // AI Provider checks
-        $checks[] = $this->checkAiProviderConfigured();
+        $this->cachedStatus = [
+            $this->checkAiProviderConfigured(),
+            $this->checkVolumesEnabled(),
+            $this->checkAnalysisPanelConfigured(),
+            $this->checkSemanticSearchEnabled(),
+        ];
 
-        // Volume checks
-        $checks[] = $this->checkVolumesEnabled();
-
-        // Field layout checks
-        $checks[] = $this->checkAnalysisPanelConfigured();
-
-        // Feature checks
-        $checks[] = $this->checkSemanticSearchEnabled();
-
-        return $checks;
+        return $this->cachedStatus;
     }
 
     /**

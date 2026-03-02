@@ -35,19 +35,6 @@ class ContentStorageService extends Component
     }
 
     /**
-     * Get analysis content by asset ID.
-     */
-    public function getAnalysisContentByAssetId(int $assetId): ?AnalysisContentRecord
-    {
-        $analysis = AssetAnalysisRecord::findOne(['assetId' => $assetId]);
-        if ($analysis === null) {
-            return null;
-        }
-
-        return $this->getAnalysisContent($analysis->id);
-    }
-
-    /**
      * Save analysis content from an AnalysisResult.
      */
     public function saveAnalysisContent(
@@ -55,14 +42,7 @@ class ContentStorageService extends Component
         AnalysisResult $result,
         ?string $errorMessage = null,
     ): AnalysisContentRecord {
-        $record = $this->getAnalysisContent($analysisRecord->id);
-
-        if ($record === null) {
-            $record = new AnalysisContentRecord();
-            $record->analysisId = $analysisRecord->id;
-            $record->uid = StringHelper::UUID();
-            $record->dateCreated = DateTimeHelper::now();
-        }
+        $record = $this->getOrCreateContentRecord($analysisRecord->id);
 
         $record->rawResponse = $result->rawResponse;
         $record->customPromptResult = $result->customPromptResult;
@@ -73,9 +53,10 @@ class ContentStorageService extends Component
             Logger::error(LogCategory::AssetProcessing, 'Failed to save analysis content', assetId: $analysisRecord->assetId, context: [
                 'errors' => $record->getErrorSummary(true),
             ]);
+
+            return $record;
         }
 
-        // Update flag on main record
         $analysisRecord->hasAnalysisContent = true;
         $analysisRecord->save(false, ['hasAnalysisContent', 'dateUpdated']);
 
@@ -87,14 +68,7 @@ class ContentStorageService extends Component
      */
     public function saveErrorMessage(AssetAnalysisRecord $analysisRecord, string $errorMessage): AnalysisContentRecord
     {
-        $record = $this->getAnalysisContent($analysisRecord->id);
-
-        if ($record === null) {
-            $record = new AnalysisContentRecord();
-            $record->analysisId = $analysisRecord->id;
-            $record->uid = StringHelper::UUID();
-            $record->dateCreated = DateTimeHelper::now();
-        }
+        $record = $this->getOrCreateContentRecord($analysisRecord->id);
 
         $record->errorMessage = $errorMessage;
         $record->dateUpdated = DateTimeHelper::now();
@@ -103,9 +77,10 @@ class ContentStorageService extends Component
             Logger::error(LogCategory::AssetProcessing, 'Failed to save error message', assetId: $analysisRecord->assetId, context: [
                 'errors' => $record->getErrorSummary(true),
             ]);
+
+            return $record;
         }
 
-        // Update flag on main record
         $analysisRecord->hasAnalysisContent = true;
         $analysisRecord->save(false, ['hasAnalysisContent', 'dateUpdated']);
 
@@ -127,32 +102,24 @@ class ContentStorageService extends Component
         AnalysisContentRecord::deleteAll(['analysisId' => $analysisId]);
     }
 
-    /**
-     * Get all content records for an analysis.
-     *
-     * @return array{
-     *     analysis: AnalysisContentRecord|null,
-     * }
-     */
-    public function getAllContent(int $analysisId): array
-    {
-        return [
-            'analysis' => $this->getAnalysisContent($analysisId),
-        ];
-    }
-
     // -------------------------------------------------------------------------
-    // Convenience Methods
+    // Private Helpers
     // -------------------------------------------------------------------------
 
     /**
-     * Get the long description for an analysis.
-     * Long description now lives on the main analysis record.
+     * Find existing content record or create a new one for the given analysis.
      */
-    public function getLongDescription(int $analysisId): ?string
+    private function getOrCreateContentRecord(int $analysisId): AnalysisContentRecord
     {
-        $record = AssetAnalysisRecord::findOne($analysisId);
+        $record = $this->getAnalysisContent($analysisId);
 
-        return $record?->longDescription;
+        if ($record === null) {
+            $record = new AnalysisContentRecord();
+            $record->analysisId = $analysisId;
+            $record->uid = StringHelper::UUID();
+            $record->dateCreated = DateTimeHelper::now();
+        }
+
+        return $record;
     }
 }

@@ -240,7 +240,11 @@ class Plugin extends BasePlugin
         }
 
         if ($isConfigured) {
-            $pendingCount = $this->review->getPendingReviewCount();
+            $pendingCount = Craft::$app->getCache()->getOrSet(
+                'lens:pendingReviewCount',
+                fn() => $this->review->getPendingReviewCount(),
+                60,
+            );
 
             if ($pendingCount > 0) {
                 $item['badgeCount'] = $pendingCount;
@@ -259,14 +263,6 @@ class Plugin extends BasePlugin
     public function getSettingsResponse(): Response
     {
         return Craft::$app->controller->redirect(UrlHelper::cpUrl('lens/settings'));
-    }
-
-    protected function settingsHtml(): ?string
-    {
-        return Craft::$app->view->renderTemplate('lens/_settings.twig', [
-            'plugin' => $this,
-            'settings' => $this->getSettings(),
-        ]);
     }
 
     private function attachEventHandlers(): void

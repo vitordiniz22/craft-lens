@@ -33,11 +33,6 @@
   color: var(--fg-error);
 }
 
-.lens-badge--error-solid {
-  background: var(--red-500);
-  color: white;
-}
-
 .lens-badge--amber {
   background: var(--amber-100);
   color: var(--amber-800);

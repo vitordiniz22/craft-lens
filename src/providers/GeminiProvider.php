@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace vitordiniz22\craftlens\providers;
 
-use craft\elements\Asset;
-use vitordiniz22\craftlens\dto\AnalysisResult;
 use vitordiniz22\craftlens\exceptions\AnalysisException;
 use vitordiniz22\craftlens\exceptions\ConfigurationException;
 use vitordiniz22\craftlens\helpers\Logger;
@@ -26,21 +24,6 @@ class GeminiProvider extends BaseAiProvider
     public function getDisplayName(): string
     {
         return 'Google Gemini';
-    }
-
-    public function analyze(
-        Asset $asset,
-        Settings $settings,
-        string $primaryLanguage,
-        array $additionalLanguages = [],
-    ): AnalysisResult {
-        $this->validateCredentials($settings);
-
-        $imageData = $this->getBase64ImageData($asset);
-        $prompt = $this->buildPrompt($primaryLanguage, $additionalLanguages);
-        $response = $this->sendRequest($settings, $imageData, $prompt, $asset->id);
-
-        return $this->parseResponse($response);
     }
 
     public function validateCredentials(Settings $settings): void
@@ -80,7 +63,7 @@ class GeminiProvider extends BaseAiProvider
     /**
      * @param array{base64: string, mimeType: string} $imageData
      */
-    private function sendRequest(Settings $settings, array $imageData, string $prompt, int $assetId): array
+    protected function sendRequest(Settings $settings, array $imageData, string $prompt, int $assetId): array
     {
         $model = $settings->geminiModel;
         $apiKey = $settings->getGeminiApiKey();

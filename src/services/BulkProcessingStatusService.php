@@ -639,9 +639,22 @@ class BulkProcessingStatusService extends Component
             ];
         }
 
+        $hasConfigError = false;
+        $configErrorMessage = null;
+
+        foreach ($groups as $group) {
+            if ($this->isConfigurationError($group['message'])) {
+                $hasConfigError = true;
+                $configErrorMessage = $group['message'];
+                break;
+            }
+        }
+
         return [
             'groups' => $groups,
             'totalFailed' => $totalFailed,
+            'hasConfigError' => $hasConfigError,
+            'configErrorMessage' => $configErrorMessage,
         ];
     }
 
@@ -656,53 +669,6 @@ class BulkProcessingStatusService extends Component
             || str_contains($lower, 'is invalid')
             || str_contains($lower, 'api key')
             || str_contains($lower, 'unauthorized');
-    }
-
-    /**
-     * Get the most common error message from failed analyses.
-     *
-     * @deprecated Use getFailureReasons() instead.
-     * @return array{message: string|null, count: int, isConfigError: bool}
-     */
-    public function getFailureReason(): array
-    {
-        $session = $this->getSessionData();
-        $query = AssetAnalysisRecord::find()
-            ->select(['id'])
-            ->where(['status' => AnalysisStatus::Failed->value]);
-
-        if ($session !== null && isset($session['startedAt'])) {
-            $query->andWhere(['>=', 'processedAt', date('Y-m-d H:i:s', $session['startedAt'])]);
-        }
-
-        $failedAnalysisIds = $query->column();
-
-        if (empty($failedAnalysisIds)) {
-            return ['message' => null, 'count' => 0, 'isConfigError' => false];
-        }
-
-        $result = (new Query())
-            ->select(['errorMessage', 'COUNT(*) as cnt'])
-            ->from(Install::TABLE_ANALYSIS_CONTENT)
-            ->where(['in', 'analysisId', $failedAnalysisIds])
-            ->andWhere(['not', ['errorMessage' => null]])
-            ->groupBy(['errorMessage'])
-            ->orderBy(['cnt' => SORT_DESC])
-            ->limit(1)
-            ->one();
-
-        if ($result === null) {
-            return ['message' => null, 'count' => 0, 'isConfigError' => false];
-        }
-
-        $message = $result['errorMessage'];
-        $count = (int) $result['cnt'];
-
-        return [
-            'message' => $message,
-            'count' => $count,
-            'isConfigError' => $this->isConfigurationError($message),
-        ];
     }
 
     /**

@@ -115,13 +115,7 @@
 
     window.Lens.pages.BulkReviewPage = LensBulkReviewPage;
 
-    function init() {
+    Lens.utils.onReady(function() {
         LensBulkReviewPage.init();
-    }
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
-    }
+    });
 })();

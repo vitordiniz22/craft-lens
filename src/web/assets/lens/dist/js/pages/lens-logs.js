@@ -27,7 +27,7 @@
 
         _bindDetailToggle: function() {
             DOM.delegate('[data-lens-action="toggle-log-detail"]', 'click', function(e, btn) {
-                var targetId = btn.dataset.target;
+                var targetId = btn.dataset.lensDetailId;
                 if (!targetId) return;
 
                 var row = document.getElementById(targetId);
@@ -53,13 +53,7 @@
 
     window.Lens.pages.LogsPage = LensLogsPage;
 
-    function init() {
+    Lens.utils.onReady(function() {
         LensLogsPage.init();
-    }
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
-    }
+    });
 })();

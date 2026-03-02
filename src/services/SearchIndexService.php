@@ -263,19 +263,16 @@ class SearchIndexService extends Component
         Logger::info(LogCategory::SearchIndex, 'Starting full search index rebuild');
 
         try {
-            // Truncate
             Craft::$app->getDb()->createCommand()
                 ->truncateTable(Install::TABLE_SEARCH_INDEX)
                 ->execute();
 
             Logger::info(LogCategory::SearchIndex, 'Search index truncated');
 
-            // Fetch all analyzed assets
-            $records = AssetAnalysisRecord::find()
-                ->where(['NOT', ['processedAt' => null]])
-                ->all();
+            $query = AssetAnalysisRecord::find()
+                ->where(['NOT', ['processedAt' => null]]);
 
-            $total = count($records);
+            $total = (int) $query->count();
             $indexed = 0;
 
             Logger::info(
@@ -284,21 +281,23 @@ class SearchIndexService extends Component
                 context: ['total' => $total]
             );
 
-            foreach ($records as $record) {
-                try {
-                    $this->indexAsset($record);
-                    $indexed++;
+            foreach ($query->batch(100) as $batch) {
+                foreach ($batch as $record) {
+                    try {
+                        $this->indexAsset($record);
+                        $indexed++;
 
-                    if ($progress !== null) {
-                        $progress($indexed, $total);
+                        if ($progress !== null) {
+                            $progress($indexed, $total);
+                        }
+                    } catch (\Throwable $e) {
+                        Logger::warning(
+                            LogCategory::SearchIndex,
+                            'Failed to index asset during rebuild',
+                            assetId: $record->assetId,
+                            context: ['error' => $e->getMessage()]
+                        );
                     }
-                } catch (\Throwable $e) {
-                    Logger::info(
-                        LogCategory::SearchIndex,
-                        'Failed to index asset during rebuild',
-                        assetId: $record->assetId,
-                        context: ['error' => $e->getMessage()]
-                    );
                 }
             }
 
@@ -362,6 +361,7 @@ class SearchIndexService extends Component
 
         // 2. Fuzzy fallback for any term that got zero exact results
         $matchedTokens = array_unique(array_column($rows, 'token'));
+
         foreach ($stemmedTerms as $term) {
             if (!in_array($term, $matchedTokens, true)) {
                 $fuzzyRows = $this->fuzzyLookup($term);

@@ -14,8 +14,6 @@ class LensReviewAsset extends AssetBundle
         $this->depends = [LensAsset::class];
         $this->js = [
             'js/components/lens-focal-point-editor.js',
-            'js/components/lens-tag-editor.js',
-            'js/components/lens-color-editor.js',
             'js/pages/lens-review-page.js',
             'js/pages/lens-bulk-review-page.js',
         ];

@@ -1,6 +1,6 @@
 {% extends '_layouts/cp' %}
 
-{% set title = 'Review: ' ~ analysis.filename %}
+{% set title = 'Review: {filename}'|t('lens', {filename: analysis.filename}) %}
 {% set selectedSubnavItem = 'review' %}
 
 {% block content %}

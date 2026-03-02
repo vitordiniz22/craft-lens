@@ -931,46 +931,7 @@ class AssetAnalysisService extends Component
      */
     public function resetStuckPending(int $minutes = 10): array
     {
-        $cutoffDate = date('Y-m-d H:i:s', time() - ($minutes * 60));
-
-        $stuckRecords = AssetAnalysisRecord::find()
-            ->where(['status' => AnalysisStatus::Pending->value])
-            ->andWhere(['<', 'dateUpdated', $cutoffDate])
-            ->all();
-
-        if (empty($stuckRecords)) {
-            return [];
-        }
-
-        $resetInfo = [];
-        $assetIds = [];
-
-        foreach ($stuckRecords as $record) {
-            $dateUpdated = $record->dateUpdated instanceof \DateTime
-                ? $record->dateUpdated
-                : new \DateTime($record->dateUpdated);
-
-            $minutesStuck = (int) round((time() - $dateUpdated->getTimestamp()) / 60);
-
-            Logger::warning(
-                LogCategory::AssetProcessing,
-                "Resetting stuck pending record for asset {$record->assetId} (stuck for {$minutesStuck} minutes)",
-                $record->assetId
-            );
-
-            $assetIds[] = $record->assetId;
-            $resetInfo[] = [
-                'assetId' => $record->assetId,
-                'minutesStuck' => $minutesStuck,
-            ];
-        }
-
-        AssetAnalysisRecord::updateAll(
-            ['status' => AnalysisStatus::Failed->value],
-            ['assetId' => $assetIds, 'status' => AnalysisStatus::Pending->value]
-        );
-
-        return $resetInfo;
+        return $this->resetStuckByStatus(AnalysisStatus::Pending, $minutes);
     }
 
     /**
@@ -980,10 +941,19 @@ class AssetAnalysisService extends Component
      */
     public function resetStuckProcessing(int $minutes = 30): array
     {
+        return $this->resetStuckByStatus(AnalysisStatus::Processing, $minutes);
+    }
+
+    /**
+     * @return array<array{assetId: int, minutesStuck: int}>
+     */
+    private function resetStuckByStatus(AnalysisStatus $status, int $minutes): array
+    {
         $cutoffDate = date('Y-m-d H:i:s', time() - ($minutes * 60));
+        $statusLabel = strtolower($status->value);
 
         $stuckRecords = AssetAnalysisRecord::find()
-            ->where(['status' => AnalysisStatus::Processing->value])
+            ->where(['status' => $status->value])
             ->andWhere(['<', 'dateUpdated', $cutoffDate])
             ->all();
 
@@ -1003,7 +973,7 @@ class AssetAnalysisService extends Component
 
             Logger::warning(
                 LogCategory::AssetProcessing,
-                "Resetting stuck processing record for asset {$record->assetId} (stuck for {$minutesStuck} minutes)",
+                "Resetting stuck {$statusLabel} record for asset {$record->assetId} (stuck for {$minutesStuck} minutes)",
                 $record->assetId
             );
 
@@ -1016,7 +986,7 @@ class AssetAnalysisService extends Component
 
         AssetAnalysisRecord::updateAll(
             ['status' => AnalysisStatus::Failed->value],
-            ['assetId' => $assetIds, 'status' => AnalysisStatus::Processing->value]
+            ['assetId' => $assetIds, 'status' => $status->value]
         );
 
         return $resetInfo;

@@ -16,7 +16,6 @@ use vitordiniz22\craftlens\Plugin;
 use vitordiniz22\craftlens\records\AssetAnalysisRecord;
 use vitordiniz22\craftlens\records\AssetColorRecord;
 use vitordiniz22\craftlens\records\AssetTagRecord;
-use vitordiniz22\craftlens\records\DuplicateGroupRecord;
 use vitordiniz22\craftlens\records\ExifMetadataRecord;
 use yii\base\Component;
 use yii\base\InvalidArgumentException;
@@ -326,46 +325,8 @@ class ReviewService extends Component
             }
         }
 
-        // Unresolved duplicates involving this asset (max 3, highest similarity)
-        $duplicates = DuplicateGroupRecord::find()
-            ->where(['and',
-                ['resolvedAt' => null],
-                ['or',
-                    ['canonicalAssetId' => $record->assetId],
-                    ['duplicateAssetId' => $record->assetId],
-                ],
-            ])
-            ->orderBy(['similarity' => SORT_DESC])
-            ->limit(3)
-            ->all();
-
-        $otherAssetIds = array_map(function($dup) use ($record) {
-            return ($dup->canonicalAssetId === $record->assetId)
-                ? $dup->duplicateAssetId
-                : $dup->canonicalAssetId;
-        }, $duplicates);
-
-        $otherAssets = !empty($otherAssetIds)
-            ? Asset::find()->id($otherAssetIds)->indexBy('id')->all()
-            : [];
-
-        $similarImages = [];
-        foreach ($duplicates as $dup) {
-            $otherAssetId = ($dup->canonicalAssetId === $record->assetId)
-                ? $dup->duplicateAssetId
-                : $dup->canonicalAssetId;
-
-            $otherAsset = $otherAssets[$otherAssetId] ?? null;
-            if ($otherAsset !== null) {
-                $similarImages[] = [
-                    'assetId' => $otherAssetId,
-                    'filename' => $otherAsset->filename,
-                    'thumbnailUrl' => Craft::$app->getAssets()->getThumbUrl($otherAsset, 120, 120),
-                    'editUrl' => $otherAsset->getCpEditUrl(),
-                    'similarity' => $dup->similarity,
-                ];
-            }
-        }
+        $similarImages = Plugin::getInstance()->duplicateDetection->getSimilarAssetsForDisplay($record->assetId);
+        $siteContentData = $this->loadSiteContentData($record->id);
 
         return [
             'analysisId' => $record->id,
@@ -460,8 +421,8 @@ class ReviewService extends Component
             'similarImages' => $similarImages,
 
             // Per-site content
-            'siteContent' => $this->loadSiteContentData($record->id),
-            'hasMultisiteContent' => !empty(Plugin::getInstance()->siteContent->getAllSiteContent($record->id)),
+            'siteContent' => $siteContentData,
+            'hasMultisiteContent' => !empty($siteContentData),
             'isAltTranslatable' => MultisiteHelper::isAltTranslatable($asset->getVolume()->id),
             'isTitleTranslatable' => MultisiteHelper::isTitleTranslatable($asset->getVolume()->id),
         ];

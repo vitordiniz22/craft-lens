@@ -12,6 +12,18 @@
      */
     window.Lens.utils = {
         /**
+         * Run a function when the DOM is ready
+         * @param {Function} fn - Function to run
+         */
+        onReady: function(fn) {
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', fn);
+            } else {
+                fn();
+            }
+        },
+
+        /**
          * Escape HTML special characters to prevent XSS
          * @param {string} text - Text to escape
          * @returns {string} HTML-safe text

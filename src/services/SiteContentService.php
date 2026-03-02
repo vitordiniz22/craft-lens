@@ -27,8 +27,8 @@ class SiteContentService extends Component
      * Field-specific validation rules.
      */
     private const FIELD_VALIDATION = [
-        'altText' => ['max' => 500, 'type' => 'string'],
-        'suggestedTitle' => ['max' => 500, 'type' => 'string'],
+        'altText' => ['max' => 1000, 'type' => 'string'],
+        'suggestedTitle' => ['max' => 255, 'type' => 'string'],
     ];
 
     /**

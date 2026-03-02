@@ -56,7 +56,7 @@
 
             var value = stats[key];
             card.dataset.lensCount = String(value);
-            var valueEl = card.querySelector('.lens-stat-value');
+            var valueEl = card.querySelector('[data-lens-target="stat-value"]');
             if (valueEl) {
                 valueEl.textContent = Number(value).toLocaleString();
             }

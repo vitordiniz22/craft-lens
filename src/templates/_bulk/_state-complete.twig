@@ -1,4 +1,4 @@
-{% set isConfigError = failureReason is defined and failureReason.message and failureReason.isConfigError %}
+{% set isConfigError = failureReasons is defined and failureReasons.hasConfigError %}
 
 {% if isConfigError %}
     {# Configuration error: show error with CTA to settings + retry action #}
@@ -6,7 +6,7 @@
         {% include 'lens/_components/inline-notice' with {
             type: 'error',
             title: 'Processing failed'|t('lens'),
-            message: failureReason.message,
+            message: failureReasons.configErrorMessage,
             cta: {
                 label: 'Go to Settings'|t('lens'),
                 url: 'lens/settings',

@@ -121,7 +121,7 @@
                             ? err.response.data.error
                             : 'Failed to check analysis status. Please refresh manually.';
 
-                        Craft.cp.displayError(Craft.t('lens', errorMsg));
+                        Craft.cp.displayError(errorMsg);
 
                         if (options.onError) {
                             options.onError(err);
@@ -185,33 +185,6 @@
                 }
                 delete this._activePolls[assetId];
             }
-        },
-
-        /**
-         * Stop polling for a specific asset
-         * @param {string|number} assetId - Asset ID
-         */
-        stopPolling: function(assetId) {
-            this._clearPoll(assetId);
-        },
-
-        /**
-         * Stop all active polls
-         */
-        stopAllPolling: function() {
-            const assetIds = Object.keys(this._activePolls);
-            assetIds.forEach(function(assetId) {
-                this.stopPolling(assetId);
-            }, this);
-        },
-
-        /**
-         * Check if currently polling for an asset
-         * @param {string|number} assetId - Asset ID
-         * @returns {boolean} True if polling
-         */
-        isPolling: function(assetId) {
-            return !!this._activePolls[assetId];
         }
     };
 })();

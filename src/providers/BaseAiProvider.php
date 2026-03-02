@@ -12,6 +12,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use vitordiniz22\craftlens\dto\AnalysisResult;
 use vitordiniz22\craftlens\enums\LogCategory;
+use vitordiniz22\craftlens\models\Settings;
 use vitordiniz22\craftlens\enums\LogLevel;
 use vitordiniz22\craftlens\exceptions\AnalysisException;
 use vitordiniz22\craftlens\exceptions\ConfigurationException;
@@ -55,6 +56,32 @@ abstract class BaseAiProvider implements AiProviderInterface
      * @return int Maximum file size in bytes
      */
     abstract protected function getMaxFileSizeBytes(): int;
+
+    /**
+     * Send the analysis request to the provider's API.
+     *
+     * @param array{base64: string, mimeType: string} $imageData
+     * @return array Raw API response body
+     */
+    abstract protected function sendRequest(Settings $settings, array $imageData, string $prompt, int $assetId): array;
+
+    /**
+     * Analyze an image asset using this provider's API.
+     */
+    final public function analyze(
+        Asset $asset,
+        Settings $settings,
+        string $primaryLanguage,
+        array $additionalLanguages = [],
+    ): AnalysisResult {
+        $this->validateCredentials($settings);
+
+        $imageData = $this->getBase64ImageData($asset);
+        $prompt = $this->buildPrompt($primaryLanguage, $additionalLanguages);
+        $response = $this->sendRequest($settings, $imageData, $prompt, $asset->id);
+
+        return $this->parseResponse($response);
+    }
 
     /**
      * Builds the analysis prompt for image analysis.

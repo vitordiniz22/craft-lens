@@ -300,13 +300,7 @@
     window.Lens.components.FocalPointEditor = LensFocalPointEditor;
 
     // Auto-initialize
-    function init() {
+    Lens.utils.onReady(function() {
         LensFocalPointEditor.init();
-    }
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
-    }
+    });
 })();

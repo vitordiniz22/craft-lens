@@ -33,31 +33,6 @@
         },
 
         /**
-         * Toggle element visibility
-         * @param {HTMLElement} element - Element to toggle
-         * @param {boolean} [visible] - Optional explicit visibility state
-         */
-        toggle: function(element, visible) {
-            if (!element) return;
-
-            if (visible === undefined) {
-                // Toggle based on current state
-                if (element.style.display === 'none' || element.hidden) {
-                    this.show(element);
-                } else {
-                    this.hide(element);
-                }
-            } else {
-                // Set explicit state
-                if (visible) {
-                    this.show(element);
-                } else {
-                    this.hide(element);
-                }
-            }
-        },
-
-        /**
          * Toggle visibility using 'hidden' class (additive, doesn't override display)
          * @param {HTMLElement} element - Element to toggle
          * @param {boolean} [visible] - Optional explicit visibility state

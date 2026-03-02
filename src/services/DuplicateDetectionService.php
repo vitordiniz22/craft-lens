@@ -33,28 +33,28 @@ class DuplicateDetectionService extends Component
 
         $sourceHash = $record->perceptualHash;
 
-        // Only select needed columns to reduce memory usage
-        $allRecords = AssetAnalysisRecord::find()
-            ->select(['id', 'assetId', 'perceptualHash'])
-            ->where(['not', ['perceptualHash' => null]])
-            ->andWhere(['!=', 'assetId', $assetId])
-            ->all();
-
         $existingPairs = $this->loadExistingPairs([$assetId]);
 
         $matches = [];
         $transaction = Craft::$app->getDb()->beginTransaction();
 
         try {
-            foreach ($allRecords as $other) {
-                $result = $this->matchPair(
-                    $assetId, $other->assetId,
-                    $sourceHash, $other->perceptualHash,
-                    $threshold, $existingPairs,
-                );
+            $query = AssetAnalysisRecord::find()
+                ->select(['id', 'assetId', 'perceptualHash'])
+                ->where(['not', ['perceptualHash' => null]])
+                ->andWhere(['!=', 'assetId', $assetId]);
 
-                if ($result !== null) {
-                    $matches[] = $result;
+            foreach ($query->batch(1000) as $batch) {
+                foreach ($batch as $other) {
+                    $result = $this->matchPair(
+                        $assetId, $other->assetId,
+                        $sourceHash, $other->perceptualHash,
+                        $threshold, $existingPairs,
+                    );
+
+                    if ($result !== null) {
+                        $matches[] = $result;
+                    }
                 }
             }
 
@@ -331,9 +331,9 @@ class DuplicateDetectionService extends Component
         }
 
         $otherAssetIds = array_map(function($dup) use ($assetId) {
-            return $dup->canonicalAssetId == $assetId
-                ? $dup->duplicateAssetId
-                : $dup->canonicalAssetId;
+            return (int) $dup->canonicalAssetId === $assetId
+                ? (int) $dup->duplicateAssetId
+                : (int) $dup->canonicalAssetId;
         }, $duplicates);
 
         $otherAssets = \craft\elements\Asset::find()
@@ -344,9 +344,9 @@ class DuplicateDetectionService extends Component
         $similarImages = [];
 
         foreach ($duplicates as $dup) {
-            $otherAssetId = ($dup->canonicalAssetId == $assetId)
-                ? $dup->duplicateAssetId
-                : $dup->canonicalAssetId;
+            $otherAssetId = (int) $dup->canonicalAssetId === $assetId
+                ? (int) $dup->duplicateAssetId
+                : (int) $dup->canonicalAssetId;
 
             $otherAsset = $otherAssets[$otherAssetId] ?? null;
 

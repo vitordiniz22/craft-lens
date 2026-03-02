@@ -462,13 +462,7 @@
     window.Lens.components.InlineEditor = LensInlineEditor;
 
     // Auto-initialize
-    function init() {
+    Lens.utils.onReady(function() {
         LensInlineEditor.init();
-    }
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
-    }
+    });
 })();

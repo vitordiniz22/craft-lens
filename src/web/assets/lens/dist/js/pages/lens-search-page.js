@@ -319,15 +319,7 @@
 
     window.Lens.pages.SearchPage = LensSearchPage;
 
-    function init() {
+    Lens.utils.onReady(function() {
         LensSearchPage.init();
-        // Also initialize duplicates if present
-        if (window.Lens.Duplicates) window.Lens.Duplicates.init();
-    }
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
-    }
+    });
 })();

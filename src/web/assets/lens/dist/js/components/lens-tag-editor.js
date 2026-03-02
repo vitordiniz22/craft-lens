@@ -252,13 +252,7 @@
     window.Lens.components.TagEditor = LensTagEditor;
 
     // Auto-initialize
-    function init() {
+    Lens.utils.onReady(function() {
         LensTagEditor.init();
-    }
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
-    }
+    });
 })();

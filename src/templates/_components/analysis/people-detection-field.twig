@@ -171,14 +171,14 @@
         {% if isEdited %}
             {% if isFaceCountEdited %}
                 {% set editor = craft.users.id(analysis.faceCountEditedBy).one() %}
-                {% set formattedDate = analysis.faceCountEditedAt|date('M j, Y') %}
+                {% set formattedDate = analysis.faceCountEditedAt|date('short') %}
                 {{ 'Edited by {user} on {date}'|t('lens', {
                     user: editor ? editor.friendlyName : 'Unknown',
                     date: formattedDate
                 }) }}
             {% elseif isPeopleEdited %}
                 {% set editor = craft.users.id(analysis.containsPeopleEditedBy).one() %}
-                {% set formattedDate = analysis.containsPeopleEditedAt|date('M j, Y') %}
+                {% set formattedDate = analysis.containsPeopleEditedAt|date('short') %}
                 {{ 'Edited by {user} on {date}'|t('lens', {
                     user: editor ? editor.friendlyName : 'Unknown',
                     date: formattedDate

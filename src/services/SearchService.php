@@ -204,12 +204,9 @@ class SearchService extends Component
             $query->andWhere(['assets.id' => $rankedAssetIds]);
         } else {
             // Legacy LIKE path: join tables needed for text search.
-            if ($this->needsTextSearchJoins($filters)) {
+            if (!empty($filters['query'])) {
                 $query->leftJoin('{{%elements_sites}} elements_sites', '[[assets.id]] = [[elements_sites.elementId]]');
                 $query->leftJoin(Install::TABLE_ASSET_TAGS . ' tags', '[[lens.id]] = [[tags.analysisId]]');
-            }
-
-            if ($this->needsSiteContentJoin($filters)) {
                 $query->leftJoin(Install::TABLE_ANALYSIS_SITE_CONTENT . ' site_content', '[[lens.id]] = [[site_content.analysisId]]');
             }
 
@@ -233,22 +230,6 @@ class SearchService extends Component
         $this->applyDefaultStatusExclusion($query, $filters);
 
         return $query;
-    }
-
-    /**
-     * Check if we need to join tables for text search (elements_sites + tags).
-     */
-    private function needsTextSearchJoins(array $filters): bool
-    {
-        return !empty($filters['query']);
-    }
-
-    /**
-     * Check if we need to join the site content table for text search.
-     */
-    private function needsSiteContentJoin(array $filters): bool
-    {
-        return !empty($filters['query']);
     }
 
     /**

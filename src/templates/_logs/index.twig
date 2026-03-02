@@ -70,7 +70,7 @@
                         error: '#ef4444',
                         critical: '#dc2626',
                     } %}
-                    <tr class="lens-log-row" data-log-id="{{ log.id }}">
+                    <tr class="lens-log-row" data-lens-log-id="{{ log.id }}">
                         <td class="lens-log-date">
                             {{ log.dateCreated|date('Y-m-d H:i:s') }}
                         </td>
@@ -98,7 +98,7 @@
                         </td>
                         <td class="lens-log-actions">
                             {% if log.stackTrace or log.context or log.requestPayload or log.responsePayload %}
-                                <button type="button" class="btn small" data-lens-action="toggle-log-detail" data-target="lens-detail-{{ log.id }}">
+                                <button type="button" class="btn small" data-lens-action="toggle-log-detail" data-lens-detail-id="lens-detail-{{ log.id }}">
                                     {{ 'Details'|t('lens') }}
                                 </button>
                             {% endif %}

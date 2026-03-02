@@ -181,10 +181,12 @@
                             Craft.t('lens', 'Asset queued for analysis.'),
                         );
 
-                        if (label)
-                            label.textContent = Craft.t('lens', 'Analyzing');
+                        Craft.cp.runQueue();
 
-                        // Keep loading state throughout polling — only release on failure
+                        if (label) {
+                            label.textContent = Craft.t('lens', 'Analyzing');
+                        }
+
                         window.Lens.services.AssetProcessing.poll(assetId, {
                             onError: function() {
                                 restoreBtn();
@@ -494,13 +496,7 @@
     window.Lens.pages.AnalysisPanel = LensAnalysisPanel;
 
     // Auto-initialize
-    function init() {
+    Lens.utils.onReady(function() {
         LensAnalysisPanel.init();
-    }
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
-    }
+    });
 })();

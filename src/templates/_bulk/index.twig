@@ -4,7 +4,7 @@
 {% set selectedSubnavItem = 'bulk' %}
 
 {% block content %}
-    {% set isConfigError = state == 'complete' and failureReason is defined and failureReason.message and failureReason.isConfigError %}
+    {% set isConfigError = state == 'complete' and failureReasons is defined and failureReasons.hasConfigError %}
 
     <div class="lens-bulk-page">
 
@@ -12,23 +12,23 @@
         {% if not isConfigError %}
             <div class="lens-stats-grid">
                 <div class="lens-stat-card lens-stat-neutral" data-lens-stat="totalImages" data-lens-count="{{ stats.totalImages }}">
-                    <div class="lens-stat-value">{{ stats.totalImages }}</div>
+                    <div class="lens-stat-value" data-lens-target="stat-value">{{ stats.totalImages }}</div>
                     <div class="lens-stat-label">{{ 'Total Images'|t('lens') }}</div>
                 </div>
                 <div class="lens-stat-card lens-stat-success" data-lens-stat="analyzed" data-lens-count="{{ stats.analyzed }}">
-                    <div class="lens-stat-value">{{ stats.analyzed }}</div>
+                    <div class="lens-stat-value" data-lens-target="stat-value">{{ stats.analyzed }}</div>
                     <div class="lens-stat-label">{{ 'Analyzed'|t('lens') }}</div>
                 </div>
                 <div class="lens-stat-card lens-stat-warning" data-lens-stat="unprocessed" data-lens-count="{{ stats.unprocessed }}">
-                    <div class="lens-stat-value">{{ stats.unprocessed }}</div>
+                    <div class="lens-stat-value" data-lens-target="stat-value">{{ stats.unprocessed }}</div>
                     <div class="lens-stat-label">{{ 'Unprocessed'|t('lens') }}</div>
                 </div>
                 <div class="lens-stat-card lens-stat-info" data-lens-stat="pendingReview" data-lens-count="{{ stats.pendingReview }}">
-                    <div class="lens-stat-value">{{ stats.pendingReview }}</div>
+                    <div class="lens-stat-value" data-lens-target="stat-value">{{ stats.pendingReview }}</div>
                     <div class="lens-stat-label">{{ 'Pending Review'|t('lens') }}</div>
                 </div>
                 <div class="lens-stat-card lens-stat-error" data-lens-stat="failed" data-lens-count="{{ stats.failed }}">
-                    <div class="lens-stat-value">{{ stats.failed }}</div>
+                    <div class="lens-stat-value" data-lens-target="stat-value">{{ stats.failed }}</div>
                     <div class="lens-stat-label">{{ 'Failed'|t('lens') }}</div>
                 </div>
             </div>
