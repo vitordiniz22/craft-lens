@@ -512,7 +512,7 @@ class StatisticsService extends Component
                 'type' => 'duplicates',
                 'label' => Craft::t('lens', 'Duplicates'),
                 'count' => $duplicateCount,
-                'url' => 'lens/duplicates',
+                'url' => 'lens/search?hasDuplicates=1',
                 'color' => 'amber',
                 'icon' => 'copy',
             ];

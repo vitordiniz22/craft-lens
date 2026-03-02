@@ -171,20 +171,10 @@
 }
 
 .lens-duplicate-badge {
-    background: rgba(180, 80, 0, 0.85);
-    color: white;
-    padding: 3px 8px;
-    border-radius: 4px;
-    font-size: 11px;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 3px;
-    text-decoration: none;
-}
-
-.lens-duplicate-badge:hover {
-    background: rgba(200, 90, 0, 0.95);
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 1;
 }
 
 /* Card info section */

@@ -1,0 +1,41 @@
+{#
+ # Similar Assets Notice
+ # Inline notice with thumbnail strip for duplicate/similar asset alerts.
+ # Used in both analysis panel (blue info) and review view (gray, via --review modifier).
+ #
+ # Expected variables: similarImages, asset, static, isProcessing, variant (optional: 'review')
+ #}
+{% set isReview = (variant ?? '') == 'review' %}
+
+{% if similarImages|length %}
+<div class="lens-similar-notice{{ isReview ? ' lens-similar-notice--review' : '' }}" data-lens-target="similar-assets-notice">
+    <div class="lens-similar-notice__header">
+        <span class="lens-similar-notice__title">
+            {{ similarImages|length }} {{ similarImages|length == 1 ? 'Similar Asset Found'|t('lens') : 'Similar Assets Found'|t('lens') }}
+        </span>
+    </div>
+
+    <div class="lens-similar-notice__thumbnails">
+        {% for img in similarImages %}
+            <a href="{{ img.editUrl }}"
+               class="lens-similar-notice__thumb"
+               title="{{ img.filename }}">
+                <img src="{{ img.thumbnailUrl }}"
+                     alt="{{ img.filename }}"
+                     loading="lazy">
+                <span class="lens-similar-notice__similarity">
+                    {{ (img.similarity * 100)|round }}%
+                </span>
+            </a>
+        {% endfor %}
+    </div>
+
+    {% if not isReview and not (static ?? false) and not (isProcessing ?? false) %}
+        <div class="lens-similar-notice__action">
+            <button type="button" class="btn small" data-lens-action="find-similar" data-lens-asset-id="{{ asset.id }}">
+                {{ 'Find Similar Assets'|t('lens') }}
+            </button>
+        </div>
+    {% endif %}
+</div>
+{% endif %}

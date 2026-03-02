@@ -103,6 +103,16 @@
             } %}
         {% endif %}
 
+        {# Similar Assets notice — shown prominently when duplicates detected #}
+        {% if analysis.status not in [lens.status.failed] and (not isProcessing or isReprocessing) and (similarImages ?? [])|length %}
+            {% include 'lens/_components/analysis/similar-assets-notice' with {
+                similarImages: similarImages,
+                asset: asset,
+                static: readOnly,
+                isProcessing: isProcessing
+            } %}
+        {% endif %}
+
         {# Section 1: Description #}
         {% if analysis.status not in [lens.status.failed] and (not isProcessing or isReprocessing) %}
             <div class="lens-section">
@@ -235,21 +245,6 @@
             </div>
         {% endif %}
 
-        {# Section 7: Similar Assets — hidden when none found #}
-        {% if analysis.status not in [lens.status.failed] and (not isProcessing or isReprocessing) and (similarImages ?? [])|length %}
-            <div class="lens-section">
-                <div class="lens-section-header">
-                    <span class="lens-section-header__title">{{ 'Similar Assets'|t('lens') }}</span>
-                </div>
-                <div class="lens-section-body">
-                    {% include 'lens/_components/analysis/relationships-section' with {
-                        similarImages: similarImages,
-                        asset: asset, static: readOnly,
-                        isProcessing: isProcessing
-                    } %}
-                </div>
-            </div>
-        {% endif %}
 
     {% else %}
         {# No analysis state #}

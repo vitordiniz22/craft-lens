@@ -121,17 +121,11 @@
                 {% endif %}
 
                 {% if analysis.similarImages is not empty %}
-                    <div class="lens-review-similar">
-                        <h4>{{ 'Similar Images'|t('lens') }}</h4>
-                        <div class="lens-review-similar-list">
-                            {% for similar in analysis.similarImages %}
-                                <a href="{{ similar.editUrl }}">
-                                    <img src="{{ similar.thumbnailUrl }}" alt="{{ similar.filename }}">
-                                    <span>{{ (similar.similarity * 100)|round }}%</span>
-                                </a>
-                            {% endfor %}
-                        </div>
-                    </div>
+                    {% include 'lens/_components/analysis/similar-assets-notice' with {
+                        similarImages: analysis.similarImages,
+                        asset: null,
+                        variant: 'review'
+                    } %}
                 {% endif %}
             </div>
 

@@ -264,24 +264,10 @@
   color: var(--amber-700);
 }
 
-/* Similar images */
-.lens-review-similar {
-  padding: 12px;
+/* Similar Assets in review left panel — neutral background to fit image context */
+.lens-similar-notice--review {
   background: var(--gray-050);
-  border-radius: var(--medium-border-radius);
-}
-
-.lens-review-similar h4 {
-  margin: 0 0 8px 0;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--medium-text-color);
-}
-
-.lens-review-similar-list {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
+  border-color: var(--hairline-color);
 }
 
 /* Right panel - Details */
