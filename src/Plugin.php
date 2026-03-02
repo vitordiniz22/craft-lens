@@ -240,11 +240,7 @@ class Plugin extends BasePlugin
         }
 
         if ($isConfigured) {
-            $pendingCount = Craft::$app->getCache()->getOrSet(
-                'lens:pendingReviewCount',
-                fn() => $this->review->getPendingReviewCount(),
-                60,
-            );
+            $pendingCount = $this->review->getPendingReviewCount();
 
             if ($pendingCount > 0) {
                 $item['badgeCount'] = $pendingCount;

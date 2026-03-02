@@ -95,19 +95,6 @@
     font-weight: 500;
 }
 
-.lens-processing__review-count {
-    color: var(--warning-color);
-    font-weight: 500;
-}
-
-.lens-processing__failed-count {
-    color: var(--error-color);
-    font-weight: 500;
-}
-
-.lens-processing__separator {
-    color: var(--light-text-color);
-}
 
 .lens-processing__progress-header {
     display: flex;

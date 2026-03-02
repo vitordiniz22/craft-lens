@@ -1,6 +1,6 @@
-{# Section 2: Processing Status - always visible #}
+{# Section 2: Analysis Coverage - always visible #}
 <div class="lens-dashboard-section lens-processing pane">
-    <h2 class="lens-section-header__title">{{ 'Analysis Progress'|t('lens') }}</h2>
+    <h2 class="lens-section-header__title">{{ 'Analysis Coverage'|t('lens') }}</h2>
 
     {% set totalImages = processingStats.totalImages %}
     {% set analyzed = processingStats.analyzed %}
@@ -8,7 +8,7 @@
     {% set processing = processingStats.processing|default(0) %}
     {% set pendingReview = processingStats.pendingReview|default(0) %}
     {% set failed = processingStats.failed|default(0) %}
-    {% set processed = analyzed + pendingReview + failed %}
+    {% set processed = max(0, totalImages - unprocessed) %}
     {% set waiting = max(0, unprocessed - failed) %}
 
     <div class="lens-processing__status" data-state="{{ processingState }}">
@@ -42,7 +42,7 @@
         {% elseif unprocessed > 0 %}
             {# Assets waiting state #}
             <div class="lens-processing-waiting">
-                {% set percentComplete = totalImages > 0 ? ((processed / totalImages) * 100) : 0 %}
+                {% set percentComplete = totalImages > 0 ? min(100, ((processed / totalImages) * 100)) : 0 %}
                 <div class="lens-processing__progress-header">
                     <span class="lens-processing__progress-text">
                         {{ processed|number_format }} {{ 'of'|t('lens') }} {{ totalImages|number_format }}
@@ -53,21 +53,7 @@
                     <div class="lens-progress-fill" style="width: {{ percentComplete }}%"></div>
                 </div>
                 <div class="lens-processing__waiting-info">
-                    {% if waiting > 0 %}
-                        <span class="lens-processing__waiting-count">{{ waiting|number_format }} {{ 'unprocessed'|t('lens') }}</span>
-                    {% endif %}
-                    {% if pendingReview > 0 %}
-                        {% if waiting > 0 %}
-                            <span class="lens-processing__separator"> · </span>
-                        {% endif %}
-                        <a href="{{ cpUrl('lens/review') }}" class="lens-processing__review-count">{{ pendingReview|number_format }} {{ 'pending review'|t('lens') }}</a>
-                    {% endif %}
-                    {% if failed > 0 %}
-                        {% if waiting > 0 or pendingReview > 0 %}
-                            <span class="lens-processing__separator"> · </span>
-                        {% endif %}
-                        <span class="lens-processing__failed-count">{{ failed|number_format }} {{ 'failed'|t('lens') }}</span>
-                    {% endif %}
+                    <span class="lens-processing__waiting-count">{{ unprocessed|number_format }} {{ 'unprocessed'|t('lens') }}</span>
                 </div>
                 <div class="lens-actions__grid">
                     {% if waiting > 0 %}
@@ -79,7 +65,7 @@
                     {% if failed > 0 %}
                         <form method="post" action="{{ actionUrl('lens/bulk/retry-failed') }}">
                             {{ csrfInput() }}
-                            <button type="submit" class="btn{% if waiting == 0 %} submit{% endif %}">{{ 'Retry Failed'|t('lens') }}</button>
+                            <button type="submit" class="btn{% if waiting == 0 %} submit{% endif %}">{{ 'Retry {count} Failed'|t('lens', {count: failed}) }}</button>
                         </form>
                     {% endif %}
                 </div>

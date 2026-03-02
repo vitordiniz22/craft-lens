@@ -6,6 +6,7 @@ namespace vitordiniz22\craftlens\controllers;
 
 use Craft;
 use craft\elements\Asset;
+use craft\helpers\UrlHelper;
 use craft\web\Controller;
 use vitordiniz22\craftlens\controllers\traits\RequiresAiProviderTrait;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
