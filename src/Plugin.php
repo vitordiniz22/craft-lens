@@ -346,6 +346,8 @@ class Plugin extends BasePlugin
                 if (!$event->isNew) {
                     $record = $this->assetAnalysis->getAnalysis($asset->id);
                     if ($record !== null) {
+                        $this->analysisEdit->syncNativeFieldsToRecord($asset, $record);
+
                         try {
                             $this->searchIndex->reindexField($record, 'title');
                             $this->searchIndex->reindexField($record, 'alt');

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace vitordiniz22\craftlens\services;
 
 use Craft;
+use craft\elements\Asset;
 use craft\helpers\DateTimeHelper;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\Logger;
@@ -283,6 +284,46 @@ class AnalysisEditService extends Component
             'float' => min($rules['max'] ?? 1.0, max($rules['min'] ?? 0.0, (float)$value)),
             'bool' => (bool)$value,
         };
+    }
+
+    /**
+     * Sync Craft's native alt and title fields back to the analysis record
+     * so plugin statistics and search stay in sync with user edits.
+     */
+    public function syncNativeFieldsToRecord(Asset $asset, AssetAnalysisRecord $record): void
+    {
+        $needsSave = false;
+        $nativeAlt = (string)($asset->alt ?? '');
+        $recordAlt = (string)($record->altText ?? '');
+
+        if ($nativeAlt !== $recordAlt) {
+            if ($nativeAlt === '') {
+                $record->altText = null;
+                $record->altTextEditedBy = null;
+                $record->altTextEditedAt = null;
+            } else {
+                $record->altText = $nativeAlt;
+                $record->altTextEditedBy = Craft::$app->getUser()->getId();
+                $record->altTextEditedAt = DateTimeHelper::now();
+            }
+            $needsSave = true;
+        }
+
+        $nativeTitle = (string)($asset->title ?? '');
+        $recordTitle = (string)($record->suggestedTitle ?? '');
+
+        if ($recordTitle !== '' && $nativeTitle !== $recordTitle) {
+            $record->suggestedTitle = $nativeTitle;
+            $record->suggestedTitleEditedBy = Craft::$app->getUser()->getId();
+            $record->suggestedTitleEditedAt = DateTimeHelper::now();
+            $needsSave = true;
+        }
+
+        if ($needsSave) {
+            if (!$record->save()) {
+                Logger::warning(LogCategory::AssetProcessing, 'Failed to sync native fields to analysis record', assetId: $asset->id);
+            }
+        }
     }
 
     private function sanitizeString(mixed $value, ?int $maxLength): string
