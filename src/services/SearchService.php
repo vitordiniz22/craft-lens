@@ -144,13 +144,22 @@ class SearchService extends Component
      */
     private function buildMatchingQuery(array $filters, ?array $rankedAssetIds = null): Query
     {
+        $focalPointMissing = isset($filters['hasFocalPoint']) && $filters['hasFocalPoint'] === false;
+        $noTagsFilter = !empty($filters['noTags']);
+        $useLeftJoin = $focalPointMissing || $noTagsFilter;
+
         $query = (new Query())
             ->select(['assets.id'])
             ->from('{{%assets}} assets')
             ->innerJoin('{{%elements}} elements', '[[assets.id]] = [[elements.id]]')
-            ->innerJoin(Install::TABLE_ASSET_ANALYSES . ' lens', '[[assets.id]] = [[lens.assetId]]')
             ->where(['elements.dateDeleted' => null])
             ->groupBy(['assets.id']);
+
+        if ($useLeftJoin) {
+            $query->leftJoin(Install::TABLE_ASSET_ANALYSES . ' lens', '[[assets.id]] = [[lens.assetId]]');
+        } else {
+            $query->innerJoin(Install::TABLE_ASSET_ANALYSES . ' lens', '[[assets.id]] = [[lens.assetId]]');
+        }
 
         if ($rankedAssetIds !== null) {
             // BM25 path: filter to pre-ranked IDs — no text-search table joins needed.
@@ -393,7 +402,7 @@ class SearchService extends Component
 
     /**
      * Apply "no tags" filter for untagged assets.
-     * Shows assets that have been analyzed but have no AI tags.
+     * Shows analyzed assets (any non-failed status) that have no AI tags.
      */
     private function applyNoTagsFilter(Query $query, array $filters): void
     {
@@ -406,7 +415,6 @@ class SearchService extends Component
             ->from(Install::TABLE_ASSET_TAGS);
 
         $query->andWhere(['not in', 'assets.id', $subQuery]);
-        $query->andWhere(['in', 'lens.status', AnalysisStatus::analyzedValues()]);
     }
 
     /**
@@ -513,6 +521,10 @@ class SearchService extends Component
 
     /**
      * Filter assets by focal point availability.
+     *
+     * Uses Craft's native assets.focalPoint field to match the dashboard coverage
+     * metric. When filtering for missing focal point, the base query uses LEFT JOIN
+     * so unanalyzed assets (no lens record) are included.
      */
     private function applyFocalPointFilter(Query $query, array $filters): void
     {
@@ -521,13 +533,9 @@ class SearchService extends Component
         }
 
         if ($filters['hasFocalPoint']) {
-            $query->andWhere(['not', ['lens.focalPointX' => null]]);
-            $query->andWhere(['not', ['lens.focalPointY' => null]]);
+            $query->andWhere(['not', ['assets.focalPoint' => null]]);
         } else {
-            $query->andWhere(['or',
-                ['lens.focalPointX' => null],
-                ['lens.focalPointY' => null],
-            ]);
+            $query->andWhere(['assets.focalPoint' => null]);
         }
     }
 
@@ -551,6 +559,9 @@ class SearchService extends Component
     /**
      * Exclude non-analyzed statuses by default when no explicit status filter is set.
      * Failed, processing, and pending assets are hidden unless explicitly requested.
+     *
+     * When filtering for missing focal point the base query uses LEFT JOIN, so
+     * unanalyzed assets have a NULL lens record — those are allowed through.
      */
     private function applyDefaultStatusExclusion(Query $query, array $filters): void
     {
@@ -558,11 +569,24 @@ class SearchService extends Component
             return;
         }
 
-        $query->andWhere(['not', ['lens.status' => [
+        $excluded = [
             AnalysisStatus::Failed->value,
             AnalysisStatus::Processing->value,
             AnalysisStatus::Pending->value,
-        ]]]);
+        ];
+
+        $usesLeftJoin = (isset($filters['hasFocalPoint']) && $filters['hasFocalPoint'] === false)
+            || !empty($filters['noTags']);
+
+        if ($usesLeftJoin) {
+            // LEFT JOIN mode: NULL lens.assetId means the asset is unanalyzed — include it.
+            $query->andWhere(['or',
+                ['lens.assetId' => null],
+                ['not', ['lens.status' => $excluded]],
+            ]);
+        } else {
+            $query->andWhere(['not', ['lens.status' => $excluded]]);
+        }
     }
 
     /**

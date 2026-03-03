@@ -124,6 +124,18 @@
                             <button type="button" data-lens-action="remove-filter-chip" data-lens-filter-param="hasDuplicates" title="{{ 'Remove filter'|t('lens') }}">&times;</button>
                         </span>
                     {% endif %}
+                    {% if filters.hasFocalPoint is defined and filters.hasFocalPoint is not null %}
+                        <span class="lens-filter-chip" data-lens-filter-param="hasFocalPoint">
+                            {{ 'Focal Point'|t('lens') }}: <strong>{{ filters.hasFocalPoint ? 'Present'|t('lens') : 'Missing'|t('lens') }}</strong>
+                            <button type="button" data-lens-action="remove-filter-chip" data-lens-filter-param="hasFocalPoint" title="{{ 'Remove filter'|t('lens') }}">&times;</button>
+                        </span>
+                    {% endif %}
+                    {% if filters.missingAltText is defined and filters.missingAltText is not null %}
+                        <span class="lens-filter-chip" data-lens-filter-param="missingAltText">
+                            {{ 'Alt Text'|t('lens') }}: <strong>{{ filters.missingAltText ? 'Missing'|t('lens') : 'Present'|t('lens') }}</strong>
+                            <button type="button" data-lens-action="remove-filter-chip" data-lens-filter-param="missingAltText" title="{{ 'Remove filter'|t('lens') }}">&times;</button>
+                        </span>
+                    {% endif %}
                 </div>
                 <a href="{{ cpUrl('lens/search') }}" class="lens-filter-chips-clear" data-lens-action="clear-all-filters">{{ 'Clear all'|t('lens') }}</a>
             </div>
