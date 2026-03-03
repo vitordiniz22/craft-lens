@@ -27,7 +27,7 @@
 <div class="lens-alt-proxy">
     <div class="lens-field-header" data-lens-target="field-header">
         <span class="lens-field-label">{{ 'Alt Text'|t('lens') }}</span>
-        {% if confidence %}
+        {% if confidence and not (hideConfidence ?? false) %}
             <span class="badge" data-lens-target="confidence-badge">{{ (confidence * 100)|round }}%</span>
         {% endif %}
     </div>
@@ -60,7 +60,7 @@
 
     <div class="lens-field-header" data-lens-target="field-header">
         <span class="lens-field-label">{{ 'Alt Text'|t('lens') }}</span>
-        {% if confidence %}
+        {% if confidence and not (hideConfidence ?? false) %}
             <span class="badge" data-lens-target="confidence-badge">{{ (confidence * 100)|round }}%</span>
         {% endif %}
         <button type="button" class="lens-edit-trigger" data-lens-action="alt-proxy-edit" title="{{ 'Edit'|t('lens') }}">&#9998;</button>

@@ -47,7 +47,7 @@
             <span class="lens-lock-icon" data-lens-target="lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
         {% endif %}
         <span class="lens-field-label">{{ label }}</span>
-        {% if not isEdited and confidence %}
+        {% if not isEdited and confidence and not (hideConfidence ?? false) %}
             <span class="badge" data-lens-target="confidence-badge">{{ (confidence * 100)|round }}%</span>
         {% endif %}
     </div>
@@ -84,7 +84,7 @@
             <span class="lens-lock-icon" data-lens-target="lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
         {% endif %}
         <span class="lens-field-label">{{ label }}</span>
-        {% if not isEdited and confidence %}
+        {% if not isEdited and confidence and not (hideConfidence ?? false) %}
             <span class="badge" data-lens-target="confidence-badge">{{ (confidence * 100)|round }}%</span>
         {% endif %}
     </div>

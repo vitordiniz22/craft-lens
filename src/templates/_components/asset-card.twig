@@ -90,13 +90,15 @@
 
         {% if showMeta %}
             <div class="lens-browse-card__meta">
-                {% set avgConfidence = avgConfidence ?? 0 %}
-                {% if avgConfidence >= 0.8 %}
-                    <span class="lens-confidence-badge lens-confidence-badge--high">{{ (avgConfidence * 100)|round }}%</span>
-                {% elseif avgConfidence >= 0.5 %}
-                    <span class="lens-confidence-badge lens-confidence-badge--medium">{{ (avgConfidence * 100)|round }}%</span>
-                {% else %}
-                    <span class="lens-confidence-badge lens-confidence-badge--low">{{ (avgConfidence * 100)|round }}%</span>
+                {% if analysis and analysis.status == lens.status.pendingReview %}
+                    {% set avgConfidence = avgConfidence ?? 0 %}
+                    {% if avgConfidence >= 0.8 %}
+                        <span class="lens-confidence-badge lens-confidence-badge--high">{{ (avgConfidence * 100)|round }}%</span>
+                    {% elseif avgConfidence >= 0.5 %}
+                        <span class="lens-confidence-badge lens-confidence-badge--medium">{{ (avgConfidence * 100)|round }}%</span>
+                    {% else %}
+                        <span class="lens-confidence-badge lens-confidence-badge--low">{{ (avgConfidence * 100)|round }}%</span>
+                    {% endif %}
                 {% endif %}
                 <span class="lens-tag-count">{{ tagCount ?? 0 }} {{ 'tags'|t('lens') }}</span>
             </div>

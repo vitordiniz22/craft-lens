@@ -21,7 +21,7 @@
                     <a href="{{ cpUrl('lens/search', {tags: tag.tag}) }}" class="chip" data-lens-tag="{{ tag.tag }}" data-lens-is-ai="{{ tag.isAi ? '1' : '0' }}" data-lens-confidence="{{ tag.confidence }}">
                         <div class="chip-content">
                             <span class="chip-label" data-lens-target="chip-label">{{ tag.tag }}</span>
-                            {% if tag.confidence %}
+                            {% if tag.confidence and not (hideConfidence ?? false) %}
                                 <span class="badge">{{ (tag.confidence * 100)|round }}%</span>
                             {% endif %}
                             {% if isInteractive %}

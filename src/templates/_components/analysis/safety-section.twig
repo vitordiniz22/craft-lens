@@ -32,7 +32,9 @@
 {% if analysis.isFlaggedNsfw or (analysis.nsfwScore is defined and analysis.nsfwScore >= 0.2) %}
     <div class="lens-detection-item lens-detection-item--nested">
         <div>
-            <span class="lens-badge lens-badge--{{ analysis.isFlaggedNsfw ? 'error-solid' : 'amber' }}">{{ (analysis.nsfwScore * 100)|round }}%</span>
+            {% if not (hideConfidence ?? false) and not analysis.nsfwScoreEditedBy %}
+                <span class="lens-badge lens-badge--{{ analysis.isFlaggedNsfw ? 'error-solid' : 'amber' }}">{{ (analysis.nsfwScore * 100)|round }}%</span>
+            {% endif %}
             {% if analysis.nsfwCategories|length %}
                 <div class="chips">
                     {% for cat in analysis.nsfwCategories %}
@@ -76,7 +78,7 @@
                 'unknown': 'Unknown'|t('lens')
             } %}
             <span class="lens-watermark-type">{{ watermarkTypes[analysis.watermarkType] ?? analysis.watermarkType|capitalize }}</span>
-            {% if analysis.watermarkConfidence %}
+            {% if analysis.watermarkConfidence and not (hideConfidence ?? false) and not analysis.hasWatermarkEditedBy %}
                 <span class="badge">{{ (analysis.watermarkConfidence * 100)|round }}%</span>
             {% endif %}
             {% if analysis.watermarkType == 'stock' and analysis.watermarkDetails.stockProvider is defined %}
@@ -107,7 +109,7 @@
     <div class="lens-detection-item lens-detection-item--nested">
         <div class="chips">
             {% for brand in analysis.detectedBrands %}
-                <div class="chip" title="{{ (brand.confidence * 100)|round }}% confidence">
+                <div class="chip"{% if not (hideConfidence ?? false) and not analysis.containsBrandLogoEditedBy %} title="{{ (brand.confidence * 100)|round }}% confidence"{% endif %}>
                     <div class="chip-content">
                         <span class="chip-label">{{ brand.brand }}</span>
                     </div>

@@ -20,7 +20,7 @@
                 <span class="lens-lock-icon" data-lens-target="lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
             {% endif %}
             <span class="lens-field-label">{{ 'Focal Point'|t('lens') }}</span>
-            {% if not fpEdited and analysis.focalPointConfidence %}
+            {% if not fpEdited and analysis.focalPointConfidence and not (hideConfidence ?? false) %}
                 <span class="badge" data-lens-target="confidence-badge">{{ (analysis.focalPointConfidence * 100)|round }}%</span>
             {% endif %}
         </div>
