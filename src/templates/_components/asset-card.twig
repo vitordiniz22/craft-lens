@@ -57,6 +57,13 @@
                     </span>
                 {% endif %}
             </div>
+        {% else %}
+            <div class="lens-result-overlay">
+                <span class="lens-badge lens-badge--small lens-badge--muted" title="{{ 'Not yet analyzed'|t('lens') }}">
+                    {{ iconSvg('circle-exclamation')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
+                    {{ 'Unprocessed'|t('lens') }}
+                </span>
+            </div>
         {% endif %}
     </a>
 
