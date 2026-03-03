@@ -146,7 +146,8 @@ class SearchService extends Component
     {
         $focalPointMissing = isset($filters['hasFocalPoint']) && $filters['hasFocalPoint'] === false;
         $noTagsFilter = !empty($filters['noTags']);
-        $useLeftJoin = $focalPointMissing || $noTagsFilter;
+        $unprocessedFilter = !empty($filters['unprocessed']);
+        $useLeftJoin = $focalPointMissing || $noTagsFilter || $unprocessedFilter;
 
         $query = (new Query())
             ->select(['assets.id'])
@@ -190,6 +191,7 @@ class SearchService extends Component
         $this->applyGpsFilter($query, $filters);
         $this->applyFocalPointFilter($query, $filters);
         $this->applyMissingAltTextFilter($query, $filters);
+        $this->applyUnprocessedFilter($query, $filters);
         $this->applyDefaultStatusExclusion($query, $filters);
 
         return $query;
@@ -557,6 +559,28 @@ class SearchService extends Component
     }
 
     /**
+     * Filter to assets that have not been successfully processed.
+     * Mirrors BulkProcessingStatusService::getUnprocessedCount(): assets that are
+     * NOT in (completed, approved, pending_review, processing).
+     * LEFT JOIN is active so NULL lens.assetId (no record) is included.
+     */
+    private function applyUnprocessedFilter(Query $query, array $filters): void
+    {
+        if (empty($filters['unprocessed'])) {
+            return;
+        }
+
+        $query->andWhere(['or',
+            ['lens.assetId' => null],
+            ['in', 'lens.status', [
+                AnalysisStatus::Pending->value,
+                AnalysisStatus::Failed->value,
+                AnalysisStatus::Rejected->value,
+            ]],
+        ]);
+    }
+
+    /**
      * Exclude non-analyzed statuses by default when no explicit status filter is set.
      * Failed, processing, and pending assets are hidden unless explicitly requested.
      *
@@ -569,16 +593,21 @@ class SearchService extends Component
             return;
         }
 
+        if (!empty($filters['unprocessed'])) {
+            return;
+        }
+
+        if (isset($filters['hasFocalPoint']) && $filters['hasFocalPoint'] === false) {
+            return;
+        }
+
         $excluded = [
             AnalysisStatus::Failed->value,
             AnalysisStatus::Processing->value,
             AnalysisStatus::Pending->value,
         ];
 
-        $usesLeftJoin = (isset($filters['hasFocalPoint']) && $filters['hasFocalPoint'] === false)
-            || !empty($filters['noTags']);
-
-        if ($usesLeftJoin) {
+        if (!empty($filters['noTags'])) {
             // LEFT JOIN mode: NULL lens.assetId means the asset is unanalyzed — include it.
             $query->andWhere(['or',
                 ['lens.assetId' => null],

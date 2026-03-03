@@ -23,7 +23,7 @@ class FilterParser
         'color', 'colorTolerance', 'hasDuplicates', 'quickFilter',
         'hasWatermark', 'watermarkType', 'containsBrandLogo',
         'qualityPreset', 'hasGps', 'hasFocalPoint',
-        'nsfwFlagged', 'missingAltText',
+        'nsfwFlagged', 'missingAltText', 'unprocessed',
     ];
 
     /**
@@ -173,7 +173,7 @@ class FilterParser
     {
         $booleanFilterKeys = [
             'hasDuplicates', 'hasWatermark', 'containsBrandLogo',
-            'hasGps', 'hasFocalPoint',
+            'hasGps', 'hasFocalPoint', 'unprocessed',
         ];
 
         foreach ($booleanFilterKeys as $key) {

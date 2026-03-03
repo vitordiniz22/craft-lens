@@ -59,22 +59,12 @@
     align-items: center;
     gap: 8px;
     padding: 10px 16px;
-    text-decoration: none;
     border-left-color: var(--link-color);
-    transition:
-        transform 0.15s ease,
-        box-shadow 0.15s ease;
 }
 
 .lens-metric-card--inline .lens-metric-card__value {
     font-size: 20px;
     font-weight: 700;
-}
-
-.lens-metric-card--inline:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    text-decoration: none;
 }
 
 /* ==========================================================================
@@ -118,6 +108,23 @@
 
 .lens-metric-card--info .lens-metric-card__value {
     color: var(--link-color);
+}
+
+/* ==========================================================================
+   Clickable cards (any card rendered as <a> with href)
+   ========================================================================== */
+
+.lens-metric-card[href] {
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.lens-metric-card[href]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    text-decoration: none;
 }
 
 /* ==========================================================================
