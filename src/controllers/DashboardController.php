@@ -58,7 +58,7 @@ class DashboardController extends Controller
 
                 // Section 4: Quick Insights
                 'topTags' => $stats->getTopTags(10),
-                'dominantColors' => $plugin->colorAggregation->getColorCounts(5),
+                'dominantColors' => $stats->getDominantColors(5),
 
                 // Section 5: Recent Activity
                 'recentActivity' => $stats->getRecentActivity(10),

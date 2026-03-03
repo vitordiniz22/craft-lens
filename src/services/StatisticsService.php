@@ -83,11 +83,19 @@ class StatisticsService extends Component
     }
 
     /**
-     * Get top tags by frequency.
+     * Get top tags by frequency, scoped to enabled volumes.
      */
     public function getTopTags(int $limit = 10): array
     {
-        return Plugin::getInstance()->tagAggregation->getTagCounts($limit, 'count');
+        return Plugin::getInstance()->tagAggregation->getTagCounts($limit, 'count', $this->getEnabledVolumeIds());
+    }
+
+    /**
+     * Get dominant colors by frequency, scoped to enabled volumes.
+     */
+    public function getDominantColors(int $limit = 5): array
+    {
+        return Plugin::getInstance()->colorAggregation->getColorCounts($limit, $this->getEnabledVolumeIds());
     }
 
     /**

@@ -50,17 +50,29 @@ class ColorAggregationService extends Component
     }
 
     /**
+     * @param int[]|null $volumeIds Restrict to assets in these volume IDs, or null for all volumes.
      * @return array<array{hex: string, count: int}>
      */
-    public function getColorCounts(int $limit = 20): array
+    public function getColorCounts(int $limit = 20, ?array $volumeIds = null): array
     {
-        $exactColorCounts = (new Query())
+        if ($volumeIds !== null && empty($volumeIds)) {
+            return [];
+        }
+
+        $query = (new Query())
             ->select(['c.hex', 'COUNT(*) as count'])
             ->from(Install::TABLE_ASSET_COLORS . ' c')
             ->innerJoin(Install::TABLE_ASSET_ANALYSES . ' a', '[[c.analysisId]] = [[a.id]]')
-            ->where(['in', 'a.status', AnalysisStatus::analyzedValues()])
-            ->groupBy(['c.hex'])
-            ->all();
+            ->where(['in', 'a.status', AnalysisStatus::withMetadataValues()]);
+
+        if ($volumeIds !== null) {
+            $query->andWhere(['in', '[[a.assetId]]', (new Query())
+                ->select('id')
+                ->from('{{%assets}}')
+                ->where(['in', 'volumeId', $volumeIds])]);
+        }
+
+        $exactColorCounts = $query->groupBy(['c.hex'])->all();
 
         $colorCounts = [];
 

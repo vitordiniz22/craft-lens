@@ -82,16 +82,29 @@ class TagAggregationService extends Component
     /**
      * Get tag counts using the indexed tags table.
      *
+     * @param int[]|null $volumeIds Restrict to assets in these volume IDs, or null for all volumes.
      * @return array<array{tag: string, count: int}>
      */
-    public function getTagCounts(int $limit = 30, string $sortBy = 'count'): array
+    public function getTagCounts(int $limit = 30, string $sortBy = 'count', ?array $volumeIds = null): array
     {
+        if ($volumeIds !== null && empty($volumeIds)) {
+            return [];
+        }
+
         $query = (new Query())
             ->select(['tags.tag', 'COUNT(*) as count'])
             ->from(Install::TABLE_ASSET_TAGS . ' tags')
             ->innerJoin(Install::TABLE_ASSET_ANALYSES . ' lens', '[[tags.analysisId]] = [[lens.id]]')
-            ->where(['in', 'lens.status', AnalysisStatus::analyzedValues()])
-            ->groupBy(['tags.tagNormalized', 'tags.tag']);
+            ->where(['in', 'lens.status', AnalysisStatus::withMetadataValues()]);
+
+        if ($volumeIds !== null) {
+            $query->andWhere(['in', '[[lens.assetId]]', (new Query())
+                ->select('id')
+                ->from('{{%assets}}')
+                ->where(['in', 'volumeId', $volumeIds])]);
+        }
+
+        $query->groupBy(['tags.tagNormalized', 'tags.tag']);
 
         if ($sortBy === 'alphabetical') {
             $query->orderBy(['tags.tag' => SORT_ASC]);
