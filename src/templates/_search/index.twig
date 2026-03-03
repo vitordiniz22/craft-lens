@@ -136,6 +136,12 @@
                             <button type="button" data-lens-action="remove-filter-chip" data-lens-filter-param="missingAltText" title="{{ 'Remove filter'|t('lens') }}">&times;</button>
                         </span>
                     {% endif %}
+                    {% if filters.unprocessed is defined and filters.unprocessed %}
+                        <span class="lens-filter-chip" data-lens-filter-param="unprocessed">
+                            <strong>{{ 'Unprocessed'|t('lens') }}</strong>
+                            <button type="button" data-lens-action="remove-filter-chip" data-lens-filter-param="unprocessed" title="{{ 'Remove filter'|t('lens') }}">&times;</button>
+                        </span>
+                    {% endif %}
                 </div>
                 <a href="{{ cpUrl('lens/search') }}" class="lens-filter-chips-clear" data-lens-action="clear-all-filters">{{ 'Clear all'|t('lens') }}</a>
             </div>

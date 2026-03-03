@@ -144,23 +144,15 @@ class SearchService extends Component
      */
     private function buildMatchingQuery(array $filters, ?array $rankedAssetIds = null): Query
     {
-        $focalPointMissing = isset($filters['hasFocalPoint']) && $filters['hasFocalPoint'] === false;
-        $noTagsFilter = !empty($filters['noTags']);
-        $unprocessedFilter = !empty($filters['unprocessed']);
-        $useLeftJoin = $focalPointMissing || $noTagsFilter || $unprocessedFilter;
-
         $query = (new Query())
             ->select(['assets.id'])
             ->from('{{%assets}} assets')
             ->innerJoin('{{%elements}} elements', '[[assets.id]] = [[elements.id]]')
             ->where(['elements.dateDeleted' => null])
+            ->andWhere(['assets.kind' => Asset::KIND_IMAGE])
             ->groupBy(['assets.id']);
 
-        if ($useLeftJoin) {
-            $query->leftJoin(Install::TABLE_ASSET_ANALYSES . ' lens', '[[assets.id]] = [[lens.assetId]]');
-        } else {
-            $query->innerJoin(Install::TABLE_ASSET_ANALYSES . ' lens', '[[assets.id]] = [[lens.assetId]]');
-        }
+        $query->leftJoin(Install::TABLE_ASSET_ANALYSES . ' lens', '[[assets.id]] = [[lens.assetId]]');
 
         if ($rankedAssetIds !== null) {
             // BM25 path: filter to pre-ranked IDs — no text-search table joins needed.
@@ -192,7 +184,7 @@ class SearchService extends Component
         $this->applyFocalPointFilter($query, $filters);
         $this->applyMissingAltTextFilter($query, $filters);
         $this->applyUnprocessedFilter($query, $filters);
-        $this->applyDefaultStatusExclusion($query, $filters);
+        $this->applyVolumeFilter($query);
 
         return $query;
     }
@@ -581,41 +573,31 @@ class SearchService extends Component
     }
 
     /**
-     * Exclude non-analyzed statuses by default when no explicit status filter is set.
-     * Failed, processing, and pending assets are hidden unless explicitly requested.
-     *
-     * When filtering for missing focal point the base query uses LEFT JOIN, so
-     * unanalyzed assets have a NULL lens record — those are allowed through.
+     * Restrict results to assets belonging to volumes enabled in plugin settings.
+     * When all volumes are enabled (the default), no filter is applied.
      */
-    private function applyDefaultStatusExclusion(Query $query, array $filters): void
+    private function applyVolumeFilter(Query $query): void
     {
-        if (!empty($filters['status'])) {
+        $configured = Plugin::getInstance()->getSettings()->enabledVolumes;
+
+        if (empty($configured) || \in_array('*', $configured, true)) {
             return;
         }
 
-        if (!empty($filters['unprocessed'])) {
+        $volumeIds = [];
+
+        foreach (Craft::$app->getVolumes()->getAllVolumes() as $volume) {
+            if (\in_array($volume->uid, $configured, true)) {
+                $volumeIds[] = $volume->id;
+            }
+        }
+
+        if (empty($volumeIds)) {
+            $query->andWhere('1 = 0');
             return;
         }
 
-        if (isset($filters['hasFocalPoint']) && $filters['hasFocalPoint'] === false) {
-            return;
-        }
-
-        $excluded = [
-            AnalysisStatus::Failed->value,
-            AnalysisStatus::Processing->value,
-            AnalysisStatus::Pending->value,
-        ];
-
-        if (!empty($filters['noTags'])) {
-            // LEFT JOIN mode: NULL lens.assetId means the asset is unanalyzed — include it.
-            $query->andWhere(['or',
-                ['lens.assetId' => null],
-                ['not', ['lens.status' => $excluded]],
-            ]);
-        } else {
-            $query->andWhere(['not', ['lens.status' => $excluded]]);
-        }
+        $query->andWhere(['assets.volumeId' => $volumeIds]);
     }
 
     /**

@@ -72,6 +72,10 @@
             {{ asset.title|truncate(30) }}
         </a>
 
+        {% if not analysis and asset.alt %}
+            <p class="lens-result-native-alt">{{ asset.alt|truncate(80) }}</p>
+        {% endif %}
+
         {% if analysis %}
             {% if (showTags and tags|length) or (showColors and colors|length) %}
                 <div class="lens-result-meta">
