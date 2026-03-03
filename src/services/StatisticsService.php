@@ -60,10 +60,6 @@ class StatisticsService extends Component
                     'SUM(CASE WHEN status = :failed THEN 1 ELSE 0 END) as failed',
                     [':failed' => AnalysisStatus::Failed->value]
                 ),
-                new Expression(
-                    "SUM(CASE WHEN status IN (:analyzed3, :analyzed4) AND (altText IS NULL OR altText = '') THEN 1 ELSE 0 END) as missingAltText",
-                    [':analyzed3' => $analyzedStatuses[0], ':analyzed4' => $analyzedStatuses[1]]
-                ),
                 'SUM(actualCost) as totalCost',
             ])
             ->asArray()
@@ -81,7 +77,6 @@ class StatisticsService extends Component
             'approved' => (int) ($result['approved'] ?? 0),
             'rejected' => (int) ($result['rejected'] ?? 0),
             'failed' => (int) ($result['failed'] ?? 0),
-            'missingAltText' => (int) ($result['missingAltText'] ?? 0),
             'totalCost' => $totalCost,
             'avgCostPerAsset' => $processed > 0 ? round($totalCost / $processed, 4) : 0.0,
         ];
@@ -95,11 +90,60 @@ class StatisticsService extends Component
         return Plugin::getInstance()->tagAggregation->getTagCounts($limit, 'count');
     }
 
-    private function getTotalImageCount(): int
+    /**
+     * @param int[]|null $volumeIds Pre-computed enabled volume IDs, or null for all volumes.
+     */
+    private function getTotalImageCount(?array $volumeIds = null): int
     {
-        return (int) Asset::find()
-            ->kind(Asset::KIND_IMAGE)
-            ->count();
+        $query = Asset::find()->kind(Asset::KIND_IMAGE);
+
+        if ($volumeIds !== null) {
+            if (empty($volumeIds)) {
+                return 0;
+            }
+
+            $query->volumeId($volumeIds);
+        }
+
+        return (int) $query->count();
+    }
+
+    /**
+     * Get IDs of volumes enabled for Lens processing, or null if all volumes are enabled.
+     *
+     * @return int[]|null null means no volume filter (all volumes enabled)
+     */
+    private function getEnabledVolumeIds(): ?array
+    {
+        $enabledUids = Plugin::getInstance()->getSettings()->enabledVolumes;
+
+        if (empty($enabledUids) || in_array('*', $enabledUids, true)) {
+            return null;
+        }
+
+        $ids = [];
+
+        foreach (Craft::$app->getVolumes()->getAllVolumes() as $volume) {
+            if (in_array($volume->uid, $enabledUids, true)) {
+                $ids[] = $volume->id;
+            }
+        }
+
+        return $ids;
+    }
+
+    /**
+     * Build a subquery that returns asset IDs belonging to the given volumes.
+     * Used to scope analysis record queries to enabled volumes only.
+     *
+     * @param int[] $volumeIds
+     */
+    private function buildVolumeSubquery(array $volumeIds): Query
+    {
+        return (new Query())
+            ->select('id')
+            ->from('{{%assets}}')
+            ->where(['in', 'volumeId', $volumeIds]);
     }
 
     private function getUnprocessedCount(): int
@@ -164,43 +208,37 @@ class StatisticsService extends Component
     }
 
     /**
-     * Get alt text coverage statistics.
+     * Get alt text coverage using Craft's native alt field.
      *
-     * When $siteId is provided, counts coverage from the per-site content table
-     * for that specific site. Otherwise counts from the main analysis record
-     * (primary site).
+     * Counts all images in enabled volumes with a non-empty native alt
+     * attribute, regardless of Lens analysis status. This reflects the
+     * real state of the library, not just AI-drafted content.
      *
      * @return array{percentage: float, withAltText: int, total: int}
      */
-    public function getAltTextCoverage(?int $precomputedAnalyzedCount = null, ?int $siteId = null): array
+    public function getAltTextCoverage(): array
     {
-        $metadataStatuses = AnalysisStatus::withMetadataValues();
-
-        $total = $precomputedAnalyzedCount ?? (int) AssetAnalysisRecord::find()
-            ->where(['in', 'status', $metadataStatuses])
-            ->count();
+        $volumeIds = $this->getEnabledVolumeIds();
+        $total = $this->getTotalImageCount($volumeIds);
 
         if ($total === 0) {
             return ['percentage' => 0.0, 'withAltText' => 0, 'total' => 0];
         }
 
-        if ($siteId !== null) {
-            $withAltText = (int) (new Query())
-                ->select(['COUNT(*)'])
-                ->from(Install::TABLE_ANALYSIS_SITE_CONTENT . ' sc')
-                ->innerJoin(Install::TABLE_ASSET_ANALYSES . ' a', '[[sc.analysisId]] = [[a.id]]')
-                ->where(['in', 'a.status', $metadataStatuses])
-                ->andWhere(['sc.siteId' => $siteId])
-                ->andWhere(['not', ['sc.altText' => null]])
-                ->andWhere(['!=', 'sc.altText', ''])
-                ->scalar();
-        } else {
-            $withAltText = (int) AssetAnalysisRecord::find()
-                ->where(['in', 'status', $metadataStatuses])
-                ->andWhere(['not', ['altText' => null]])
-                ->andWhere(['!=', 'altText', ''])
-                ->count();
+        $query = Asset::find()
+            ->kind(Asset::KIND_IMAGE)
+            ->andWhere(['not', ['assets.alt' => null]])
+            ->andWhere(['!=', 'assets.alt', '']);
+
+        if ($volumeIds !== null) {
+            if (empty($volumeIds)) {
+                return ['percentage' => 0.0, 'withAltText' => 0, 'total' => $total];
+            }
+
+            $query->volumeId($volumeIds);
         }
+
+        $withAltText = (int) $query->count();
 
         return [
             'percentage' => round(($withAltText / $total) * 100, 1),
@@ -210,64 +248,74 @@ class StatisticsService extends Component
     }
 
     /**
-     * Get percentage of analyzed assets that have at least one tag.
+     * Get percentage of all images in enabled volumes that have at least one tag,
+     * regardless of analysis status.
      *
      * @return array{percentage: float, withTags: int, total: int}
      */
-    public function getTaggedPercentage(?int $precomputedAnalyzedCount = null): array
+    public function getTaggedPercentage(): array
     {
-        $metadataStatuses = AnalysisStatus::withMetadataValues();
-
-        $total = $precomputedAnalyzedCount ?? (int) AssetAnalysisRecord::find()
-            ->where(['in', 'status', $metadataStatuses])
-            ->count();
+        $volumeIds = $this->getEnabledVolumeIds();
+        $total = $this->getTotalImageCount($volumeIds);
 
         if ($total === 0) {
             return ['percentage' => 0.0, 'withTags' => 0, 'total' => 0];
         }
 
-        // Count distinct analysisIds that have at least one tag
-        $withTags = (int) (new Query())
+        $query = (new Query())
             ->select(['COUNT(DISTINCT [[tags.analysisId]])'])
             ->from(Install::TABLE_ASSET_TAGS . ' tags')
-            ->innerJoin(Install::TABLE_ASSET_ANALYSES . ' lens', '[[tags.analysisId]] = [[lens.id]]')
-            ->where(['in', 'lens.status', $metadataStatuses])
-            ->scalar();
+            ->innerJoin(Install::TABLE_ASSET_ANALYSES . ' lens', '[[tags.analysisId]] = [[lens.id]]');
+        if ($volumeIds !== null) {
+            if (empty($volumeIds)) {
+                return ['percentage' => 0.0, 'withTags' => 0, 'total' => $total];
+            }
+            $query->andWhere(['in', '[[lens.assetId]]', $this->buildVolumeSubquery($volumeIds)]);
+        }
+        $withTags = (int) $query->scalar();
 
         return [
             'percentage' => round(($withTags / $total) * 100, 1),
-            'withTags' => (int) $withTags,
+            'withTags' => $withTags,
             'total' => $total,
         ];
     }
 
     /**
-     * Get percentage of analyzed assets with high quality (overallQualityScore >= 0.7).
+     * Get focal point coverage using Craft's native focalPoint field.
      *
-     * @return array{percentage: float, highQuality: int, total: int}
+     * Counts all images in enabled volumes with an explicitly set focal point,
+     * regardless of Lens analysis status. Lens auto-applies its detected focal
+     * point to the native Craft field at analysis time, so this reflects the
+     * real state of the library.
+     *
+     * @return array{percentage: float, withFocalPoint: int, total: int}
      */
-    public function getHighQualityPercentage(?int $precomputedScoredCount = null): array
+    public function getFocalPointCoverage(): array
     {
-        $metadataStatuses = AnalysisStatus::withMetadataValues();
-
-        // Only count assets that have a quality score (not null)
-        $total = $precomputedScoredCount ?? (int) AssetAnalysisRecord::find()
-            ->where(['in', 'status', $metadataStatuses])
-            ->andWhere(['not', ['overallQualityScore' => null]])
-            ->count();
+        $volumeIds = $this->getEnabledVolumeIds();
+        $total = $this->getTotalImageCount($volumeIds);
 
         if ($total === 0) {
-            return ['percentage' => 0.0, 'highQuality' => 0, 'total' => 0];
+            return ['percentage' => 0.0, 'withFocalPoint' => 0, 'total' => 0];
         }
 
-        $highQuality = (int) AssetAnalysisRecord::find()
-            ->where(['in', 'status', $metadataStatuses])
-            ->andWhere(['>=', 'overallQualityScore', 0.7])
-            ->count();
+        $query = Asset::find()
+            ->kind(Asset::KIND_IMAGE)
+            ->andWhere(['not', ['assets.focalPoint' => null]]);
+
+        if ($volumeIds !== null) {
+            if (empty($volumeIds)) {
+                return ['percentage' => 0.0, 'withFocalPoint' => 0, 'total' => $total];
+            }
+            $query->volumeId($volumeIds);
+        }
+
+        $withFocalPoint = (int) $query->count();
 
         return [
-            'percentage' => round(($highQuality / $total) * 100, 1),
-            'highQuality' => $highQuality,
+            'percentage' => round(($withFocalPoint / $total) * 100, 1),
+            'withFocalPoint' => $withFocalPoint,
             'total' => $total,
         ];
     }

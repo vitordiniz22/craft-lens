@@ -264,12 +264,6 @@
   color: var(--amber-700);
 }
 
-/* Similar Assets in review left panel — neutral background to fit image context */
-.lens-similar-notice--review {
-  background: var(--gray-050);
-  border-color: var(--hairline-color);
-}
-
 /* Right panel - Details */
 .lens-review-right {
   display: flex;

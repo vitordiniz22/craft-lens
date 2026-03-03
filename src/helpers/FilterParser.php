@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace vitordiniz22\craftlens\helpers;
 
 use craft\web\Request;
+use vitordiniz22\craftlens\enums\QuickFilter;
 use vitordiniz22\craftlens\Plugin;
 
 /**
@@ -22,7 +23,7 @@ class FilterParser
         'color', 'colorTolerance', 'hasDuplicates', 'quickFilter',
         'hasWatermark', 'watermarkType', 'containsBrandLogo',
         'qualityPreset', 'hasGps', 'hasFocalPoint',
-        'nsfwFlagged',
+        'nsfwFlagged', 'missingAltText',
     ];
 
     /**
@@ -40,6 +41,7 @@ class FilterParser
         self::parseDateFilters($request, $filters);
         self::parseColorFilters($request, $filters);
         self::parseBooleanFilters($request, $filters);
+        self::parseMissingAltText($request, $filters);
         self::parseEnumFilters($request, $filters);
         self::parseQuickFilter($request, $filters);
         self::parsePagination($request, $filters);
@@ -183,6 +185,15 @@ class FilterParser
         }
     }
 
+    private static function parseMissingAltText(Request $request, array &$filters): void
+    {
+        $value = $request->getQueryParam('missingAltText');
+
+        if ($value !== null && $value !== '') {
+            $filters['missingAltText'] = filter_var($value, FILTER_VALIDATE_BOOLEAN);
+        }
+    }
+
     private static function parseEnumFilters(Request $request, array &$filters): void
     {
         $enumFilters = [
@@ -203,7 +214,7 @@ class FilterParser
     {
         $quickFilter = $request->getQueryParam('quickFilter');
 
-        if ($quickFilter !== null && trim($quickFilter) !== '') {
+        if ($quickFilter !== null && QuickFilter::tryFrom($quickFilter) !== null) {
             $plugin = Plugin::getInstance();
             $filters = $plugin->search->applyQuickFilter($quickFilter, $filters);
             $filters['quickFilter'] = $quickFilter;

@@ -27,7 +27,6 @@ class DashboardController extends Controller
         try {
             $stats = $plugin->statistics;
             $overviewStats = $stats->getOverviewStats();
-            $analyzedCount = $overviewStats['analyzed'];
 
             // Get processing status for Section 2
             $bulkStatus = $plugin->bulkProcessingStatus;
@@ -55,7 +54,7 @@ class DashboardController extends Controller
                 // Section 3: Metadata Coverage
                 'altTextCoverage' => $stats->getAltTextCoverage(),
                 'taggedPercentage' => $stats->getTaggedPercentage(),
-                'highQualityPercentage' => $stats->getHighQualityPercentage(),
+                'focalPointCoverage' => $stats->getFocalPointCoverage(),
 
                 // Section 4: Quick Insights
                 'topTags' => $stats->getTopTags(10),

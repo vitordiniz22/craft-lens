@@ -27,16 +27,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   background: var(--error-color);
   flex-shrink: 0;
 }
 
 .lens-setup-banner-icon svg {
-  width: 16px;
-  height: 16px;
+  width: 12px;
+  height: 12px;
   fill: white;
 }
 

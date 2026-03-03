@@ -48,23 +48,23 @@
             </div>
         </div>
 
-        {# Quality (70%+ passing) #}
-        {% set qualityColor = highQualityPercentage.percentage >= 66 ? 'var(--green-500)' : (highQualityPercentage.percentage >= 33 ? 'var(--amber-400)' : 'var(--red-500)') %}
+        {# Focal Point Coverage #}
+        {% set fpColor = focalPointCoverage.percentage >= 66 ? 'var(--green-500)' : (focalPointCoverage.percentage >= 33 ? 'var(--amber-400)' : 'var(--red-500)') %}
         <div class="lens-coverage__metric">
             <div class="lens-coverage__metric-header">
-                <span class="lens-field-label">{{ 'Quality'|t('lens') }}</span>
+                <span class="lens-field-label">{{ 'Focal Point'|t('lens') }}</span>
                 <span class="lens-coverage__metric-stat">
-                    {{ highQualityPercentage.percentage }}%
-                    <span class="lens-coverage__metric-counts">({{ highQualityPercentage.highQuality }} {{ 'of'|t('lens') }} {{ highQualityPercentage.total }})</span>
+                    {{ focalPointCoverage.percentage }}%
+                    <span class="lens-coverage__metric-counts">({{ focalPointCoverage.withFocalPoint }} {{ 'of'|t('lens') }} {{ focalPointCoverage.total }})</span>
                 </span>
             </div>
             <div class="lens-coverage__metric-row">
                 <div class="lens-progress">
-                    <div class="lens-progress-fill" style="width: {{ highQualityPercentage.percentage }}%; background-color: {{ qualityColor }}"></div>
+                    <div class="lens-progress-fill" style="width: {{ focalPointCoverage.percentage }}%; background-color: {{ fpColor }}"></div>
                 </div>
-                {% if highQualityPercentage.total - highQualityPercentage.highQuality > 0 %}
-                    <a href="{{ cpUrl('lens/search', {qualityBelow: '0.7'}) }}" class="lens-link">
-                        {{ 'View low quality'|t('lens') }} &rarr;
+                {% if focalPointCoverage.total - focalPointCoverage.withFocalPoint > 0 %}
+                    <a href="{{ cpUrl('lens/search', {hasFocalPoint: 0}) }}" class="lens-link">
+                        {{ 'View missing'|t('lens') }} &rarr;
                     </a>
                 {% endif %}
             </div>

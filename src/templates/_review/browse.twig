@@ -10,6 +10,12 @@
             totalCount: totalCount
         } %}
 
+        {% include 'lens/_components/inline-notice' with {
+            type: 'info',
+            title: 'What is Review?'|t('lens'),
+            message: 'Lens analyzed these assets and generated AI metadata, tags, alt text, focal points, and descriptions. Review each one to verify the AI\'s work, correct any mistakes, and approve or reject. Assets are fully usable immediately after analysis; review is optional, but it ensures your library data is accurate and trustworthy.'|t('lens')
+        } %}
+
         <div class="lens-browse-grid">
             {% for item in items %}
                 {% set asset = assets[item.assetId] ?? null %}

@@ -69,7 +69,7 @@
                             <button type="button" data-lens-action="remove-filter-chip" data-lens-filter-param="q" title="{{ 'Remove filter'|t('lens') }}">&times;</button>
                         </span>
                     {% endif %}
-                    {% if filters.containsPeople is defined and filters.containsPeople is not null %}
+                    {% if filters.containsPeople is defined and filters.containsPeople is not null and (filters.quickFilter ?? '') != (quickFilterDerivedParams.containsPeople ?? '') %}
                         <span class="lens-filter-chip" data-lens-filter-param="containsPeople">
                             {{ 'People'|t('lens') }}: <strong>{{ filters.containsPeople ? 'Yes'|t('lens') : 'No'|t('lens') }}</strong>
                             <button type="button" data-lens-action="remove-filter-chip" data-lens-filter-param="containsPeople" title="{{ 'Remove filter'|t('lens') }}">&times;</button>
@@ -106,19 +106,19 @@
                             <button type="button" data-lens-action="remove-filter-chip" data-lens-filter-param="color,colorTolerance" title="{{ 'Remove filter'|t('lens') }}">&times;</button>
                         </span>
                     {% endif %}
-                    {% if filters.status is defined and filters.status|length %}
+                    {% if filters.status is defined and filters.status|length and (filters.quickFilter ?? '') != (quickFilterDerivedParams.status ?? '') %}
                         <span class="lens-filter-chip" data-lens-filter-param="status">
                             {{ 'Status'|t('lens') }}: <strong>{{ filters.status|map(s => lens.statusLabel(s))|join(', ') }}</strong>
                             <button type="button" data-lens-action="remove-filter-chip" data-lens-filter-param="status" title="{{ 'Remove filter'|t('lens') }}">&times;</button>
                         </span>
                     {% endif %}
-                    {% if filters.processedFrom is defined or filters.processedTo is defined %}
+                    {% if (filters.processedFrom is defined or filters.processedTo is defined) and (filters.quickFilter ?? '') != (quickFilterDerivedParams.processedFrom ?? '') %}
                         <span class="lens-filter-chip" data-lens-filter-param="processedFrom,processedTo">
                             {{ 'Date'|t('lens') }}: <strong>{% if filters.processedFrom is defined %}{{ filters.processedFrom|date('Y-m-d') }}{% endif %} {{ 'to'|t('lens') }} {% if filters.processedTo is defined %}{{ filters.processedTo|date('Y-m-d') }}{% endif %}</strong>
                             <button type="button" data-lens-action="remove-filter-chip" data-lens-filter-param="processedFrom,processedTo" title="{{ 'Remove filter'|t('lens') }}">&times;</button>
                         </span>
                     {% endif %}
-                    {% if filters.hasDuplicates is defined and filters.hasDuplicates is not null %}
+                    {% if filters.hasDuplicates is defined and filters.hasDuplicates is not null and (filters.quickFilter ?? '') != (quickFilterDerivedParams.hasDuplicates ?? '') %}
                         <span class="lens-filter-chip" data-lens-filter-param="hasDuplicates">
                             {{ 'Duplicates'|t('lens') }}: <strong>{{ filters.hasDuplicates ? 'Yes'|t('lens') : 'No'|t('lens') }}</strong>
                             <button type="button" data-lens-action="remove-filter-chip" data-lens-filter-param="hasDuplicates" title="{{ 'Remove filter'|t('lens') }}">&times;</button>

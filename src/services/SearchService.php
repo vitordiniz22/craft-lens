@@ -8,6 +8,7 @@ use Craft;
 use craft\elements\Asset;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\enums\LogCategory;
+use vitordiniz22\craftlens\enums\QuickFilter;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\migrations\Install;
 use vitordiniz22\craftlens\Plugin;
@@ -26,54 +27,6 @@ class SearchService extends Component
 {
     private const DEFAULT_LIMIT = 50;
 
-    /**
-     * Quick filter presets for one-click filtering.
-     */
-    public static function quickFilters(): array
-    {
-        return [
-            'untagged' => [
-                'label' => 'Untagged',
-                'icon' => 'tag',
-                'specialCondition' => 'noTags',
-            ],
-            'low-confidence' => [
-                'label' => 'Low Confidence',
-                'icon' => 'alert',
-                'filters' => ['confidenceMax' => 0.7],
-            ],
-            'needs-review' => [
-                'label' => 'Needs Review',
-                'icon' => 'eye',
-                'filters' => ['status' => [AnalysisStatus::PendingReview->value]],
-            ],
-            'with-people' => [
-                'label' => 'With People',
-                'icon' => 'users',
-                'filters' => ['containsPeople' => true],
-            ],
-            'nsfw-flagged' => [
-                'label' => 'NSFW Flagged',
-                'icon' => 'warning',
-                'filters' => ['nsfwScoreMin' => 0.5],
-            ],
-            'nsfw-caution' => [
-                'label' => 'NSFW Caution',
-                'icon' => 'warning',
-                'filters' => ['nsfwScoreMin' => 0.2, 'nsfwScoreMax' => 0.499],
-            ],
-            'recent-7d' => [
-                'label' => 'Last 7 Days',
-                'icon' => 'clock',
-                'relativeDays' => 7,
-            ],
-            'has-duplicates' => [
-                'label' => 'Has Duplicates',
-                'icon' => 'copy',
-                'filters' => ['hasDuplicates' => true],
-            ],
-        ];
-    }
 
     /**
      * Search assets using combined filters.
@@ -227,6 +180,7 @@ class SearchService extends Component
         $this->applyQualityPresetFilter($query, $filters);
         $this->applyGpsFilter($query, $filters);
         $this->applyFocalPointFilter($query, $filters);
+        $this->applyMissingAltTextFilter($query, $filters);
         $this->applyDefaultStatusExclusion($query, $filters);
 
         return $query;
@@ -578,6 +532,23 @@ class SearchService extends Component
     }
 
     /**
+     * Filter assets by whether Craft's native alt field is empty.
+     */
+    private function applyMissingAltTextFilter(Query $query, array $filters): void
+    {
+        if (!isset($filters['missingAltText'])) {
+            return;
+        }
+
+        if ($filters['missingAltText']) {
+            $query->andWhere(['or', ['assets.alt' => null], ['assets.alt' => '']]);
+        } else {
+            $query->andWhere(['not', ['assets.alt' => null]]);
+            $query->andWhere(['!=', 'assets.alt', '']);
+        }
+    }
+
+    /**
      * Exclude non-analyzed statuses by default when no explicit status filter is set.
      * Failed, processing, and pending assets are hidden unless explicitly requested.
      */
@@ -723,11 +694,11 @@ class SearchService extends Component
     {
         $filters = [];
 
-        foreach (self::quickFilters() as $key => $def) {
-            $filters[$key] = [
-                'key' => $key,
-                'label' => Craft::t('lens', $def['label']),
-                'icon' => $def['icon'],
+        foreach (QuickFilter::cases() as $case) {
+            $filters[$case->value] = [
+                'key' => $case->value,
+                'label' => Craft::t('lens', $case->label()),
+                'icon' => $case->icon(),
             ];
         }
 
@@ -739,24 +710,12 @@ class SearchService extends Component
      */
     public function applyQuickFilter(string $key, array $filters): array
     {
-        $preset = self::quickFilters()[$key] ?? null;
+        $case = QuickFilter::tryFrom($key);
 
-        if ($preset === null) {
+        if ($case === null) {
             return $filters;
         }
 
-        if (isset($preset['specialCondition']) && $preset['specialCondition'] === 'noTags') {
-            $filters['noTags'] = true;
-        }
-
-        if (isset($preset['filters'])) {
-            $filters = array_merge($filters, $preset['filters']);
-        }
-
-        if (isset($preset['relativeDays'])) {
-            $filters['processedFrom'] = (new \DateTime())->modify("-{$preset['relativeDays']} days");
-        }
-
-        return $filters;
+        return $case->applyToFilters($filters);
     }
 }
