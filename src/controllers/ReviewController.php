@@ -398,9 +398,8 @@ class ReviewController extends Controller
             $items[] = [
                 'analysisId' => $analysis->id,
                 'assetId' => $analysis->assetId,
-                'thumbnailUrl' => Craft::$app->getAssets()->getThumbUrl($asset, 200, 200),
-                'filename' => $asset->filename,
-                'suggestedTitle' => $analysis->suggestedTitle,
+                'asset' => $asset,
+                'analysis' => $analysis,
                 'avgConfidence' => $this->calculateAverageConfidence(
                     $analysis->titleConfidence !== null ? (float) $analysis->titleConfidence : null,
                     $analysis->altTextConfidence !== null ? (float) $analysis->altTextConfidence : null,

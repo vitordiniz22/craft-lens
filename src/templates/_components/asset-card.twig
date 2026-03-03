@@ -1,5 +1,5 @@
 {#
- # Reusable asset card component for search results and review browse grids.
+ # Reusable asset card component for search results and review browse/bulk grids.
  #
  # Parameters:
  #   asset     - Craft Asset element
@@ -10,9 +10,11 @@
  #   linkUrl   - string (destination URL when card is clicked)
  #   showTags     - bool (default true)
  #   showColors   - bool (default true)
- #   showMeta     - bool (show confidence badge in browse cards, default false)
- #   avgConfidence - float (for browse mode confidence badge, optional)
- #   tagCount   - int (for browse mode tag count display, optional)
+ #   showMeta     - bool (show confidence badge in browse/bulk cards, default false)
+ #   avgConfidence - float (for browse/bulk mode confidence badge, optional)
+ #   tagCount   - int (for browse/bulk mode tag count display, optional)
+ #   checkable  - bool (bulk selection mode: renders checkbox instead of link, default false)
+ #   analysisId - int (required when checkable=true, used as checkbox value)
  #}
 
 {% set showTags = showTags ?? true %}
@@ -21,16 +23,55 @@
 {% set tags = tags ?? [] %}
 {% set colors = colors ?? [] %}
 {% set dupCount = dupCount ?? 0 %}
+{% set checkable = checkable ?? false %}
+{% set analysisId = analysisId ?? null %}
 
+{% if checkable %}
+<label class="card lens-asset-card lens-asset-card--checkable"
+       data-lens-target="result-card"
+       data-lens-asset-id="{{ asset.id }}"
+       data-lens-confidence="{{ avgConfidence ?? 0 }}">
+    <input type="checkbox" name="ids[]" value="{{ analysisId }}"
+           data-lens-control="bulk-checkbox">
+    <div class="lens-result-preview">
+        <div class="lens-asset-card__check-overlay">
+            <span class="lens-asset-card__checkmark">&#10003;</span>
+        </div>
+        {% if asset.kind == 'image' %}
+            <img src="{{ craft.app.assets.getThumbUrl(asset, 200, 200) }}" alt="{{ asset.title }}" loading="lazy">
+        {% else %}
+            <div class="lens-result-icon">
+                {{ iconSvg('file-lines')|attr({width: 32, height: 32, fill: 'currentColor'}) }}
+            </div>
+        {% endif %}
+    </div>
+    <div class="lens-result-info">
+        <span class="lens-result-title">{{ (analysis.suggestedTitle ?: asset.title)|truncate(30) }}</span>
+        {% if showMeta %}
+            <div class="lens-browse-card__meta">
+                {% if analysis and analysis.status == lens.status.pendingReview %}
+                    {% set avgConfidence = avgConfidence ?? 0 %}
+                    {% if avgConfidence >= 0.8 %}
+                        <span class="lens-confidence-badge lens-confidence-badge--high">{{ (avgConfidence * 100)|round }}%</span>
+                    {% elseif avgConfidence >= 0.5 %}
+                        <span class="lens-confidence-badge lens-confidence-badge--medium">{{ (avgConfidence * 100)|round }}%</span>
+                    {% else %}
+                        <span class="lens-confidence-badge lens-confidence-badge--low">{{ (avgConfidence * 100)|round }}%</span>
+                    {% endif %}
+                {% endif %}
+                <span class="lens-tag-count">{{ tagCount ?? 0 }} {{ 'tags'|t('lens') }}</span>
+            </div>
+        {% endif %}
+    </div>
+</label>
+{% else %}
 <div class="card lens-asset-card" data-lens-target="result-card" data-lens-asset-id="{{ asset.id }}">
     <a href="{{ linkUrl }}" class="lens-result-preview" data-lens-target="result-link">
         {% if asset.kind == 'image' %}
             <img src="{{ craft.app.assets.getThumbUrl(asset, 200, 200) }}" alt="{{ asset.title }}" loading="lazy">
         {% else %}
             <div class="lens-result-icon">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M4 4h16a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm0 2v12h16V6H4zm4 3a1 1 0 011-1h6a1 1 0 010 2H9a1 1 0 01-1-1zm0 4a1 1 0 011-1h6a1 1 0 010 2H9a1 1 0 01-1-1z"/>
-                </svg>
+                {{ iconSvg('file-lines')|attr({width: 32, height: 32, fill: 'currentColor'}) }}
             </div>
         {% endif %}
 
@@ -116,3 +157,4 @@
         {% endif %}
     </div>
 </div>
+{% endif %}
