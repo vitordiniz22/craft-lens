@@ -109,7 +109,7 @@ abstract class BaseAiProvider implements AiProviderInterface
         $instructions[] = '- "titleConfidence": Your confidence in the title (0.0-1.0)';
         $instructions[] = '  Title rules: NO "Image of/Photo of" prefixes, NO file extensions, be SPECIFIC';
 
-        $instructions[] = sprintf('- "tags": An array of objects with "tag" (lowercase single word or short phrase, in %s) and "confidence" (0.0-1.0), max 25 tags', $primaryName);
+        $instructions[] = sprintf('- "tags": An array of objects with "tag" (lowercase single word or short phrase, in %s) and "confidence" (0.0-1.0), generate at least 20 tags (aim for 20-25)', $primaryName);
         $instructions[] = '  Tag vocabulary guidelines for DAM (Digital Asset Management) systems:';
         $instructions[] = '  • Prefer COMMON, GENERAL-PURPOSE tags that are widely understood and searchable (e.g., "beach", "sunset", "portrait", "food", "architecture", "business")';
         $instructions[] = '  • Avoid overly specific or technical terms unless they are the PRIMARY subject (e.g., prefer "flower" over "chrysanthemum", "car" over "sedan", "building" over "skyscraper" unless specificity is critical)';
@@ -117,7 +117,7 @@ abstract class BaseAiProvider implements AiProviderInterface
         $instructions[] = '  • Focus on tags that would be useful for search and categorization across a large professional image library';
         $instructions[] = '  • Avoid brand names, artist names, or location-specific details unless they are obvious and iconic (e.g., "eiffel tower" is acceptable, but not "paris 16th arrondissement")';
         $instructions[] = '  • Prioritize tags that describe WHAT is in the image, not HOW it was made (avoid "bokeh", "long exposure", "f/2.8" unless these are the main subject)';
-        $instructions[] = '- "dominantColors": An array of objects with "hex" (color in #RRGGBB format) and "percentage" (0.0-1.0), max 5 colors';
+        $instructions[] = '- "dominantColors": An array of objects with "hex" (color in #RRGGBB format) and "percentage" (0.0-1.0), generate exactly 6 colors';
         $instructions[] = '- "extractedText": Any visible text in the image (signs, labels, packaging, etc.), or null if none';
         $instructions[] = '- "containsPeople": Carefully examine the image for ANY human presence. Set to true if the image contains:';
         $instructions[] = '  - People facing the camera (even if face is small/unclear)';

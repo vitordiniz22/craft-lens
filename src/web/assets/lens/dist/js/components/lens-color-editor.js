@@ -42,10 +42,8 @@
         _bindEvents: function() {
             const DOM = window.Lens.core.DOM;
 
-            // Add color
-            DOM.delegate('[data-lens-action="color-add"]', 'click', this._handleColorAdd.bind(this));
+            DOM.delegate('[data-lens-control="color-picker"]', 'change', this._handlePickerChange.bind(this));
 
-            // Remove color
             DOM.delegate('[data-lens-action="color-remove"]', 'click', this._handleColorRemove.bind(this));
         },
 
@@ -53,20 +51,21 @@
         // Event Handlers
         // ================================================================
 
-        _handleColorAdd: function(e, addBtn) {
-            const editor = addBtn.closest('[data-lens-target="color-editor"]');
+        _handlePickerChange: function(e, picker) {
+            const editor = picker.closest('[data-lens-target="color-editor"]');
             if (!editor) return;
 
-            const picker = editor.querySelector('[data-lens-control="color-picker"]');
-            if (!picker) return;
-
             const hex = picker.value;
-            this._addColor(editor, hex);
+            if (!this._addColor(editor, hex)) return;
+
             this._updateColorCount(editor);
             this._autoSave(editor, Craft.t('lens', 'Color added.'));
         },
 
         _handleColorRemove: function(e, removeBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+
             const item = removeBtn.closest('[data-lens-target="color-item"]');
             if (!item) return;
 
@@ -81,21 +80,22 @@
         // ================================================================
 
         _addColor: function(editor, hex) {
-            // Use service to validate and normalize hex
-            if (!window.Lens.services.Taxonomy.validateHex(hex)) return;
+            if (!window.Lens.services.Taxonomy.validateHex(hex)) return false;
 
             const normalizedHex = window.Lens.services.Taxonomy.normalizeHex(hex);
-            if (!normalizedHex) return;
+            if (!normalizedHex) return false;
 
-            // Use service to check for duplicates
-            if (window.Lens.services.Taxonomy.isDuplicateColor(editor, normalizedHex)) return;
+            if (window.Lens.services.Taxonomy.isDuplicateColor(editor, normalizedHex)) {
+                this._flashDuplicateChip(editor, normalizedHex);
+                Craft.cp.displayNotice(Craft.t('lens', 'Color already exists.'));
+                return false;
+            }
 
-            // Use service to get or create swatches container
-            const swatches = window.Lens.services.Taxonomy.getOrCreateSwatchesContainer(editor);
-            if (!swatches) return;
+            var swatches = editor.querySelector('[data-lens-target="color-swatches"]');
+            if (!swatches) return false;
 
             var template = editor.querySelector('[data-lens-target="color-item-template"]');
-            if (!template) return;
+            if (!template) return false;
 
             var item = template.content.firstElementChild.cloneNode(true);
             item.dataset.lensHex = normalizedHex;
@@ -103,13 +103,19 @@
             item.querySelector('[data-lens-target="color-swatch"]').style.backgroundColor = normalizedHex;
             item.querySelector('[data-lens-target="chip-label"]').textContent = normalizedHex;
 
-            swatches.appendChild(item);
+            var addBtn = swatches.querySelector('[data-lens-action="color-add"]');
+            if (addBtn) {
+                swatches.insertBefore(item, addBtn);
+            } else {
+                swatches.appendChild(item);
+            }
 
-            // Scale-in animation
             item.classList.add('is-new');
             item.addEventListener('animationend', function() {
                 this.classList.remove('is-new');
             }, { once: true });
+
+            return true;
         },
 
         // ================================================================
@@ -133,7 +139,6 @@
         _autoSave: function(editor, successMessage) {
             if (!editor) return;
 
-            // Only auto-save when data-lens-auto-save="1" (asset edit page, not review)
             if (editor.dataset.lensAutoSave !== '1') return;
 
             var analysisId = editor.dataset.lensAnalysisId;
@@ -149,12 +154,32 @@
             }).catch(function() {
                 Craft.cp.displayError(Craft.t('lens', 'Failed to save colors.'));
             });
+        },
+
+        // ================================================================
+        // Duplicate Feedback
+        // ================================================================
+
+        _flashDuplicateChip: function(editor, hex) {
+            var normalized = hex.toUpperCase();
+            var chips = editor.querySelectorAll('[data-lens-target="color-item"]');
+
+            for (var i = 0; i < chips.length; i++) {
+                if (chips[i].dataset.lensHex.toUpperCase() === normalized) {
+                    chips[i].classList.remove('is-duplicate-flash');
+                    void chips[i].offsetWidth;
+                    chips[i].classList.add('is-duplicate-flash');
+                    chips[i].addEventListener('animationend', function() {
+                        this.classList.remove('is-duplicate-flash');
+                    }, { once: true });
+                    break;
+                }
+            }
         }
     };
 
     window.Lens.components.ColorEditor = LensColorEditor;
 
-    // Auto-initialize
     Lens.utils.onReady(function() {
         LensColorEditor.init();
     });

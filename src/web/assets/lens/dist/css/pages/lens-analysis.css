@@ -556,20 +556,49 @@
     font-size: 12px;
 }
 
-.lens-color-add-row {
-    display: flex;
-    gap: 6px;
+/* Inline color picker button — flows with chips */
+.lens-color-add-btn {
+    position: relative;
+    display: inline-flex;
     align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: 1px dashed var(--gray-300);
+    border-radius: var(--small-border-radius);
+    background: transparent;
+    cursor: pointer;
+    flex: 0 0 28px;
+    padding: 0;
 }
 
-.lens-color-picker {
-    width: 32px;
-    height: 28px;
-    padding: 0;
-    border: 1px solid var(--hairline-color);
-    border-radius: var(--small-border-radius);
+.lens-color-add-btn:hover {
+    border-color: var(--link-color);
+    border-style: solid;
+}
+
+.lens-color-add-icon {
+    font-size: 16px;
+    line-height: 1;
+    color: var(--medium-text-color);
+    pointer-events: none;
+    margin-bottom: 2px;
+}
+
+.lens-color-add-btn:hover .lens-color-add-icon {
+    color: var(--link-color);
+}
+
+.lens-color-picker-hidden {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
     cursor: pointer;
-    background: none;
+    border: none;
+    padding: 0;
 }
 
 /* Swatch component defined in components/swatch.css */

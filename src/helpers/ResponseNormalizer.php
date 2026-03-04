@@ -69,7 +69,7 @@ final class ResponseNormalizer
             }
         );
 
-        return array_slice($normalized, 0, 5);
+        return array_slice($normalized, 0, 6);
     }
 
     /**
