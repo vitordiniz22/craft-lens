@@ -102,7 +102,7 @@ abstract class BaseAiProvider implements AiProviderInterface
         $instructions[] = sprintf('- "altText": A natural, descriptive alt text for accessibility (1-2 sentences, in %s)', $primaryName);
         $instructions[] = '- "altTextConfidence": Your confidence in the alt text (0.0-1.0)';
 
-        $instructions[] = sprintf('- "longDescription": A detailed, paragraph-length description (2-4 sentences) providing rich context about the image content, composition, subjects, setting, and notable details (in %s)', $primaryName);
+        $instructions[] = sprintf('- "longDescription": A detailed, comprehensive description (3-5 sentences) providing rich context about the image content, composition, subjects, setting, mood, notable details, and any relevant background elements. Be thorough and descriptive to maximize searchability (in %s)', $primaryName);
         $instructions[] = '- "longDescriptionConfidence": Your confidence in the long description (0.0-1.0)';
 
         $instructions[] = sprintf('- "suggestedTitle": A concise title (2-6 words, Title Case, specific not generic, in %s)', $primaryName);
