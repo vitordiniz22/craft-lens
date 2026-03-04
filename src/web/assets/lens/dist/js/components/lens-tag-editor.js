@@ -1,7 +1,8 @@
 /**
  * Lens Plugin - Tag Editor Component
- * Tag management with autocomplete suggestions and keyboard navigation
- * Extracted and refactored from lens-asset-actions.js
+ * Tag management with autocomplete suggestions, keyboard navigation, and auto-save.
+ * Auto-saves on each add/remove when data-lens-auto-save="1" is present (asset edit page).
+ * In review mode, changes are collected at form submit time.
  */
 (function() {
     'use strict';
@@ -45,7 +46,7 @@
             // Tag input keyboard handling (Enter to add, arrows to navigate suggestions)
             DOM.delegate('[data-lens-control="tag-input"]', 'keydown', this._handleTagKeydown.bind(this));
 
-            // Tag input - autocomplete
+            // Tag input - autocomplete + length indicator
             DOM.delegate('[data-lens-control="tag-input"]', 'input', this._handleTagInput.bind(this));
 
             // Tag removal
@@ -102,6 +103,8 @@
             const editor = input.closest('[data-lens-target="tag-editor"]');
             if (!editor) return;
 
+            this._updateLengthIndicator(input);
+
             const minChars = window.Lens.config.THRESHOLDS.TAG_AUTOCOMPLETE_MIN_CHARS;
             if (query.length < minChars) {
                 this._hideSuggestions(editor);
@@ -118,8 +121,16 @@
             const chip = removeBtn.closest('[data-lens-tag]');
             if (!chip) return;
 
+            const editor = chip.closest('[data-lens-target="tag-editor"]');
             chip.remove();
-            this._markDirty(removeBtn);
+
+            if (editor) {
+                var input = editor.querySelector('[data-lens-control="tag-input"]');
+                if (input) input.focus();
+            }
+
+            this._updateTagCount(editor);
+            this._autoSave(editor, Craft.t('lens', 'Tag removed.'));
         },
 
         _handleSuggestionClick: function(e, suggestion) {
@@ -151,47 +162,68 @@
             // Use service to check for duplicates
             if (window.Lens.services.Taxonomy.isDuplicateTag(editor, tagName)) {
                 input.value = '';
+                this._flashDuplicateChip(editor, tagName);
+                Craft.cp.displayNotice(Craft.t('lens', 'Tag already exists.'));
                 return;
             }
 
             this._addTag(editor, tagName, false);
             input.value = '';
             this._hideSuggestions(editor);
-            this._markDirty(editor);
+            this._clearLengthIndicator(input);
+            this._updateTagCount(editor);
+            this._autoSave(editor, Craft.t('lens', 'Tag added.'));
         },
 
         _selectSuggestion: function(editor, suggestion) {
-            const tagName = suggestion.dataset.lensTag;
+            const tagName = suggestion.dataset.lensSuggestionTag;
             const input = editor.querySelector('[data-lens-control="tag-input"]');
             if (input) input.value = '';
 
             // Use service to check for duplicates
             if (window.Lens.services.Taxonomy.isDuplicateTag(editor, tagName)) {
                 this._hideSuggestions(editor);
+                this._flashDuplicateChip(editor, tagName);
+                Craft.cp.displayNotice(Craft.t('lens', 'Tag already exists.'));
                 return;
             }
 
             this._addTag(editor, tagName, false);
             this._hideSuggestions(editor);
-            this._markDirty(editor);
+            if (input) this._clearLengthIndicator(input);
+            this._updateTagCount(editor);
+            this._autoSave(editor, Craft.t('lens', 'Tag added.'));
         },
 
         _addTag: function(editor, tagName, isAi) {
-            // Use service to get or create chips container
             const chips = window.Lens.services.Taxonomy.getOrCreateChipsContainer(editor);
+
             if (!chips) return;
 
             var template = editor.querySelector('[data-lens-target="tag-chip-template"]');
+
             if (!template) return;
 
             var chip = template.content.firstElementChild.cloneNode(true);
+
             chip.href = Craft.getCpUrl('lens/search', {tags: tagName});
             chip.dataset.lensTag = tagName;
             chip.dataset.lensIsAi = isAi ? '1' : '0';
             chip.dataset.lensConfidence = isAi ? '' : '1';
             chip.querySelector('[data-lens-target="chip-label"]').textContent = tagName;
 
-            chips.appendChild(chip);
+            var inputWrapper = chips.querySelector('[data-lens-target="tag-input-wrapper"]');
+
+            if (inputWrapper) {
+                chips.insertBefore(chip, inputWrapper);
+            } else {
+                chips.appendChild(chip);
+            }
+
+            chip.classList.add('is-new');
+            chip.addEventListener('animationend', function() {
+                this.classList.remove('is-new');
+            }, { once: true });
         },
 
         // ================================================================
@@ -227,7 +259,7 @@
                 const item = document.createElement('div');
                 item.className = 'lens-tag-suggestion';
                 item.dataset.lensTarget = 'tag-suggestion-item';
-                item.dataset.lensTag = tag.tag;
+                item.dataset.lensSuggestionTag = tag.tag;
                 item.innerHTML =
                     '<span>' + window.Lens.utils.escapeHtml(tag.tag) + '</span>' +
                     '<span class="lens-tag-suggestion-count">' + tag.count + '</span>';
@@ -244,8 +276,99 @@
             }
         },
 
-        _markDirty: function(el) {
-            window.Lens.services.Taxonomy.markDirty(el);
+        // ================================================================
+        // Tag Count
+        // ================================================================
+
+        _updateTagCount: function(editor) {
+            if (!editor) return;
+
+            var count = editor.querySelectorAll('[data-lens-tag]').length;
+            var label = editor.querySelector('[data-lens-target="field-header"] .lens-field-label');
+            if (label) {
+                label.textContent = Craft.t('lens', 'Tags') + ' (' + count + ')';
+            }
+        },
+
+        // ================================================================
+        // Auto-Save
+        // ================================================================
+
+        _autoSave: function(editor, successMessage) {
+            if (!editor) return;
+
+            // Only auto-save when data-lens-auto-save="1" (asset edit page, not review)
+            if (editor.dataset.lensAutoSave !== '1') return;
+
+            var analysisId = editor.dataset.lensAnalysisId;
+            if (!analysisId) return;
+
+            var tags = window.Lens.services.Taxonomy.collectTags(editor);
+
+            window.Lens.core.API.post('lens/analysis/update-tags', {
+                analysisId: analysisId,
+                tags: JSON.stringify(tags)
+            }).then(function() {
+                Craft.cp.displayNotice(successMessage);
+            }).catch(function() {
+                Craft.cp.displayError(Craft.t('lens', 'Failed to save tags.'));
+            });
+        },
+
+        // ================================================================
+        // Duplicate Feedback
+        // ================================================================
+
+        _flashDuplicateChip: function(editor, tagName) {
+            var normalized = tagName.toLowerCase();
+            var chips = editor.querySelectorAll('[data-lens-tag]');
+
+            for (var i = 0; i < chips.length; i++) {
+                if (chips[i].dataset.lensTag.toLowerCase() === normalized) {
+                    chips[i].classList.remove('is-duplicate-flash');
+                    void chips[i].offsetWidth;
+                    chips[i].classList.add('is-duplicate-flash');
+                    chips[i].addEventListener('animationend', function() {
+                        this.classList.remove('is-duplicate-flash');
+                    }, { once: true });
+                    break;
+                }
+            }
+        },
+
+        // ================================================================
+        // Length Indicator
+        // ================================================================
+
+        _updateLengthIndicator: function(input) {
+            var wrapper = input.closest('[data-lens-target="tag-input-wrapper"]');
+            if (!wrapper) return;
+
+            var indicator = wrapper.querySelector('[data-lens-target="length-indicator"]');
+            var length = input.value.length;
+            var threshold = window.Lens.config.THRESHOLDS.TAG_LENGTH_WARNING_THRESHOLD;
+            var max = window.Lens.config.THRESHOLDS.TAG_MAX_LENGTH;
+
+            if (length >= threshold) {
+                if (!indicator) {
+                    indicator = document.createElement('span');
+                    indicator.className = 'lens-tag-length-indicator';
+                    indicator.dataset.lensTarget = 'length-indicator';
+                    wrapper.appendChild(indicator);
+                }
+                indicator.textContent = length + '/' + max;
+                indicator.classList.toggle('is-near-limit', length >= 240);
+            } else if (indicator) {
+                indicator.remove();
+            }
+        },
+
+        _clearLengthIndicator: function(input) {
+            var wrapper = input.closest('[data-lens-target="tag-input-wrapper"]');
+            if (!wrapper) return;
+
+            var indicator = wrapper.querySelector('[data-lens-target="length-indicator"]');
+            if (indicator) indicator.remove();
         }
     };
 

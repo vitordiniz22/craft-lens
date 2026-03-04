@@ -422,6 +422,7 @@
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
+    align-items: center;
 }
 
 .lens-tag-chips .chip {
@@ -446,23 +447,45 @@
     color: var(--error-color);
 }
 
-.lens-tag-input-row {
-    display: flex;
-    gap: 6px;
-    align-items: center;
+/* Inline input that flows with chips */
+.lens-tag-inline-input-wrapper {
     position: relative;
+    display: inline-flex;
+    align-items: center;
+    width: 200px;
+    flex: 0 0 200px;
 }
 
-.lens-tag-input {
-    flex: 1;
-    min-width: 80px;
+.lens-tag-inline-input {
+    border: 1px dashed var(--gray-300);
+    border-radius: var(--small-border-radius);
+    padding: 4px 8px;
+    font-size: 13px;
+    background: transparent;
+    width: 100%;
+    outline: none;
+    color: var(--text-color);
+    height: auto;
+    line-height: 1.4;
 }
 
+.lens-tag-inline-input:focus {
+    border-color: var(--link-color);
+    border-style: solid;
+    background: var(--white);
+}
+
+.lens-tag-inline-input::placeholder {
+    color: var(--light-text-color);
+    font-style: italic;
+}
+
+/* Autocomplete suggestions dropdown */
 .lens-tag-suggestions {
     position: absolute;
-    top: 100%;
+    top: calc(100% + 4px);
     left: 0;
-    right: 0;
+    width: 100%;
     background: var(--white);
     border: 1px solid var(--hairline-color);
     border-radius: var(--small-border-radius);
@@ -496,6 +519,38 @@
     color: var(--medium-text-color);
 }
 
+/* Tag/chip animations */
+@keyframes lens-chip-flash {
+    0%   { background-color: var(--yellow-300); }
+    100% { background-color: transparent; }
+}
+
+@keyframes lens-chip-appear {
+    0%   { opacity: 0; transform: scale(0.85); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+.lens-tag-chips .chip.is-duplicate-flash {
+    animation: lens-chip-flash 0.8s ease;
+}
+
+.lens-tag-chips .chip.is-new {
+    animation: lens-chip-appear 0.2s ease-out;
+}
+
+/* Max-length indicator (shown near 255 limit) */
+.lens-tag-length-indicator {
+    font-size: 11px;
+    color: var(--medium-text-color);
+    flex-shrink: 0;
+    padding: 0 4px;
+}
+
+.lens-tag-length-indicator.is-near-limit {
+    color: var(--error-color);
+    font-weight: 600;
+}
+
 .lens-color-hex {
     font-family: var(--mono-font-family);
     font-size: 12px;
@@ -515,13 +570,6 @@
     border-radius: var(--small-border-radius);
     cursor: pointer;
     background: none;
-}
-
-/* Shared save row for taxonomy */
-.lens-taxonomy-save {
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 1px solid var(--hairline-color);
 }
 
 /* Swatch component defined in components/swatch.css */

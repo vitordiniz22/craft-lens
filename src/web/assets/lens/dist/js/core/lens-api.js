@@ -29,7 +29,8 @@
             data = data || {};
             options = options || {};
 
-            return Craft.sendActionRequest(method, action, { data: data })
+            var requestConfig = method === 'GET' ? { params: data } : { data: data };
+            return Craft.sendActionRequest(method, action, requestConfig)
                 .then(function(response) {
                     // Show success notice if requested
                     if (options.showSuccessNotice) {

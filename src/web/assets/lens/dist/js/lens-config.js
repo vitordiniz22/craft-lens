@@ -54,7 +54,17 @@
             /**
              * Minimum characters before showing tag autocomplete
              */
-            TAG_AUTOCOMPLETE_MIN_CHARS: 2
+            TAG_AUTOCOMPLETE_MIN_CHARS: 2,
+
+            /**
+             * Maximum tag character length (matches DB column)
+             */
+            TAG_MAX_LENGTH: 255,
+
+            /**
+             * Show character counter above this input length
+             */
+            TAG_LENGTH_WARNING_THRESHOLD: 200
         },
 
         /**
@@ -79,7 +89,17 @@
             /**
              * Debounce delay for form field re-enabling
              */
-            FORM_FIELD_DEBOUNCE_MS: 100
+            FORM_FIELD_DEBOUNCE_MS: 100,
+
+            /**
+             * Duration of duplicate chip flash animation
+             */
+            CHIP_FLASH_MS: 800,
+
+            /**
+             * Duration of new chip entrance animation
+             */
+            CHIP_APPEAR_MS: 200
         },
 
         /**

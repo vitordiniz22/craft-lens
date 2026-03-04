@@ -1,7 +1,8 @@
 /**
  * Lens Plugin - Color Editor Component
- * Color picker and swatch management
- * Extracted and refactored from lens-asset-actions.js
+ * Color picker and swatch management with auto-save.
+ * Auto-saves on each add/remove when data-lens-auto-save="1" is present (asset edit page).
+ * In review mode, changes are collected at form submit time.
  */
 (function() {
     'use strict';
@@ -61,15 +62,18 @@
 
             const hex = picker.value;
             this._addColor(editor, hex);
-            this._markDirty(editor);
+            this._updateColorCount(editor);
+            this._autoSave(editor, Craft.t('lens', 'Color added.'));
         },
 
         _handleColorRemove: function(e, removeBtn) {
             const item = removeBtn.closest('[data-lens-target="color-item"]');
             if (!item) return;
 
+            const editor = item.closest('[data-lens-target="color-editor"]');
             item.remove();
-            this._markDirty(removeBtn);
+            this._updateColorCount(editor);
+            this._autoSave(editor, Craft.t('lens', 'Color removed.'));
         },
 
         // ================================================================
@@ -100,10 +104,51 @@
             item.querySelector('[data-lens-target="chip-label"]').textContent = normalizedHex;
 
             swatches.appendChild(item);
+
+            // Scale-in animation
+            item.classList.add('is-new');
+            item.addEventListener('animationend', function() {
+                this.classList.remove('is-new');
+            }, { once: true });
         },
 
-        _markDirty: function(el) {
-            window.Lens.services.Taxonomy.markDirty(el);
+        // ================================================================
+        // Color Count
+        // ================================================================
+
+        _updateColorCount: function(editor) {
+            if (!editor) return;
+
+            var count = editor.querySelectorAll('[data-lens-target="color-item"]').length;
+            var label = editor.querySelector('[data-lens-target="field-header"] .lens-field-label');
+            if (label) {
+                label.textContent = Craft.t('lens', 'Colors') + ' (' + count + ')';
+            }
+        },
+
+        // ================================================================
+        // Auto-Save
+        // ================================================================
+
+        _autoSave: function(editor, successMessage) {
+            if (!editor) return;
+
+            // Only auto-save when data-lens-auto-save="1" (asset edit page, not review)
+            if (editor.dataset.lensAutoSave !== '1') return;
+
+            var analysisId = editor.dataset.lensAnalysisId;
+            if (!analysisId) return;
+
+            var colors = window.Lens.services.Taxonomy.collectColors(editor);
+
+            window.Lens.core.API.post('lens/analysis/update-colors', {
+                analysisId: analysisId,
+                colors: JSON.stringify(colors)
+            }).then(function() {
+                Craft.cp.displayNotice(successMessage);
+            }).catch(function() {
+                Craft.cp.displayError(Craft.t('lens', 'Failed to save colors.'));
+            });
         }
     };
 

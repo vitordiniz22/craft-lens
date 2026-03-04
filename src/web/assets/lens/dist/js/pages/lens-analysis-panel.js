@@ -24,7 +24,6 @@
             if (!this._shouldInit()) return;
 
             // Components auto-initialize themselves, we just coordinate page-level features
-            this.initTaxonomySave();
             this.initAssetActions();
             this.initAutoPolling();
             this._initialized = true;
@@ -37,76 +36,6 @@
          */
         _shouldInit: function () {
             return document.querySelector('[data-lens-target="analysis-panel"]') !== null;
-        },
-
-        // ================================================================
-        // Taxonomy Save (Tags + Colors Batch)
-        // ================================================================
-
-        initTaxonomySave: function () {
-            window.Lens.core.DOM.delegate(
-                '[data-lens-action="taxonomy-save"]',
-                'click',
-                this._handleTaxonomySave.bind(this),
-            );
-        },
-
-        _handleTaxonomySave: function (e, saveBtn) {
-            if (saveBtn.disabled) return;
-
-            const analysisId = saveBtn.dataset.lensAnalysisId;
-            const section = saveBtn.closest('[data-lens-target="taxonomy-section"]');
-            if (!section) return;
-
-            window.Lens.core.ButtonState.withLoading(
-                saveBtn,
-                Craft.t('lens', 'Saving'),
-                () => {
-                    // Collect tags using service
-                    const tagEditor = section.querySelector(
-                        '[data-lens-target="tag-editor"]',
-                    );
-                    const tags =
-                        window.Lens.services.Taxonomy.collectTags(tagEditor);
-
-                    // Collect colors using service
-                    const colorEditor = section.querySelector(
-                        '[data-lens-target="color-editor"]',
-                    );
-                    const colors =
-                        window.Lens.services.Taxonomy.collectColors(
-                            colorEditor,
-                        );
-
-                    // Save both via parallel API calls
-                    const tagPromise = window.Lens.core.API.post(
-                        'lens/analysis/update-tags',
-                        {
-                            analysisId: analysisId,
-                            tags: JSON.stringify(tags),
-                        },
-                    );
-
-                    const colorPromise = window.Lens.core.API.post(
-                        'lens/analysis/update-colors',
-                        {
-                            analysisId: analysisId,
-                            colors: JSON.stringify(colors),
-                        },
-                    );
-
-                    return Promise.all([tagPromise, colorPromise]).then(() => {
-                        Craft.cp.displayNotice(
-                            Craft.t('lens', 'Taxonomy saved.'),
-                        );
-                        const status = section.querySelector(
-                            '[data-lens-target="taxonomy-status"]',
-                        );
-                        if (status) status.textContent = '';
-                        saveBtn.textContent = Craft.t('lens', 'Save Changes');
-                    });
-                },
-            );
         },
 
         // ================================================================

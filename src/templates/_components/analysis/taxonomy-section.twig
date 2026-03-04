@@ -1,45 +1,47 @@
 {#
  # Taxonomy Section
  # Tags (chip editor) and Colors (swatch editor) with add/remove capability.
+ # Auto-saves on each add/remove when fieldState == 'unlocked' (asset edit page).
+ # In review mode (fieldState == 'editing'), changes are collected at form submit.
  #
  # Expected variables: analysis, analysisTags, analysisColors, fieldState
  #}
 {% set fieldState = fieldState ?? 'readonly' %}
 {% set isInteractive = fieldState in ['unlocked', 'editing'] %}
+{% set autoSave = fieldState == 'unlocked' %}
 {% set showTaxonomy = analysis.status not in [lens.status.pending, lens.status.processing, lens.status.failed] %}
 
 {% if showTaxonomy %}
     {# Tags #}
-    <div class="lens-editable-field" data-lens-target="tag-editor" data-lens-analysis-id="{{ analysis.id }}">
+    <div class="lens-editable-field" data-lens-target="tag-editor" data-lens-analysis-id="{{ analysis.id }}"{{ autoSave ? ' data-lens-auto-save="1"' }}>
         <div class="lens-field-header" data-lens-target="field-header">
             <span class="lens-field-label">{{ 'Tags'|t('lens') }} ({{ analysisTags|length }})</span>
         </div>
 
-        {% if analysisTags|length %}
-            <div class="lens-tag-chips" data-lens-target="tag-chips">
-                {% for tag in analysisTags %}
-                    <a href="{{ cpUrl('lens/search', {tags: tag.tag}) }}" class="chip" data-lens-tag="{{ tag.tag }}" data-lens-is-ai="{{ tag.isAi ? '1' : '0' }}" data-lens-confidence="{{ tag.confidence }}">
-                        <div class="chip-content">
-                            <span class="chip-label" data-lens-target="chip-label">{{ tag.tag }}</span>
-                            {% if tag.confidence and not (hideConfidence ?? false) %}
-                                <span class="badge">{{ (tag.confidence * 100)|round }}%</span>
-                            {% endif %}
-                            {% if isInteractive %}
-                                <button type="button" class="lens-tag-remove" data-lens-action="tag-remove" title="{{ 'Remove'|t('lens') }}">&times;</button>
-                            {% endif %}
-                        </div>
-                    </a>
-                {% endfor %}
-            </div>
-        {% endif %}
+        <div class="lens-tag-chips" data-lens-target="tag-chips">
+            {% for tag in analysisTags %}
+                <a href="{{ cpUrl('lens/search', {tags: tag.tag}) }}" class="chip" data-lens-tag="{{ tag.tag }}" data-lens-is-ai="{{ tag.isAi ? '1' : '0' }}" data-lens-confidence="{{ tag.confidence }}">
+                    <div class="chip-content">
+                        <span class="chip-label" data-lens-target="chip-label">{{ tag.tag }}</span>
+                        {% if tag.confidence and not (hideConfidence ?? false) %}
+                            <span class="badge">{{ (tag.confidence * 100)|round }}%</span>
+                        {% endif %}
+                        {% if isInteractive %}
+                            <button type="button" class="lens-tag-remove" data-lens-action="tag-remove" title="{{ 'Remove'|t('lens') }}">&times;</button>
+                        {% endif %}
+                    </div>
+                </a>
+            {% endfor %}
+
+            {% if isInteractive %}
+                <div class="lens-tag-inline-input-wrapper" data-lens-target="tag-input-wrapper">
+                    <input type="text" class="text small lens-tag-inline-input" data-lens-control="tag-input" placeholder="{{ 'Add tag'|t('lens') }}" maxlength="255">
+                    <div class="lens-tag-suggestions" data-lens-target="tag-suggestions"></div>
+                </div>
+            {% endif %}
+        </div>
 
         {% if isInteractive %}
-            <div class="lens-tag-input-row">
-                <input type="text" class="text small lens-tag-input" data-lens-control="tag-input" placeholder="{{ 'Add tag'|t('lens') }}">
-                <button type="button" class="btn small" data-lens-action="tag-add">{{ 'Add'|t('lens') }}</button>
-                <div class="lens-tag-suggestions" data-lens-target="tag-suggestions"></div>
-            </div>
-
             <template data-lens-target="tag-chip-template">
                 <a href="" class="chip" data-lens-tag="" data-lens-is-ai="0" data-lens-confidence="">
                     <div class="chip-content">
@@ -52,7 +54,7 @@
     </div>
 
     {# Colors #}
-    <div class="lens-editable-field" data-lens-target="color-editor" data-lens-analysis-id="{{ analysis.id }}">
+    <div class="lens-editable-field" data-lens-target="color-editor" data-lens-analysis-id="{{ analysis.id }}"{{ autoSave ? ' data-lens-auto-save="1"' }}>
         <div class="lens-field-header" data-lens-target="field-header">
             <span class="lens-field-label">{{ 'Colors'|t('lens') }} ({{ analysisColors|length }})</span>
         </div>
@@ -93,14 +95,4 @@
             </template>
         {% endif %}
     </div>
-
-    {# Save changes button (tags + colors) - only in unlocked mode #}
-    {% if fieldState == 'unlocked' %}
-        <div class="lens-taxonomy-save">
-            <button type="button" class="btn small submit" data-lens-action="taxonomy-save" data-lens-analysis-id="{{ analysis.id }}" disabled>
-                {{ 'Save Changes'|t('lens') }}
-            </button>
-            <span class="smalltext light" data-lens-target="taxonomy-status"></span>
-        </div>
-    {% endif %}
 {% endif %}

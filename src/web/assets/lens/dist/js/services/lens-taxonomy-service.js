@@ -131,25 +131,6 @@
         },
 
         /**
-         * Mark the taxonomy section as dirty (unsaved changes).
-         * Shared by tag and color editors.
-         * @param {HTMLElement} el - Any element inside the .lens-section
-         */
-        markDirty: function(el) {
-            var section = el.closest('[data-lens-target="taxonomy-section"]');
-            if (!section) return;
-
-            var saveBtn = section.querySelector('[data-lens-action="taxonomy-save"]');
-            if (saveBtn) {
-                saveBtn.disabled = false;
-                var status = section.querySelector('[data-lens-target="taxonomy-status"]');
-                if (status) {
-                    status.textContent = Craft.t('lens', 'Unsaved changes');
-                }
-            }
-        },
-
-        /**
          * Create or get chips container for tags
          * @param {HTMLElement} editor - Tag editor element
          * @returns {HTMLElement|null} Chips container
