@@ -79,6 +79,7 @@ class LensAnalysisElement extends BaseUiElement
                 }
 
                 $similarImages = $plugin->duplicateDetection->getSimilarAssetsForDisplay($element->id);
+                $totalSimilarCount = $plugin->duplicateDetection->getUnresolvedDuplicateCountForAsset($element->id);
 
                 if (MultisiteHelper::needsMultisiteContent($element)) {
                     $siteRecords = $plugin->siteContent->getAllSiteContent($analysis->id);
@@ -122,6 +123,7 @@ class LensAnalysisElement extends BaseUiElement
                     'analysisColors' => $colors,
                     'exifData' => $exifData,
                     'similarImages' => $similarImages,
+                    'totalSimilarCount' => $totalSimilarCount,
                     'siteContent' => $siteContent,
                     'isAltTranslatable' => MultisiteHelper::isAltTranslatable($element->getVolume()->id),
                     'isTitleTranslatable' => MultisiteHelper::isTitleTranslatable($element->getVolume()->id),

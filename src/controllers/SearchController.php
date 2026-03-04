@@ -38,6 +38,20 @@ class SearchController extends Controller
         $request = Craft::$app->getRequest();
 
         $filters = FilterParser::fromRequest($request);
+
+        $similarToAsset = null;
+
+        if (isset($filters['similarTo'])) {
+            $similarToAsset = Asset::find()
+                ->id($filters['similarTo'])
+                ->kind(Asset::KIND_IMAGE)
+                ->one();
+
+            if ($similarToAsset === null) {
+                unset($filters['similarTo']);
+            }
+        }
+
         $results = $plugin->search->search($filters);
 
         $assetIds = array_map(fn($a) => $a->id, $results['assets']);
@@ -50,6 +64,12 @@ class SearchController extends Controller
         $tagsMap = $plugin->tagAggregation->getTagsForAnalyses($analysisIds);
         $colorsMap = $plugin->colorAggregation->getColorsForAnalyses($analysisIds);
         $dupCountsMap = $plugin->duplicateDetection->getUnresolvedDuplicateCountsForAssets($assetIds);
+
+        $similarityMap = [];
+
+        if ($similarToAsset !== null) {
+            $similarityMap = $plugin->duplicateDetection->getSimilarityMapForAsset($similarToAsset->id);
+        }
 
         return $this->renderTemplate('lens/_search/index', [
             'assets' => $results['assets'],
@@ -67,6 +87,8 @@ class SearchController extends Controller
             'tagsMap' => $tagsMap,
             'colorsMap' => $colorsMap,
             'dupCountsMap' => $dupCountsMap,
+            'similarityMap' => $similarityMap,
+            'similarToAsset' => $similarToAsset,
         ]);
     }
 

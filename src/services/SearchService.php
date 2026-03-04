@@ -13,6 +13,7 @@ use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\migrations\Install;
 use vitordiniz22\craftlens\Plugin;
 use yii\base\Component;
+use yii\db\Expression;
 use yii\db\Query;
 
 /**
@@ -85,7 +86,26 @@ class SearchService extends Component
             }
         }
 
-        $baseQuery = $this->buildMatchingQuery($filters, $rankedAssetIds);
+        // Similarity path: resolve ranked IDs when similarTo is set.
+        $similarAssetIds = null;
+        $similarToAssetId = $filters['similarTo'] ?? null;
+
+        if ($similarToAssetId !== null) {
+            $similarAssetIds = Plugin::getInstance()
+                ->duplicateDetection
+                ->getSimilarAssetIds($similarToAssetId);
+
+            if (empty($similarAssetIds)) {
+                return [
+                    'assets' => [],
+                    'total' => 0,
+                    'offset' => $offset,
+                    'limit' => $limit,
+                ];
+            }
+        }
+
+        $baseQuery = $this->buildMatchingQuery($filters, $rankedAssetIds, $similarAssetIds);
 
         $total = (int) (clone $baseQuery)->count();
 
@@ -100,9 +120,21 @@ class SearchService extends Component
 
         if ($usedBm25 && $rankedAssetIds !== null) {
             // Preserve BM25 relevance order using MySQL FIELD().
-            $fieldList = implode(',', array_map('intval', $rankedAssetIds));
+            // When combined with similarTo, use only the intersected IDs.
+            $orderIds = ($similarAssetIds !== null)
+                ? array_values(array_intersect($rankedAssetIds, $similarAssetIds))
+                : $rankedAssetIds;
+            $fieldList = implode(',', array_map('intval', $orderIds));
             $paginatedIds = (clone $baseQuery)
-                ->orderBy(new \yii\db\Expression('FIELD(assets.id, ' . $fieldList . ')'))
+                ->orderBy(new Expression('FIELD(assets.id, ' . $fieldList . ')'))
+                ->offset($offset)
+                ->limit($limit)
+                ->column();
+        } elseif ($similarAssetIds !== null) {
+            // Similarity ordering: most similar first.
+            $fieldList = implode(',', array_map('intval', $similarAssetIds));
+            $paginatedIds = (clone $baseQuery)
+                ->orderBy(new Expression('FIELD(assets.id, ' . $fieldList . ')'))
                 ->offset($offset)
                 ->limit($limit)
                 ->column();
@@ -142,7 +174,7 @@ class SearchService extends Component
      * Build the base query for matching assets. Returns a grouped query
      * selecting asset IDs that can be used for both counting and pagination.
      */
-    private function buildMatchingQuery(array $filters, ?array $rankedAssetIds = null): Query
+    private function buildMatchingQuery(array $filters, ?array $rankedAssetIds = null, ?array $similarAssetIds = null): Query
     {
         $query = (new Query())
             ->select(['assets.id'])
@@ -154,10 +186,21 @@ class SearchService extends Component
 
         $query->leftJoin(Install::TABLE_ASSET_ANALYSES . ' lens', '[[assets.id]] = [[lens.assetId]]');
 
-        if ($rankedAssetIds !== null) {
+        if ($similarAssetIds !== null) {
+            // Constrain to only assets similar to the target asset.
+            if ($rankedAssetIds !== null) {
+                // Intersect with BM25 results when both are active.
+                $intersected = array_values(array_intersect($rankedAssetIds, $similarAssetIds));
+                $query->andWhere(empty($intersected) ? '1 = 0' : ['assets.id' => $intersected]);
+            } else {
+                $query->andWhere(['assets.id' => $similarAssetIds]);
+            }
+        }
+
+        if ($rankedAssetIds !== null && $similarAssetIds === null) {
             // BM25 path: filter to pre-ranked IDs — no text-search table joins needed.
             $query->andWhere(['assets.id' => $rankedAssetIds]);
-        } else {
+        } elseif ($rankedAssetIds === null) {
             // Legacy LIKE path: join tables needed for text search.
             if (!empty($filters['query'])) {
                 $query->leftJoin('{{%elements_sites}} elements_sites', '[[assets.id]] = [[elements_sites.elementId]]');

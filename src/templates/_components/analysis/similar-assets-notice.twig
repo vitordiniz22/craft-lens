@@ -3,15 +3,17 @@
  # Inline notice with thumbnail strip for duplicate/similar asset alerts.
  # Embeds the shared inline-notice component with a custom body block.
  #
- # Expected variables: similarImages, asset, static, isProcessing, variant (optional: 'review')
+ # Expected variables: similarImages, totalSimilarCount, asset, static, isProcessing, variant (optional: 'review')
  #}
 {% set isReview = (variant ?? '') == 'review' %}
+{% set totalCount = totalSimilarCount ?? similarImages|length %}
+{% set extraCount = totalCount - similarImages|length %}
 
 {% if similarImages|length %}
     {% embed 'lens/_components/inline-notice' with {
         type: isReview ? 'neutral' : 'info',
         icon: 'clone',
-        title: similarImages|length ~ ' ' ~ (similarImages|length == 1 ? 'Similar Asset Found'|t('lens') : 'Similar Assets Found'|t('lens')),
+        title: totalCount ~ ' ' ~ (totalCount == 1 ? 'Similar Asset Found'|t('lens') : 'Similar Assets Found'|t('lens')),
         attr: {'data-lens-target': 'similar-assets-notice'}
     } %}
         {% block body %}
@@ -28,17 +30,14 @@
                         </span>
                     </a>
                 {% endfor %}
+                {% if extraCount > 0 and not isReview and (asset ?? null) %}
+                    <a href="{{ cpUrl('lens/search', {similarTo: asset.id}) }}"
+                       class="lens-notice-thumb-more"
+                       title="{{ '+{count} more similar assets'|t('lens', {count: extraCount}) }}">
+                        +{{ extraCount }}
+                    </a>
+                {% endif %}
             </div>
-        {% endblock %}
-
-        {% block action %}
-            {% if not isReview and not (static ?? false) and not (isProcessing ?? false) %}
-                <div class="lens-notice-action">
-                    <button type="button" class="btn small" data-lens-action="find-similar" data-lens-asset-id="{{ asset.id }}">
-                        {{ 'Find Similar Assets'|t('lens') }}
-                    </button>
-                </div>
-            {% endif %}
         {% endblock %}
     {% endembed %}
 {% endif %}

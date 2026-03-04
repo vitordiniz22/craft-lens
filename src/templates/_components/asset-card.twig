@@ -76,7 +76,14 @@
         {% endif %}
 
         {% if analysis %}
-            {% if dupCount > 0 %}
+            {% if (similarity ?? null) is not null %}
+                <span class="lens-duplicate-badge">
+                    <span class="lens-badge lens-badge--small lens-badge--duplicate" title="{{ 'Similarity'|t('lens') }}">
+                        {{ iconSvg('clone')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
+                        {{ (similarity * 100)|round }}% {{ 'match'|t('lens') }}
+                    </span>
+                </span>
+            {% elseif dupCount > 0 %}
                 <span class="lens-duplicate-badge">
                     <span class="lens-badge lens-badge--small lens-badge--duplicate" title="{{ '{count} duplicate(s)'|t('lens', {count: dupCount}) }}">
                         {{ iconSvg('copy')|attr({width: 12, height: 12, fill: 'currentColor'}) }}

@@ -7,6 +7,10 @@
 <div class="lens-search-page">
     {# Search Header #}
     <form method="get" action="{{ cpUrl('lens/search') }}" class="lens-search-form" data-lens-target="search-form">
+        {% if filters.similarTo is defined and filters.similarTo %}
+            <input type="hidden" name="similarTo" value="{{ filters.similarTo }}">
+        {% endif %}
+
         {# Search Toolbar #}
         <div class="lens-search-toolbar">
             <div class="flex-grow">
@@ -122,6 +126,12 @@
                         <span class="lens-filter-chip" data-lens-filter-param="hasDuplicates">
                             {{ 'Duplicates'|t('lens') }}: <strong>{{ filters.hasDuplicates ? 'Yes'|t('lens') : 'No'|t('lens') }}</strong>
                             <button type="button" data-lens-action="remove-filter-chip" data-lens-filter-param="hasDuplicates" title="{{ 'Remove filter'|t('lens') }}">&times;</button>
+                        </span>
+                    {% endif %}
+                    {% if filters.similarTo is defined and filters.similarTo and (similarToAsset ?? null) %}
+                        <span class="lens-filter-chip" data-lens-filter-param="similarTo">
+                            {{ 'Similar to'|t('lens') }}: <strong>{{ similarToAsset.title }}</strong>
+                            <button type="button" data-lens-action="remove-filter-chip" data-lens-filter-param="similarTo" title="{{ 'Remove filter'|t('lens') }}">&times;</button>
                         </span>
                     {% endif %}
                     {% if filters.hasFocalPoint is defined and filters.hasFocalPoint is not null %}

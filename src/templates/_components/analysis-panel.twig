@@ -108,8 +108,9 @@
         {% if analysis.status not in [lens.status.failed] and (not isProcessing or isReprocessing) and (similarImages ?? [])|length %}
             {% include 'lens/_components/analysis/similar-assets-notice' with {
                 similarImages: similarImages,
+                totalSimilarCount: totalSimilarCount ?? similarImages|length,
                 asset: asset,
-                static: readOnly,
+                static: static ?? false,
                 isProcessing: isProcessing
             } %}
         {% endif %}

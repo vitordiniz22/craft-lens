@@ -23,7 +23,8 @@
                 analysis: analysis,
                 tags: tagsMap[analysis.id ?? 0] ?? [],
                 colors: colorsMap[analysis.id ?? 0] ?? [],
-                dupCount: dupCountsMap[asset.id] ?? 0,
+                dupCount: (similarityMap is defined and similarityMap|length) ? 0 : (dupCountsMap[asset.id] ?? 0),
+                similarity: (similarityMap is defined) ? (similarityMap[asset.id] ?? null) : null,
                 linkUrl: asset.cpEditUrl,
                 showTags: true,
                 showColors: true,
@@ -40,11 +41,20 @@
     } only %}
 
 {% elseif hasFilters is defined and hasFilters %}
-    {% include 'lens/_components/empty-state' with {
-        heading: 'No Results Found'|t('lens'),
-        description: 'No assets found matching your filters.'|t('lens'),
-        cta: {label: 'Clear Filters'|t('lens'), url: 'lens/search', style: ''},
-    } only %}
+    {% if similarToAsset ?? null %}
+        {% include 'lens/_components/empty-state' with {
+            heading: 'No Similar Assets Found'|t('lens'),
+            description: 'No duplicate or similar assets were detected for this image.'|t('lens'),
+            cta: {label: 'Back to Asset'|t('lens'), url: similarToAsset.cpEditUrl, style: ''},
+            secondaryCta: {label: 'Browse All Assets'|t('lens'), url: 'lens/search'},
+        } only %}
+    {% else %}
+        {% include 'lens/_components/empty-state' with {
+            heading: 'No Results Found'|t('lens'),
+            description: 'No assets found matching your filters.'|t('lens'),
+            cta: {label: 'Clear Filters'|t('lens'), url: 'lens/search', style: ''},
+        } only %}
+    {% endif %}
 
 {% else %}
     {% include 'lens/_components/empty-state' with {

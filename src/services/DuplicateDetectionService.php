@@ -369,6 +369,74 @@ class DuplicateDetectionService extends Component
     }
 
     /**
+     * Get IDs of assets similar to the given asset, ordered by similarity (highest first).
+     * Only includes unresolved duplicate pairs.
+     *
+     * @return int[]
+     */
+    public function getSimilarAssetIds(int $assetId): array
+    {
+        $duplicates = DuplicateGroupRecord::find()
+            ->select(['canonicalAssetId', 'duplicateAssetId'])
+            ->where(['and',
+                ['resolvedAt' => null],
+                ['or',
+                    ['canonicalAssetId' => $assetId],
+                    ['duplicateAssetId' => $assetId],
+                ],
+            ])
+            ->orderBy(['similarity' => SORT_DESC])
+            ->asArray()
+            ->all();
+
+        if (empty($duplicates)) {
+            return [];
+        }
+
+        $ids = array_map(function (array $dup) use ($assetId) {
+            return (int) $dup['canonicalAssetId'] === $assetId
+                ? (int) $dup['duplicateAssetId']
+                : (int) $dup['canonicalAssetId'];
+        }, $duplicates);
+
+        return array_values(array_unique($ids));
+    }
+
+    /**
+     * Get a map of asset ID => similarity score for all similar assets.
+     *
+     * @return array<int, float> [assetId => similarity]
+     */
+    public function getSimilarityMapForAsset(int $assetId): array
+    {
+        $duplicates = DuplicateGroupRecord::find()
+            ->select(['canonicalAssetId', 'duplicateAssetId', 'similarity'])
+            ->where(['and',
+                ['resolvedAt' => null],
+                ['or',
+                    ['canonicalAssetId' => $assetId],
+                    ['duplicateAssetId' => $assetId],
+                ],
+            ])
+            ->asArray()
+            ->all();
+
+        $map = [];
+
+        foreach ($duplicates as $dup) {
+            $otherId = (int) $dup['canonicalAssetId'] === $assetId
+                ? (int) $dup['duplicateAssetId']
+                : (int) $dup['canonicalAssetId'];
+
+            if (!isset($map[$otherId])) {
+                $map[$otherId] = (float) $dup['similarity'];
+            }
+        }
+
+        return $map;
+    }
+
+    /**
      * Resolve a duplicate pair.
      */
     public function resolve(int $groupId, string $resolution, ?int $userId): bool

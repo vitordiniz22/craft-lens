@@ -24,6 +24,7 @@ class FilterParser
         'hasWatermark', 'watermarkType', 'containsBrandLogo',
         'qualityPreset', 'hasGps', 'hasFocalPoint',
         'nsfwFlagged', 'missingAltText', 'unprocessed',
+        'similarTo',
     ];
 
     /**
@@ -46,6 +47,7 @@ class FilterParser
         self::parseQuickFilter($request, $filters);
         self::parsePagination($request, $filters);
         self::parseNsfwFlagged($request, $filters);
+        self::parseSimilarTo($request, $filters);
 
         return $filters;
     }
@@ -246,6 +248,15 @@ class FilterParser
         if ($nsfwFlagged !== null && filter_var($nsfwFlagged, FILTER_VALIDATE_BOOLEAN) && !isset($filters['nsfwScoreMin'])) {
             $filters['nsfwScoreMin'] = 0.5;
             $filters['nsfwFlagged'] = true;
+        }
+    }
+
+    private static function parseSimilarTo(Request $request, array &$filters): void
+    {
+        $similarTo = $request->getQueryParam('similarTo');
+
+        if ($similarTo !== null && is_numeric($similarTo) && (int) $similarTo > 0) {
+            $filters['similarTo'] = (int) $similarTo;
         }
     }
 

@@ -134,12 +134,6 @@
                 'click',
                 this._handleApplyFocalPoint.bind(this),
             );
-            window.Lens.core.DOM.delegate(
-                '[data-lens-action="find-similar"]',
-                'click',
-                this._handleFindSimilar.bind(this),
-            );
-
             // Alt proxy field handlers
             window.Lens.core.DOM.delegate(
                 '[data-lens-action="alt-proxy-edit"]',
@@ -460,15 +454,6 @@
                     });
                 },
             );
-        },
-
-        _handleFindSimilar: function (e, btn) {
-            if (btn.disabled) return;
-
-            const assetId = btn.dataset.lensAssetId;
-            const url = Craft.getCpUrl('lens/search', { assetId: assetId });
-
-            window.location.href = url;
         },
 
         // ================================================================
