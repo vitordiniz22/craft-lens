@@ -2,7 +2,9 @@
 {% set hasUsageData = allTimeUsage.totalAssets > 0 %}
 {% if hasUsageData %}
 <div class="lens-dashboard-section lens-usage pane">
-    <h2 class="lens-section-header__title">{{ 'Usage & Costs'|t('lens') }}</h2>
+    <div class="lens-section-header">
+        <h2 class="lens-section-header__title">{{ 'Usage & Costs'|t('lens') }}</h2>
+    </div>
 
     {# Primary stat cards: all-time totals #}
     {% set avgCost = allTimeUsage.totalAssets > 0

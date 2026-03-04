@@ -1,6 +1,8 @@
 {# Section 2: Analysis Coverage - always visible #}
 <div class="lens-dashboard-section lens-processing pane">
-    <h2 class="lens-section-header__title">{{ 'Analysis Coverage'|t('lens') }}</h2>
+    <div class="lens-section-header">
+        <h2 class="lens-section-header__title">{{ 'Analysis Coverage'|t('lens') }}</h2>
+    </div>
 
     {% set totalImages = processingStats.totalImages %}
     {% set analyzed = processingStats.analyzed %}

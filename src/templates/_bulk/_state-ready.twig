@@ -34,7 +34,9 @@
             description: doneDescription,
         } only %}
     {% else %}
-        <h2 class="lens-section-header__title">{{ 'Process Assets'|t('lens') }}</h2>
+        <div class="lens-section-header">
+            <h2 class="lens-section-header__title">{{ 'Process Assets'|t('lens') }}</h2>
+        </div>
 
         <div class="lens-bulk-status">
             {% if stats.unprocessed > 0 %}

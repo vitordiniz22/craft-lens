@@ -1,7 +1,9 @@
 {# Section 6: Recent Activity #}
 {% if recentActivity|length %}
 <div class="lens-dashboard-section lens-activity pane">
-    <h2 class="lens-section-header__title">{{ 'Recent Activity'|t('lens') }}</h2>
+    <div class="lens-section-header">
+        <h2 class="lens-section-header__title">{{ 'Recent Activity'|t('lens') }}</h2>
+    </div>
 
     <ul class="lens-activity__feed">
         {% for activity in recentActivity %}

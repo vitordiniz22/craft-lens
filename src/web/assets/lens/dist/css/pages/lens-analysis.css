@@ -73,7 +73,6 @@
     border-bottom: 1px solid var(--hairline-color);
     display: flex;
     flex-direction: column;
-    gap: 15px;
 }
 
 .lens-section:last-child {
@@ -86,6 +85,7 @@
     align-items: center;
     width: 100%;
     gap: 6px;
+    margin-bottom: 20px;
 }
 
 .lens-section-header__title {
@@ -94,7 +94,7 @@
     font-weight: 500;
     color: var(--gray-600);
     letter-spacing: 0.02em;
-    margin-bottom: 20px;
+    margin-bottom: 0px;
 }
 
 .lens-section-header__intro {

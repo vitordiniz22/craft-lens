@@ -1,7 +1,9 @@
 {# Section 3: Metadata Coverage - only shows when assets have been analyzed #}
 {% if altTextCoverage.total > 0 %}
 <div class="lens-dashboard-section lens-coverage pane">
-    <h2 class="lens-section-header__title">{{ 'Metadata Coverage'|t('lens') }}</h2>
+    <div class="lens-section-header">
+        <h2 class="lens-section-header__title">{{ 'Metadata Coverage'|t('lens') }}</h2>
+    </div>
 
     <div class="lens-coverage__metrics">
         {# Alt Text Coverage #}
