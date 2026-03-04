@@ -1,6 +1,6 @@
 {% extends '_layouts/cp' %}
 
-{% set title = 'Review: {filename}'|t('lens', {filename: analysis.filename}) %}
+{% set title = 'Review: {title}'|t('lens', {title: analysis.assetTitle ?? analysis.filename}) %}
 {% set selectedSubnavItem = 'review' %}
 
 {% block content %}
@@ -132,8 +132,9 @@
             {# Right Panel - Reuse analysis components #}
             <div class="lens-review-right">
                 <div class="lens-review-asset-header">
-                    <h3>{{ analysis.filename }}</h3>
+                    <h3>{{ analysis.assetTitle ?? analysis.filename }}</h3>
                     <div class="lens-review-meta">
+                        <a href="{{ analysis.editUrl }}" target="_blank">{{ analysis.filename }}</a> &bull;
                         {{ analysis.fileSize|filesize }} &bull;
                         {{ analysis.uploadDate|datetime('short') }}
                     </div>

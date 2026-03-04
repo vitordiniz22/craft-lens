@@ -468,6 +468,15 @@
   color: var(--medium-text-color);
 }
 
+.lens-review-meta a {
+  color: var(--link-color);
+  text-decoration: none;
+}
+
+.lens-review-meta a:hover {
+  text-decoration: underline;
+}
+
 .lens-ai-suggestion-inline {
   display: flex;
   align-items: center;
