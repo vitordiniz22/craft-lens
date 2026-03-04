@@ -96,21 +96,21 @@
 
                 {# Focal point action bar — visible when review FP differs from asset's existing FP #}
                 {% if analysis.assetHasFocalPoint and analysis.assetFocalPoint %}
-                    <div class="lens-review-fp-actions" data-lens-target="fp-actions"
-                         {{ fpMatchesAsset ? 'style="display: none;"' : '' }}>
-                        <span class="lens-review-fp-actions__icon lens-review-fp-actions__icon--ai">{{ iconSvg('wand-magic-sparkles')|attr({width: 12, height: 12}) }}</span>
-                        <span class="lens-review-fp-actions__icon lens-review-fp-actions__icon--action">{{ iconSvg('triangle-exclamation')|attr({width: 12, height: 12}) }}</span>
-                        <span class="lens-review-fp-actions__text" data-lens-target="fp-actions-text">
+                    <div class="lens-ai-suggestion-inline" data-lens-target="fp-actions"
+                         {% if fpMatchesAsset %}style="display: none;"{% endif %}>
+                        <span class="lens-ai-suggestion-icon lens-ai-suggestion-icon--ai">{{ iconSvg('wand-magic-sparkles')|attr({width: 12, height: 12}) }}</span>
+                        <span class="lens-ai-suggestion-icon lens-ai-suggestion-icon--action">{{ iconSvg('triangle-exclamation')|attr({width: 12, height: 12}) }}</span>
+                        <span data-lens-target="fp-actions-text">
                             {{ 'Different focal point suggested'|t('lens') }}
                         </span>
-                        <span class="lens-review-fp-actions__sep">&middot;</span>
-                        <button type="button" class="lens-review-fp-actions__btn"
+                        &middot;
+                        <button type="button" class="lens-revert-trigger"
                                 data-lens-action="focal-accept">
                             {{ 'Accept'|t('lens') }}
                         </button>
-                        <span class="lens-review-fp-actions__undo-group">
-                            <span class="lens-review-fp-actions__sep">&middot;</span>
-                            <button type="button" class="lens-review-fp-actions__btn"
+                        <span class="lens-focal-undo-group">
+                            &middot;
+                            <button type="button" class="lens-revert-trigger"
                                     data-lens-action="focal-use-current"
                                     data-lens-asset-focal-x="{{ analysis.assetFocalPoint.x }}"
                                     data-lens-asset-focal-y="{{ analysis.assetFocalPoint.y }}">

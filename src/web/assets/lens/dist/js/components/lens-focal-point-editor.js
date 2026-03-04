@@ -206,7 +206,7 @@
             var actionsText = document.querySelector('[data-lens-target="fp-actions-text"]');
             if (actions) {
                 actions.style.display = shouldHide ? 'none' : '';
-                actions.classList.toggle('lens-review-fp-actions--warning', !isAiMatch);
+                actions.classList.toggle('lens-ai-suggestion-inline--warning', !isAiMatch);
             }
             if (actionsText && !shouldHide) {
                 actionsText.textContent = contextText;

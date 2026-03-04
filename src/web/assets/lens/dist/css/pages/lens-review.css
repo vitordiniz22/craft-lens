@@ -195,75 +195,6 @@
   border-color: rgba(255, 255, 255, 0.8);
 }
 
-/* Focal point action bar — shows when review FP differs from asset's existing FP */
-/* Default = AI context (violet), --warning = manual override (amber) */
-.lens-review-fp-actions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  padding: 6px 10px;
-  background: var(--violet-100);
-  border-radius: var(--small-border-radius);
-  color: var(--violet-800);
-}
-
-.lens-review-fp-actions--warning {
-  background: var(--amber-100);
-  color: var(--amber-800);
-}
-
-.lens-review-fp-actions__sep {
-  color: var(--violet-400);
-}
-
-.lens-review-fp-actions--warning .lens-review-fp-actions__sep {
-  color: var(--amber-400);
-}
-
-.lens-review-fp-actions__icon {
-  flex-shrink: 0;
-  display: flex;
-  color: var(--violet-500);
-}
-
-.lens-review-fp-actions__icon--action {
-  display: none;
-}
-
-.lens-review-fp-actions--warning .lens-review-fp-actions__icon--ai {
-  display: none;
-}
-
-.lens-review-fp-actions--warning .lens-review-fp-actions__icon--action {
-  display: flex;
-  color: var(--amber-500);
-}
-
-/* Undo group — hidden in AI state, visible only after manual click (warning) */
-.lens-review-fp-actions__undo-group {
-  display: none;
-}
-
-.lens-review-fp-actions--warning .lens-review-fp-actions__undo-group {
-  display: contents;
-}
-
-.lens-review-fp-actions__btn {
-  background: none;
-  border: none;
-  padding: 0;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--violet-700);
-  cursor: pointer;
-  text-decoration: underline;
-}
-
-.lens-review-fp-actions--warning .lens-review-fp-actions__btn {
-  color: var(--amber-700);
-}
-
 /* Right panel - Details */
 .lens-review-right {
   display: flex;
@@ -498,6 +429,7 @@
   flex-shrink: 0;
   display: flex;
   color: var(--violet-500);
+  fill: currentColor;
 }
 
 /* Icon toggle — show wand (AI) by default, exclamation (action) in warning state */

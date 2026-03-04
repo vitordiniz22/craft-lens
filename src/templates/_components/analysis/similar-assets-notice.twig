@@ -11,7 +11,7 @@
 
 {% if similarImages|length %}
     {% embed 'lens/_components/inline-notice' with {
-        type: isReview ? 'neutral' : 'info',
+        type: 'info',
         icon: 'clone',
         title: totalCount ~ ' ' ~ (totalCount == 1 ? 'Similar Asset Found'|t('lens') : 'Similar Assets Found'|t('lens')),
         attr: {'data-lens-target': 'similar-assets-notice'}
