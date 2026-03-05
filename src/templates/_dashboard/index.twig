@@ -17,23 +17,28 @@
     {% endif %}
 
     {% if not hasCriticalIssues %}
-        {# Section 1: Needs Attention (conditional) #}
-        {% include 'lens/_dashboard/_attention' %}
+        {% if processingStats.totalImages == 0 %}
+            {# Empty state: no images in selected volumes #}
+            {% include 'lens/_dashboard/_empty-state' %}
+        {% else %}
+            {# Section 1: Needs Attention (conditional) #}
+            {% include 'lens/_dashboard/_attention' %}
 
-        {# Section 2: Processing Status (always visible) #}
-        {% include 'lens/_dashboard/_processing-status' %}
+            {# Section 2: Processing Status #}
+            {% include 'lens/_dashboard/_processing-status' %}
 
-        {# Section 3: Metadata Coverage (conditional - only when analyzed assets exist) #}
-        {% include 'lens/_dashboard/_library-health' %}
+            {# Section 3: Metadata Coverage (conditional - only when analyzed assets exist) #}
+            {% include 'lens/_dashboard/_library-health' %}
 
-        {# Section 4: Quick Insights (conditional) #}
-        {% include 'lens/_dashboard/_quick-insights' %}
+            {# Section 4: Quick Insights (conditional) #}
+            {% include 'lens/_dashboard/_quick-insights' %}
 
-        {# Section 5: Recent Activity #}
-        {% include 'lens/_dashboard/_recent-activity' %}
+            {# Section 5: Recent Activity #}
+            {% include 'lens/_dashboard/_recent-activity' %}
 
-        {# Section 6: Usage (collapsed) #}
-        {% include 'lens/_dashboard/_usage' %}
+            {# Section 6: Usage (collapsed) #}
+            {% include 'lens/_dashboard/_usage' %}
+        {% endif %}
     {% endif %}
 </div>
 

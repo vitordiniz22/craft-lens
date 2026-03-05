@@ -16,6 +16,78 @@
 }
 
 /* ==========================================================================
+   Empty State: Welcome Card
+   ========================================================================== */
+
+.lens-dashboard-welcome__header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.lens-dashboard-welcome__header .lens-section-header__title {
+    margin: 0;
+}
+
+.lens-dashboard-welcome__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+}
+
+.lens-dashboard-welcome__icon svg {
+    width: 22px;
+    height: 22px;
+}
+
+.lens-dashboard-welcome__description {
+    margin: 0 0 20px 0;
+    font-size: 14px;
+    color: var(--medium-text-color);
+    line-height: 1.5;
+    max-width: 600px;
+}
+
+.lens-dashboard-welcome__preview {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.lens-dashboard-welcome__stat {
+    text-align: center;
+    padding: 16px 8px;
+    background: var(--gray-050);
+    border-radius: var(--medium-border-radius);
+    opacity: 0.5;
+}
+
+.lens-dashboard-welcome__stat-value {
+    display: block;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--light-text-color);
+    line-height: 1.2;
+}
+
+.lens-dashboard-welcome__stat-label {
+    display: block;
+    font-size: 13px;
+    color: var(--light-text-color);
+    margin-top: 4px;
+}
+
+.lens-dashboard-welcome__actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* ==========================================================================
    Section 1: Needs Attention
    ========================================================================== */
 
@@ -59,7 +131,6 @@
     color: var(--medium-text-color);
     font-weight: 500;
 }
-
 
 .lens-processing__progress-header {
     display: flex;
@@ -358,29 +429,53 @@
    ========================================================================== */
 
 @media (max-width: 768px) {
+    .lens-dashboard-welcome__preview {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .lens-dashboard-welcome__stat {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        text-align: left;
+        padding: 8px 12px;
+    }
+
+    .lens-dashboard-welcome__stat-value {
+        font-size: 20px;
+    }
+
     .lens-insights__grid {
         grid-template-columns: 1fr;
     }
+
     .lens-attention__cards {
         flex-direction: column;
     }
+
     .lens-asset-card {
         width: 100%;
     }
+
     .lens-actions__grid {
         flex-direction: column;
     }
+
     .lens-actions__grid .btn,
     .lens-actions__grid .lens-actions__form {
         width: 100%;
     }
+
     .lens-actions__grid .lens-actions__form .btn {
         width: 100%;
     }
+
     .lens-usage__cards {
         grid-template-columns: 1fr;
         gap: 8px;
     }
+
     .lens-usage__card {
         text-align: left;
         display: flex;
@@ -388,9 +483,11 @@
         gap: 8px;
         padding: 8px 0;
     }
+
     .lens-usage__card-value {
         font-size: 20px;
     }
+
     .lens-activity__thumb {
         display: none;
     }

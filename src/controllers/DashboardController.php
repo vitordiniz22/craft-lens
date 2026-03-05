@@ -34,6 +34,9 @@ class DashboardController extends Controller
             $processingStats = $bulkStatus->getStats();
 
             return $this->renderTemplate('lens/_dashboard/index', [
+                // Empty state context
+                'isAllVolumesMode' => in_array('*', $plugin->getSettings()->enabledVolumes, true),
+
                 // Setup status
                 'setupStatus' => $plugin->setupStatus->getSetupStatus(),
                 'criticalIssues' => $plugin->setupStatus->getCriticalIssues(),

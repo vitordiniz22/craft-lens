@@ -1,0 +1,43 @@
+{# Dashboard Empty State - shown when no images exist in selected volumes #}
+<div class="lens-dashboard-section lens-dashboard-welcome pane">
+    <div class="lens-section-header lens-dashboard-welcome__header">
+        <span class="lens-dashboard-welcome__icon">
+            {{ svg(craft.app.plugins.getPlugin('lens').basePath ~ '/icon.svg') }}
+        </span>
+        <h2 class="lens-section-header__title">
+            {% if isAllVolumesMode %}
+                {{ 'Welcome to Lens'|t('lens') }}
+            {% else %}
+                {{ 'No Images in Selected Volumes'|t('lens') }}
+            {% endif %}
+        </h2>
+    </div>
+
+    <p class="lens-dashboard-welcome__description">
+        {% if isAllVolumesMode %}
+            {{ 'Lens uses AI to generate alt text, tags, and quality insights for your images. Upload images to any asset volume to get started, or check your volume settings to make sure the right volumes are selected.'|t('lens') }}
+        {% else %}
+            {{ 'Lens is monitoring specific volumes, but they don\'t contain any images yet. Upload images to those volumes, or adjust your volume settings.'|t('lens') }}
+        {% endif %}
+    </p>
+
+    <div class="lens-dashboard-welcome__preview">
+        <div class="lens-dashboard-welcome__stat">
+            <span class="lens-dashboard-welcome__stat-value">0</span>
+            <span class="lens-dashboard-welcome__stat-label">{{ 'Images'|t('lens') }}</span>
+        </div>
+        <div class="lens-dashboard-welcome__stat">
+            <span class="lens-dashboard-welcome__stat-value">0</span>
+            <span class="lens-dashboard-welcome__stat-label">{{ 'Analyzed'|t('lens') }}</span>
+        </div>
+        <div class="lens-dashboard-welcome__stat">
+            <span class="lens-dashboard-welcome__stat-value">0</span>
+            <span class="lens-dashboard-welcome__stat-label">{{ 'Tags'|t('lens') }}</span>
+        </div>
+    </div>
+
+    <div class="lens-dashboard-welcome__actions">
+        <a href="{{ cpUrl('assets') }}" class="btn submit">{{ 'Go to Assets'|t('lens') }}</a>
+        <a href="{{ cpUrl('lens/settings') }}" class="btn">{{ 'Volume Settings'|t('lens') }}</a>
+    </div>
+</div>
