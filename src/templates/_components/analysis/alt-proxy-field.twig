@@ -77,7 +77,7 @@
 
     {# Edit mode (hidden by default) #}
     <div class="lens-field-edit" data-lens-target="alt-proxy-edit-area" hidden>
-        <textarea class="text fullwidth" rows="3" data-lens-target="alt-proxy-input">{{ nativeValue }}</textarea>
+        <textarea class="text fullwidth" rows="3" maxlength="500" data-lens-target="alt-proxy-input">{{ nativeValue }}</textarea>
         <div class="lens-field-actions">
             <button type="button" class="btn small submit" data-lens-action="alt-proxy-save">{{ 'Save'|t('lens') }}</button>
             <button type="button" class="btn small" data-lens-action="alt-proxy-cancel">{{ 'Cancel'|t('lens') }}</button>
@@ -134,7 +134,7 @@
     </div>
 
     {# Editable suggestion input #}
-    <textarea class="text fullwidth" name="altText" rows="2">{{ suggestionValue }}</textarea>
+    <textarea class="text fullwidth" name="altText" rows="2" maxlength="500">{{ suggestionValue }}</textarea>
 
     {# Status line #}
     <div class="lens-native-status">

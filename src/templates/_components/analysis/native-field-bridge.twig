@@ -30,6 +30,8 @@
 {% set fieldState = fieldState ?? 'readonly' %}
 {% set isEdited = (editedBy ?? null) is not null %}
 {% set isSecondarySite = siteId and siteId != craft.app.sites.primarySite.id %}
+{% set fieldMaxLengths = { altText: 500, suggestedTitle: 255 } %}
+{% set maxlength = fieldMaxLengths[fieldName] ?? null %}
 
 {# Determine the status of the native value relative to the suggestion #}
 {% set hasSuggestion = suggestionValue is defined and suggestionValue is not empty %}
@@ -162,9 +164,9 @@
 
     {# Editable suggestion input #}
     {% if inputType == 'textarea' %}
-        <textarea class="text fullwidth" name="{{ fieldName }}" rows="2">{{ suggestionValue }}</textarea>
+        <textarea class="text fullwidth" name="{{ fieldName }}" rows="2"{% if maxlength %} maxlength="{{ maxlength }}"{% endif %}>{{ suggestionValue }}</textarea>
     {% else %}
-        <input type="text" class="text fullwidth" name="{{ fieldName }}" value="{{ suggestionValue }}">
+        <input type="text" class="text fullwidth" name="{{ fieldName }}" value="{{ suggestionValue }}"{% if maxlength %} maxlength="{{ maxlength }}"{% endif %}>
     {% endif %}
 
     {# Status line #}

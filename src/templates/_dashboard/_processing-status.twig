@@ -1,4 +1,5 @@
-{# Section 2: Analysis Coverage - always visible #}
+{# Section 2: Analysis Coverage - hidden when no assets in selected volumes #}
+{% if processingStats.totalImages > 0 %}
 <div class="lens-dashboard-section lens-processing pane">
     <div class="lens-section-header">
         <h2 class="lens-section-header__title">{{ 'Analysis Coverage'|t('lens') }}</h2>
@@ -88,3 +89,4 @@
         {% endif %}
     </div>
 </div>
+{% endif %}

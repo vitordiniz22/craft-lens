@@ -19,6 +19,8 @@
 {% set inputType = inputType ?? 'text' %}
 {% set featured = featured ?? false %}
 {% set fieldState = fieldState ?? 'readonly' %}
+{% set fieldMaxLengths = { altText: 500, suggestedTitle: 255, longDescription: 5000, extractedText: 50000 } %}
+{% set maxlength = fieldMaxLengths[fieldName] ?? null %}
 
 {# ============================================================
    READONLY — Display only. No edit buttons. No JS hooks.
@@ -90,9 +92,9 @@
     {# Edit mode (hidden by default) #}
     <div class="lens-field-edit" data-lens-target="field-edit" hidden>
         {% if inputType == 'textarea' %}
-            <textarea class="text fullwidth" rows="3">{{ value }}</textarea>
+            <textarea class="text fullwidth" rows="3"{% if maxlength %} maxlength="{{ maxlength }}"{% endif %}>{{ value }}</textarea>
         {% else %}
-            <input type="text" class="text fullwidth" value="{{ value }}">
+            <input type="text" class="text fullwidth" value="{{ value }}"{% if maxlength %} maxlength="{{ maxlength }}"{% endif %}>
         {% endif %}
         <div class="lens-field-actions">
             <button type="button" class="btn small submit" data-lens-action="field-save">{{ 'Save'|t('lens') }}</button>
@@ -141,9 +143,9 @@
     </div>
 
     {% if inputType == 'textarea' %}
-        <textarea class="text fullwidth" name="{{ fieldName }}" rows="2">{{ value }}</textarea>
+        <textarea class="text fullwidth" name="{{ fieldName }}" rows="2"{% if maxlength %} maxlength="{{ maxlength }}"{% endif %}>{{ value }}</textarea>
     {% else %}
-        <input type="text" class="text fullwidth" name="{{ fieldName }}" value="{{ value }}">
+        <input type="text" class="text fullwidth" name="{{ fieldName }}" value="{{ value }}"{% if maxlength %} maxlength="{{ maxlength }}"{% endif %}>
     {% endif %}
 
     {# AI suggestion inline (informational) #}
