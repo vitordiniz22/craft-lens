@@ -71,6 +71,26 @@
 
                     if (containsPeopleInput) containsPeopleInput.value = fields.containsPeople ? '1' : '0';
                     if (faceCountInput) faceCountInput.value = fields.faceCount.toString();
+
+                    var container = radio.closest('[data-lens-target="people-detection"]');
+                    if (!container) return;
+
+                    // Update status badge text
+                    var displayText = container.querySelector('[data-lens-target="people-display-text"]');
+                    if (displayText) {
+                        displayText.textContent = fields.containsPeople
+                            ? Lens.utils.formatPeopleDetectionText(fields.containsPeople, fields.faceCount)
+                            : Craft.t('lens', 'Clear');
+                    }
+
+                    // Toggle AI suggestion visibility based on whether selection matches AI
+                    var aiSuggestion = container.querySelector('[data-lens-target="people-ai-suggestion"]');
+                    if (aiSuggestion) {
+                        var aiContainsPeople = container.dataset.lensContainsPeopleAi === '1';
+                        var aiFaceCount = parseInt(container.dataset.lensFaceCountAi, 10) || 0;
+                        var matchesAi = (fields.containsPeople === aiContainsPeople) && (fields.faceCount === aiFaceCount);
+                        aiSuggestion.hidden = matchesAi;
+                    }
                 });
             });
         },
@@ -94,6 +114,32 @@
                     var hiddenInput = window.Lens.core.DOM.findControl('field-' + fieldName);
                     if (hiddenInput) {
                         hiddenInput.value = radio.value;
+                    }
+
+                    var container = radio.closest('[data-lens-target="detection-toggle"]');
+                    if (!container) return;
+
+                    var currentDetected = parseFloat(radio.value) > 0;
+
+                    // Update accent bar and icon styling
+                    container.classList.toggle('lens-accent-bar', currentDetected);
+                    container.classList.toggle('lens-accent-bar--red', currentDetected);
+                    var icon = container.querySelector('[data-lens-target="detection-icon"]');
+                    if (icon) icon.classList.toggle('lens-detection-icon--flagged', currentDetected);
+
+                    // Update status badge
+                    var badge = container.querySelector('[data-lens-target="detection-badge"]');
+                    if (badge) {
+                        badge.className = 'lens-detection-badge ' + (currentDetected ? 'lens-detection-badge--flagged' : 'lens-detection-badge--clear');
+                        var srcIcon = container.querySelector(currentDetected ? '.lens-segmented-control__icon--flagged' : '.lens-segmented-control__icon--clear');
+                        badge.innerHTML = (srcIcon ? srcIcon.innerHTML : '') + ' ' + Craft.t('lens', currentDetected ? 'Flagged' : 'Clear');
+                    }
+
+                    // Toggle AI suggestion visibility based on whether selection matches AI
+                    var aiSuggestion = container.querySelector('[data-lens-target="detection-ai-suggestion"]');
+                    if (aiSuggestion) {
+                        var aiDetected = container.dataset.lensDetectedAi === '1';
+                        aiSuggestion.hidden = (currentDetected === aiDetected);
                     }
                 });
             });

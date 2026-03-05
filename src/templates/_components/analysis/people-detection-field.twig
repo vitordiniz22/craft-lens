@@ -1,5 +1,5 @@
 {#
- # People Detection Inline Editor — 3-State Pattern (Redesigned)
+ # People Detection Inline Editor — 3-State Pattern
  # Icon + badge display, native radios with auto-save
  #
  # Expected variables:
@@ -113,9 +113,13 @@
 </div>
 
 {# ============================================================
-   UNLOCKED — Icon + badge + native radios (auto-save on change).
+   UNLOCKED / EDITING — Same component, different interaction mode.
+   unlocked: asset edit page (click-to-edit, auto-save via AJAX)
+   editing:  review page (always editable, form-based submission)
    ============================================================ #}
-{% elseif fieldState == 'unlocked' %}
+{% elseif fieldState == 'unlocked' or fieldState == 'editing' %}
+
+{% set isReview = fieldState == 'editing' %}
 
 <div class="lens-people-detection lens-editable-field lens-detection-row"
      data-lens-target="people-detection"
@@ -129,14 +133,16 @@
         <span class="lens-detection-icon" data-lens-target="detection-icon">
             {{ iconSvg('user')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
         </span>
-        {% if isEdited %}
+        {% if not isReview and isEdited %}
             <span class="lens-lock-icon" data-lens-target="lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
         {% endif %}
         <span class="lens-field-label">{{ 'People Detection'|t('lens') }}</span>
-        {% if not isEdited and analysis.containsPeopleConfidence is defined and analysis.containsPeopleConfidence and not (hideConfidence ?? false) %}
-            <span class="badge" data-lens-target="confidence-badge">{{ (analysis.containsPeopleConfidence * 100)|round }}%</span>
+        {% if (isReview or not isEdited) and analysis.containsPeopleConfidence is defined and analysis.containsPeopleConfidence and not (hideConfidence ?? false) %}
+            <span class="badge"{% if not isReview %} data-lens-target="confidence-badge"{% endif %}>{{ (analysis.containsPeopleConfidence * 100)|round }}%</span>
         {% endif %}
-        <button type="button" class="lens-edit-trigger" data-lens-action="people-edit" title="{{ 'Edit'|t('lens') }}">&#9998;</button>
+        {% if not isReview %}
+            <button type="button" class="lens-edit-trigger" data-lens-action="people-edit" title="{{ 'Edit'|t('lens') }}">&#9998;</button>
+        {% endif %}
         <span class="lens-detection-badge lens-detection-badge--clear" data-lens-target="people-badge">
             {% if hasPeople %}
                 {{ iconSvg('user')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
@@ -148,33 +154,40 @@
         </span>
     </div>
 
-    {# Display mode — help text #}
-    <div data-lens-target="field-display">
-        <div data-lens-target="people-present"{% if not hasPeople %} hidden{% endif %}>
-            <p class="lens-detection-help" data-lens-target="people-help-text">
-                <span class="lens-detection-help__icon">{{ iconSvg('lightbulb')|attr({width: 12, height: 12, fill: 'currentColor'}) }}</span>
-                {% if hasPeople and analysis.faceCount > 0 %}
-                    {{ 'May require model releases for commercial use'|t('lens') }}
-                {% elseif hasPeople %}
-                    {{ 'People visible but faces obscured. May still require releases for commercial use.'|t('lens') }}
-                {% endif %}
-            </p>
+    {% if not isReview %}
+        {# Display mode — help text #}
+        <div data-lens-target="field-display">
+            <div data-lens-target="people-present"{% if not hasPeople %} hidden{% endif %}>
+                <p class="lens-detection-help" data-lens-target="people-help-text">
+                    <span class="lens-detection-help__icon">{{ iconSvg('lightbulb')|attr({width: 12, height: 12, fill: 'currentColor'}) }}</span>
+                    {% if hasPeople and analysis.faceCount > 0 %}
+                        {{ 'May require model releases for commercial use'|t('lens') }}
+                    {% elseif hasPeople %}
+                        {{ 'People visible but faces obscured. May still require releases for commercial use.'|t('lens') }}
+                    {% endif %}
+                </p>
+            </div>
+            <div data-lens-target="people-absent"{% if hasPeople %} hidden{% endif %}></div>
         </div>
-        <div data-lens-target="people-absent"{% if hasPeople %} hidden{% endif %}></div>
-    </div>
+    {% endif %}
 
-    {# Edit mode — native radios (hidden by default, auto-saves on change) #}
-    <div class="lens-field-edit lens-people-edit-panel" data-lens-target="people-edit-panel" hidden>
+    {# Radios — hidden by default in unlocked (revealed on edit click), always visible in review #}
+    <div{% if not isReview %} class="lens-field-edit lens-people-edit-panel" data-lens-target="people-edit-panel" hidden{% endif %}>
         <div class="lens-people-edit-options">
-            {{ _self.radioOptions(analysis, 'people-mode') }}
+            {{ _self.radioOptions(analysis, isReview ? 'people-mode-review' : 'people-mode') }}
         </div>
-        <div class="lens-field-actions">
-            <button type="button" class="btn small" data-lens-action="people-cancel">{{ 'Cancel'|t('lens') }}</button>
-        </div>
+        {% if not isReview %}
+            <div class="lens-field-actions">
+                <button type="button" class="btn small" data-lens-action="people-cancel">{{ 'Cancel'|t('lens') }}</button>
+            </div>
+        {% endif %}
     </div>
 
-    {# AI suggestion — purple bar, shown when edited AND AI value differs from current #}
-    {% set aiDiffers = isEdited and ((analysis.containsPeopleAi != analysis.containsPeople) or (analysis.faceCountAi != analysis.faceCount)) %}
+    {# AI suggestion — purple bar, shown when value differs from AI #}
+    {% set aiDiffers = isReview
+        ? ((analysis.containsPeopleAi != analysis.containsPeople) or (analysis.faceCountAi != analysis.faceCount))
+        : (isEdited and ((analysis.containsPeopleAi != analysis.containsPeople) or (analysis.faceCountAi != analysis.faceCount)))
+    %}
     <div class="lens-ai-suggestion-inline" data-lens-target="people-ai-suggestion"{% if not aiDiffers %} hidden{% endif %}>
         <span class="lens-ai-suggestion-icon">{{ iconSvg('wand-magic-sparkles')|attr({width: 12, height: 12}) }}</span>
         <span data-lens-target="people-ai-text">
@@ -182,69 +195,38 @@
                 text: _self.peopleDetectionText(analysis.containsPeopleAi, analysis.faceCountAi)
             }) }}
         </span>
-        <button type="button" class="lens-revert-trigger" data-lens-action="people-revert" data-lens-analysis-id="{{ analysis.id }}"{% if not aiDiffers %} hidden{% endif %}>
-            {{ 'Revert to AI'|t('lens') }}
-        </button>
-    </div>
-
-    {# Provenance meta (always rendered, hidden when not edited) #}
-    {% if isFaceCountEdited %}
-        {% include 'lens/_components/analysis/edit-meta' with {
-            editedBy: analysis.faceCountEditedBy,
-            editedAt: analysis.faceCountEditedAt,
-            target: 'people-edit-meta',
-            isEdited: true,
-        } only %}
-    {% elseif isPeopleEdited %}
-        {% include 'lens/_components/analysis/edit-meta' with {
-            editedBy: analysis.containsPeopleEditedBy,
-            editedAt: analysis.containsPeopleEditedAt,
-            target: 'people-edit-meta',
-            isEdited: true,
-        } only %}
-    {% else %}
-        {% include 'lens/_components/analysis/edit-meta' with {
-            editedBy: null,
-            editedAt: null,
-            target: 'people-edit-meta',
-            isEdited: false,
-        } only %}
-    {% endif %}
-</div>
-
-{# ============================================================
-   EDITING — Native radios always visible. No save/cancel.
-   ============================================================ #}
-{% elseif fieldState == 'editing' %}
-
-<div class="lens-people-detection lens-editable-field lens-detection-row"
-     data-lens-target="people-detection"
-     data-lens-analysis-id="{{ analysis.id }}"
-     data-lens-contains-people="{{ analysis.containsPeople ? '1' : '0' }}"
-     data-lens-face-count="{{ analysis.faceCount }}">
-
-    <div class="lens-field-header" data-lens-target="field-header">
-        <span class="lens-detection-icon">
-            {{ iconSvg('user')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
-        </span>
-        <span class="lens-field-label">{{ 'People Detection'|t('lens') }}</span>
-        {% if analysis.containsPeopleConfidence is defined and analysis.containsPeopleConfidence and analysis.containsPeopleConfidence < 0.8 %}
-            <span class="lens-confidence-badge lens-confidence-{{ (analysis.containsPeopleConfidence * 100)|round >= 50 ? 'medium' : 'low' }}">
-                {{ (analysis.containsPeopleConfidence * 100)|round }}%
-            </span>
+        {% if not isReview %}
+            <button type="button" class="lens-revert-trigger" data-lens-action="people-revert" data-lens-analysis-id="{{ analysis.id }}"{% if not aiDiffers %} hidden{% endif %}>
+                {{ 'Revert to AI'|t('lens') }}
+            </button>
         {% endif %}
     </div>
 
-    <div class="lens-people-edit-options">
-        {{ _self.radioOptions(analysis, 'people-mode-review') }}
-    </div>
-
-    {# AI suggestion always visible in editing mode #}
-    <div class="lens-ai-suggestion-inline">
-        {{ 'AI suggested: {text}'|t('lens', {
-            text: _self.peopleDetectionText(analysis.containsPeopleAi, analysis.faceCountAi)
-        }) }}
-    </div>
+    {% if not isReview %}
+        {# Provenance meta (always rendered, hidden when not edited) #}
+        {% if isFaceCountEdited %}
+            {% include 'lens/_components/analysis/edit-meta' with {
+                editedBy: analysis.faceCountEditedBy,
+                editedAt: analysis.faceCountEditedAt,
+                target: 'people-edit-meta',
+                isEdited: true,
+            } only %}
+        {% elseif isPeopleEdited %}
+            {% include 'lens/_components/analysis/edit-meta' with {
+                editedBy: analysis.containsPeopleEditedBy,
+                editedAt: analysis.containsPeopleEditedAt,
+                target: 'people-edit-meta',
+                isEdited: true,
+            } only %}
+        {% else %}
+            {% include 'lens/_components/analysis/edit-meta' with {
+                editedBy: null,
+                editedAt: null,
+                target: 'people-edit-meta',
+                isEdited: false,
+            } only %}
+        {% endif %}
+    {% endif %}
 </div>
 
 {% endif %}

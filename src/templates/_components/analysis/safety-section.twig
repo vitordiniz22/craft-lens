@@ -19,7 +19,7 @@
     fieldName: 'nsfwScore',
     label: 'NSFW Detection'|t('lens'),
     detected: analysis.isFlaggedNsfw or (analysis.nsfwScore is defined and analysis.nsfwScore >= 0.2),
-    detectedAi: analysis.nsfwScoreAi is defined and analysis.nsfwScoreAi >= 0.2,
+    detectedAi: analysis.isFlaggedNsfw or (analysis.nsfwScoreAi is defined and analysis.nsfwScoreAi >= 0.2),
     editedBy: analysis.nsfwScoreEditedBy ?? null,
     editedAt: analysis.nsfwScoreEditedAt ?? null,
     analysisId: analysis.id,
