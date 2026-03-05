@@ -68,6 +68,7 @@ class LensAnalysisElement extends BaseUiElement
             $colors = [];
             $exifData = null;
             $similarImages = [];
+            $totalSimilarCount = 0;
             $siteContent = [];
 
             if ($analysis) {
