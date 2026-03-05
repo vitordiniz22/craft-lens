@@ -23,6 +23,11 @@ class CleanupController extends Controller
      */
     public function actionStuckPending(int $minutes = 10): int
     {
+        if ($minutes <= 0) {
+            $this->stderr("Minutes must be a positive integer.\n");
+            return ExitCode::USAGE;
+        }
+
         $resetInfo = Plugin::getInstance()->assetAnalysis->resetStuckPending($minutes);
 
         if (empty($resetInfo)) {
@@ -49,6 +54,11 @@ class CleanupController extends Controller
      */
     public function actionStuckProcessing(int $minutes = 30): int
     {
+        if ($minutes <= 0) {
+            $this->stderr("Minutes must be a positive integer.\n");
+            return ExitCode::USAGE;
+        }
+
         $resetInfo = Plugin::getInstance()->assetAnalysis->resetStuckProcessing($minutes);
 
         if (empty($resetInfo)) {

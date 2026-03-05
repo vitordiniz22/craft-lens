@@ -27,8 +27,8 @@ class SiteContentService extends Component
      * Field-specific validation rules.
      */
     private const FIELD_VALIDATION = [
-        'altText' => ['max' => 1000, 'type' => 'string'],
-        'suggestedTitle' => ['max' => 255, 'type' => 'string'],
+        'altText' => ['max' => AssetAnalysisRecord::ALT_TEXT_MAX_LENGTH, 'type' => 'string'],
+        'suggestedTitle' => ['max' => AssetAnalysisRecord::SUGGESTED_TITLE_MAX_LENGTH, 'type' => 'string'],
     ];
 
     /**
@@ -303,7 +303,9 @@ class SiteContentService extends Component
         $value = trim((string) $value);
 
         if (isset($rules['max']) && mb_strlen($value) > $rules['max']) {
-            $value = mb_substr($value, 0, $rules['max']);
+            throw new InvalidArgumentException(
+                Craft::t('lens', 'Value exceeds maximum length of {max} characters.', ['max' => $rules['max']])
+            );
         }
 
         return $value;

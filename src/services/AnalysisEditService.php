@@ -24,13 +24,16 @@ use yii\base\InvalidArgumentException;
  */
 class AnalysisEditService extends Component
 {
+    private const MAX_TAGS = 50;
+    private const MAX_COLORS = 20;
+
     /**
      * Field-specific validation rules: [maxLength, type].
      */
     private const FIELD_VALIDATION = [
-        'suggestedTitle' => ['max' => 255, 'type' => 'string'],
-        'altText' => ['max' => 1000, 'type' => 'string'],
-        'longDescription' => ['max' => 5000, 'type' => 'string'],
+        'suggestedTitle' => ['max' => AssetAnalysisRecord::SUGGESTED_TITLE_MAX_LENGTH, 'type' => 'string'],
+        'altText' => ['max' => AssetAnalysisRecord::ALT_TEXT_MAX_LENGTH, 'type' => 'string'],
+        'longDescription' => ['max' => AssetAnalysisRecord::LONG_DESCRIPTION_MAX_LENGTH, 'type' => 'string'],
         'faceCount' => ['min' => 0, 'type' => 'int'],
         'containsPeople' => ['type' => 'bool'],
         'nsfwScore' => ['min' => 0.0, 'max' => 1.0, 'type' => 'float'],
@@ -38,7 +41,7 @@ class AnalysisEditService extends Component
         'containsBrandLogo' => ['type' => 'bool'],
         'focalPointX' => ['min' => 0.0, 'max' => 1.0, 'type' => 'float'],
         'focalPointY' => ['min' => 0.0, 'max' => 1.0, 'type' => 'float'],
-        'extractedText' => ['type' => 'string'],
+        'extractedText' => ['max' => AssetAnalysisRecord::EXTRACTED_TEXT_MAX_LENGTH, 'type' => 'string'],
     ];
 
     /**
@@ -160,6 +163,12 @@ class AnalysisEditService extends Component
             throw new InvalidArgumentException("Analysis record {$analysisId} not found");
         }
 
+        if (count($tags) > self::MAX_TAGS) {
+            throw new InvalidArgumentException(
+                Craft::t('lens', 'Maximum of {max} tags allowed.', ['max' => self::MAX_TAGS])
+            );
+        }
+
         AssetTagRecord::deleteAll(['analysisId' => $record->id]);
 
         $result = [];
@@ -224,6 +233,12 @@ class AnalysisEditService extends Component
 
         if ($record === null) {
             throw new InvalidArgumentException("Analysis record {$analysisId} not found");
+        }
+
+        if (count($colors) > self::MAX_COLORS) {
+            throw new InvalidArgumentException(
+                Craft::t('lens', 'Maximum of {max} colors allowed.', ['max' => self::MAX_COLORS])
+            );
         }
 
         AssetColorRecord::deleteAll(['analysisId' => $record->id]);
@@ -333,7 +348,9 @@ class AnalysisEditService extends Component
         $value = trim((string)$value);
 
         if ($maxLength !== null && mb_strlen($value) > $maxLength) {
-            $value = mb_substr($value, 0, $maxLength);
+            throw new InvalidArgumentException(
+                Craft::t('lens', 'Value exceeds maximum length of {max} characters.', ['max' => $maxLength])
+            );
         }
 
         return $value;

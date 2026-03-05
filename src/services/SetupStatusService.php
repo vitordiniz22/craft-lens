@@ -137,12 +137,14 @@ class SetupStatusService extends Component
                 break;
 
             case 'duplicates':
+            case 'tag_extraction':
+            case 'title_generation':
+            case 'alt_text_generation':
                 $aiCheck = $this->checkAiProviderConfigured();
                 if (!$aiCheck['isResolved']) {
                     $requirements[] = $aiCheck;
                 }
                 break;
-
         }
 
         return $requirements;

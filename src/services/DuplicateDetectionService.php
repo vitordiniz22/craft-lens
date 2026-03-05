@@ -12,6 +12,7 @@ use vitordiniz22\craftlens\helpers\PerceptualHashHelper;
 use vitordiniz22\craftlens\records\AssetAnalysisRecord;
 use vitordiniz22\craftlens\records\DuplicateGroupRecord;
 use yii\base\Component;
+use yii\db\Query;
 
 /**
  * Service for detecting and managing duplicate assets via perceptual hashing.
@@ -136,41 +137,48 @@ class DuplicateDetectionService extends Component
     {
         Logger::info(LogCategory::Duplicate, 'Starting full duplicate scan');
 
-        $records = AssetAnalysisRecord::find()
+        $hashes = (new Query())
             ->select(['id', 'assetId', 'perceptualHash'])
+            ->from(AssetAnalysisRecord::tableName())
             ->where(['not', ['perceptualHash' => null]])
             ->orderBy(['assetId' => SORT_ASC])
             ->all();
 
         $existingPairs = $this->loadExistingPairs();
-
+        $count = count($hashes);
         $newPairs = 0;
-        $transaction = Craft::$app->getDb()->beginTransaction();
+        $chunkSize = 500;
 
-        try {
-            for ($i = 0, $count = count($records); $i < $count; $i++) {
-                for ($j = $i + 1; $j < $count; $j++) {
-                    $isNew = false;
-                    $result = $this->matchPair(
-                        $records[$i]->assetId, $records[$j]->assetId,
-                        $records[$i]->perceptualHash, $records[$j]->perceptualHash,
-                        $threshold, $existingPairs, $isNew,
-                    );
+        // Process in chunks to keep transactions short and memory bounded.
+        for ($chunkStart = 0; $chunkStart < $count; $chunkStart += $chunkSize) {
+            $chunkEnd = min($chunkStart + $chunkSize, $count);
+            $transaction = Craft::$app->getDb()->beginTransaction();
 
-                    if ($result !== null && $isNew) {
-                        $newPairs++;
+            try {
+                for ($i = $chunkStart; $i < $chunkEnd; $i++) {
+                    for ($j = $i + 1; $j < $count; $j++) {
+                        $isNew = false;
+                        $result = $this->matchPair(
+                            (int)$hashes[$i]['assetId'], (int)$hashes[$j]['assetId'],
+                            $hashes[$i]['perceptualHash'], $hashes[$j]['perceptualHash'],
+                            $threshold, $existingPairs, $isNew,
+                        );
+
+                        if ($result !== null && $isNew) {
+                            $newPairs++;
+                        }
                     }
                 }
-            }
 
-            $transaction->commit();
-        } catch (\Throwable $e) {
-            $transaction->rollBack();
-            Logger::error(LogCategory::Duplicate, 'Full duplicate scan failed', exception: $e, context: ['recordsScanned' => count($records)]);
-            throw $e;
+                $transaction->commit();
+            } catch (\Throwable $e) {
+                $transaction->rollBack();
+                Logger::error(LogCategory::Duplicate, 'Full duplicate scan failed', exception: $e, context: ['recordsScanned' => $count]);
+                throw $e;
+            }
         }
 
-        Logger::info(LogCategory::Duplicate, "Full duplicate scan completed", context: ['newPairsFound' => $newPairs, 'recordsScanned' => count($records)]);
+        Logger::info(LogCategory::Duplicate, 'Full duplicate scan completed', context: ['newPairsFound' => $newPairs, 'recordsScanned' => $count]);
 
         return $newPairs;
     }

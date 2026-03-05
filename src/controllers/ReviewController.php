@@ -211,6 +211,8 @@ class ReviewController extends Controller
             } else {
                 $reviewService->approve($analysisId, $userId);
             }
+        } catch (\InvalidArgumentException $e) {
+            throw new BadRequestHttpException($e->getMessage());
         } catch (\Throwable $e) {
             Logger::error(LogCategory::Review, "Approve failed for analysis {$analysisId}", exception: $e);
             throw $e;
