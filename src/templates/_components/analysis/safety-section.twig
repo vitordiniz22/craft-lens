@@ -29,21 +29,10 @@
     trueValue: 1,
     falseValue: 0,
     confidence: analysis.nsfwScore ?? null,
-    hideConfidence: hideConfidence ?? false
+    hideConfidence: hideConfidence ?? false,
+    details: analysis.nsfwCategories|default([])|map(c => c.category),
+    detailClass: 'lens-nsfw-chip'
 } only %}
-
-{# NSFW contextual info — category chips #}
-{% if (analysis.isFlaggedNsfw or (analysis.nsfwScore is defined and analysis.nsfwScore >= 0.2)) and analysis.nsfwCategories|length %}
-    <div class="chips">
-        {% for cat in analysis.nsfwCategories %}
-            <div class="chip small lens-nsfw-chip{% if not analysis.isFlaggedNsfw %} lens-nsfw-chip--caution{% endif %}">
-                <div class="chip-content">
-                    <span class="chip-label">{{ cat.category }}</span>
-                </div>
-            </div>
-        {% endfor %}
-    </div>
-{% endif %}
 
 {# Watermark Detection Toggle #}
 {% include 'lens/_components/analysis/detection-toggle-field' with {

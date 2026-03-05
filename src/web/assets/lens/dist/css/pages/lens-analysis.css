@@ -807,15 +807,30 @@
     pointer-events: none;
 }
 
-/* NSFW chips */
-.lens-nsfw-chip {
-    background: var(--red-100);
-    color: var(--red-800);
+/* Detail chips inside detection row — hidden unless flagged */
+.lens-detection-detail {
+    display: none;
 }
 
-.lens-nsfw-chip--caution {
-    background: var(--amber-100);
-    color: var(--amber-800);
+.lens-detection-row.lens-accent-bar--red .lens-detection-detail {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+/* NSFW category chips */
+.lens-nsfw-chip {
+    display: inline-flex;
+    align-items: center;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--red-500) 15%, transparent);
+    color: var(--red-700);
 }
 
 /* Watermark info */

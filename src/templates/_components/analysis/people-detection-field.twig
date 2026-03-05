@@ -77,7 +77,7 @@
 <div class="lens-people-detection lens-editable-field lens-detection-row">
     <div class="lens-field-header" data-lens-target="field-header">
         <span class="lens-detection-icon" data-lens-target="detection-icon">
-            {{ iconSvg('user')|attr({width: 16, height: 16, fill: 'currentColor'}) }}
+            {{ iconSvg('user')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
         </span>
         {% if isEdited %}
             <span class="lens-lock-icon" data-lens-target="lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
@@ -127,7 +127,7 @@
 
     <div class="lens-field-header" data-lens-target="field-header">
         <span class="lens-detection-icon" data-lens-target="detection-icon">
-            {{ iconSvg('user')|attr({width: 16, height: 16, fill: 'currentColor'}) }}
+            {{ iconSvg('user')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
         </span>
         {% if isEdited %}
             <span class="lens-lock-icon" data-lens-target="lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
@@ -225,7 +225,7 @@
 
     <div class="lens-field-header" data-lens-target="field-header">
         <span class="lens-detection-icon">
-            {{ iconSvg('user')|attr({width: 16, height: 16, fill: 'currentColor'}) }}
+            {{ iconSvg('user')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
         </span>
         <span class="lens-field-label">{{ 'People Detection'|t('lens') }}</span>
         {% if analysis.containsPeopleConfidence is defined and analysis.containsPeopleConfidence and analysis.containsPeopleConfidence < 0.8 %}
