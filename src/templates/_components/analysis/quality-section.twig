@@ -14,7 +14,7 @@
     {% endif %}
     {% set fpEdited = analysis.focalPointEditedBy is not null %}
 
-    <div class="lens-native-bridge">
+    <div class="lens-accent-bar">
         <div class="lens-field-header" data-lens-target="field-header">
             {% if fpEdited %}
                 <span class="lens-lock-icon" data-lens-target="lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
@@ -111,7 +111,7 @@
         {% endif %}
     </div>
 {% else %}
-    <div class="lens-native-bridge">
+    <div class="lens-accent-bar">
         <div class="lens-field-header" data-lens-target="field-header">
             <span class="lens-field-label">{{ 'Focal Point'|t('lens') }}</span>
         </div>

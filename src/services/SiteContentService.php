@@ -232,7 +232,9 @@ class SiteContentService extends Component
             'value' => $siteRecord->$field,
             'aiValue' => $siteRecord->$aiColumn ?? null,
             'editedBy' => $editor?->friendlyName ?? 'Unknown',
-            'editedAt' => $now->format('Y-m-d'),
+            'editedByUrl' => $editor?->getCpEditUrl(),
+            'editedAt' => $now->format('c'),
+            'editedAtFormatted' => Craft::$app->getFormatter()->asDate($now, 'short'),
         ];
     }
 

@@ -1,8 +1,9 @@
 {#
- # Detection Toggle Field — 3-State Pattern
- # Binary detection toggle (detected / not detected) for safety flags.
+ # Detection Toggle Field — 3-State Pattern (Redesigned)
+ # Binary detection toggle with icon, status badge, and segmented control.
  #
  # Expected variables:
+ #   icon           - string (iconSvg name, e.g., 'shield-halved')
  #   fieldName      - string (e.g., 'nsfwScore', 'hasWatermark', 'containsBrandLogo')
  #   label          - string
  #   detected       - bool, current detection value
@@ -18,37 +19,41 @@
  #}
 
 {% set fieldState = fieldState ?? 'readonly' %}
+{% set icon = icon ?? 'circle-question' %}
 {% set isEdited = editedBy is not null %}
 
 {# ============================================================
-   READONLY — Display status text + badge. No interactions.
+   READONLY — Icon + label + badge. No interactions.
    ============================================================ #}
 {% if fieldState == 'readonly' %}
 
-<div class="lens-editable-field">
+<div class="lens-editable-field lens-detection-row{{ detected ? ' lens-accent-bar lens-accent-bar--red' : '' }}">
     <div class="lens-field-header" data-lens-target="field-header">
+        <span class="lens-detection-icon{{ detected ? ' lens-detection-icon--flagged' : '' }}" data-lens-target="detection-icon">
+            {{ iconSvg(icon)|attr({width: 16, height: 16, fill: 'currentColor'}) }}
+        </span>
         {% if isEdited %}
             <span class="lens-lock-icon" data-lens-target="lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
         {% endif %}
         <span class="lens-field-label">{{ label }}</span>
-    </div>
-
-    <div class="lens-field-display">
-        <div class="lens-detection-item{% if not detected %} lens-detection-item--clear{% endif %}">
-            <div class="flex items-center gap-s">
-                <span class="status {{ detected ? 'on' : 'off' }}"></span>
-                <span>{{ detected ? detectedLabel : clearedLabel }}</span>
-            </div>
-        </div>
+        <span class="lens-detection-badge {{ detected ? 'lens-detection-badge--flagged' : 'lens-detection-badge--clear' }}">
+            {% if detected %}
+                {{ iconSvg('triangle-exclamation')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
+                {{ 'Flagged'|t('lens') }}
+            {% else %}
+                {{ iconSvg('check')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
+                {{ 'Clear'|t('lens') }}
+            {% endif %}
+        </span>
     </div>
 </div>
 
 {# ============================================================
-   UNLOCKED — Display + edit pencil, hidden radio panel with Save/Cancel.
+   UNLOCKED — Icon + label + badge + segmented control (auto-save).
    ============================================================ #}
 {% elseif fieldState == 'unlocked' %}
 
-<div class="lens-editable-field"
+<div class="lens-editable-field lens-detection-row{{ detected ? ' lens-accent-bar lens-accent-bar--red' : '' }}"
      data-lens-target="detection-toggle"
      data-lens-field="{{ fieldName }}"
      data-lens-analysis-id="{{ analysisId }}"
@@ -58,97 +63,110 @@
      data-lens-false-value="{{ falseValue }}">
 
     <div class="lens-field-header" data-lens-target="field-header">
+        <span class="lens-detection-icon{{ detected ? ' lens-detection-icon--flagged' : '' }}" data-lens-target="detection-icon">
+            {{ iconSvg(icon)|attr({width: 16, height: 16, fill: 'currentColor'}) }}
+        </span>
         {% if isEdited %}
             <span class="lens-lock-icon" data-lens-target="lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
         {% endif %}
         <span class="lens-field-label">{{ label }}</span>
         <button type="button" class="lens-edit-trigger" data-lens-action="detection-edit" title="{{ 'Edit'|t('lens') }}">&#9998;</button>
+        <span class="lens-detection-badge {{ detected ? 'lens-detection-badge--flagged' : 'lens-detection-badge--clear' }}" data-lens-target="detection-badge">
+            {% if detected %}
+                {{ iconSvg('triangle-exclamation')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
+                {{ 'Flagged'|t('lens') }}
+            {% else %}
+                {{ iconSvg('check')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
+                {{ 'Clear'|t('lens') }}
+            {% endif %}
+        </span>
     </div>
 
-    {# Display mode #}
-    <div class="lens-field-display" data-lens-target="field-display">
-        <div class="lens-detection-item{% if not detected %} lens-detection-item--clear{% endif %}">
-            <div class="flex items-center gap-s">
-                <span class="status {{ detected ? 'on' : 'off' }}"></span>
-                <span data-lens-target="detection-display-text">{{ detected ? detectedLabel : clearedLabel }}</span>
-            </div>
-        </div>
-    </div>
-
-    {# Edit mode (hidden by default) #}
+    {# Edit mode — segmented control (hidden by default, auto-saves on click) #}
     <div class="lens-field-edit" data-lens-target="detection-edit-panel" hidden>
-        <div class="lens-people-edit-options">
-            <label class="lens-people-option">
+        <div class="lens-segmented-control">
+            <label class="lens-segmented-control__option">
                 <input type="radio" name="detection-{{ fieldName }}-{{ analysisId }}" value="{{ trueValue }}" data-lens-control="detection-radio"
                        {% if detected %}checked{% endif %}>
-                <span>{{ detectedLabel }}</span>
+                <span class="lens-segmented-control__icon lens-segmented-control__icon--flagged">
+                    {{ iconSvg('triangle-exclamation')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
+                </span>
+                <span>{{ 'Flagged'|t('lens') }}</span>
             </label>
-            <label class="lens-people-option">
+            <label class="lens-segmented-control__option">
                 <input type="radio" name="detection-{{ fieldName }}-{{ analysisId }}" value="{{ falseValue }}" data-lens-control="detection-radio"
                        {% if not detected %}checked{% endif %}>
-                <span>{{ clearedLabel }}</span>
+                <span class="lens-segmented-control__icon lens-segmented-control__icon--clear">
+                    {{ iconSvg('check')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
+                </span>
+                <span>{{ 'Clear'|t('lens') }}</span>
             </label>
         </div>
 
-        {# Hidden input to hold selected value for save #}
+        {# Hidden input to hold selected value #}
         <input type="hidden" data-lens-target="detection-value" value="{{ detected ? trueValue : falseValue }}">
 
+        {# Cancel link to close without saving #}
         <div class="lens-field-actions">
-            <button type="button" class="btn small submit" data-lens-action="detection-save">{{ 'Save'|t('lens') }}</button>
             <button type="button" class="btn small" data-lens-action="detection-cancel">{{ 'Cancel'|t('lens') }}</button>
         </div>
     </div>
 
-    {# Provenance meta (always rendered, hidden when not edited) #}
-    <div class="lens-edit-meta" data-lens-target="detection-edit-meta"{% if not isEdited %} hidden{% endif %}>
-        {% if isEdited %}
-            {% set editor = craft.users.id(editedBy).one() %}
-            {{ 'Edited by {user} on {date}'|t('lens', {
-                user: editor ? editor.friendlyName : 'Unknown',
-                date: editedAt|date('short')
-            }) }}
-        {% endif %}
-    </div>
-
-    {# AI suggestion with revert button #}
+    {# AI suggestion — purple bar, shown when edited AND AI value differs from current #}
     {% set aiDiffers = isEdited and (detectedAi != detected) %}
-    <div class="lens-ai-suggestion" data-lens-target="detection-ai-suggestion"{% if not aiDiffers %} hidden{% endif %}>
+    <div class="lens-ai-suggestion-inline" data-lens-target="detection-ai-suggestion"{% if not aiDiffers %} hidden{% endif %}>
+        <span class="lens-ai-suggestion-icon">{{ iconSvg('wand-magic-sparkles')|attr({width: 12, height: 12}) }}</span>
         <span data-lens-target="detection-ai-text">
-            {% if aiDiffers %}
-                {{ 'AI suggested: "{value}"'|t('lens', {value: detectedAi ? detectedLabel : clearedLabel}) }}
-            {% endif %}
+            {{ 'AI suggested: "{value}"'|t('lens', {value: detectedAi ? detectedLabel : clearedLabel}) }}
         </span>
         <button type="button" class="lens-revert-trigger" data-lens-action="detection-revert" data-lens-field="{{ fieldName }}" data-lens-analysis-id="{{ analysisId }}"{% if not aiDiffers %} hidden{% endif %}>
             {{ 'Revert to AI'|t('lens') }}
         </button>
     </div>
+
+    {# Provenance meta (always rendered, hidden when not edited) #}
+    {% include 'lens/_components/analysis/edit-meta' with {
+        editedBy: editedBy,
+        editedAt: editedAt,
+        target: 'detection-edit-meta',
+        isEdited: isEdited,
+    } only %}
 </div>
 
 {# ============================================================
-   EDITING — Radio toggle always visible. Hidden input with name for form.
+   EDITING — Segmented control always visible. No save/cancel.
    ============================================================ #}
 {% elseif fieldState == 'editing' %}
 
-<div class="lens-editable-field"
+<div class="lens-editable-field lens-detection-row"
      data-lens-target="detection-toggle"
      data-lens-field="{{ fieldName }}">
 
     <div class="lens-field-header" data-lens-target="field-header">
+        <span class="lens-detection-icon">
+            {{ iconSvg(icon)|attr({width: 16, height: 16, fill: 'currentColor'}) }}
+        </span>
         <span class="lens-field-label">{{ label }}</span>
     </div>
 
-    <div class="lens-people-edit-options">
-        <label class="lens-people-option">
+    <div class="lens-segmented-control">
+        <label class="lens-segmented-control__option">
             <input type="radio" name="detection-{{ fieldName }}" value="{{ trueValue }}" data-lens-control="detection-radio-review"
                    data-lens-field="{{ fieldName }}"
                    {% if detected %}checked{% endif %}>
-            <span>{{ detectedLabel }}</span>
+            <span class="lens-segmented-control__icon lens-segmented-control__icon--flagged">
+                {{ iconSvg('triangle-exclamation')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
+            </span>
+            <span>{{ 'Flagged'|t('lens') }}</span>
         </label>
-        <label class="lens-people-option">
+        <label class="lens-segmented-control__option">
             <input type="radio" name="detection-{{ fieldName }}" value="{{ falseValue }}" data-lens-control="detection-radio-review"
                    data-lens-field="{{ fieldName }}"
                    {% if not detected %}checked{% endif %}>
-            <span>{{ clearedLabel }}</span>
+            <span class="lens-segmented-control__icon lens-segmented-control__icon--clear">
+                {{ iconSvg('check')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
+            </span>
+            <span>{{ 'Clear'|t('lens') }}</span>
         </label>
     </div>
 

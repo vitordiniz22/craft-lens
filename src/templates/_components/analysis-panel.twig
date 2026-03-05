@@ -197,11 +197,18 @@
                     <span class="lens-section-header__title">
                         {{ 'Flags & Detection'|t('lens') }}
                         {% if analysis.isFlaggedNsfw %}
-                            <span class="lens-badge lens-badge--error">!</span>
+                            <span class="lens-badge lens-badge--circle lens-badge--error">!</span>
                         {% elseif analysis.nsfwScore is defined and analysis.nsfwScore >= 0.2 %}
-                            <span class="lens-badge lens-badge--warning">!</span>
+                            <span class="lens-badge lens-badge--circle lens-badge--warning">!</span>
                         {% endif %}
                     </span>
+                    <p class="lens-section-header__intro">
+                        {% if readOnly or isProcessing %}
+                            {{ 'Content safety flags and detection results.'|t('lens') }}
+                        {% else %}
+                            {{ 'Content safety flags and detection results. Click the pencil to edit.'|t('lens') }}
+                        {% endif %}
+                    </p>
                 </div>
                 <div class="lens-section-body">
                     {% include 'lens/_components/analysis/safety-section' with {
@@ -215,6 +222,16 @@
         {# Section 5: Extracted Text #}
         {% if analysis.status not in [lens.status.failed] and (not isProcessing or isReprocessing) %}
             <div class="lens-section">
+                <div class="lens-section-header">
+                    <span class="lens-section-header__title">{{ 'Extracted Text'|t('lens') }}</span>
+                    <p class="lens-section-header__intro">
+                        {% if readOnly or isProcessing %}
+                            {{ 'Text detected within the image via OCR.'|t('lens') }}
+                        {% else %}
+                            {{ 'Text detected within the image via OCR. Click the pencil to edit.'|t('lens') }}
+                        {% endif %}
+                    </p>
+                </div>
                 <div class="lens-section-body">
                     {% include 'lens/_components/analysis/editable-field' with {
                         fieldName: 'extractedText',

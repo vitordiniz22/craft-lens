@@ -41,7 +41,7 @@
    ============================================================ #}
 {% if fieldState == 'readonly' %}
 
-<div class="lens-native-bridge">
+<div class="lens-accent-bar">
     <div class="lens-field-header" data-lens-target="field-header">
         {% if isEdited %}
             <span class="lens-lock-icon" data-lens-target="lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
@@ -74,7 +74,7 @@
    ============================================================ #}
 {% elseif fieldState == 'unlocked' %}
 
-<div class="lens-native-bridge"
+<div class="lens-accent-bar"
      data-lens-target="native-bridge"
      data-lens-field="{{ fieldName }}"
      {% if siteId %}data-lens-site-id="{{ siteId }}"{% endif %}>
@@ -137,7 +137,7 @@
    ============================================================ #}
 {% elseif fieldState == 'editing' %}
 
-<div class="lens-native-bridge lens-native-bridge--editing">
+<div class="lens-accent-bar lens-accent-bar--editing">
     <div class="lens-field-header" data-lens-target="field-header">
         <span class="lens-field-label">{{ label }}</span>
         {% if confidence and confidence < 0.8 %}

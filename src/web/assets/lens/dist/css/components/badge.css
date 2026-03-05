@@ -55,6 +55,17 @@
   color: white;
 }
 
+/* Circle modifier — for single-character badges like "!" */
+.lens-badge--circle {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border-radius: 50%;
+  justify-content: center;
+  font-size: 11px;
+  line-height: 1;
+}
+
 /* Size modifier */
 .lens-badge--small {
   font-size: 10px;

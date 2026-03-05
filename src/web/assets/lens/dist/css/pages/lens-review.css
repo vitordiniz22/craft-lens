@@ -420,6 +420,10 @@
   border-radius: var(--small-border-radius);
 }
 
+.lens-ai-suggestion-inline[hidden] {
+  display: none;
+}
+
 .lens-ai-suggestion-inline--warning {
   background: var(--amber-100);
   color: var(--amber-800);

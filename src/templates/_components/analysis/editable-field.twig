@@ -101,15 +101,12 @@
     </div>
 
     {# Provenance meta (always rendered, hidden when not edited) #}
-    <div class="lens-edit-meta" data-lens-target="field-edit-meta"{% if not isEdited %} hidden{% endif %}>
-        {% if isEdited %}
-            {% set editor = craft.users.id(editedBy).one() %}
-            {{ 'Edited by {user} on {date}'|t('lens', {
-                user: editor ? editor.friendlyName : 'Unknown',
-                date: editedAt|date('short')
-            }) }}
-        {% endif %}
-    </div>
+    {% include 'lens/_components/analysis/edit-meta' with {
+        editedBy: editedBy,
+        editedAt: editedAt,
+        target: 'field-edit-meta',
+        isEdited: isEdited,
+    } only %}
 
     {# AI suggestion with revert button #}
     {% set showAiSuggestion = isEdited and aiValue and aiValue != value %}

@@ -63,6 +63,32 @@
         },
 
         /**
+         * Build edit meta HTML with linked user name
+         * @param {Object} data - API response data
+         * @param {string} data.editedBy - User display name
+         * @param {string|null} data.editedByUrl - User CP edit URL
+         * @param {string} data.editedAtFormatted - Locale-formatted date string
+         * @returns {string} HTML string for innerHTML
+         */
+        formatEditMeta: function(data) {
+            if (!data || !data.editedBy) return '';
+
+            var escapedName = Lens.utils.escapeHtml(data.editedBy);
+            var userHtml;
+
+            if (data.editedByUrl) {
+                userHtml = '<a href="' + Lens.utils.escapeHtml(data.editedByUrl) + '">' + escapedName + '</a>';
+            } else {
+                userHtml = escapedName;
+            }
+
+            return Craft.t('lens', 'Edited by {user} on {date}', {
+                user: userHtml,
+                date: Lens.utils.escapeHtml(data.editedAtFormatted || data.editedAt || '')
+            });
+        },
+
+        /**
          * Safely reload the page, preventing multiple simultaneous reloads.
          * @param {number} [delay=0] - Optional delay in ms before reload
          */

@@ -14,6 +14,7 @@
 
 {# NSFW Detection Toggle #}
 {% include 'lens/_components/analysis/detection-toggle-field' with {
+    icon: 'shield-halved',
     fieldName: 'nsfwScore',
     label: 'NSFW Detection'|t('lens'),
     detected: analysis.isFlaggedNsfw or (analysis.nsfwScore is defined and analysis.nsfwScore >= 0.2),
@@ -30,28 +31,25 @@
 
 {# NSFW contextual info — always displayed when data exists (read-only) #}
 {% if analysis.isFlaggedNsfw or (analysis.nsfwScore is defined and analysis.nsfwScore >= 0.2) %}
-    <div class="lens-detection-item lens-detection-item--nested">
-        <div>
-            {% if not (hideConfidence ?? false) and not analysis.nsfwScoreEditedBy %}
-                <span class="lens-badge lens-badge--{{ analysis.isFlaggedNsfw ? 'error-solid' : 'amber' }}">{{ (analysis.nsfwScore * 100)|round }}%</span>
-            {% endif %}
-            {% if analysis.nsfwCategories|length %}
-                <div class="chips">
-                    {% for cat in analysis.nsfwCategories %}
-                        <div class="chip small lens-nsfw-chip{% if not analysis.isFlaggedNsfw %} lens-nsfw-chip--caution{% endif %}">
-                            <div class="chip-content">
-                                <span class="chip-label">{{ cat.category }}</span>
-                            </div>
-                        </div>
-                    {% endfor %}
+    {% if not (hideConfidence ?? false) and not analysis.nsfwScoreEditedBy %}
+        <span class="lens-badge lens-badge--{{ analysis.isFlaggedNsfw ? 'error-solid' : 'amber' }}">{{ (analysis.nsfwScore * 100)|round }}%</span>
+    {% endif %}
+    {% if analysis.nsfwCategories|length %}
+        <div class="chips">
+            {% for cat in analysis.nsfwCategories %}
+                <div class="chip small lens-nsfw-chip{% if not analysis.isFlaggedNsfw %} lens-nsfw-chip--caution{% endif %}">
+                    <div class="chip-content">
+                        <span class="chip-label">{{ cat.category }}</span>
+                    </div>
                 </div>
-            {% endif %}
+            {% endfor %}
         </div>
-    </div>
+    {% endif %}
 {% endif %}
 
 {# Watermark Detection Toggle #}
 {% include 'lens/_components/analysis/detection-toggle-field' with {
+    icon: 'droplet',
     fieldName: 'hasWatermark',
     label: 'Watermark Detection'|t('lens'),
     detected: analysis.hasWatermark,
@@ -67,29 +65,28 @@
 } only %}
 
 {# Watermark contextual info — always displayed when data exists (read-only) #}
-{% if analysis.hasWatermark %}
-    <div class="lens-detection-item lens-detection-item--nested">
-        <div class="lens-watermark-info">
-            {% set watermarkTypes = {
-                'stock': 'Stock Photo'|t('lens'),
-                'logo': 'Logo'|t('lens'),
-                'text': 'Text'|t('lens'),
-                'copyright': 'Copyright'|t('lens'),
-                'unknown': 'Unknown'|t('lens')
-            } %}
-            <span class="lens-watermark-type">{{ watermarkTypes[analysis.watermarkType] ?? analysis.watermarkType|capitalize }}</span>
-            {% if analysis.watermarkConfidence and not (hideConfidence ?? false) and not analysis.hasWatermarkEditedBy %}
-                <span class="badge">{{ (analysis.watermarkConfidence * 100)|round }}%</span>
-            {% endif %}
-            {% if analysis.watermarkType == 'stock' and analysis.watermarkDetails.stockProvider is defined %}
-                <span class="lens-badge lens-badge--amber">{{ analysis.watermarkDetails.stockProvider }}</span>
-            {% endif %}
-        </div>
+{% if analysis.hasWatermark and analysis.watermarkType %}
+    <div class="lens-watermark-info">
+        {% set watermarkTypes = {
+            'stock': 'Stock Photo'|t('lens'),
+            'logo': 'Logo'|t('lens'),
+            'text': 'Text'|t('lens'),
+            'copyright': 'Copyright'|t('lens'),
+            'unknown': 'Unknown'|t('lens')
+        } %}
+        <span class="lens-watermark-type">{{ watermarkTypes[analysis.watermarkType] ?? analysis.watermarkType|capitalize }}</span>
+        {% if analysis.watermarkConfidence and not (hideConfidence ?? false) and not analysis.hasWatermarkEditedBy %}
+            <span class="badge">{{ (analysis.watermarkConfidence * 100)|round }}%</span>
+        {% endif %}
+        {% if analysis.watermarkType == 'stock' and analysis.watermarkDetails.stockProvider is defined %}
+            <span class="lens-badge lens-badge--amber">{{ analysis.watermarkDetails.stockProvider }}</span>
+        {% endif %}
     </div>
 {% endif %}
 
 {# Brand Detection Toggle #}
 {% include 'lens/_components/analysis/detection-toggle-field' with {
+    icon: 'tag',
     fieldName: 'containsBrandLogo',
     label: 'Brand Detection'|t('lens'),
     detected: analysis.containsBrandLogo and analysis.detectedBrands|length,
@@ -106,15 +103,13 @@
 
 {# Brand contextual info — always displayed when data exists (read-only) #}
 {% if analysis.containsBrandLogo and analysis.detectedBrands|length %}
-    <div class="lens-detection-item lens-detection-item--nested">
-        <div class="chips">
-            {% for brand in analysis.detectedBrands %}
-                <div class="chip"{% if not (hideConfidence ?? false) and not analysis.containsBrandLogoEditedBy %} title="{{ (brand.confidence * 100)|round }}% confidence"{% endif %}>
-                    <div class="chip-content">
-                        <span class="chip-label">{{ brand.brand }}</span>
-                    </div>
+    <div class="chips">
+        {% for brand in analysis.detectedBrands %}
+            <div class="chip"{% if not (hideConfidence ?? false) and not analysis.containsBrandLogoEditedBy %} title="{{ (brand.confidence * 100)|round }}% confidence"{% endif %}>
+                <div class="chip-content">
+                    <span class="chip-label">{{ brand.brand }}</span>
                 </div>
-            {% endfor %}
-        </div>
+            </div>
+        {% endfor %}
     </div>
 {% endif %}

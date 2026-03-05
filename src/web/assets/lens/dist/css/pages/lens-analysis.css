@@ -89,7 +89,9 @@
 }
 
 .lens-section-header__title {
-    display: block;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     font-size: 16px;
     font-weight: 500;
     color: var(--gray-600);
@@ -179,14 +181,13 @@
 .lens-field-label {
     font-size: 12px;
     font-weight: 700;
+    line-height: 1.3;
     color: var(--medium-text-color);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
 .lens-edit-trigger {
-    opacity: 0;
-    transition: opacity 0.15s ease;
     cursor: pointer;
     background: none;
     border: none;
@@ -199,10 +200,6 @@
 
 .lens-edit-trigger:hover {
     background: var(--gray-100);
-}
-
-.lens-editable-field:hover .lens-edit-trigger {
-    opacity: 1;
 }
 
 .lens-field-display {
@@ -252,7 +249,7 @@
 /* Provenance indicators */
 .lens-lock-icon {
     font-size: 11px;
-    line-height: 1;
+    line-height: 1.3;
     opacity: 0.6;
 }
 
@@ -260,6 +257,15 @@
     font-size: 12px;
     color: var(--medium-text-color);
     margin-top: 4px;
+}
+
+.lens-edit-meta a {
+    color: var(--link-color);
+    text-decoration: none;
+}
+
+.lens-edit-meta a:hover {
+    text-decoration: underline;
 }
 
 .lens-ai-suggestion {
@@ -300,10 +306,11 @@
 }
 
 /* ==========================================================================
-   Native Field Bridge (Title/Alt suggestion-to-asset)
+   Accent Bar — Colored left-border container for field groups.
+   Blue = native field bridge, Red = flagged detection.
    ========================================================================== */
 
-.lens-native-bridge {
+.lens-accent-bar {
     position: relative;
     width: 100%;
     padding: 12px 14px;
@@ -312,7 +319,12 @@
     background: var(--gray-050);
 }
 
-.lens-native-bridge--editing {
+.lens-accent-bar--red {
+    border-left-color: var(--red-500);
+    background: color-mix(in srgb, var(--red-500) 4%, transparent);
+}
+
+.lens-accent-bar--editing {
     border-left-color: var(--blue-200);
     background: transparent;
     padding: 0;
@@ -657,6 +669,145 @@
    Content Safety & Detection Sections
    ========================================================================== */
 
+/* Detection row — icon + label + badge layout */
+
+
+/* Detection icon */
+.lens-detection-icon {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    color: var(--green-500);
+}
+
+.lens-detection-icon--flagged {
+    color: var(--red-500);
+}
+
+
+/* Detection status badge */
+.lens-detection-badge {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 10px;
+    white-space: nowrap;
+}
+
+.lens-detection-badge--clear {
+    background: var(--green-100);
+    color: var(--green-700);
+}
+
+.lens-detection-badge--flagged {
+    background: var(--red-100);
+    color: var(--red-700);
+}
+
+
+/* Detection help text */
+.lens-detection-help {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--medium-text-color);
+    margin: 2px 0 0 0;
+}
+
+.lens-detection-help__icon {
+    flex-shrink: 0;
+    display: inline-flex;
+    color: var(--yellow-500);
+}
+
+/* Segmented control (binary detection toggles) */
+.lens-segmented-control {
+    display: inline-flex;
+    border: 1px solid var(--hairline-color);
+    border-radius: var(--small-border-radius);
+    overflow: hidden;
+    margin: 8px 0 12px 0;
+}
+
+.lens-segmented-control__option {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 7px 12px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text-color);
+    transition: background-color 0.15s ease, color 0.15s ease;
+    border-right: 1px solid var(--hairline-color);
+    user-select: none;
+}
+
+.lens-segmented-control__option:last-child {
+    border-right: none;
+}
+
+.lens-segmented-control__option:hover {
+    background: var(--gray-050);
+}
+
+.lens-segmented-control__option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    width: 0;
+    height: 0;
+}
+
+.lens-segmented-control__option:has(input:checked) {
+    background: var(--blue-050);
+    color: var(--blue-700);
+    font-weight: 600;
+}
+
+.lens-segmented-control__icon {
+    display: inline-flex;
+    align-items: center;
+    color: var(--gray-400);
+}
+
+.lens-segmented-control__option:has(input:checked) .lens-segmented-control__icon {
+    color: var(--blue-600);
+}
+
+/* Native radio options (people detection, replaces bordered cards) */
+.lens-radio-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text-color);
+}
+
+.lens-radio-option input[type="radio"] {
+    margin: 0;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+.lens-radio-option:hover {
+    color: var(--link-color);
+}
+
+/* Saving indicator for auto-save */
+.lens-detection-row--saving {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* NSFW chips */
 .lens-nsfw-chip {
     background: var(--red-100);
     color: var(--red-800);
@@ -667,11 +818,11 @@
     color: var(--amber-800);
 }
 
+/* Watermark info */
 .lens-watermark-info {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-top: 8px;
 }
 
 .lens-watermark-type {
@@ -679,6 +830,7 @@
     color: var(--amber-800);
 }
 
+/* Legacy detection item (kept for any remaining uses) */
 .lens-detection-item {
     display: flex;
     align-items: flex-start;
@@ -710,44 +862,8 @@
 .lens-people-edit-options {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    margin-bottom: 12px;
-}
-
-.lens-people-option {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 12px;
-    border: 1px solid var(--hairline-color);
-    border-radius: var(--small-border-radius);
-    cursor: pointer;
-    transition:
-        background-color 0.15s ease,
-        border-color 0.15s ease;
-}
-
-.lens-people-option:hover {
-    background-color: var(--gray-050);
-    border-color: var(--gray-300);
-}
-
-.lens-people-option input[type="radio"] {
-    margin: 0;
-    flex-shrink: 0;
-    cursor: pointer;
-}
-
-.lens-people-option span {
-    color: var(--text-color);
-    font-size: 13px;
-    white-space: nowrap;
-}
-
-/* Highlight selected option */
-.lens-people-option:has(input[type="radio"]:checked) {
-    background-color: var(--blue-050);
-    border-color: var(--blue-300);
+    gap: 2px;
+    margin: 8px 0 12px 0;
 }
 
 /* ==========================================================================
