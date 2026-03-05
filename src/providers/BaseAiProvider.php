@@ -126,11 +126,16 @@ abstract class BaseAiProvider implements AiProviderInterface
         $instructions[] = '  - Partial views of people (e.g., just hands, legs, torso)';
         $instructions[] = '  - People at any distance (far away or close up)';
         $instructions[] = '  Set to false ONLY if you are confident no human is present. Boolean.';
-        $instructions[] = '- "faceCount": Count ONLY clearly visible human faces where facial features can be distinguished. Important rules:';
-        $instructions[] = '  - If people are visible but faces are obscured/from behind, set faceCount to 0 but containsPeople to true';
-        $instructions[] = '  - Only count faces where you can see eyes, nose, or mouth';
-        $instructions[] = '  - Heavily pixelated, very small, or completely blurred faces should not be counted';
+        $instructions[] = '- "faceCount": Count human faces that are recognizable as faces, even if partially visible. Important rules:';
+        $instructions[] = '  - Count a face if you can identify it as a human face, even at an angle, in profile, partially turned, or in motion';
+        $instructions[] = '  - Count faces where at least some facial features (eyes, nose, mouth, jawline) are visible, even if not all are clear';
+        $instructions[] = '  - DO count faces in action scenes (fighting, sports, dancing) even if slightly blurred by motion';
+        $instructions[] = '  - DO count faces seen from the side (profile view) or at three-quarter angles';
+        $instructions[] = '  - Do NOT count faces that are completely hidden (facing fully away, fully covered by mask/object)';
+        $instructions[] = '  - Do NOT count heavily pixelated faces where no features can be made out at all';
+        $instructions[] = '  - If people are visible but ALL faces are fully obscured/from behind, set faceCount to 0 but containsPeople to true';
         $instructions[] = '  - Return integer, 0 if no faces visible but people may still be present';
+        $instructions[] = '- "containsPeopleConfidence": How confident you are in your containsPeople and faceCount assessment (0.0-1.0). Should be HIGH (0.8-1.0) when the image clearly shows people OR clearly shows no people. Should be LOW (0.3-0.6) only when the image is genuinely ambiguous (e.g., distant figures, mannequins, statues that might be people)';
         $instructions[] = '- "nsfwScore": Overall NSFW/unsafe content confidence score (0.0-1.0). This should reflect ANY content that may be inappropriate for general audiences, including:';
         $instructions[] = '  • Sexual/adult content (nudity, sexual acts, suggestive poses, lingerie, revealing clothing)';
         $instructions[] = '  • Violence (fighting, weapons, blood, injuries, gore, dead bodies, torture)';
@@ -163,7 +168,7 @@ abstract class BaseAiProvider implements AiProviderInterface
         $instructions[] = '    - Low-resolution (800x600) with watermark = 0.1-0.3';
         $instructions[] = '    - Thumbnail with multiple issues = 0.0-0.2';
         $instructions[] = '- "hasWatermark": Whether the image contains any visible watermark (boolean)';
-        $instructions[] = '- "watermarkConfidence": Confidence score for watermark detection (0.0-1.0)';
+        $instructions[] = '- "watermarkConfidence": How confident you are in your hasWatermark assessment (0.0-1.0). Should be HIGH (0.8-1.0) when the image clearly has a watermark OR clearly has no watermark. Should be LOW (0.3-0.6) only when the image is genuinely ambiguous (e.g., faint overlays, decorative text that might be a watermark)';
         $instructions[] = '- "watermarkType": Type of watermark detected. Must be one of: stock, logo, text, copyright, unknown, or null if no watermark';
         $instructions[] = '- "watermarkDetails": Object with additional details:';
         $instructions[] = '  - "position": Where the watermark appears (center, corner, diagonal, tiled, edge)';
@@ -174,6 +179,7 @@ abstract class BaseAiProvider implements AiProviderInterface
         $instructions[] = '- "focalPointY": Y coordinate (0.0-1.0, top to bottom) of the primary subject or visual focal point of the image';
         $instructions[] = '- "focalPointConfidence": Confidence in the focal point detection (0.0-1.0)';
         $instructions[] = '- "containsBrandLogo": Whether the image contains any recognizable brand logos (boolean)';
+        $instructions[] = '- "containsBrandLogoConfidence": How confident you are in your containsBrandLogo assessment (0.0-1.0). Should be HIGH (0.8-1.0) when the image clearly has brand logos OR clearly has no brand logos. Should be LOW (0.3-0.6) only when the image is genuinely ambiguous (e.g., partial logos, generic shapes that might be a brand)';
         $instructions[] = '- "detectedBrands": Array of objects with "brand" (company/brand name), "confidence" (0.0-1.0), and "position" (location in image)';
 
         if (!empty($additionalLanguages)) {
@@ -240,6 +246,7 @@ abstract class BaseAiProvider implements AiProviderInterface
             extractedText: $data['extractedText'] ?? null,
             faceCount: (int) ($data['faceCount'] ?? 0),
             containsPeople: (bool) ($data['containsPeople'] ?? false),
+            containsPeopleConfidence: ResponseNormalizer::clampConfidence($data['containsPeopleConfidence'] ?? 0.0),
             rawResponse: $response,
             customPromptResult: null,
             nsfwScore: $nsfwScore,
@@ -250,6 +257,7 @@ abstract class BaseAiProvider implements AiProviderInterface
             watermarkType: ResponseNormalizer::normalizeWatermarkType($data['watermarkType'] ?? null),
             watermarkDetails: ResponseNormalizer::normalizeWatermarkDetails($data['watermarkDetails'] ?? []),
             containsBrandLogo: !empty($detectedBrands),
+            containsBrandLogoConfidence: ResponseNormalizer::clampConfidence($data['containsBrandLogoConfidence'] ?? 0.0),
             detectedBrands: $detectedBrands,
             inputTokens: $usage['inputTokens'],
             outputTokens: $usage['outputTokens'],

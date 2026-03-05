@@ -25,6 +25,7 @@ readonly class AnalysisResult
      * @param string|null $extractedText Visible text detected in image (signs, labels, etc.)
      * @param int $faceCount Number of faces/people detected
      * @param bool $containsPeople Whether the image contains people
+     * @param float $containsPeopleConfidence Confidence in people/face detection (0.0 - 1.0)
      * @param array $rawResponse Full API response for debugging
      * @param string|null $customPromptResult Result from custom analysis prompt
      * @param float $nsfwScore NSFW confidence score (0.0 - 1.0)
@@ -35,6 +36,7 @@ readonly class AnalysisResult
      * @param string|null $watermarkType Type of watermark: stock, logo, text, copyright, unknown
      * @param array{position?: string, detectedText?: string, stockProvider?: string, isObtrusive?: bool} $watermarkDetails Additional watermark details
      * @param bool $containsBrandLogo Whether brand logos were detected
+     * @param float $containsBrandLogoConfidence Confidence in brand detection (0.0 - 1.0)
      * @param array<array{brand: string, confidence: float, position: string}> $detectedBrands Detected brands with confidence
      * @param int $inputTokens Number of input tokens used (OpenAI)
      * @param int $outputTokens Number of output tokens used (OpenAI)
@@ -58,6 +60,7 @@ readonly class AnalysisResult
         public ?string $extractedText,
         public int $faceCount,
         public bool $containsPeople,
+        public float $containsPeopleConfidence,
         public array $rawResponse,
         public ?string $customPromptResult = null,
         public float $nsfwScore = 0.0,
@@ -68,6 +71,7 @@ readonly class AnalysisResult
         public ?string $watermarkType = null,
         public array $watermarkDetails = [],
         public bool $containsBrandLogo = false,
+        public float $containsBrandLogoConfidence = 0.0,
         public array $detectedBrands = [],
         public int $inputTokens = 0,
         public int $outputTokens = 0,
@@ -102,6 +106,7 @@ readonly class AnalysisResult
             'extractedText' => $this->extractedText,
             'faceCount' => $this->faceCount,
             'containsPeople' => $this->containsPeople,
+            'containsPeopleConfidence' => $this->containsPeopleConfidence,
             'customPromptResult' => $this->customPromptResult,
             'nsfwScore' => $this->nsfwScore,
             'nsfwCategories' => $this->nsfwCategories,
@@ -111,6 +116,7 @@ readonly class AnalysisResult
             'watermarkType' => $this->watermarkType,
             'watermarkDetails' => $this->watermarkDetails,
             'containsBrandLogo' => $this->containsBrandLogo,
+            'containsBrandLogoConfidence' => $this->containsBrandLogoConfidence,
             'detectedBrands' => $this->detectedBrands,
             'inputTokens' => $this->inputTokens,
             'outputTokens' => $this->outputTokens,
@@ -152,12 +158,14 @@ readonly class AnalysisResult
             extractedText: null,
             faceCount: 0,
             containsPeople: false,
+            containsPeopleConfidence: 0.0,
             rawResponse: [],
             hasWatermark: false,
             watermarkConfidence: 0.0,
             watermarkType: null,
             watermarkDetails: [],
             containsBrandLogo: false,
+            containsBrandLogoConfidence: 0.0,
             detectedBrands: [],
             sharpnessScore: 0.0,
             exposureScore: 0.0,

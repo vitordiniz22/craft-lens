@@ -9,7 +9,8 @@
 {# People Detection — Editable inline component #}
 {% include 'lens/_components/analysis/people-detection-field' with {
     analysis: analysis,
-    fieldState: fieldState
+    fieldState: fieldState,
+    hideConfidence: hideConfidence ?? false
 } only %}
 
 {# NSFW Detection Toggle #}
@@ -26,25 +27,22 @@
     detectedLabel: 'NSFW content detected'|t('lens'),
     clearedLabel: 'No NSFW content'|t('lens'),
     trueValue: 1,
-    falseValue: 0
+    falseValue: 0,
+    confidence: analysis.nsfwScore ?? null,
+    hideConfidence: hideConfidence ?? false
 } only %}
 
-{# NSFW contextual info — always displayed when data exists (read-only) #}
-{% if analysis.isFlaggedNsfw or (analysis.nsfwScore is defined and analysis.nsfwScore >= 0.2) %}
-    {% if not (hideConfidence ?? false) and not analysis.nsfwScoreEditedBy %}
-        <span class="lens-badge lens-badge--{{ analysis.isFlaggedNsfw ? 'error-solid' : 'amber' }}">{{ (analysis.nsfwScore * 100)|round }}%</span>
-    {% endif %}
-    {% if analysis.nsfwCategories|length %}
-        <div class="chips">
-            {% for cat in analysis.nsfwCategories %}
-                <div class="chip small lens-nsfw-chip{% if not analysis.isFlaggedNsfw %} lens-nsfw-chip--caution{% endif %}">
-                    <div class="chip-content">
-                        <span class="chip-label">{{ cat.category }}</span>
-                    </div>
+{# NSFW contextual info — category chips #}
+{% if (analysis.isFlaggedNsfw or (analysis.nsfwScore is defined and analysis.nsfwScore >= 0.2)) and analysis.nsfwCategories|length %}
+    <div class="chips">
+        {% for cat in analysis.nsfwCategories %}
+            <div class="chip small lens-nsfw-chip{% if not analysis.isFlaggedNsfw %} lens-nsfw-chip--caution{% endif %}">
+                <div class="chip-content">
+                    <span class="chip-label">{{ cat.category }}</span>
                 </div>
-            {% endfor %}
-        </div>
-    {% endif %}
+            </div>
+        {% endfor %}
+    </div>
 {% endif %}
 
 {# Watermark Detection Toggle #}
@@ -61,10 +59,12 @@
     detectedLabel: 'Watermark detected'|t('lens'),
     clearedLabel: 'No watermark detected'|t('lens'),
     trueValue: 1,
-    falseValue: 0
+    falseValue: 0,
+    confidence: analysis.watermarkConfidence ?? null,
+    hideConfidence: hideConfidence ?? false
 } only %}
 
-{# Watermark contextual info — always displayed when data exists (read-only) #}
+{# Watermark contextual info — type and provider details #}
 {% if analysis.hasWatermark and analysis.watermarkType %}
     <div class="lens-watermark-info">
         {% set watermarkTypes = {
@@ -75,9 +75,6 @@
             'unknown': 'Unknown'|t('lens')
         } %}
         <span class="lens-watermark-type">{{ watermarkTypes[analysis.watermarkType] ?? analysis.watermarkType|capitalize }}</span>
-        {% if analysis.watermarkConfidence and not (hideConfidence ?? false) and not analysis.hasWatermarkEditedBy %}
-            <span class="badge">{{ (analysis.watermarkConfidence * 100)|round }}%</span>
-        {% endif %}
         {% if analysis.watermarkType == 'stock' and analysis.watermarkDetails.stockProvider is defined %}
             <span class="lens-badge lens-badge--amber">{{ analysis.watermarkDetails.stockProvider }}</span>
         {% endif %}
@@ -98,14 +95,16 @@
     detectedLabel: 'Brands detected'|t('lens'),
     clearedLabel: 'No brands detected'|t('lens'),
     trueValue: 1,
-    falseValue: 0
+    falseValue: 0,
+    confidence: analysis.containsBrandLogoConfidence ?? null,
+    hideConfidence: hideConfidence ?? false
 } only %}
 
 {# Brand contextual info — always displayed when data exists (read-only) #}
 {% if analysis.containsBrandLogo and analysis.detectedBrands|length %}
     <div class="chips">
         {% for brand in analysis.detectedBrands %}
-            <div class="chip"{% if not (hideConfidence ?? false) and not analysis.containsBrandLogoEditedBy %} title="{{ (brand.confidence * 100)|round }}% confidence"{% endif %}>
+            <div class="chip"{% if not (hideConfidence ?? false) and not (analysis.containsBrandLogoEditedBy ?? null) %} title="{{ (brand.confidence * 100)|round }}% confidence"{% endif %}>
                 <div class="chip-content">
                     <span class="chip-label">{{ brand.brand }}</span>
                 </div>

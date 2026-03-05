@@ -81,6 +81,7 @@ class Install extends Migration
             'faceCountAi' => $this->integer()->null(),
             'containsPeople' => $this->boolean()->notNull()->defaultValue(false),
             'containsPeopleAi' => $this->boolean()->null(),
+            'containsPeopleConfidence' => $this->decimal(3, 2)->null(),
             'faceCountEditedBy' => $this->integer()->null(),
             'faceCountEditedAt' => $this->dateTime()->null(),
             'containsPeopleEditedBy' => $this->integer()->null(),
@@ -106,6 +107,7 @@ class Install extends Migration
             // Brand detection (editable)
             'containsBrandLogo' => $this->boolean()->notNull()->defaultValue(false),
             'containsBrandLogoAi' => $this->boolean()->null(),
+            'containsBrandLogoConfidence' => $this->decimal(3, 2)->null(),
             'detectedBrands' => $this->json()->null(),
             'containsBrandLogoEditedBy' => $this->integer()->null(),
             'containsBrandLogoEditedAt' => $this->dateTime()->null(),

@@ -16,6 +16,7 @@
  #   clearedLabel   - string (e.g., 'No NSFW content')
  #   trueValue      - mixed (value to send when "detected", e.g., 1.0 for nsfwScore, 1 for bools)
  #   falseValue     - mixed (value to send when "not detected", e.g., 0)
+ #   confidence     - float|null (optional, 0.0-1.0 AI confidence score)
  #}
 
 {% set fieldState = fieldState ?? 'readonly' %}
@@ -36,6 +37,9 @@
             <span class="lens-lock-icon" data-lens-target="lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
         {% endif %}
         <span class="lens-field-label">{{ label }}</span>
+        {% if not isEdited and (confidence ?? null) and not (hideConfidence ?? false) %}
+            <span class="badge">{{ (confidence * 100)|round }}%</span>
+        {% endif %}
         <span class="lens-detection-badge {{ detected ? 'lens-detection-badge--flagged' : 'lens-detection-badge--clear' }}">
             {% if detected %}
                 {{ iconSvg('triangle-exclamation')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
@@ -70,6 +74,9 @@
             <span class="lens-lock-icon" data-lens-target="lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
         {% endif %}
         <span class="lens-field-label">{{ label }}</span>
+        {% if not isEdited and (confidence ?? null) and not (hideConfidence ?? false) %}
+            <span class="badge" data-lens-target="confidence-badge">{{ (confidence * 100)|round }}%</span>
+        {% endif %}
         <button type="button" class="lens-edit-trigger" data-lens-action="detection-edit" title="{{ 'Edit'|t('lens') }}">&#9998;</button>
         <span class="lens-detection-badge {{ detected ? 'lens-detection-badge--flagged' : 'lens-detection-badge--clear' }}" data-lens-target="detection-badge">
             {% if detected %}
@@ -147,6 +154,11 @@
             {{ iconSvg(icon)|attr({width: 16, height: 16, fill: 'currentColor'}) }}
         </span>
         <span class="lens-field-label">{{ label }}</span>
+        {% if (confidence ?? null) and confidence < 0.8 %}
+            <span class="lens-confidence-badge lens-confidence-{{ (confidence * 100)|round >= 50 ? 'medium' : 'low' }}">
+                {{ (confidence * 100)|round }}%
+            </span>
+        {% endif %}
     </div>
 
     <div class="lens-segmented-control">

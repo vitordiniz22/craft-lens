@@ -53,6 +53,7 @@ use yii\db\ActiveQueryInterface;
  * @property int|null $faceCountAi
  * @property bool $containsPeople
  * @property bool|null $containsPeopleAi
+ * @property float|null $containsPeopleConfidence
  * @property int|null $faceCountEditedBy
  * @property \DateTime|null $faceCountEditedAt
  * @property int|null $containsPeopleEditedBy
@@ -78,6 +79,7 @@ use yii\db\ActiveQueryInterface;
  * Brand detection (editable):
  * @property bool $containsBrandLogo
  * @property bool|null $containsBrandLogoAi
+ * @property float|null $containsBrandLogoConfidence
  * @property array|null $detectedBrands
  * @property int|null $containsBrandLogoEditedBy
  * @property \DateTime|null $containsBrandLogoEditedAt
@@ -129,6 +131,11 @@ use yii\db\ActiveQueryInterface;
  */
 class AssetAnalysisRecord extends ActiveRecord
 {
+    public const ALT_TEXT_MAX_LENGTH = 500;
+    public const SUGGESTED_TITLE_MAX_LENGTH = 255;
+    public const LONG_DESCRIPTION_MAX_LENGTH = 5000;
+    public const EXTRACTED_TEXT_MAX_LENGTH = 50000;
+
     /**
      * List of editable field names and their corresponding EditedBy/EditedAt column prefixes.
      * Fields sharing edit tracking (e.g. focalPointX/Y) map to the same prefix.
@@ -190,15 +197,16 @@ class AssetAnalysisRecord extends ActiveRecord
             [['assetId'], 'required'],
             [['status'], 'in', 'range' => array_column(AnalysisStatus::cases(), 'value')],
             [['provider', 'providerModel'], 'string', 'max' => 50],
-            [['altText', 'altTextAi', 'suggestedTitle', 'suggestedTitleAi'], 'string', 'max' => 500],
-            [['longDescription', 'longDescriptionAi'], 'string', 'max' => 5000],
-            [['altTextConfidence', 'titleConfidence', 'longDescriptionConfidence', 'nsfwScore', 'nsfwScoreAi', 'watermarkConfidence', 'sharpnessScore', 'exposureScore', 'noiseScore', 'overallQualityScore', 'focalPointX', 'focalPointXAi', 'focalPointY', 'focalPointYAi', 'focalPointConfidence'], 'number', 'min' => 0, 'max' => 1],
+            [['altText', 'altTextAi'], 'string', 'max' => self::ALT_TEXT_MAX_LENGTH],
+            [['suggestedTitle', 'suggestedTitleAi'], 'string', 'max' => self::SUGGESTED_TITLE_MAX_LENGTH],
+            [['longDescription', 'longDescriptionAi'], 'string', 'max' => self::LONG_DESCRIPTION_MAX_LENGTH],
+            [['altTextConfidence', 'titleConfidence', 'longDescriptionConfidence', 'containsPeopleConfidence', 'containsBrandLogoConfidence', 'nsfwScore', 'nsfwScoreAi', 'watermarkConfidence', 'sharpnessScore', 'exposureScore', 'noiseScore', 'overallQualityScore', 'focalPointX', 'focalPointXAi', 'focalPointY', 'focalPointYAi', 'focalPointConfidence'], 'number', 'min' => 0, 'max' => 1],
             [['faceCount'], 'integer', 'min' => 0],
             [['faceCountAi'], 'integer', 'min' => 0],
             [['containsPeople', 'containsPeopleAi', 'isFlaggedNsfw', 'hasWatermark', 'hasWatermarkAi', 'containsBrandLogo', 'containsBrandLogoAi'], 'boolean'],
             [['watermarkType'], 'string', 'max' => 30],
             [['watermarkType'], 'in', 'range' => array_column(WatermarkType::cases(), 'value')],
-            [['extractedText', 'extractedTextAi'], 'string'],
+            [['extractedText', 'extractedTextAi'], 'string', 'max' => self::EXTRACTED_TEXT_MAX_LENGTH],
             [['hasAnalysisContent', 'hasExifMetadata'], 'boolean'],
             [['perceptualHash', 'fileContentHash'], 'string', 'max' => 64],
             [['inputTokens', 'outputTokens'], 'integer', 'min' => 0],

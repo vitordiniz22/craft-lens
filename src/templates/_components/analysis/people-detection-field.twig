@@ -83,6 +83,9 @@
             <span class="lens-lock-icon" data-lens-target="lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
         {% endif %}
         <span class="lens-field-label">{{ 'People Detection'|t('lens') }}</span>
+        {% if not isEdited and analysis.containsPeopleConfidence is defined and analysis.containsPeopleConfidence and not (hideConfidence ?? false) %}
+            <span class="badge">{{ (analysis.containsPeopleConfidence * 100)|round }}%</span>
+        {% endif %}
         {% if hasPeople %}
             <span class="lens-detection-badge lens-detection-badge--clear">
                 {{ iconSvg('user')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
@@ -130,6 +133,9 @@
             <span class="lens-lock-icon" data-lens-target="lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
         {% endif %}
         <span class="lens-field-label">{{ 'People Detection'|t('lens') }}</span>
+        {% if not isEdited and analysis.containsPeopleConfidence is defined and analysis.containsPeopleConfidence and not (hideConfidence ?? false) %}
+            <span class="badge" data-lens-target="confidence-badge">{{ (analysis.containsPeopleConfidence * 100)|round }}%</span>
+        {% endif %}
         <button type="button" class="lens-edit-trigger" data-lens-action="people-edit" title="{{ 'Edit'|t('lens') }}">&#9998;</button>
         <span class="lens-detection-badge lens-detection-badge--clear" data-lens-target="people-badge">
             {% if hasPeople %}
@@ -222,6 +228,11 @@
             {{ iconSvg('user')|attr({width: 16, height: 16, fill: 'currentColor'}) }}
         </span>
         <span class="lens-field-label">{{ 'People Detection'|t('lens') }}</span>
+        {% if analysis.containsPeopleConfidence is defined and analysis.containsPeopleConfidence and analysis.containsPeopleConfidence < 0.8 %}
+            <span class="lens-confidence-badge lens-confidence-{{ (analysis.containsPeopleConfidence * 100)|round >= 50 ? 'medium' : 'low' }}">
+                {{ (analysis.containsPeopleConfidence * 100)|round }}%
+            </span>
+        {% endif %}
     </div>
 
     <div class="lens-people-edit-options">

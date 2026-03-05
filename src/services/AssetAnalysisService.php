@@ -714,6 +714,7 @@ class AssetAnalysisService extends Component
 
         $record->faceCountAi = $result->faceCount;
         $record->containsPeopleAi = $result->containsPeople;
+        $record->containsPeopleConfidence = $result->containsPeopleConfidence;
 
         if (!$record->isFieldEdited('faceCount')) {
             $record->faceCount = $result->faceCount;
@@ -741,6 +742,7 @@ class AssetAnalysisService extends Component
         }
 
         $record->containsBrandLogoAi = $result->containsBrandLogo;
+        $record->containsBrandLogoConfidence = $result->containsBrandLogoConfidence;
         $record->detectedBrands = $result->detectedBrands;
 
         if (!$record->isFieldEdited('containsBrandLogo')) {
