@@ -470,6 +470,29 @@
   color: var(--amber-700);
 }
 
+/* AI title chip — shown when displaying suggested title instead of filename */
+.lens-ai-title-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  margin-left: 6px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.6;
+  white-space: nowrap;
+  background: var(--violet-100);
+  color: var(--violet-700);
+  vertical-align: middle;
+  letter-spacing: 0.02em;
+}
+
+.lens-ai-title-chip--sm {
+  font-size: 9px;
+  padding: 0 5px;
+  margin-left: 4px;
+}
+
 @media (max-width: 768px) {
   .lens-browse-grid {
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));

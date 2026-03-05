@@ -156,10 +156,14 @@
                     }
                 }
 
-                // Show AI suggestion revert row when value differs from AI
+                // Show AI suggestion revert rows when value differs from AI
                 var aiSuggestion = document.querySelector('[data-lens-target="focal-ai-suggestion"]');
                 if (aiSuggestion) {
                     aiSuggestion.style.display = (!isAiMatch && hasAi) ? '' : 'none';
+                }
+                var fpAiRevert = document.querySelector('[data-lens-target="fp-ai-revert"]');
+                if (fpAiRevert) {
+                    fpAiRevert.style.display = (!isAiMatch && hasAi) ? '' : 'none';
                 }
             }
 

@@ -197,6 +197,21 @@
     color: var(--link-color);
 }
 
+/* When card title has an AI chip, use flex so chip stays visible */
+a.lens-result-title--ai {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 4px;
+    max-width: 100%;
+}
+
+.lens-result-title__text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
 /* Tags + colors meta row */
 .lens-result-meta {
     display: flex;
