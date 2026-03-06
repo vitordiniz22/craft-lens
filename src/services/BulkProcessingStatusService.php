@@ -122,11 +122,18 @@ class BulkProcessingStatusService extends Component
      */
     public function determineState(array $stats): string
     {
-        $hasQueuedJobs = $this->hasLensJobsInQueue();
-        $processingCount = $stats['processing'] ?? 0;
+        $session = $this->getSessionData();
 
-        if ($hasQueuedJobs || $processingCount > 0) {
-            return 'processing';
+        // Only show processing state if a bulk session was explicitly started.
+        // Individual AnalyzeAssetJob jobs (from uploads/replacements) should not
+        // trigger the bulk processing UI.
+        if ($session !== null && !isset($session['completedAt'])) {
+            $hasQueuedJobs = $this->hasLensJobsInQueue();
+            $processingCount = $stats['processing'] ?? 0;
+
+            if ($hasQueuedJobs || $processingCount > 0) {
+                return 'processing';
+            }
         }
 
         if ($this->isRecentlyCompleted($stats)) {
