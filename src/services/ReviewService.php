@@ -402,6 +402,7 @@ class ReviewService extends Component
             'containsPeopleEditedAtFormatted' => $record->containsPeopleEditedAt ? (DateTimeHelper::toDateTime($record->containsPeopleEditedAt) ?: null)?->format('M j, Y') : null,
             'nsfwScore' => $record->nsfwScore,
             'nsfwScoreAi' => $record->nsfwScoreAi,
+            'nsfwConfidence' => $record->nsfwConfidence,
             'nsfwScoreEditedBy' => $record->nsfwScoreEditedBy,
             'nsfwScoreEditedAt' => $record->nsfwScoreEditedAt,
             'nsfwCategories' => $record->nsfwCategories,

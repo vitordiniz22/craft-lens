@@ -90,6 +90,7 @@ class Install extends Migration
             // NSFW detection (editable)
             'nsfwScore' => $this->decimal(5, 4)->null(),
             'nsfwScoreAi' => $this->decimal(5, 4)->null(),
+            'nsfwConfidence' => $this->decimal(5, 4)->null(),
             'nsfwCategories' => $this->json()->null(),
             'isFlaggedNsfw' => $this->boolean()->notNull()->defaultValue(false),
             'nsfwScoreEditedBy' => $this->integer()->null(),

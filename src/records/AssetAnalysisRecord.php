@@ -62,6 +62,7 @@ use yii\db\ActiveQueryInterface;
  * NSFW detection (editable):
  * @property float|null $nsfwScore
  * @property float|null $nsfwScoreAi
+ * @property float|null $nsfwConfidence
  * @property array|null $nsfwCategories
  * @property bool $isFlaggedNsfw
  * @property int|null $nsfwScoreEditedBy
@@ -200,7 +201,7 @@ class AssetAnalysisRecord extends ActiveRecord
             [['altText', 'altTextAi'], 'string', 'max' => self::ALT_TEXT_MAX_LENGTH],
             [['suggestedTitle', 'suggestedTitleAi'], 'string', 'max' => self::SUGGESTED_TITLE_MAX_LENGTH],
             [['longDescription', 'longDescriptionAi'], 'string', 'max' => self::LONG_DESCRIPTION_MAX_LENGTH],
-            [['altTextConfidence', 'titleConfidence', 'longDescriptionConfidence', 'containsPeopleConfidence', 'containsBrandLogoConfidence', 'nsfwScore', 'nsfwScoreAi', 'watermarkConfidence', 'sharpnessScore', 'exposureScore', 'noiseScore', 'overallQualityScore', 'focalPointX', 'focalPointXAi', 'focalPointY', 'focalPointYAi', 'focalPointConfidence'], 'number', 'min' => 0, 'max' => 1],
+            [['altTextConfidence', 'titleConfidence', 'longDescriptionConfidence', 'containsPeopleConfidence', 'containsBrandLogoConfidence', 'nsfwScore', 'nsfwScoreAi', 'nsfwConfidence', 'watermarkConfidence', 'sharpnessScore', 'exposureScore', 'noiseScore', 'overallQualityScore', 'focalPointX', 'focalPointXAi', 'focalPointY', 'focalPointYAi', 'focalPointConfidence'], 'number', 'min' => 0, 'max' => 1],
             [['faceCount'], 'integer', 'min' => 0],
             [['faceCountAi'], 'integer', 'min' => 0],
             [['containsPeople', 'containsPeopleAi', 'isFlaggedNsfw', 'hasWatermark', 'hasWatermarkAi', 'containsBrandLogo', 'containsBrandLogoAi'], 'boolean'],

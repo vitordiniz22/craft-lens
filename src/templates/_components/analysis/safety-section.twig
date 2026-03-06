@@ -28,7 +28,7 @@
     clearedLabel: 'No NSFW content'|t('lens'),
     trueValue: 1,
     falseValue: 0,
-    confidence: analysis.nsfwScore ?? null,
+    confidence: analysis.nsfwConfidence ?? null,
     hideConfidence: hideConfidence ?? false,
     details: analysis.nsfwCategories|default([])|map(c => c.category)
 } only %}

@@ -724,6 +724,7 @@ class AssetAnalysisService extends Component
         }
 
         $record->nsfwScoreAi = $result->nsfwScore;
+        $record->nsfwConfidence = $result->nsfwConfidence;
         $record->nsfwCategories = $result->nsfwCategories;
         $record->isFlaggedNsfw = $result->isFlaggedNsfw;
 

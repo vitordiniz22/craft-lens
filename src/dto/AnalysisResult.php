@@ -28,7 +28,8 @@ readonly class AnalysisResult
      * @param float $containsPeopleConfidence Confidence in people/face detection (0.0 - 1.0)
      * @param array $rawResponse Full API response for debugging
      * @param string|null $customPromptResult Result from custom analysis prompt
-     * @param float $nsfwScore NSFW confidence score (0.0 - 1.0)
+     * @param float $nsfwScore NSFW severity score (0.0 - 1.0)
+     * @param float $nsfwConfidence Confidence in NSFW assessment (0.0 - 1.0)
      * @param array<array{category: string, confidence: float}> $nsfwCategories NSFW category breakdown
      * @param bool $isFlaggedNsfw Whether the image exceeds NSFW threshold
      * @param bool $hasWatermark Whether a watermark was detected
@@ -64,6 +65,7 @@ readonly class AnalysisResult
         public array $rawResponse,
         public ?string $customPromptResult = null,
         public float $nsfwScore = 0.0,
+        public float $nsfwConfidence = 0.0,
         public array $nsfwCategories = [],
         public bool $isFlaggedNsfw = false,
         public bool $hasWatermark = false,
@@ -109,6 +111,7 @@ readonly class AnalysisResult
             'containsPeopleConfidence' => $this->containsPeopleConfidence,
             'customPromptResult' => $this->customPromptResult,
             'nsfwScore' => $this->nsfwScore,
+            'nsfwConfidence' => $this->nsfwConfidence,
             'nsfwCategories' => $this->nsfwCategories,
             'isFlaggedNsfw' => $this->isFlaggedNsfw,
             'hasWatermark' => $this->hasWatermark,
