@@ -195,7 +195,7 @@ class StatisticsService extends Component
     public function getNsfwFlaggedCount(): int
     {
         return (int) AssetAnalysisRecord::find()
-            ->where(['in', 'status', AnalysisStatus::analyzedValues()])
+            ->where(['in', 'status', AnalysisStatus::processedValues()])
             ->andWhere([
                 'or',
                 ['>=', 'nsfwScore', 0.5],
@@ -210,7 +210,7 @@ class StatisticsService extends Component
     public function getWatermarkedCount(): int
     {
         return (int) AssetAnalysisRecord::find()
-            ->where(['in', 'status', AnalysisStatus::analyzedValues()])
+            ->where(['in', 'status', AnalysisStatus::processedValues()])
             ->andWhere(['hasWatermark' => true])
             ->count();
     }
