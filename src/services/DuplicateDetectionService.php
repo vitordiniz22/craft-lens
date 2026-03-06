@@ -199,13 +199,26 @@ class DuplicateDetectionService extends Component
     }
 
     /**
-     * Get count of unresolved duplicate pairs.
+     * Get count of unique assets involved in unresolved duplicate pairs.
      */
     public function getUnresolvedDuplicateCount(): int
     {
-        return (int) DuplicateGroupRecord::find()
-            ->where(['resolution' => null])
-            ->count();
+        $table = DuplicateGroupRecord::tableName();
+
+        return (int) (new Query())
+            ->from([
+                'dup_union' => (new Query())
+                    ->select(['canonicalAssetId AS asset_id'])
+                    ->from($table)
+                    ->where(['resolution' => null])
+                    ->union(
+                        (new Query())
+                            ->select(['duplicateAssetId AS asset_id'])
+                            ->from($table)
+                            ->where(['resolution' => null]),
+                    ),
+            ])
+            ->count('DISTINCT [[asset_id]]');
     }
 
     /**
