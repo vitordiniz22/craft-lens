@@ -139,7 +139,9 @@
                         fieldState: fieldState,
                         siteContent: siteContent ?? [],
                         isAltTranslatable: isAltTranslatable ?? false,
-                        isTitleTranslatable: isTitleTranslatable ?? false
+                        isTitleTranslatable: isTitleTranslatable ?? false,
+                        currentSiteId: currentSiteId ?? craft.app.sites.primarySite.id,
+                        primarySiteId: primarySiteId ?? craft.app.sites.primarySite.id
                     } %}
                 </div>
             </div>

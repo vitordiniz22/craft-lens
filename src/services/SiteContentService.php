@@ -38,6 +38,11 @@ class SiteContentService extends Component
      * that received translated alt text and title from the AI provider.
      * Only saves fields whose volume translation method is translatable.
      *
+     * Sites sharing a base language (e.g. fr-FR and fr-CA) receive the
+     * same AI translation. The result is keyed by the representative locale
+     * returned by MultisiteHelper::getAdditionalLanguages(), so we look up
+     * by exact locale first, then fall back to base-language match.
+     *
      * @param array<int, array{siteId: int, language: string}> $sites
      */
     public function saveFromAnalysisResult(
@@ -53,12 +58,12 @@ class SiteContentService extends Component
 
         foreach ($sites as $siteInfo) {
             $lang = $siteInfo['language'];
+            $content = $this->resolveResultContent($result->siteContent, $lang);
 
-            if (!isset($result->siteContent[$lang])) {
+            if ($content === null) {
                 continue;
             }
 
-            $content = $result->siteContent[$lang];
             $altText = $altTranslatable ? ($content['altText'] ?? '') : '';
             $suggestedTitle = $titleTranslatable ? ($content['suggestedTitle'] ?? '') : '';
 
@@ -108,6 +113,36 @@ class SiteContentService extends Component
             sprintf('Saved per-site content for %d language(s)', count($result->siteContent)),
             assetId: $record->assetId,
         );
+    }
+
+    /**
+     * Find AI result content for a locale, falling back to base-language match.
+     *
+     * The AI result may be keyed by a representative locale (e.g. "fr-FR")
+     * while the site uses a regional variant (e.g. "fr-CA"). This method
+     * tries exact match first, then falls back to any key sharing the same
+     * base language.
+     *
+     * @param array<string, array> $siteContent AI result keyed by locale
+     * @return array|null The matching content array, or null if not found
+     */
+    private function resolveResultContent(array $siteContent, string $locale): ?array
+    {
+        // Exact locale match
+        if (isset($siteContent[$locale])) {
+            return $siteContent[$locale];
+        }
+
+        // Fall back to base-language match
+        $base = MultisiteHelper::getBaseLanguage($locale);
+
+        foreach ($siteContent as $key => $content) {
+            if (MultisiteHelper::getBaseLanguage($key) === $base) {
+                return $content;
+            }
+        }
+
+        return null;
     }
 
     /**

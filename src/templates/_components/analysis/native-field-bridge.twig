@@ -29,7 +29,6 @@
 {% set siteId = siteId ?? null %}
 {% set fieldState = fieldState ?? 'readonly' %}
 {% set isEdited = (editedBy ?? null) is not null %}
-{% set isSecondarySite = siteId and siteId != craft.app.sites.primarySite.id %}
 {% set fieldMaxLengths = { altText: 500, suggestedTitle: 255 } %}
 {% set maxlength = fieldMaxLengths[fieldName] ?? null %}
 
@@ -72,32 +71,77 @@
 </div>
 
 {# ============================================================
-   UNLOCKED — Suggestion display + apply button
+   UNLOCKED / EDITING — Same component, different interaction mode.
+   unlocked: asset edit page (suggestion display + apply button)
+   editing:  review page (current value context + editable input)
    ============================================================ #}
-{% elseif fieldState == 'unlocked' %}
+{% elseif fieldState == 'unlocked' or fieldState == 'editing' %}
+
+{% set isReview = fieldState == 'editing' %}
 
 <div class="lens-accent-bar"
+     {% if not isReview %}
      data-lens-target="native-bridge"
      data-lens-field="{{ fieldName }}"
-     {% if siteId %}data-lens-site-id="{{ siteId }}"{% endif %}>
+     {% if siteId %}data-lens-site-id="{{ siteId }}"{% endif %}
+     {% endif %}>
 
     <div class="lens-field-header" data-lens-target="field-header">
-        {% if isEdited %}
+        {% if not isReview and isEdited %}
             <span class="lens-lock-icon" data-lens-target="lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
         {% endif %}
         <span class="lens-field-label">{{ label }}</span>
-        {% if not isEdited and confidence and not (hideConfidence ?? false) %}
-            <span class="badge" data-lens-target="confidence-badge">{{ (confidence * 100)|round }}%</span>
+        {% if isReview %}
+            {% if confidence and confidence < 0.8 %}
+                <span class="lens-confidence-badge lens-confidence-{{ (confidence * 100)|round >= 50 ? 'medium' : 'low' }}">
+                    {{ (confidence * 100)|round }}%
+                </span>
+            {% endif %}
+        {% else %}
+            {% if not isEdited and confidence and not (hideConfidence ?? false) %}
+                <span class="badge" data-lens-target="confidence-badge">{{ (confidence * 100)|round }}%</span>
+            {% endif %}
         {% endif %}
     </div>
 
-    {% if hasSuggestion %}
-        <div class="lens-field-display">
-            <p>{{ suggestionValue }}</p>
+    {% if isReview %}
+        {# Current asset value (static context — reviewer needs this) #}
+        <div class="lens-native-current lens-native-current--context">
+            <span class="lens-native-current-label">{{ 'Current asset value'|t('lens') }}:</span>
+            {% if isNativeDefault %}
+                <span class="light"><em>{{ nativeValue ?: 'Empty'|t('lens') }}</em></span>
+                <span class="lens-native-chip lens-native-chip--auto">{{ nativeValue ? 'Auto-generated'|t('lens') : 'Empty'|t('lens') }}</span>
+            {% elseif nativeValue %}
+                <span>{{ nativeValue }}</span>
+            {% else %}
+                <span class="light"><em>{{ 'Empty'|t('lens') }}</em></span>
+            {% endif %}
         </div>
 
-        {# Apply row — hidden for secondary site translations #}
-        {% if not isSecondarySite %}
+        {# Editable suggestion input #}
+        {% if inputType == 'textarea' %}
+            <textarea class="text fullwidth" name="{{ fieldName }}" rows="2"{% if maxlength %} maxlength="{{ maxlength }}"{% endif %}>{{ suggestionValue }}</textarea>
+        {% else %}
+            <input type="text" class="text fullwidth" name="{{ fieldName }}" value="{{ suggestionValue }}"{% if maxlength %} maxlength="{{ maxlength }}"{% endif %}>
+        {% endif %}
+
+        {# Status line #}
+        <div class="lens-native-status">
+            {% if valuesMatch %}
+                <span class="light">{{ 'Already applied to asset'|t('lens') }}</span>
+            {% elseif isCustom %}
+                <span class="light">{{ 'Suggestion only — current value was set manually'|t('lens') }}</span>
+            {% elseif hasSuggestion %}
+                <span class="light">{{ 'Will be applied to the asset on approval'|t('lens') }}</span>
+            {% endif %}
+        </div>
+    {% else %}
+        {% if hasSuggestion %}
+            <div class="lens-field-display">
+                <p>{{ suggestionValue }}</p>
+            </div>
+
+            {# Apply row — always shown (works for primary and context-aware secondary sites) #}
             <div class="lens-apply-row" data-lens-target="native-apply-row">
                 {% if valuesMatch %}
                     <div class="lens-applied-indicator">
@@ -126,65 +170,21 @@
                     {% endif %}
                 {% endif %}
             </div>
-        {% endif %}
-    {% else %}
-        <div class="lens-field-display">
-            <p class="light">{{ 'No suggestion available'|t('lens') }}</p>
-        </div>
-    {% endif %}
-</div>
-
-{# ============================================================
-   EDITING — Review page: current asset value as context + editable input
-   ============================================================ #}
-{% elseif fieldState == 'editing' %}
-
-<div class="lens-accent-bar lens-accent-bar--editing">
-    <div class="lens-field-header" data-lens-target="field-header">
-        <span class="lens-field-label">{{ label }}</span>
-        {% if confidence and confidence < 0.8 %}
-            <span class="lens-confidence-badge lens-confidence-{{ (confidence * 100)|round >= 50 ? 'medium' : 'low' }}">
-                {{ (confidence * 100)|round }}%
-            </span>
-        {% endif %}
-    </div>
-
-    {# Current asset value (static context — reviewer needs this) #}
-    <div class="lens-native-current lens-native-current--context">
-        <span class="lens-native-current-label">{{ 'Current asset value'|t('lens') }}:</span>
-        {% if isNativeDefault %}
-            <span class="light"><em>{{ nativeValue ?: 'Empty'|t('lens') }}</em></span>
-            <span class="lens-native-chip lens-native-chip--auto">{{ nativeValue ? 'Auto-generated'|t('lens') : 'Empty'|t('lens') }}</span>
-        {% elseif nativeValue %}
-            <span>{{ nativeValue }}</span>
         {% else %}
-            <span class="light"><em>{{ 'Empty'|t('lens') }}</em></span>
+            <div class="lens-field-display">
+                <p class="light">{{ 'No suggestion available'|t('lens') }}</p>
+            </div>
         {% endif %}
-    </div>
-
-    {# Editable suggestion input #}
-    {% if inputType == 'textarea' %}
-        <textarea class="text fullwidth" name="{{ fieldName }}" rows="2"{% if maxlength %} maxlength="{{ maxlength }}"{% endif %}>{{ suggestionValue }}</textarea>
-    {% else %}
-        <input type="text" class="text fullwidth" name="{{ fieldName }}" value="{{ suggestionValue }}"{% if maxlength %} maxlength="{{ maxlength }}"{% endif %}>
     {% endif %}
-
-    {# Status line #}
-    <div class="lens-native-status">
-        {% if valuesMatch %}
-            <span class="light">{{ 'Already applied to asset'|t('lens') }}</span>
-        {% elseif isCustom %}
-            <span class="light">{{ 'Suggestion only — current value was set manually'|t('lens') }}</span>
-        {% elseif hasSuggestion %}
-            <span class="light">{{ 'Will be applied to the asset on approval'|t('lens') }}</span>
-        {% endif %}
-    </div>
 
     {# AI suggestion inline (informational, if user has edited the suggestion) #}
-    {% if (aiValue ?? null) and aiValue != suggestionValue %}
-        <div class="lens-ai-suggestion-inline">
-            {{ 'AI: "{value}"'|t('lens', {value: aiValue|truncate(60)}) }}
-        </div>
+    {% if isReview %}
+        {% if (aiValue ?? null) and aiValue != suggestionValue %}
+            <div class="lens-ai-suggestion-inline">
+                <span class="lens-ai-suggestion-icon">{{ iconSvg('wand-magic-sparkles')|attr({width: 12, height: 12}) }}</span>
+                {{ 'AI: "{value}"'|t('lens', {value: aiValue|truncate(60)}) }}
+            </div>
+        {% endif %}
     {% endif %}
 </div>
 

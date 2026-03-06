@@ -197,7 +197,9 @@
                             fieldState: 'editing',
                             siteContent: analysis.siteContent ?? [],
                             isAltTranslatable: analysis.isAltTranslatable ?? false,
-                            isTitleTranslatable: analysis.isTitleTranslatable ?? false
+                            isTitleTranslatable: analysis.isTitleTranslatable ?? false,
+                            currentSiteId: craft.app.sites.primarySite.id,
+                            primarySiteId: craft.app.sites.primarySite.id
                         } %}
                     </div>
                 </div>

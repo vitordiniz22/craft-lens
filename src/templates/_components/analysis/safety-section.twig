@@ -30,8 +30,7 @@
     falseValue: 0,
     confidence: analysis.nsfwScore ?? null,
     hideConfidence: hideConfidence ?? false,
-    details: analysis.nsfwCategories|default([])|map(c => c.category),
-    detailClass: 'lens-nsfw-chip'
+    details: analysis.nsfwCategories|default([])|map(c => c.category)
 } only %}
 
 {# Watermark Detection Toggle #}
@@ -50,25 +49,13 @@
     trueValue: 1,
     falseValue: 0,
     confidence: analysis.watermarkConfidence ?? null,
-    hideConfidence: hideConfidence ?? false
+    hideConfidence: hideConfidence ?? false,
+    details: (analysis.hasWatermark and analysis.watermarkType) ? [
+        ({ 'stock': 'Stock Photo'|t('lens'), 'logo': 'Logo'|t('lens'), 'text': 'Text'|t('lens'), 'copyright': 'Copyright'|t('lens'), 'unknown': 'Unknown'|t('lens') }[analysis.watermarkType] ?? analysis.watermarkType|capitalize)
+    ]|merge(
+        (analysis.watermarkType == 'stock' and analysis.watermarkDetails.stockProvider is defined) ? [analysis.watermarkDetails.stockProvider] : []
+    ) : []
 } only %}
-
-{# Watermark contextual info — type and provider details #}
-{% if analysis.hasWatermark and analysis.watermarkType %}
-    <div class="lens-watermark-info">
-        {% set watermarkTypes = {
-            'stock': 'Stock Photo'|t('lens'),
-            'logo': 'Logo'|t('lens'),
-            'text': 'Text'|t('lens'),
-            'copyright': 'Copyright'|t('lens'),
-            'unknown': 'Unknown'|t('lens')
-        } %}
-        <span class="lens-watermark-type">{{ watermarkTypes[analysis.watermarkType] ?? analysis.watermarkType|capitalize }}</span>
-        {% if analysis.watermarkType == 'stock' and analysis.watermarkDetails.stockProvider is defined %}
-            <span class="lens-badge lens-badge--amber">{{ analysis.watermarkDetails.stockProvider }}</span>
-        {% endif %}
-    </div>
-{% endif %}
 
 {# Brand Detection Toggle #}
 {% include 'lens/_components/analysis/detection-toggle-field' with {
@@ -86,18 +73,6 @@
     trueValue: 1,
     falseValue: 0,
     confidence: analysis.containsBrandLogoConfidence ?? null,
-    hideConfidence: hideConfidence ?? false
+    hideConfidence: hideConfidence ?? false,
+    details: (analysis.containsBrandLogo and analysis.detectedBrands|length) ? analysis.detectedBrands|map(b => b.brand) : []
 } only %}
-
-{# Brand contextual info — always displayed when data exists (read-only) #}
-{% if analysis.containsBrandLogo and analysis.detectedBrands|length %}
-    <div class="chips">
-        {% for brand in analysis.detectedBrands %}
-            <div class="chip"{% if not (hideConfidence ?? false) and not (analysis.containsBrandLogoEditedBy ?? null) %} title="{{ (brand.confidence * 100)|round }}% confidence"{% endif %}>
-                <div class="chip-content">
-                    <span class="chip-label">{{ brand.brand }}</span>
-                </div>
-            </div>
-        {% endfor %}
-    </div>
-{% endif %}

@@ -97,13 +97,14 @@
 
             var analysisId = fieldEl.dataset.lensAnalysisId;
             var fieldName = fieldEl.dataset.lensField;
+            var siteId = fieldEl.dataset.lensSiteId || null;
             var input = fieldEl.querySelector('[data-lens-target="field-edit"] input, [data-lens-target="field-edit"] textarea');
             if (!input) return;
 
             var value = input.value;
 
             window.Lens.core.ButtonState.withLoading(saveBtn, Craft.t('lens', 'Saving...'), () => {
-                return window.Lens.core.API.updateField(analysisId, fieldName, value)
+                return window.Lens.core.API.updateField(analysisId, fieldName, value, siteId ? { siteId: siteId } : undefined)
                     .then((response) => {
                         if (response.data.success) {
                             this._updateFieldDisplay(fieldEl, response.data);
@@ -123,8 +124,9 @@
 
             var analysisId = fieldEl.dataset.lensAnalysisId;
             var fieldName = fieldEl.dataset.lensField;
+            var siteId = fieldEl.dataset.lensSiteId || null;
 
-            window.Lens.core.API.revertField(analysisId, fieldName).then((response) => {
+            window.Lens.core.API.revertField(analysisId, fieldName, siteId ? { siteId: siteId } : undefined).then((response) => {
                 if (response.data.success) {
                     // Update display and input
                     var displayP = fieldEl.querySelector('[data-lens-target="field-display"] p');

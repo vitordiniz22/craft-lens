@@ -84,6 +84,7 @@ class LensAnalysisElement extends BaseUiElement
 
                 if (MultisiteHelper::needsMultisiteContent($element)) {
                     $siteRecords = $plugin->siteContent->getAllSiteContent($analysis->id);
+                    $sitesNeeded = MultisiteHelper::getSitesNeedingContent($element);
                     $allSites = Craft::$app->getSites()->getAllSites();
                     $siteNames = [];
 
@@ -91,19 +92,23 @@ class LensAnalysisElement extends BaseUiElement
                         $siteNames[$site->id] = $site->name;
                     }
 
-                    foreach ($siteRecords as $siteId => $record) {
+                    // Show ALL sites that need content, merging existing records
+                    foreach ($sitesNeeded as $siteInfo) {
+                        $siteId = $siteInfo['siteId'];
+                        $record = $siteRecords[$siteId] ?? null;
+
                         $siteContent[] = [
                             'siteId' => $siteId,
-                            'language' => $record->language,
+                            'language' => $record->language ?? $siteInfo['language'],
                             'siteName' => $siteNames[$siteId] ?? "Site {$siteId}",
-                            'altText' => $record->altText,
-                            'altTextAi' => $record->altTextAi,
-                            'altTextConfidence' => $record->altTextConfidence,
-                            'altTextEditedBy' => $record->altTextEditedBy,
-                            'suggestedTitle' => $record->suggestedTitle,
-                            'suggestedTitleAi' => $record->suggestedTitleAi,
-                            'titleConfidence' => $record->titleConfidence,
-                            'suggestedTitleEditedBy' => $record->suggestedTitleEditedBy,
+                            'altText' => $record->altText ?? null,
+                            'altTextAi' => $record->altTextAi ?? null,
+                            'altTextConfidence' => $record->altTextConfidence ?? null,
+                            'altTextEditedBy' => $record->altTextEditedBy ?? null,
+                            'suggestedTitle' => $record->suggestedTitle ?? null,
+                            'suggestedTitleAi' => $record->suggestedTitleAi ?? null,
+                            'titleConfidence' => $record->titleConfidence ?? null,
+                            'suggestedTitleEditedBy' => $record->suggestedTitleEditedBy ?? null,
                         ];
                     }
                 }
@@ -128,6 +133,8 @@ class LensAnalysisElement extends BaseUiElement
                     'siteContent' => $siteContent,
                     'isAltTranslatable' => MultisiteHelper::isAltTranslatable($element->getVolume()->id),
                     'isTitleTranslatable' => MultisiteHelper::isTitleTranslatable($element->getVolume()->id),
+                    'currentSiteId' => $element->siteId,
+                    'primarySiteId' => Craft::$app->getSites()->getPrimarySite()->id,
                 ]
             );
         } catch (\Throwable $e) {

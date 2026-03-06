@@ -326,7 +326,7 @@ class ReviewService extends Component
         }
 
         $similarImages = Plugin::getInstance()->duplicateDetection->getSimilarAssetsForDisplay($record->assetId);
-        $siteContentData = $this->loadSiteContentData($record->id);
+        $siteContentData = $this->loadSiteContentData($record->id, $asset);
 
         return [
             'analysisId' => $record->id,
@@ -444,11 +444,16 @@ class ReviewService extends Component
      *
      * @return array<int, array{siteId: int, language: string, siteName: string, altText: string|null, altTextAi: string|null, altTextConfidence: float|null, altTextEditedBy: int|null, suggestedTitle: string|null, suggestedTitleAi: string|null, titleConfidence: float|null, suggestedTitleEditedBy: int|null}>
      */
-    private function loadSiteContentData(int $analysisId): array
+    private function loadSiteContentData(int $analysisId, Asset $asset): array
     {
-        $records = Plugin::getInstance()->siteContent->getAllSiteContent($analysisId);
+        if (!MultisiteHelper::needsMultisiteContent($asset)) {
+            return [];
+        }
 
-        if (empty($records)) {
+        $records = Plugin::getInstance()->siteContent->getAllSiteContent($analysisId);
+        $sitesNeeded = MultisiteHelper::getSitesNeedingContent($asset);
+
+        if (empty($sitesNeeded)) {
             return [];
         }
 
@@ -459,19 +464,22 @@ class ReviewService extends Component
         }
 
         $data = [];
-        foreach ($records as $siteId => $record) {
+        foreach ($sitesNeeded as $siteInfo) {
+            $siteId = $siteInfo['siteId'];
+            $record = $records[$siteId] ?? null;
+
             $data[] = [
                 'siteId' => $siteId,
-                'language' => $record->language,
+                'language' => $record->language ?? $siteInfo['language'],
                 'siteName' => $siteNames[$siteId] ?? "Site {$siteId}",
-                'altText' => $record->altText,
-                'altTextAi' => $record->altTextAi,
-                'altTextConfidence' => $record->altTextConfidence,
-                'altTextEditedBy' => $record->altTextEditedBy,
-                'suggestedTitle' => $record->suggestedTitle,
-                'suggestedTitleAi' => $record->suggestedTitleAi,
-                'titleConfidence' => $record->titleConfidence,
-                'suggestedTitleEditedBy' => $record->suggestedTitleEditedBy,
+                'altText' => $record->altText ?? null,
+                'altTextAi' => $record->altTextAi ?? null,
+                'altTextConfidence' => $record->altTextConfidence ?? null,
+                'altTextEditedBy' => $record->altTextEditedBy ?? null,
+                'suggestedTitle' => $record->suggestedTitle ?? null,
+                'suggestedTitleAi' => $record->suggestedTitleAi ?? null,
+                'titleConfidence' => $record->titleConfidence ?? null,
+                'suggestedTitleEditedBy' => $record->suggestedTitleEditedBy ?? null,
             ];
         }
 

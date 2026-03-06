@@ -13,13 +13,35 @@ use craft\elements\Asset;
  *
  * Centralizes all logic for deciding whether per-site alt text and title
  * generation is needed, based on site languages and volume configuration.
+ *
+ * Language comparison uses base language (first two chars, e.g. "en" from
+ * "en-US") so that same-language regional variants (en-US / en-GB) are
+ * treated as a single language and share one AI translation.
  */
 class MultisiteHelper
 {
     /**
+     * Extract the base language from a full locale code.
+     *
+     * "en-US" → "en", "fr-FR" → "fr", "pt-BR" → "pt"
+     */
+    public static function getBaseLanguage(string $locale): string
+    {
+        return strtolower(substr($locale, 0, 2));
+    }
+
+    /**
+     * Check if two locale codes share the same base language.
+     */
+    public static function isSameBaseLanguage(string $localeA, string $localeB): bool
+    {
+        return self::getBaseLanguage($localeA) === self::getBaseLanguage($localeB);
+    }
+
+    /**
      * Check if multisite content generation is needed for an asset.
      *
-     * Returns true when multiple sites exist with different languages
+     * Returns true when multiple sites exist with different base languages
      * and the volume has at least one translatable text field (alt or title).
      */
     public static function needsMultisiteContent(Asset $asset): bool
@@ -31,7 +53,9 @@ class MultisiteHelper
      * Determine which sites need per-site content for a given asset.
      *
      * Returns site list when: multiple sites exist, sites have different
-     * languages, and the volume has at least one translatable text field.
+     * base languages, and the volume has at least one translatable text field.
+     * Sites sharing the primary site's base language (e.g. en-GB when primary
+     * is en-US) are excluded — they use the primary site's values directly.
      *
      * @return array<int, array{siteId: int, language: string}>
      *         Empty array = single-site behavior (no per-site content needed)
@@ -52,11 +76,11 @@ class MultisiteHelper
             return [];
         }
 
-        $primaryLanguage = self::getPrimarySiteLanguage();
+        $primaryBase = self::getBaseLanguage(self::getPrimarySiteLanguage());
         $sites = [];
 
         foreach ($allSites as $site) {
-            if ($site->language === $primaryLanguage) {
+            if (self::getBaseLanguage($site->language) === $primaryBase) {
                 continue;
             }
 
@@ -108,19 +132,25 @@ class MultisiteHelper
     /**
      * Get unique additional languages (non-primary) from sites that need content.
      *
-     * @return string[] Unique language codes (e.g., ["fr-FR", "pt-BR"])
+     * Deduplicates by base language so that fr-FR and fr-CA only produce one
+     * entry (the first locale encountered for that base). The AI generates
+     * one translation per base language, shared across regional variants.
+     *
+     * @return string[] Unique language codes, one per base language (e.g., ["fr-FR", "pt-BR"])
      */
     public static function getAdditionalLanguages(Asset $asset): array
     {
         $sites = self::getSitesNeedingContent($asset);
         $languages = [];
-        $seen = [];
+        $seenBases = [];
 
         foreach ($sites as $siteInfo) {
             $lang = $siteInfo['language'];
-            if (!isset($seen[$lang])) {
+            $base = self::getBaseLanguage($lang);
+
+            if (!isset($seenBases[$base])) {
                 $languages[] = $lang;
-                $seen[$lang] = true;
+                $seenBases[$base] = true;
             }
         }
 

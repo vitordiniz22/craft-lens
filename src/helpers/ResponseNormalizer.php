@@ -124,9 +124,9 @@ final class ResponseNormalizer
             'brand',
             'confidence',
             fn($brand) => [
-                'brand' => trim((string) $brand['brand']),
+                'brand' => is_array($brand['brand']) ? trim((string) ($brand['brand']['name'] ?? 'unknown')) : trim((string) $brand['brand']),
                 'confidence' => self::clampConfidence($brand['confidence'] ?? 0.5),
-                'position' => trim((string) ($brand['position'] ?? 'unknown')),
+                'position' => is_array($brand['position'] ?? null) ? 'unknown' : trim((string) ($brand['position'] ?? 'unknown')),
             ]
         );
     }

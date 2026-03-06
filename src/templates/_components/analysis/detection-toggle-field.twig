@@ -18,7 +18,6 @@
  #   falseValue     - mixed (value to send when "not detected", e.g., 0)
  #   confidence     - float|null (optional, 0.0-1.0 AI confidence score)
  #   details        - string[] (optional, contextual labels shown inside accent bar when flagged)
- #   detailClass    - string (optional, CSS class for detail chips, default 'lens-detail-chip')
  #}
 
 {% set fieldState = fieldState ?? 'readonly' %}
@@ -56,7 +55,7 @@
     {% if (details ?? [])|length %}
         <div class="lens-detection-detail">
             {% for detail in details %}
-                <span class="{{ detailClass ?? 'lens-detail-chip' }}">{{ detail }}</span>
+                <span class="lens-detection-chip">{{ detail }}</span>
             {% endfor %}
         </div>
     {% endif %}
@@ -168,7 +167,7 @@
     {% if (details ?? [])|length %}
         <div class="lens-detection-detail">
             {% for detail in details %}
-                <span class="{{ detailClass ?? 'lens-detail-chip' }}">{{ detail }}</span>
+                <span class="lens-detection-chip">{{ detail }}</span>
             {% endfor %}
         </div>
     {% endif %}

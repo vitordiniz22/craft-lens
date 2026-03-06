@@ -386,6 +386,96 @@
         },
 
         // ================================================================
+        // Translations (collapse/expand, tabs, summary expand)
+        // ================================================================
+
+        initTranslations: function () {
+            var DOM = window.Lens.core.DOM;
+
+            // Toggle collapse/expand
+            DOM.delegate(
+                '[data-lens-action="toggle-translations"]',
+                'click',
+                this._handleTranslationToggle.bind(this),
+            );
+
+            // Tab switching
+            DOM.delegate(
+                '[data-lens-action="translation-tab"]',
+                'click',
+                this._handleTranslationTab.bind(this),
+            );
+
+            // Summary row expand (review page)
+            DOM.delegate(
+                '[data-lens-action="translation-expand"]',
+                'click',
+                this._handleTranslationExpand.bind(this),
+            );
+        },
+
+        _handleTranslationToggle: function (e, header) {
+            var section = header.closest('[data-lens-target="translations-section"]')
+                || header.closest('.lens-translation-summary');
+            if (!section) return;
+
+            var body = section.querySelector('[data-lens-target="translations-body"]');
+            if (!body) return;
+
+            var isExpanded = header.getAttribute('aria-expanded') === 'true';
+            header.setAttribute('aria-expanded', isExpanded ? 'false' : 'true');
+            window.Lens.core.DOM.toggleClass(body, !isExpanded);
+        },
+
+        _handleTranslationTab: function (e, tab) {
+            var section = tab.closest('[data-lens-target="translations-section"]');
+            if (!section) return;
+
+            var siteId = tab.dataset.lensTabSite;
+            if (!siteId) return;
+
+            // Deactivate all tabs
+            var tabs = section.querySelectorAll('[data-lens-action="translation-tab"]');
+            for (var i = 0; i < tabs.length; i++) {
+                tabs[i].classList.remove('is-active');
+            }
+
+            // Activate clicked tab
+            tab.classList.add('is-active');
+
+            // Hide all tab panels, show matching one
+            var panels = section.querySelectorAll('.lens-translation-group[data-lens-site-id]');
+            for (var j = 0; j < panels.length; j++) {
+                panels[j].classList.add('hidden');
+            }
+
+            var target = section.querySelector('.lens-translation-group[data-lens-site-id="' + siteId + '"]');
+            if (target) {
+                target.classList.remove('hidden');
+            }
+        },
+
+        _handleTranslationExpand: function (e, row) {
+            var summary = row.closest('[data-lens-target="translation-summary"]');
+            if (!summary) return;
+
+            var siteId = row.dataset.lensExpandSite;
+            if (!siteId) return;
+
+            // Accordion: collapse any currently expanded detail
+            var allDetails = summary.querySelectorAll('[data-lens-target="translation-detail"]');
+            for (var i = 0; i < allDetails.length; i++) {
+                var detail = allDetails[i];
+                if (detail.dataset.lensSiteId === siteId) {
+                    // Toggle this one
+                    detail.classList.toggle('hidden');
+                } else {
+                    detail.classList.add('hidden');
+                }
+            }
+        },
+
+        // ================================================================
         // Auto-Polling
         // ================================================================
 
@@ -411,6 +501,9 @@
 
     // Auto-initialize
     Lens.utils.onReady(function() {
+        // Translation delegates use event delegation and work on both
+        // analysis panel and review page — register unconditionally
+        LensAnalysisPanel.initTranslations();
         LensAnalysisPanel.init();
     });
 })();
