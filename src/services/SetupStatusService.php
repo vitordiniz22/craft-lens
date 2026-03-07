@@ -39,8 +39,11 @@ class SetupStatusService extends Component
             $this->checkAiProviderConfigured(),
             $this->checkVolumesEnabled(),
             $this->checkAnalysisPanelConfigured(),
-            $this->checkSemanticSearchEnabled(),
         ];
+
+        if (Plugin::getInstance()->getIsPro()) {
+            $this->cachedStatus[] = $this->checkSemanticSearchEnabled();
+        }
 
         return $this->cachedStatus;
     }
