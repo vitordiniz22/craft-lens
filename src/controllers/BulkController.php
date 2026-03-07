@@ -27,6 +27,8 @@ class BulkController extends Controller
         $this->requireCpRequest();
         $this->requirePermission('accessPlugin-lens');
 
+        Plugin::getInstance()->requireProEdition();
+
         $volumeId = $this->request->getQueryParam('volumeId');
         $volumeId = $volumeId ? (int) $volumeId : null;
 
@@ -87,6 +89,7 @@ class BulkController extends Controller
     {
         $this->requireCpRequest();
         $this->requirePermission('accessPlugin-lens');
+        Plugin::getInstance()->requireProEdition();
 
         $statusService = Plugin::getInstance()->bulkProcessingStatus;
         $session = $statusService->getSessionData();
@@ -116,6 +119,7 @@ class BulkController extends Controller
     {
         $this->requireCpRequest();
         $this->requirePermission('accessPlugin-lens');
+        Plugin::getInstance()->requireProEdition();
 
         Plugin::getInstance()->bulkProcessingStatus->clearSession();
 
@@ -130,6 +134,7 @@ class BulkController extends Controller
         $this->requireCpRequest();
         $this->requirePostRequest();
         $this->requirePermission('accessPlugin-lens');
+        Plugin::getInstance()->requireProEdition();
 
         $statusService = Plugin::getInstance()->bulkProcessingStatus;
         $cancelled = $statusService->cancelProcessing();
@@ -150,6 +155,7 @@ class BulkController extends Controller
         $this->requireCpRequest();
         $this->requirePostRequest();
         $this->requirePermission('accessPlugin-lens');
+        Plugin::getInstance()->requireProEdition();
 
         try {
             Plugin::getInstance()->aiProvider->testConnection();
@@ -182,6 +188,7 @@ class BulkController extends Controller
         $this->requireCpRequest();
         $this->requirePostRequest();
         $this->requirePermission('accessPlugin-lens');
+        Plugin::getInstance()->requireProEdition();
 
         try {
             Plugin::getInstance()->aiProvider->testConnection();

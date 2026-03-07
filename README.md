@@ -142,8 +142,7 @@ return [
 | `geminiModel` | `gemini-2.5-flash` | Model: `gemini-2.5-flash`, `gemini-2.5-flash-lite`, `gemini-2.5-pro` |
 | `claudeApiKey` | — | Anthropic Claude API key |
 | `claudeModel` | `claude-sonnet-4-5-20250929` | Model: `claude-sonnet-4-5-*`, `claude-opus-4-5-*`, `claude-haiku-4-5-*` |
-| `autoProcessOnUpload` | `true` | Analyze assets automatically when uploaded |
-| `reprocessOnFileReplace` | `true` | Re-analyze assets when files are replaced |
+| `autoProcessOnUpload` | `true` | Analyze assets automatically when uploaded or replaced |
 | `requireReviewBeforeApply` | `false` | Require manual approval before applying AI suggestions |
 | `enabledVolumes` | `['*']` | Volume handles to process, or `['*']` for all |
 | `enableSemanticSearch` | `false` | Replace native search in asset selector modals with Lens AI search |

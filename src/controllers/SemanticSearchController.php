@@ -33,6 +33,7 @@ class SemanticSearchController extends Controller
         $this->requireCpRequest();
         $this->requirePostRequest();
         $this->requireAcceptsJson();
+        Plugin::getInstance()->requireProEdition();
 
         if (!Plugin::getInstance()->getSettings()->enableSemanticSearch) {
             throw new BadRequestHttpException('Semantic search is disabled.');

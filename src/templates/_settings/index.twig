@@ -10,7 +10,8 @@
     {{ actionInput('lens/settings/save') }}
     {{ redirectInput('lens/settings') }}
 
-    {# ==================== SECTION: AI Provider ==================== #}
+    {% include 'lens/_components/edition-badge' %}
+
     <h2>{{ 'AI Provider'|t('lens') }}</h2>
     <p>{{ 'Choose the AI provider for image analysis. Each provider offers equivalent features, so pick based on your preferred pricing and existing API access.'|t('lens') }}</p>
 
@@ -33,7 +34,6 @@
     <h3>{{ 'API Configuration'|t('lens') }}</h3>
     <p>{{ 'Add your API key and select a model. For production use, store keys as environment variables.'|t('lens') }}</p>
 
-    {# --- OpenAI Settings --- #}
     <div id="aiProvider--openai" class="nested-fields{% if settings.aiProvider != 'openai' %} hidden{% endif %}">
         {{ forms.autosuggestField({
             label: 'OpenAI API Key'|t('lens'),
@@ -61,7 +61,6 @@
         }) }}
     </div>
 
-    {# --- Google Gemini Settings --- #}
     <div id="aiProvider--gemini" class="nested-fields{% if settings.aiProvider != 'gemini' %} hidden{% endif %}">
         {{ forms.autosuggestField({
             label: 'Gemini API Key'|t('lens'),
@@ -89,7 +88,6 @@
         }) }}
     </div>
 
-    {# --- Claude (Anthropic) Settings --- #}
     <div id="aiProvider--claude" class="nested-fields{% if settings.aiProvider != 'claude' %} hidden{% endif %}">
         {{ forms.autosuggestField({
             label: 'Claude API Key'|t('lens'),
@@ -119,26 +117,27 @@
 
     <hr>
 
-    {# ==================== SECTION: Asset Processing ==================== #}
     <h2>{{ 'Asset Processing'|t('lens') }}</h2>
     <p>{{ 'Control when and how Lens analyzes your assets. All processing runs in the background and uploads are never delayed.'|t('lens') }}</p>
 
     {{ forms.lightswitchField({
         first: true,
         label: 'Auto-Process on Upload'|t('lens'),
-        instructions: 'When a new image is uploaded, Lens will automatically generate alt text, tags, and other metadata in the background.'|t('lens'),
+        instructions: 'When a new image is uploaded or replaced, Lens will automatically generate alt text, tags, and other metadata in the background.'|t('lens'),
         id: 'autoProcessOnUpload',
         name: 'settings[autoProcessOnUpload]',
         on: settings.autoProcessOnUpload,
     }) }}
 
-    {{ forms.lightswitchField({
-        label: 'Require Human Review'|t('lens'),
-        instructions: 'Hold AI-generated metadata for review before applying it to assets. Recommended for published sites where accuracy matters. Pending assets appear in the Review Queue.'|t('lens'),
-        id: 'requireReviewBeforeApply',
-        name: 'settings[requireReviewBeforeApply]',
-        on: settings.requireReviewBeforeApply,
-    }) }}
+    {% if lens.isPro %}
+        {{ forms.lightswitchField({
+            label: 'Require Human Review'|t('lens'),
+            instructions: 'Hold AI-generated metadata for review before applying it to assets. Recommended for published sites where accuracy matters. Pending assets appear in the Review Queue.'|t('lens'),
+            id: 'requireReviewBeforeApply',
+            name: 'settings[requireReviewBeforeApply]',
+            on: settings.requireReviewBeforeApply,
+        }) }}
+    {% endif %}
 
     {{ forms.checkboxSelectField({
         label: 'Volumes to Process'|t('lens'),
@@ -152,17 +151,18 @@
 
     <hr>
 
-    {# ==================== SECTION: Semantic Search ==================== #}
-    <h2>{{ 'Semantic Search'|t('lens') }}</h2>
-    <p>{{ 'Enhance the native asset selector with AI-powered search. When enabled, the search bar in every asset selector modal is replaced with Lens semantic search — editors can describe what they\'re looking for instead of remembering filenames.'|t('lens') }}</p>
+    {% if lens.isPro %}
+        <h2>{{ 'Semantic Search'|t('lens') }}</h2>
+        <p>{{ 'Enhance the native asset selector with AI-powered search. When enabled, the search bar in every asset selector modal is replaced with Lens semantic search — editors can describe what they\'re looking for instead of remembering filenames.'|t('lens') }}</p>
 
-    {{ forms.lightswitchField({
-        first: true,
-        label: 'Enable Semantic Asset Search'|t('lens'),
-        instructions: 'Replaces the native search in asset selector modals with Lens search. Queries match against AI-generated alt text, descriptions, tags, and extracted text.'|t('lens'),
-        id: 'enableSemanticSearch',
-        name: 'settings[enableSemanticSearch]',
-        on: settings.enableSemanticSearch,
-    }) }}
+        {{ forms.lightswitchField({
+            first: true,
+            label: 'Enable Semantic Asset Search'|t('lens'),
+            instructions: 'Replaces the native search in asset selector modals with Lens search. Queries match against AI-generated alt text, descriptions, tags, and extracted text.'|t('lens'),
+            id: 'enableSemanticSearch',
+            name: 'settings[enableSemanticSearch]',
+            on: settings.enableSemanticSearch,
+        }) }}
+    {% endif %}
 
 {% endblock %}

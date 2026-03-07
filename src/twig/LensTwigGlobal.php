@@ -109,4 +109,14 @@ class LensTwigGlobal
     {
         return Plugin::getInstance()->duplicateDetection->getUnresolvedDuplicateCountForAsset($assetId);
     }
+
+    public function getIsPro(): bool
+    {
+        return Plugin::getInstance()->getIsPro();
+    }
+
+    public function getIsLite(): bool
+    {
+        return Plugin::getInstance()->getIsLite();
+    }
 }

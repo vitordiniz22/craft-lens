@@ -1,0 +1,8 @@
+<div class="lens-edition-badge-container">
+    {% if lens.isPro %}
+        <span class="lens-edition-badge lens-edition-badge--pro">{{ 'Pro'|t('lens') }}</span>
+    {% else %}
+        <span class="lens-edition-badge lens-edition-badge--lite">{{ 'Lite'|t('lens') }}</span>
+        <a href="https://plugins.craftcms.com/lens" class="lens-edition-upgrade-link" target="_blank">{{ 'Upgrade to Pro'|t('lens') }}</a>
+    {% endif %}
+</div>

@@ -9,6 +9,7 @@ use craft\helpers\DateTimeHelper;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\helpers\PerceptualHashHelper;
+use vitordiniz22\craftlens\Plugin;
 use vitordiniz22\craftlens\records\AssetAnalysisRecord;
 use vitordiniz22\craftlens\records\DuplicateGroupRecord;
 use yii\base\Component;
@@ -83,6 +84,10 @@ class DuplicateDetectionService extends Component
      */
     public function findDuplicatesForAssets(array $assetIds, int $threshold = 10): int
     {
+        if (!Plugin::getInstance()->getIsPro()) {
+            return 0;
+        }
+
         if (count($assetIds) < 2) {
             return 0;
         }

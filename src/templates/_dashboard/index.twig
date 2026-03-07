@@ -5,7 +5,6 @@
 
 {% block content %}
 <div class="lens-dashboard-page">
-    {# Setup Status Banner (shows when configuration is incomplete) #}
     {% if hasUnresolvedIssues %}
         {% include 'lens/_components/setup-banner' with {
             checks: setupStatus,
@@ -18,26 +17,19 @@
 
     {% if not hasCriticalIssues %}
         {% if processingStats.totalImages == 0 %}
-            {# Empty state: no images in selected volumes #}
             {% include 'lens/_dashboard/_empty-state' %}
         {% else %}
-            {# Section 1: Needs Attention (conditional) #}
-            {% include 'lens/_dashboard/_attention' %}
-
-            {# Section 2: Processing Status #}
-            {% include 'lens/_dashboard/_processing-status' %}
-
-            {# Section 3: Metadata Coverage (conditional - only when analyzed assets exist) #}
             {% include 'lens/_dashboard/_library-health' %}
 
-            {# Section 4: Quick Insights (conditional) #}
-            {% include 'lens/_dashboard/_quick-insights' %}
-
-            {# Section 5: Recent Activity #}
-            {% include 'lens/_dashboard/_recent-activity' %}
-
-            {# Section 6: Usage (collapsed) #}
-            {% include 'lens/_dashboard/_usage' %}
+            {% if lens.isPro %}
+                {% include 'lens/_dashboard/_processing-status' %}
+                {% include 'lens/_dashboard/_attention' %}
+                {% include 'lens/_dashboard/_quick-insights' %}
+                {% include 'lens/_dashboard/_recent-activity' %}
+                {% include 'lens/_dashboard/_usage' %}
+            {% else %}
+                {% include 'lens/_components/upgrade-banner' %}
+            {% endif %}
         {% endif %}
     {% endif %}
 </div>

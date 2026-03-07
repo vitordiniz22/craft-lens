@@ -34,6 +34,8 @@ class SearchController extends Controller
         $this->requireCpRequest();
         $this->requirePermission('accessPlugin-lens');
 
+        Plugin::getInstance()->requireProEdition();
+
         $plugin = Plugin::getInstance();
         $request = Craft::$app->getRequest();
 
@@ -99,6 +101,7 @@ class SearchController extends Controller
     {
         $this->requireCpRequest();
         $this->requirePermission('accessPlugin-lens');
+        Plugin::getInstance()->requireProEdition();
 
         $plugin = Plugin::getInstance();
         $request = Craft::$app->getRequest();
@@ -271,6 +274,7 @@ class SearchController extends Controller
         $this->requirePostRequest();
         $this->requireAcceptsJson();
         $this->requirePermission('accessPlugin-lens');
+        Plugin::getInstance()->requireProEdition();
 
         $groupId = (int) $this->request->getRequiredBodyParam('groupId');
         $resolution = $this->request->getRequiredBodyParam('resolution');

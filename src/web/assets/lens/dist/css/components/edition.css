@@ -1,0 +1,62 @@
+/* ========================================
+   Edition UI — Upgrade banner, edition badges
+   ======================================== */
+
+/* Upgrade Banner (dashboard) */
+.lens-upgrade-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 20px;
+    background: var(--gray-050, #f8f9fa);
+    border: 1px solid var(--hairline-color);
+    border-radius: var(--large-border-radius, 5px);
+}
+
+.lens-upgrade-banner-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.lens-upgrade-banner-icon {
+    color: var(--ui-control-active-color, #0d99ff);
+    flex-shrink: 0;
+}
+
+.lens-upgrade-banner-text span {
+    color: var(--medium-text-color);
+}
+
+/* Edition Badge (settings header) */
+.lens-edition-badge-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.lens-edition-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-radius: var(--small-border-radius, 3px);
+}
+
+.lens-edition-badge--pro {
+    color: var(--success-color, #27AE60);
+    background: color-mix(in srgb, var(--success-color, #27AE60) 10%, transparent);
+}
+
+.lens-edition-badge--lite {
+    color: var(--medium-text-color);
+    background: var(--gray-100, #eee);
+}
+
+.lens-edition-upgrade-link {
+    font-size: 13px;
+}

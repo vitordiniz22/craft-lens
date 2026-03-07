@@ -35,6 +35,9 @@ class LensAsset extends AssetBundle
             'css/components/stats-grid.css',
             'css/components/swatch.css',
 
+            // Edition
+            'css/components/edition.css',
+
             // Pages (alphabetical)
             'css/pages/lens-analysis.css',
             'css/pages/lens-bulk.css',

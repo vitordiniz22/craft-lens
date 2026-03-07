@@ -74,6 +74,7 @@ use vitordiniz22\craftlens\web\assets\lens\LensReviewAsset;
 use vitordiniz22\craftlens\web\assets\lens\LensSearchAsset;
 use vitordiniz22\craftlens\web\assets\lens\LensSemanticSelectorAsset;
 use yii\base\Event;
+use yii\web\ForbiddenHttpException;
 use yii\web\Response;
 
 /**
@@ -99,15 +100,47 @@ use yii\web\Response;
  * @property-read BulkProcessingStatusService $bulkProcessingStatus
  * @property-read LogService $log
  * @property-read SearchIndexService $searchIndex
+ * @property-read bool $isPro
+ * @property-read bool $isLite
  * @author Vitor Diniz <vitordiniz22@gmail.com>
  * @copyright Vitor Diniz
  * @license Proprietary
  */
 class Plugin extends BasePlugin
 {
+    public const EDITION_LITE = 'lite';
+    public const EDITION_PRO = 'pro';
+
     public string $schemaVersion = '1.0.0';
     public bool $hasCpSettings = true;
     public bool $hasCpSection = true;
+
+    public static function editions(): array
+    {
+        return [
+            self::EDITION_LITE,
+            self::EDITION_PRO,
+        ];
+    }
+
+    public function getIsPro(): bool
+    {
+        return $this->is(self::EDITION_PRO);
+    }
+
+    public function getIsLite(): bool
+    {
+        return $this->is(self::EDITION_LITE);
+    }
+
+    public function requireProEdition(): void
+    {
+        if (!$this->getIsPro()) {
+            throw new ForbiddenHttpException(
+                Craft::t('lens', 'This feature requires Lens Pro.')
+            );
+        }
+    }
 
     public static function isDevInstall(): bool
     {
@@ -207,7 +240,7 @@ class Plugin extends BasePlugin
             ],
         ];
 
-        if ($isConfigured) {
+        if ($this->getIsPro() && $isConfigured) {
             $item['subnav']['search'] = [
                 'label' => Craft::t('lens', 'Asset Browser'),
                 'url' => 'lens/search',
@@ -239,7 +272,7 @@ class Plugin extends BasePlugin
             }
         }
 
-        if ($isConfigured) {
+        if ($this->getIsPro() && $isConfigured) {
             $pendingCount = $this->review->getPendingReviewCount();
 
             if ($pendingCount > 0) {
@@ -368,7 +401,7 @@ class Plugin extends BasePlugin
                 /** @var Asset $asset */
                 $asset = $event->asset;
 
-                if (!$this->getSettings()->reprocessOnFileReplace) {
+                if (!$this->getSettings()->autoProcessOnUpload) {
                     return;
                 }
 
@@ -405,18 +438,18 @@ class Plugin extends BasePlugin
             AssetCondition::EVENT_REGISTER_CONDITION_RULES,
             function(RegisterConditionRulesEvent $event) {
                 $event->conditionRules[] = HasAiTagsConditionRule::class;
-                $event->conditionRules[] = ContainsPeopleConditionRule::class;
                 $event->conditionRules[] = AiConfidenceConditionRule::class;
                 $event->conditionRules[] = LensStatusConditionRule::class;
                 $event->conditionRules[] = NsfwFlaggedConditionRule::class;
-                // Watermark & Brand Detection condition rules
-                $event->conditionRules[] = WatermarkFlaggedConditionRule::class;
-                $event->conditionRules[] = WatermarkTypeConditionRule::class;
-                $event->conditionRules[] = StockProviderConditionRule::class;
-                $event->conditionRules[] = ContainsBrandLogoConditionRule::class;
 
-                // EXIF/GPS condition rules
-                $event->conditionRules[] = HasGpsCoordinatesConditionRule::class;
+                if ($this->getIsPro()) {
+                    $event->conditionRules[] = ContainsPeopleConditionRule::class;
+                    $event->conditionRules[] = WatermarkFlaggedConditionRule::class;
+                    $event->conditionRules[] = WatermarkTypeConditionRule::class;
+                    $event->conditionRules[] = StockProviderConditionRule::class;
+                    $event->conditionRules[] = ContainsBrandLogoConditionRule::class;
+                    $event->conditionRules[] = HasGpsCoordinatesConditionRule::class;
+                }
             }
         );
     }
@@ -573,13 +606,19 @@ class Plugin extends BasePlugin
             Asset::class,
             Element::EVENT_REGISTER_ACTIONS,
             function(RegisterElementActionsEvent $event) {
-                $event->actions[] = FindDuplicatesAction::class;
+                if ($this->getIsPro()) {
+                    $event->actions[] = FindDuplicatesAction::class;
+                }
             }
         );
     }
 
     private function registerSemanticSearch(): void
     {
+        if (!$this->getIsPro()) {
+            return;
+        }
+
         if (!$this->getSettings()->enableSemanticSearch) {
             return;
         }

@@ -27,7 +27,6 @@ class Settings extends Model
 
     // Processing Options
     public bool $autoProcessOnUpload = true;
-    public bool $reprocessOnFileReplace = true;
     public bool $requireReviewBeforeApply = true;
 
     // Volume Settings
@@ -63,7 +62,6 @@ class Settings extends Model
             // Boolean toggles
             [[
                 'autoProcessOnUpload',
-                'reprocessOnFileReplace',
                 'requireReviewBeforeApply',
                 'enableSemanticSearch',
             ], 'boolean'],
@@ -84,7 +82,6 @@ class Settings extends Model
             'claudeApiKey' => Craft::t('lens', 'Claude API Key'),
             'claudeModel' => Craft::t('lens', 'Claude Model'),
             'autoProcessOnUpload' => Craft::t('lens', 'Auto-Process on Upload'),
-            'reprocessOnFileReplace' => Craft::t('lens', 'Reprocess on File Replace'),
             'requireReviewBeforeApply' => Craft::t('lens', 'Require Human Review'),
             'enabledVolumes' => Craft::t('lens', 'Enabled Volumes'),
             'enableSemanticSearch' => Craft::t('lens', 'Semantic Asset Search'),

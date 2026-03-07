@@ -34,6 +34,8 @@ class ReviewController extends Controller
         $this->requireCpRequest();
         $this->requirePermission('accessPlugin-lens');
 
+        Plugin::getInstance()->requireProEdition();
+
         $reviewService = Plugin::getInstance()->review;
         $page = max(1, (int) ($this->request->getParam('page') ?? 1));
         $offset = ($page - 1) * self::PER_PAGE;
@@ -78,6 +80,7 @@ class ReviewController extends Controller
     {
         $this->requireCpRequest();
         $this->requirePermission('accessPlugin-lens');
+        Plugin::getInstance()->requireProEdition();
 
         $reviewService = Plugin::getInstance()->review;
         $data = $reviewService->getFullAnalysis($analysisId);
@@ -115,6 +118,7 @@ class ReviewController extends Controller
     {
         $this->requireCpRequest();
         $this->requirePermission('accessPlugin-lens');
+        Plugin::getInstance()->requireProEdition();
 
         $reviewService = Plugin::getInstance()->review;
         $queueIds = $reviewService->getPendingReviewIds();
@@ -131,6 +135,7 @@ class ReviewController extends Controller
         $this->requireCpRequest();
         $this->requirePostRequest();
         $this->requirePermission('accessPlugin-lens');
+        Plugin::getInstance()->requireProEdition();
 
         $analysisId = (int) $this->request->getRequiredBodyParam('analysisId');
 
@@ -230,6 +235,7 @@ class ReviewController extends Controller
         $this->requireCpRequest();
         $this->requirePostRequest();
         $this->requirePermission('accessPlugin-lens');
+        Plugin::getInstance()->requireProEdition();
 
         $analysisId = (int) $this->request->getRequiredBodyParam('analysisId');
 
@@ -270,6 +276,7 @@ class ReviewController extends Controller
         $this->requireCpRequest();
         $this->requirePostRequest();
         $this->requirePermission('accessPlugin-lens');
+        Plugin::getInstance()->requireProEdition();
 
         $ids = $this->validateAndCastIds($this->request->getRequiredBodyParam('ids'));
 
@@ -298,6 +305,7 @@ class ReviewController extends Controller
         $this->requireCpRequest();
         $this->requirePostRequest();
         $this->requirePermission('accessPlugin-lens');
+        Plugin::getInstance()->requireProEdition();
 
         $analysisId = (int) $this->request->getRequiredBodyParam('analysisId');
 
@@ -321,6 +329,8 @@ class ReviewController extends Controller
     {
         $this->requireCpRequest();
         $this->requirePermission('accessPlugin-lens');
+
+        Plugin::getInstance()->requireProEdition();
 
         $reviewService = Plugin::getInstance()->review;
         $totalCount = $reviewService->getPendingReviewCount();
