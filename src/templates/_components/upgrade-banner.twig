@@ -1,13 +1,11 @@
 <div class="lens-upgrade-banner">
     <div class="lens-upgrade-banner-content">
         <div class="lens-upgrade-banner-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-            </svg>
+            {{ svg(craft.app.plugins.getPlugin('lens').basePath ~ '/icon.svg')|attr({width: 24, height: 24}) }}
         </div>
         <div class="lens-upgrade-banner-text">
-            <strong>{{ 'Lens Pro'|t('lens') }}</strong>
-            <span>{{ 'Unlock bulk processing, review workflow, advanced search, duplicate detection, multisite translations, and more.'|t('lens') }}</span>
+            <strong>{{ 'Lens Pro'|t('lens') }} &mdash; {{ 'Take full control of your media library'|t('lens') }}</strong>
+            <span>{{ 'Browse, search, and filter every asset with the Asset Browser. Supercharge Craft\'s asset picker with metadata-driven search. Process entire volumes in bulk, detect duplicates, review every AI suggestion before it\'s applied, and much more.'|t('lens') }}</span>
         </div>
     </div>
     <a href="https://plugins.craftcms.com/lens" class="btn small submit" target="_blank">
