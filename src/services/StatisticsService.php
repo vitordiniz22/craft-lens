@@ -519,7 +519,7 @@ class StatisticsService extends Component
 
         $items = [];
 
-        if ($overview['pendingReview'] > 0) {
+        if ($overview['pendingReview'] > 0 && $plugin->getIsPro()) {
             $items[] = [
                 'type' => 'pending_review',
                 'label' => Craft::t('lens', 'Pending Review'),

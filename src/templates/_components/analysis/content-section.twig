@@ -167,17 +167,18 @@
     } %}
 {% endif %}
 
-{# ── Long Description (no native Craft equivalent) ── #}
-{% include 'lens/_components/analysis/editable-field' with {
-    fieldName: 'longDescription',
-    label: 'Description'|t('lens'),
-    value: analysis.longDescription,
-    aiValue: analysis.longDescriptionAi,
-    confidence: analysis.longDescriptionConfidence,
-    editedBy: analysis.longDescriptionEditedBy,
-    editedAt: analysis.longDescriptionEditedAt ?? null,
-    inputType: 'textarea',
-    featured: false,
-    analysisId: resolvedAnalysisId,
-    fieldState: fieldState
-} %}
+{% if lens.isPro %}
+    {% include 'lens/_components/analysis/editable-field' with {
+        fieldName: 'longDescription',
+        label: 'Description'|t('lens'),
+        value: analysis.longDescription,
+        aiValue: analysis.longDescriptionAi,
+        confidence: analysis.longDescriptionConfidence,
+        editedBy: analysis.longDescriptionEditedBy,
+        editedAt: analysis.longDescriptionEditedAt ?? null,
+        inputType: 'textarea',
+        featured: false,
+        analysisId: resolvedAnalysisId,
+        fieldState: fieldState
+    } %}
+{% endif %}

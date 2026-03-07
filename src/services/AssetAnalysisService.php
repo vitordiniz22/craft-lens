@@ -496,7 +496,9 @@ class AssetAnalysisService extends Component
     {
         $settings = $this->getSettings();
 
-        return $settings->requireReviewBeforeApply
+        $requireReview = Plugin::getInstance()->getIsPro() && $settings->requireReviewBeforeApply;
+
+        return $requireReview
             ? AnalysisStatus::PendingReview->value
             : AnalysisStatus::Completed->value;
     }

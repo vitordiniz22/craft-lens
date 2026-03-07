@@ -11,7 +11,7 @@
 {% set hasSafetyFlags = analysis and (analysis.containsPeople or analysis.isFlaggedNsfw or (analysis.nsfwScore is defined and analysis.nsfwScore >= 0.2) or analysis.hasWatermark or (analysis.containsBrandLogo and analysis.detectedBrands|length)) %}
 
 {# Editing is locked when static (Craft preview) or when asset is pending review #}
-{% set readOnly = (static ?? false) or (analysis and analysis.status == lens.status.pendingReview) %}
+{% set readOnly = (static ?? false) or (analysis and analysis.status == lens.status.pendingReview and lens.isPro) %}
 
 {# Processing state detection #}
 {% set isProcessing = analysis and analysis.status == lens.status.processing %}
@@ -90,7 +90,7 @@
 
     {% if analysis %}
         {# Pending review notice #}
-        {% if analysis.status == lens.status.pendingReview and not (static ?? false) %}
+        {% if analysis.status == lens.status.pendingReview and not (static ?? false) and lens.isPro %}
             {% include 'lens/_components/inline-notice' with {
                 type: 'warning',
                 title: 'Pending Review'|t('lens'),
@@ -148,7 +148,7 @@
         {% endif %}
 
         {# Section 2: Taxonomy #}
-        {% if analysis.status not in [lens.status.pending, lens.status.failed] and (not isProcessing or isReprocessing) %}
+        {% if lens.isPro and analysis.status not in [lens.status.pending, lens.status.failed] and (not isProcessing or isReprocessing) %}
             <div class="lens-section" data-lens-target="taxonomy-section">
                 <div class="lens-section-header">
                     <span class="lens-section-header__title">
@@ -222,7 +222,7 @@
         {% endif %}
 
         {# Section 5: Extracted Text #}
-        {% if analysis.status not in [lens.status.failed] and (not isProcessing or isReprocessing) %}
+        {% if lens.isPro and analysis.status not in [lens.status.failed] and (not isProcessing or isReprocessing) %}
             <div class="lens-section">
                 <div class="lens-section-header">
                     <span class="lens-section-header__title">{{ 'Extracted Text'|t('lens') }}</span>
@@ -268,7 +268,6 @@
 
 
     {% else %}
-        {# No analysis state #}
         {% if lens.hasCriticalIssues() %}
             {% set criticalIssues = lens.getCriticalIssues() %}
             {% if criticalIssues|length > 0 %}
