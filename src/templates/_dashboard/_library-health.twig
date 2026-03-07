@@ -28,27 +28,29 @@
             </div>
         </div>
 
-        {# Tag Coverage #}
-        {% set tagColor = taggedPercentage.percentage >= 66 ? 'var(--green-500)' : (taggedPercentage.percentage >= 33 ? 'var(--amber-400)' : 'var(--red-500)') %}
-        <div class="lens-coverage__metric">
-            <div class="lens-coverage__metric-header">
-                <span class="lens-field-label">{{ 'Tags'|t('lens') }}</span>
-                <span class="lens-coverage__metric-stat">
-                    {{ taggedPercentage.percentage }}%
-                    <span class="lens-coverage__metric-counts">({{ taggedPercentage.withTags }} {{ 'of'|t('lens') }} {{ taggedPercentage.total }})</span>
-                </span>
-            </div>
-            <div class="lens-coverage__metric-row">
-                <div class="lens-progress">
-                    <div class="lens-progress-fill" style="width: {{ taggedPercentage.percentage }}%; background-color: {{ tagColor }}"></div>
+        {# Tag Coverage (Pro only) #}
+        {% if lens.isPro %}
+            {% set tagColor = taggedPercentage.percentage >= 66 ? 'var(--green-500)' : (taggedPercentage.percentage >= 33 ? 'var(--amber-400)' : 'var(--red-500)') %}
+            <div class="lens-coverage__metric">
+                <div class="lens-coverage__metric-header">
+                    <span class="lens-field-label">{{ 'Tags'|t('lens') }}</span>
+                    <span class="lens-coverage__metric-stat">
+                        {{ taggedPercentage.percentage }}%
+                        <span class="lens-coverage__metric-counts">({{ taggedPercentage.withTags }} {{ 'of'|t('lens') }} {{ taggedPercentage.total }})</span>
+                    </span>
                 </div>
-                {% if taggedPercentage.total - taggedPercentage.withTags > 0 %}
-                    <a href="{{ cpUrl('lens/search', {quickFilter: 'untagged'}) }}" class="lens-link">
-                        {{ 'View untagged'|t('lens') }} &rarr;
-                    </a>
-                {% endif %}
+                <div class="lens-coverage__metric-row">
+                    <div class="lens-progress">
+                        <div class="lens-progress-fill" style="width: {{ taggedPercentage.percentage }}%; background-color: {{ tagColor }}"></div>
+                    </div>
+                    {% if taggedPercentage.total - taggedPercentage.withTags > 0 %}
+                        <a href="{{ cpUrl('lens/search', {quickFilter: 'untagged'}) }}" class="lens-link">
+                            {{ 'View untagged'|t('lens') }} &rarr;
+                        </a>
+                    {% endif %}
+                </div>
             </div>
-        </div>
+        {% endif %}
 
         {# Focal Point Coverage #}
         {% set fpColor = focalPointCoverage.percentage >= 66 ? 'var(--green-500)' : (focalPointCoverage.percentage >= 33 ? 'var(--amber-400)' : 'var(--red-500)') %}
