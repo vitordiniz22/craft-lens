@@ -32,135 +32,11 @@
         <input type="hidden" name="containsBrandLogo" data-lens-control="field-containsBrandLogo" value="{{ analysis.containsBrandLogo ? '1' : '0' }}">
 
         <div class="lens-review-panels" data-lens-target="review-view">
-            {# Left Panel - Image #}
+            {# Left Panel - Image + Focal Point #}
             <div class="lens-review-left">
-                <div class="lens-review-image-container">
-                    <div class="lens-review-image-inner" data-lens-target="image-container"
-                         data-lens-focal-x-ai="{{ analysis.focalPointXAi ?? '' }}"
-                         data-lens-focal-y-ai="{{ analysis.focalPointYAi ?? '' }}"
-                         data-lens-asset-has-focal-point="{{ analysis.assetHasFocalPoint ? '1' : '0' }}"
-                         {% if analysis.assetFocalPoint %}
-                             data-lens-asset-focal-x="{{ analysis.assetFocalPoint.x }}"
-                             data-lens-asset-focal-y="{{ analysis.assetFocalPoint.y }}"
-                         {% endif %}>
-                        <img data-lens-target="review-image"
-                             src="{{ analysis.previewUrl }}"
-                             alt="{{ analysis.filename }}">
-
-                        {% set fpMatchesAsset = analysis.assetHasFocalPoint
-                            and analysis.assetFocalPoint
-                            and analysis.focalPointX
-                            and (analysis.focalPointX|round(2) == analysis.assetFocalPoint.x|round(2))
-                            and (analysis.focalPointY|round(2) == analysis.assetFocalPoint.y|round(2)) %}
-
-                        {# Active focal point marker (red = AI/editing, Craft-native = matches asset) #}
-                        <div class="lens-review-focal-marker{{ fpMatchesAsset ? ' lens-review-focal-marker--current' : '' }}" data-lens-target="focal-marker"
-                             {% if analysis.focalPointX is not null %}
-                                 style="left: {{ (analysis.focalPointX * 100)|round(2) }}%;
-                                        top: {{ (analysis.focalPointY * 100)|round(2) }}%;"
-                             {% else %}
-                                 style="display: none;"
-                             {% endif %}></div>
-
-                        {# Static reference — asset's current FP in Craft-native style (hidden when they overlap or no analysis FP) #}
-                        {% if analysis.assetHasFocalPoint and analysis.assetFocalPoint %}
-                            <div class="lens-review-focal-ref" data-lens-target="focal-ref"
-                                 style="left: {{ (analysis.assetFocalPoint.x * 100)|round(2) }}%;
-                                        top: {{ (analysis.assetFocalPoint.y * 100)|round(2) }}%;
-                                        {{ (fpMatchesAsset or analysis.focalPointX is null) ? 'display: none;' : '' }}"></div>
-                        {% endif %}
-
-                        <span class="lens-review-focal-hint" data-lens-target="focal-hint">
-                            {{ 'Click to set focal point'|t('lens') }}
-                        </span>
-                    </div>
-                </div>
-
-                <div class="lens-review-focal-status" data-lens-target="focal-status">
-                    <span class="lens-review-focal-status__icon">&#9678;</span>
-                    <span data-lens-target="focal-status-text">
-                        {% if analysis.focalPointX %}
-                            {{ 'Focal: {x}, {y}'|t('lens', {
-                                x: (analysis.focalPointX * 100)|round ~ '%',
-                                y: (analysis.focalPointY * 100)|round ~ '%'
-                            }) }}
-                        {% else %}
-                            {{ 'No focal point set'|t('lens') }}
-                        {% endif %}
-                    </span>
-                    {% if analysis.focalPointX and not fpMatchesAsset %}
-                        {% if analysis.focalPointEditedBy is null %}
-                            <span data-lens-target="focal-status-badge" class="lens-review-focal-badge">
-                                {{ 'AI'|t('lens') }}
-                            </span>
-                        {% else %}
-                            <span data-lens-target="focal-status-badge" class="lens-review-focal-badge lens-review-focal-badge--edited">
-                                {{ 'Edited'|t('lens') }}
-                            </span>
-                        {% endif %}
-                    {% else %}
-                        <span data-lens-target="focal-status-badge" class="lens-review-focal-badge" style="display: none;"></span>
-                    {% endif %}
-                </div>
-
-                {# Focal point action bar — visible when review FP differs from asset's existing FP #}
-                {% if analysis.assetHasFocalPoint and analysis.assetFocalPoint %}
-                    <div class="lens-ai-suggestion-inline" data-lens-target="fp-actions"
-                         {% if fpMatchesAsset %}style="display: none;"{% endif %}>
-                        <span class="lens-ai-suggestion-icon lens-ai-suggestion-icon--ai">{{ iconSvg('wand-magic-sparkles')|attr({width: 12, height: 12}) }}</span>
-                        <span class="lens-ai-suggestion-icon lens-ai-suggestion-icon--action">{{ iconSvg('triangle-exclamation')|attr({width: 12, height: 12}) }}</span>
-                        <span data-lens-target="fp-actions-text">
-                            {{ 'Different focal point suggested'|t('lens') }}
-                        </span>
-                        &middot;
-                        <button type="button" class="lens-revert-trigger"
-                                data-lens-action="focal-accept">
-                            {{ 'Accept'|t('lens') }}
-                        </button>
-                        <span class="lens-focal-undo-group">
-                            &middot;
-                            <button type="button" class="lens-revert-trigger"
-                                    data-lens-action="focal-use-current"
-                                    data-lens-asset-focal-x="{{ analysis.assetFocalPoint.x }}"
-                                    data-lens-asset-focal-y="{{ analysis.assetFocalPoint.y }}">
-                                {{ 'Undo'|t('lens') }}
-                            </button>
-                        </span>
-                    </div>
-                {% endif %}
-
-                {# AI focal point revert — visible when FP differs from AI suggestion #}
-                {% if analysis.focalPointXAi is not null and analysis.focalPointYAi is not null %}
-                    {% set fpMatchesAi = analysis.focalPointX is not null
-                        and (analysis.focalPointXAi|round(2) == analysis.focalPointX|round(2))
-                        and (analysis.focalPointYAi|round(2) == analysis.focalPointY|round(2)) %}
-
-                    <div class="lens-ai-suggestion-inline" data-lens-target="fp-ai-revert"
-                         {% if fpMatchesAi %}style="display: none;"{% endif %}>
-                        <span class="lens-ai-suggestion-icon lens-ai-suggestion-icon--ai">{{ iconSvg('wand-magic-sparkles')|attr({width: 12, height: 12}) }}</span>
-                        <span data-lens-target="fp-ai-revert-text">
-                            {{ 'AI suggested: {x}, {y}'|t('lens', {
-                                x: (analysis.focalPointXAi * 100)|round ~ '%',
-                                y: (analysis.focalPointYAi * 100)|round ~ '%'
-                            }) }}
-                        </span>
-                        &middot;
-                        <button type="button" class="lens-revert-trigger"
-                                data-lens-action="focal-revert"
-                                data-lens-focal-x-ai="{{ analysis.focalPointXAi }}"
-                                data-lens-focal-y-ai="{{ analysis.focalPointYAi }}">
-                            {{ 'Revert to AI'|t('lens') }}
-                        </button>
-                    </div>
-                {% endif %}
-
-                {% if analysis.similarImages is not empty %}
-                    {% include 'lens/_components/analysis/similar-assets-notice' with {
-                        similarImages: analysis.similarImages,
-                        asset: null,
-                        variant: 'review'
-                    } %}
-                {% endif %}
+                {% include 'lens/_review/_focal-point-panel' with {
+                    analysis: analysis
+                } %}
             </div>
 
             {# Right Panel - Reuse analysis components #}
@@ -276,38 +152,9 @@
             </div>
         </div>
 
-        <div class="lens-review-action-bar">
-            {% if prevId %}
-                <a href="{{ cpUrl('lens/review/' ~ prevId) }}" class="btn">
-                    &larr; {{ 'Previous'|t('lens') }}
-                </a>
-            {% else %}
-                <button type="button" class="btn" disabled>&larr; {{ 'Previous'|t('lens') }}</button>
-            {% endif %}
-
-            <button type="submit" class="btn submit" data-lens-action="review-approve">
-                {{ 'Approve & Next'|t('lens') }} <kbd>A</kbd>
-            </button>
-
-            <button type="submit" class="btn"
-                    formaction="{{ actionUrl('lens/review/skip') }}"
-                    data-lens-action="review-skip">
-                {{ 'Skip'|t('lens') }} <kbd>S</kbd>
-            </button>
-
-            <button type="submit" class="btn"
-                    formaction="{{ actionUrl('lens/review/reject') }}"
-                    data-lens-action="review-reject">
-                {{ 'Reject'|t('lens') }} <kbd>R</kbd>
-            </button>
-
-            {% if nextId %}
-                <a href="{{ cpUrl('lens/review/' ~ nextId) }}" class="btn">
-                    {{ 'Next'|t('lens') }} &rarr;
-                </a>
-            {% else %}
-                <button type="button" class="btn" disabled>{{ 'Next'|t('lens') }} &rarr;</button>
-            {% endif %}
-        </div>
+        {% include 'lens/_review/_action-bar' with {
+            prevId: prevId,
+            nextId: nextId
+        } %}
     </form>
 {% endblock %}

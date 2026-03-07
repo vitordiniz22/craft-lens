@@ -37,43 +37,23 @@
         <div class="lens-asset-card__check-overlay">
             <span class="lens-asset-card__checkmark">&#10003;</span>
         </div>
-        {% if asset.kind == 'image' %}
-            <img src="{{ craft.app.assets.getThumbUrl(asset, 200, 200) }}" alt="{{ asset.title }}" loading="lazy">
-        {% else %}
-            <div class="lens-result-icon">
-                {{ iconSvg('file-lines')|attr({width: 32, height: 32, fill: 'currentColor'}) }}
-            </div>
-        {% endif %}
+        {% include 'lens/_components/_asset-preview' with {asset: asset} only %}
     </div>
     <div class="lens-result-info">
         <span class="lens-result-title">{{ (analysis.suggestedTitle ?: asset.title)|truncate(30) }}</span>
         {% if showMeta %}
-            <div class="lens-browse-card__meta">
-                {% if analysis and analysis.status == lens.status.pendingReview %}
-                    {% set avgConfidence = avgConfidence ?? 0 %}
-                    {% if avgConfidence >= 0.8 %}
-                        <span class="lens-confidence-badge lens-confidence-badge--high">{{ (avgConfidence * 100)|round }}%</span>
-                    {% elseif avgConfidence >= 0.5 %}
-                        <span class="lens-confidence-badge lens-confidence-badge--medium">{{ (avgConfidence * 100)|round }}%</span>
-                    {% else %}
-                        <span class="lens-confidence-badge lens-confidence-badge--low">{{ (avgConfidence * 100)|round }}%</span>
-                    {% endif %}
-                {% endif %}
-                <span class="lens-tag-count">{{ tagCount ?? 0 }} {{ 'tags'|t('lens') }}</span>
-            </div>
+            {% include 'lens/_components/_card-meta' with {
+                analysis: analysis,
+                avgConfidence: avgConfidence ?? 0,
+                tagCount: tagCount ?? 0
+            } %}
         {% endif %}
     </div>
 </label>
 {% else %}
 <div class="card lens-asset-card" data-lens-target="result-card" data-lens-asset-id="{{ asset.id }}">
     <a href="{{ linkUrl }}" class="lens-result-preview" data-lens-target="result-link">
-        {% if asset.kind == 'image' %}
-            <img src="{{ craft.app.assets.getThumbUrl(asset, 200, 200) }}" alt="{{ asset.title }}" loading="lazy">
-        {% else %}
-            <div class="lens-result-icon">
-                {{ iconSvg('file-lines')|attr({width: 32, height: 32, fill: 'currentColor'}) }}
-            </div>
-        {% endif %}
+        {% include 'lens/_components/_asset-preview' with {asset: asset} only %}
 
         {% if analysis %}
             {% if (similarity ?? null) is not null %}
@@ -152,19 +132,11 @@
         {% endif %}
 
         {% if showMeta %}
-            <div class="lens-browse-card__meta">
-                {% if analysis and analysis.status == lens.status.pendingReview %}
-                    {% set avgConfidence = avgConfidence ?? 0 %}
-                    {% if avgConfidence >= 0.8 %}
-                        <span class="lens-confidence-badge lens-confidence-badge--high">{{ (avgConfidence * 100)|round }}%</span>
-                    {% elseif avgConfidence >= 0.5 %}
-                        <span class="lens-confidence-badge lens-confidence-badge--medium">{{ (avgConfidence * 100)|round }}%</span>
-                    {% else %}
-                        <span class="lens-confidence-badge lens-confidence-badge--low">{{ (avgConfidence * 100)|round }}%</span>
-                    {% endif %}
-                {% endif %}
-                <span class="lens-tag-count">{{ tagCount ?? 0 }} {{ 'tags'|t('lens') }}</span>
-            </div>
+            {% include 'lens/_components/_card-meta' with {
+                analysis: analysis,
+                avgConfidence: avgConfidence ?? 0,
+                tagCount: tagCount ?? 0
+            } %}
         {% endif %}
     </div>
 </div>

@@ -1,0 +1,13 @@
+{#
+ # Asset Preview — Image or icon fallback for asset cards
+ #
+ # Parameters:
+ #   asset - Craft Asset element
+ #}
+{% if asset.kind == 'image' %}
+    <img src="{{ craft.app.assets.getThumbUrl(asset, 200, 200) }}" alt="{{ asset.title }}" loading="lazy">
+{% else %}
+    <div class="lens-result-icon">
+        {{ iconSvg('file-lines')|attr({width: 32, height: 32, fill: 'currentColor'}) }}
+    </div>
+{% endif %}

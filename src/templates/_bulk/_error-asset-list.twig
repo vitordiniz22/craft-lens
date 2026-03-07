@@ -1,0 +1,23 @@
+{#
+ # Error Asset List — shared partial for bulk completion error groups
+ #
+ # Parameters:
+ #   assets  - array of {editUrl, filename, id}
+ #   hasMore - int, count of remaining assets not shown
+ #}
+<div class="lens-error-asset-list">
+    {% for asset in assets %}
+        <div class="lens-error-asset">
+            {% if asset.editUrl %}
+                <a href="{{ asset.editUrl }}" class="lens-error-asset-link">{{ asset.filename }}</a>
+            {% else %}
+                <span class="lens-error-asset-deleted">{{ 'Deleted asset (ID: {id})'|t('lens', {id: asset.id}) }}</span>
+            {% endif %}
+        </div>
+    {% endfor %}
+    {% if hasMore > 0 %}
+        <div class="lens-error-asset-more">
+            {{ 'and {count} more'|t('lens', {count: hasMore}) }}
+        </div>
+    {% endif %}
+</div>

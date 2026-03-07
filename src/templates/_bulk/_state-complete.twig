@@ -76,22 +76,10 @@
                         </div>
 
                         {% if group.assets|length > 0 %}
-                            <div class="lens-error-asset-list">
-                                {% for asset in group.assets %}
-                                    <div class="lens-error-asset">
-                                        {% if asset.editUrl %}
-                                            <a href="{{ asset.editUrl }}" class="lens-error-asset-link">{{ asset.filename }}</a>
-                                        {% else %}
-                                            <span class="lens-error-asset-deleted">{{ 'Deleted asset (ID: {id})'|t('lens', {id: asset.id}) }}</span>
-                                        {% endif %}
-                                    </div>
-                                {% endfor %}
-                                {% if group.hasMore > 0 %}
-                                    <div class="lens-error-asset-more">
-                                        {{ 'and {count} more'|t('lens', {count: group.hasMore}) }}
-                                    </div>
-                                {% endif %}
-                            </div>
+                            {% include 'lens/_bulk/_error-asset-list' with {
+                                assets: group.assets,
+                                hasMore: group.hasMore,
+                            } only %}
                         {% endif %}
                     </div>
                 {% else %}
@@ -112,22 +100,10 @@
 
                                 <div class="lens-error-group-detail" style="display: none;" data-lens-target="error-group-detail">
                                     {% if group.assets|length > 0 %}
-                                        <div class="lens-error-asset-list">
-                                            {% for asset in group.assets %}
-                                                <div class="lens-error-asset">
-                                                    {% if asset.editUrl %}
-                                                        <a href="{{ asset.editUrl }}" class="lens-error-asset-link">{{ asset.filename }}</a>
-                                                    {% else %}
-                                                        <span class="lens-error-asset-deleted">{{ 'Deleted asset (ID: {id})'|t('lens', {id: asset.id}) }}</span>
-                                                    {% endif %}
-                                                </div>
-                                            {% endfor %}
-                                            {% if group.hasMore > 0 %}
-                                                <div class="lens-error-asset-more">
-                                                    {{ 'and {count} more'|t('lens', {count: group.hasMore}) }}
-                                                </div>
-                                            {% endif %}
-                                        </div>
+                                        {% include 'lens/_bulk/_error-asset-list' with {
+                                            assets: group.assets,
+                                            hasMore: group.hasMore,
+                                        } only %}
                                     {% else %}
                                         <div class="lens-error-no-assets">
                                             {{ 'Asset details unavailable.'|t('lens') }}
