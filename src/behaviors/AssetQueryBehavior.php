@@ -39,6 +39,7 @@ class AssetQueryBehavior extends Behavior
     public ?float $lensQualityBelow = null;
     public ?float $lensSharpnessBelow = null;
     public ?bool $lensExposureIssues = null;
+    public ?bool $lensHasFocalPoint = null;
     // EXIF/GPS filters
     public ?bool $lensHasGpsCoordinates = null;
     public ?bool $lensHasExifData = null;
@@ -226,6 +227,15 @@ class AssetQueryBehavior extends Behavior
     }
 
     /**
+     * Filters assets by whether they have a focal point set.
+     */
+    public function lensHasFocalPoint(?bool $value): AssetQuery
+    {
+        $this->lensHasFocalPoint = $value;
+        return $this->owner;
+    }
+
+    /**
      * Filters assets by whether they have GPS coordinates.
      */
     public function lensHasGpsCoordinates(?bool $value): AssetQuery
@@ -301,6 +311,13 @@ class AssetQueryBehavior extends Behavior
     {
         if ($this->lensStockProvider !== null && $this->owner->subQuery !== null) {
             $this->applyStockProviderFilter();
+        }
+    }
+
+    public function lensApplyHasFocalPointFilter(): void
+    {
+        if ($this->lensHasFocalPoint !== null && $this->owner->subQuery !== null) {
+            $this->applyHasFocalPointFilter();
         }
     }
 
@@ -408,6 +425,10 @@ class AssetQueryBehavior extends Behavior
 
         if ($this->lensExposureIssues !== null) {
             $this->applyExposureIssuesFilter();
+        }
+
+        if ($this->lensHasFocalPoint !== null) {
+            $this->applyHasFocalPointFilter();
         }
 
         if ($this->lensHasGpsCoordinates !== null) {
@@ -693,6 +714,15 @@ class AssetQueryBehavior extends Behavior
         );
 
         $this->exifMetadataJoined = true;
+    }
+
+    private function applyHasFocalPointFilter(): void
+    {
+        if ($this->lensHasFocalPoint) {
+            $this->owner->subQuery->andWhere(['not', ['assets.focalPoint' => null]]);
+        } else {
+            $this->owner->subQuery->andWhere(['assets.focalPoint' => null]);
+        }
     }
 
     private function applyHasGpsCoordinatesFilter(): void

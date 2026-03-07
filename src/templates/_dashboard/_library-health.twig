@@ -21,7 +21,11 @@
                     <div class="lens-progress-fill" style="width: {{ altTextCoverage.percentage }}%; background-color: {{ altColor }}"></div>
                 </div>
                 {% if altTextCoverage.total - altTextCoverage.withAltText > 0 %}
-                    <a href="{{ cpUrl('lens/search', {missingAltText: 1}) }}" class="lens-link">
+                    {% if lens.isPro %}
+                        <a href="{{ cpUrl('lens/search', {missingAltText: 1}) }}" class="lens-link">
+                    {% else %}
+                        <a href="{{ cpUrl('assets', {lensFilter: 'missing-alt-text'}) }}" class="lens-link">
+                    {% endif %}
                         {{ 'View missing'|t('lens') }} &rarr;
                     </a>
                 {% endif %}
@@ -67,7 +71,11 @@
                     <div class="lens-progress-fill" style="width: {{ focalPointCoverage.percentage }}%; background-color: {{ fpColor }}"></div>
                 </div>
                 {% if focalPointCoverage.total - focalPointCoverage.withFocalPoint > 0 %}
-                    <a href="{{ cpUrl('lens/search', {hasFocalPoint: 0}) }}" class="lens-link">
+                    {% if lens.isPro %}
+                        <a href="{{ cpUrl('lens/search', {hasFocalPoint: 0}) }}" class="lens-link">
+                    {% else %}
+                        <a href="{{ cpUrl('assets', {lensFilter: 'missing-focal-point'}) }}" class="lens-link">
+                    {% endif %}
                         {{ 'View missing'|t('lens') }} &rarr;
                     </a>
                 {% endif %}

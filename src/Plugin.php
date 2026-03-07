@@ -16,6 +16,7 @@ use craft\events\DefineMetadataEvent;
 use craft\events\ModelEvent;
 use craft\events\RegisterConditionRulesEvent;
 use craft\events\RegisterElementActionsEvent;
+use craft\events\RegisterElementSourcesEvent;
 use craft\events\RegisterUrlRulesEvent;
 use craft\events\ReplaceAssetEvent;
 use craft\events\TemplateEvent;
@@ -33,10 +34,10 @@ use vitordiniz22\craftlens\actions\FindDuplicatesAction;
 use vitordiniz22\craftlens\behaviors\AssetQueryBehavior;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\Logger;
-use vitordiniz22\craftlens\conditions\AiConfidenceConditionRule;
 use vitordiniz22\craftlens\conditions\ContainsBrandLogoConditionRule;
 use vitordiniz22\craftlens\conditions\ContainsPeopleConditionRule;
 use vitordiniz22\craftlens\conditions\HasAiTagsConditionRule;
+use vitordiniz22\craftlens\conditions\HasFocalPointConditionRule;
 use vitordiniz22\craftlens\conditions\HasGpsCoordinatesConditionRule;
 use vitordiniz22\craftlens\conditions\LensStatusConditionRule;
 use vitordiniz22\craftlens\conditions\NsfwFlaggedConditionRule;
@@ -299,6 +300,8 @@ class Plugin extends BasePlugin
         $this->registerAssetEventHandlers();
         $this->registerConditionRuleHandlers();
         $this->registerAssetQueryBehavior();
+        $this->registerAssetSources();
+        $this->registerAssetSourceAutoSelect();
         $this->registerAssetSidebarHandler();
         $this->registerFieldLayoutElements();
         $this->registerElementActions();
@@ -438,9 +441,9 @@ class Plugin extends BasePlugin
             AssetCondition::EVENT_REGISTER_CONDITION_RULES,
             function(RegisterConditionRulesEvent $event) {
                 $event->conditionRules[] = HasAiTagsConditionRule::class;
-                $event->conditionRules[] = AiConfidenceConditionRule::class;
                 $event->conditionRules[] = LensStatusConditionRule::class;
                 $event->conditionRules[] = NsfwFlaggedConditionRule::class;
+                $event->conditionRules[] = HasFocalPointConditionRule::class;
 
                 if ($this->getIsPro()) {
                     $event->conditionRules[] = ContainsPeopleConditionRule::class;
@@ -465,6 +468,61 @@ class Plugin extends BasePlugin
                 ]);
             }
         );
+    }
+
+    private function registerAssetSources(): void
+    {
+        Event::on(
+            Asset::class,
+            Element::EVENT_REGISTER_SOURCES,
+            function(RegisterElementSourcesEvent $event) {
+                if ($event->context !== 'index' || $this->getIsPro()) {
+                    return;
+                }
+
+                $sources = [];
+
+                $sources[] = [
+                    'key' => 'lens:missing-alt-text',
+                    'label' => Craft::t('lens', 'Missing Alt Text'),
+                    'criteria' => ['hasAlt' => false, 'kind' => 'image'],
+                    'hasThumbs' => true,
+                    'defaultSort' => ['dateCreated', 'desc'],
+                ];
+
+                $sources[] = [
+                    'key' => 'lens:missing-focal-point',
+                    'label' => Craft::t('lens', 'Missing Focal Point'),
+                    'criteria' => ['lensHasFocalPoint' => false, 'kind' => 'image'],
+                    'hasThumbs' => true,
+                    'defaultSort' => ['dateCreated', 'desc'],
+                ];
+
+                if (!empty($sources)) {
+                    $event->sources[] = ['type' => 'heading', 'heading' => 'Lens'];
+                    array_push($event->sources, ...$sources);
+                }
+            }
+        );
+    }
+
+    private function registerAssetSourceAutoSelect(): void
+    {
+        if (Craft::$app->getRequest()->getIsConsoleRequest()) {
+            return;
+        }
+
+        Craft::$app->getView()->hook('cp.layouts.elementindex', function() {
+            // Auto-select source when arriving via dashboard link
+            $lensFilter = Craft::$app->getRequest()->getQueryParam('lensFilter');
+            if ($lensFilter) {
+                $safeKey = preg_replace('/[^a-z0-9\-]/', '', $lensFilter);
+                $sourceKey = 'lens:' . $safeKey;
+                Craft::$app->getView()->registerJs(
+                    "requestAnimationFrame(function() { var link = document.querySelector('[data-key=\"{$sourceKey}\"]'); if (link) link.click(); });"
+                );
+            }
+        });
     }
 
     private function registerAssetSidebarHandler(): void
