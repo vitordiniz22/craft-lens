@@ -74,12 +74,6 @@
                 'click',
                 this._handleApplyFocalPoint.bind(this),
             );
-            // Bridge revert (AI provenance on native-field-bridge)
-            window.Lens.core.DOM.delegate(
-                '[data-lens-action="bridge-revert"]',
-                'click',
-                this._handleBridgeRevert.bind(this),
-            );
             // Alt proxy field handlers
             window.Lens.core.DOM.delegate(
                 '[data-lens-action="alt-proxy-edit"]',
@@ -223,93 +217,6 @@
             }
         },
 
-        /**
-         * Revert a native-field-bridge suggestion to the original AI value
-         */
-        _handleBridgeRevert: function (e, revertBtn) {
-            var bridge = revertBtn.closest('[data-lens-target="native-bridge"]');
-            if (!bridge) return;
-
-            var analysisId = bridge.dataset.lensAnalysisId;
-            var fieldName = bridge.dataset.lensField;
-            var siteId = bridge.dataset.lensSiteId || null;
-
-            window.Lens.core.API.revertField(analysisId, fieldName, siteId ? { siteId: siteId } : undefined)
-                .then((response) => {
-                    if (response.data.success) {
-                        var DOM = window.Lens.core.DOM;
-
-                        // Update display text
-                        var displayText = bridge.querySelector('[data-lens-target="bridge-suggestion-text"]');
-                        if (displayText) displayText.textContent = response.data.value;
-
-                        // Remove lock icon + its craft-tooltip wrapper
-                        var lock = bridge.querySelector('[data-lens-target="lock-icon"]');
-                        if (lock) {
-                            var lockTooltip = lock.closest('craft-tooltip');
-                            (lockTooltip || lock).remove();
-                        }
-
-                        // Hide AI suggestion inline
-                        var aiSuggestion = bridge.querySelector('[data-lens-target="bridge-ai-suggestion"]');
-                        if (aiSuggestion) DOM.hide(aiSuggestion);
-
-                        // Recalculate apply row status
-                        this._recalcBridgeApplyRow(bridge, response.data.value);
-
-                        // Reset form baseline to prevent "unsaved changes" warning
-                        var $form = $(bridge).closest('form[data-confirm-unload]');
-                        if ($form.length) {
-                            var serializer = $form.data('serializer');
-                            $form.data('initialSerializedValue', typeof serializer === 'function' ? serializer() : $form.serialize());
-                        }
-
-                        Craft.cp.displayNotice(Craft.t('lens', 'Reverted to AI value.'));
-                    }
-                });
-        },
-
-        /**
-         * Recalculate the apply action after reverting a bridge suggestion.
-         * Swaps the Applied indicator or Apply link inside the purple bar.
-         */
-        _recalcBridgeApplyRow: function (bridge, revertedValue) {
-            var applyRow = bridge.querySelector('[data-lens-target="native-apply-row"]');
-            if (!applyRow) return;
-
-            var fieldName = bridge.dataset.lensField;
-            var nativeField = fieldName === 'suggestedTitle' ? 'title' : 'alt';
-            var nativeInput = document.getElementById(nativeField) ||
-                              document.querySelector('input[name="' + nativeField + '"], textarea[name="' + nativeField + '"]');
-
-            var nativeValue = nativeInput ? nativeInput.value : '';
-            var valuesMatch = revertedValue && nativeValue === revertedValue;
-
-            // Remove existing action element (link or applied indicator)
-            var existing = applyRow.querySelector('.lens-revert-trigger, .lens-applied-indicator');
-            if (existing) existing.remove();
-
-            if (valuesMatch) {
-                var applied = this._cloneAppliedIndicator();
-                if (applied) applyRow.appendChild(applied);
-            } else {
-                var action = fieldName === 'suggestedTitle' ? 'apply-title' : 'apply-alt';
-                var siteId = bridge.dataset.lensSiteId || '';
-                var analysisId = bridge.dataset.lensAnalysisId;
-                var existingBtn = bridge.querySelector('[data-lens-asset-id]');
-                var btnAssetId = existingBtn ? existingBtn.dataset.lensAssetId : (bridge.dataset.lensAssetId || '');
-
-                var link = document.createElement('button');
-                link.type = 'button';
-                link.className = 'lens-revert-trigger';
-                link.dataset.lensAction = action;
-                link.dataset.lensAssetId = btnAssetId;
-                link.dataset.lensAnalysisId = analysisId;
-                if (siteId) link.dataset.lensSiteId = siteId;
-                link.textContent = Craft.t('lens', 'Apply to Asset');
-                applyRow.appendChild(link);
-            }
-        },
 
         /**
          * Update the alt proxy field display after apply
@@ -441,6 +348,14 @@
 
                 // Trigger change event so Craft's editor detects the modification
                 input.dispatchEvent(new Event('input', { bubbles: true }));
+
+                // Reset form baseline — the value was already saved server-side,
+                // so Craft shouldn't warn about unsaved changes on navigation.
+                var $form = $(input).closest('form[data-confirm-unload]');
+                if ($form.length) {
+                    var serializer = $form.data('serializer');
+                    $form.data('initialSerializedValue', typeof serializer === 'function' ? serializer() : $form.serialize());
+                }
             }
 
             // Also update the page heading/title if it's the title field

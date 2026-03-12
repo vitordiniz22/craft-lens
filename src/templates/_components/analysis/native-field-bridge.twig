@@ -179,27 +179,6 @@
                 </button>
             {% endif %}
         </div>
-    {% else %}
-        {# Asset panel: AI provenance + revert (visible when suggestion was edited) #}
-        {% set showBridgeAi = isEdited and (aiValue ?? null) and aiValue != suggestionValue %}
-        <div class="lens-ai-suggestion-inline" data-lens-target="bridge-ai-suggestion"{% if not showBridgeAi %} hidden{% endif %}>
-            {% include 'lens/_components/analysis/_tooltip-ai' only %}
-            <span data-lens-target="bridge-ai-text">
-                {% if showBridgeAi %}
-                    {{ 'AI suggested: "{value}"'|t('lens', {value: aiValue|truncate(100)}) }}
-                {% endif %}
-            </span>
-            {% if aiValue ?? null %}
-                <button type="button" class="lens-revert-trigger"
-                        data-lens-action="bridge-revert"
-                        data-lens-field="{{ fieldName }}"
-                        data-lens-analysis-id="{{ analysisId }}"
-                        {% if siteId %}data-lens-site-id="{{ siteId }}"{% endif %}
-                        {% if not showBridgeAi %} hidden{% endif %}>
-                    {{ 'Revert to AI'|t('lens') }}
-                </button>
-            {% endif %}
-        </div>
     {% endif %}
 </div>
 
