@@ -18,9 +18,14 @@ use vitordiniz22\craftlens\Plugin;
  */
 class ContainsPeopleConditionRule extends BaseLightswitchConditionRule implements ElementConditionRuleInterface
 {
+    public function getGroupLabel(): string
+    {
+        return 'Lens';
+    }
+
     public function getLabel(): string
     {
-        return Craft::t('lens', 'Lens - Contains People');
+        return Craft::t('lens', 'Contains People');
     }
 
     public function getExclusiveQueryParams(): array

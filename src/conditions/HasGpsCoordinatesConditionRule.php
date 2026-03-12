@@ -18,9 +18,14 @@ use vitordiniz22\craftlens\Plugin;
  */
 class HasGpsCoordinatesConditionRule extends BaseLightswitchConditionRule implements ElementConditionRuleInterface
 {
+    public function getGroupLabel(): string
+    {
+        return 'Lens';
+    }
+
     public function getLabel(): string
     {
-        return Craft::t('lens', 'Lens - Has GPS Coordinates');
+        return Craft::t('lens', 'Has GPS Coordinates');
     }
 
     public function getExclusiveQueryParams(): array

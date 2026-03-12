@@ -18,9 +18,14 @@ use vitordiniz22\craftlens\Plugin;
  */
 class ContainsBrandLogoConditionRule extends BaseLightswitchConditionRule implements ElementConditionRuleInterface
 {
+    public function getGroupLabel(): string
+    {
+        return 'Lens';
+    }
+
     public function getLabel(): string
     {
-        return Craft::t('lens', 'Lens - Contains Brand Logo');
+        return Craft::t('lens', 'Contains Brand Logo');
     }
 
     public function getExclusiveQueryParams(): array

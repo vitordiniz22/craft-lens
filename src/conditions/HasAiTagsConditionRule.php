@@ -19,9 +19,14 @@ use vitordiniz22\craftlens\records\AssetTagRecord;
  */
 class HasAiTagsConditionRule extends BaseLightswitchConditionRule implements ElementConditionRuleInterface
 {
+    public function getGroupLabel(): string
+    {
+        return 'Lens';
+    }
+
     public function getLabel(): string
     {
-        return Craft::t('lens', 'Lens - Has AI Tags');
+        return Craft::t('lens', 'Has AI Tags');
     }
 
     public function getExclusiveQueryParams(): array

@@ -18,9 +18,14 @@ use vitordiniz22\craftlens\Plugin;
  */
 class StockProviderConditionRule extends BaseMultiSelectConditionRule implements ElementConditionRuleInterface
 {
+    public function getGroupLabel(): string
+    {
+        return 'Lens';
+    }
+
     public function getLabel(): string
     {
-        return Craft::t('lens', 'Lens - Stock Provider');
+        return Craft::t('lens', 'Stock Provider');
     }
 
     public function getExclusiveQueryParams(): array

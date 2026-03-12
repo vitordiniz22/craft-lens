@@ -18,9 +18,14 @@ use vitordiniz22\craftlens\Plugin;
  */
 class WatermarkFlaggedConditionRule extends BaseLightswitchConditionRule implements ElementConditionRuleInterface
 {
+    public function getGroupLabel(): string
+    {
+        return 'Lens';
+    }
+
     public function getLabel(): string
     {
-        return Craft::t('lens', 'Lens - Has Watermark');
+        return Craft::t('lens', 'Has Watermark');
     }
 
     public function getExclusiveQueryParams(): array

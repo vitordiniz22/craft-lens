@@ -18,9 +18,14 @@ use vitordiniz22\craftlens\Plugin;
  */
 class NsfwFlaggedConditionRule extends BaseLightswitchConditionRule implements ElementConditionRuleInterface
 {
+    public function getGroupLabel(): string
+    {
+        return 'Lens';
+    }
+
     public function getLabel(): string
     {
-        return Craft::t('lens', 'Lens - NSFW Flagged');
+        return Craft::t('lens', 'NSFW Flagged');
     }
 
     public function getExclusiveQueryParams(): array

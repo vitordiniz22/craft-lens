@@ -19,9 +19,14 @@ use vitordiniz22\craftlens\Plugin;
  */
 class WatermarkTypeConditionRule extends BaseMultiSelectConditionRule implements ElementConditionRuleInterface
 {
+    public function getGroupLabel(): string
+    {
+        return 'Lens';
+    }
+
     public function getLabel(): string
     {
-        return Craft::t('lens', 'Lens - Watermark Type');
+        return Craft::t('lens', 'Watermark Type');
     }
 
     public function getExclusiveQueryParams(): array

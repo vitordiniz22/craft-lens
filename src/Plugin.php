@@ -38,9 +38,9 @@ use vitordiniz22\craftlens\conditions\ContainsBrandLogoConditionRule;
 use vitordiniz22\craftlens\conditions\ContainsPeopleConditionRule;
 use vitordiniz22\craftlens\conditions\HasAiTagsConditionRule;
 use vitordiniz22\craftlens\conditions\HasFocalPointConditionRule;
-use vitordiniz22\craftlens\conditions\HasGpsCoordinatesConditionRule;
 use vitordiniz22\craftlens\conditions\LensStatusConditionRule;
 use vitordiniz22\craftlens\conditions\NsfwFlaggedConditionRule;
+use vitordiniz22\craftlens\conditions\HasGpsCoordinatesConditionRule;
 use vitordiniz22\craftlens\conditions\StockProviderConditionRule;
 use vitordiniz22\craftlens\conditions\WatermarkFlaggedConditionRule;
 use vitordiniz22\craftlens\conditions\WatermarkTypeConditionRule;
@@ -431,13 +431,13 @@ class Plugin extends BasePlugin
                 $event->conditionRules[] = LensStatusConditionRule::class;
                 $event->conditionRules[] = NsfwFlaggedConditionRule::class;
                 $event->conditionRules[] = HasFocalPointConditionRule::class;
+                $event->conditionRules[] = ContainsPeopleConditionRule::class;
+                $event->conditionRules[] = WatermarkFlaggedConditionRule::class;
+                $event->conditionRules[] = ContainsBrandLogoConditionRule::class;
 
                 if ($this->getIsPro()) {
-                    $event->conditionRules[] = ContainsPeopleConditionRule::class;
-                    $event->conditionRules[] = WatermarkFlaggedConditionRule::class;
                     $event->conditionRules[] = WatermarkTypeConditionRule::class;
                     $event->conditionRules[] = StockProviderConditionRule::class;
-                    $event->conditionRules[] = ContainsBrandLogoConditionRule::class;
                     $event->conditionRules[] = HasGpsCoordinatesConditionRule::class;
                 }
             }
@@ -469,12 +469,15 @@ class Plugin extends BasePlugin
 
                 $sources = [];
 
+                $iconPath = $this->getBasePath() . '/icon-mask.svg';
+
                 $sources[] = [
                     'key' => 'lens:missing-alt-text',
                     'label' => Craft::t('lens', 'Missing Alt Text'),
                     'criteria' => ['hasAlt' => false, 'kind' => 'image'],
                     'hasThumbs' => true,
                     'defaultSort' => ['dateCreated', 'desc'],
+                    'iconMask' => $iconPath,
                 ];
 
                 $sources[] = [
@@ -483,10 +486,46 @@ class Plugin extends BasePlugin
                     'criteria' => ['lensHasFocalPoint' => false, 'kind' => 'image'],
                     'hasThumbs' => true,
                     'defaultSort' => ['dateCreated', 'desc'],
+                    'iconMask' => $iconPath,
+                ];
+
+                $sources[] = [
+                    'key' => 'lens:nsfw-flagged',
+                    'label' => Craft::t('lens', 'NSFW Flagged'),
+                    'criteria' => ['lensNsfwFlagged' => true, 'kind' => 'image'],
+                    'hasThumbs' => true,
+                    'defaultSort' => ['dateCreated', 'desc'],
+                    'iconMask' => $iconPath,
+                ];
+
+                $sources[] = [
+                    'key' => 'lens:contains-people',
+                    'label' => Craft::t('lens', 'Contains People'),
+                    'criteria' => ['lensContainsPeople' => true, 'kind' => 'image'],
+                    'hasThumbs' => true,
+                    'defaultSort' => ['dateCreated', 'desc'],
+                    'iconMask' => $iconPath,
+                ];
+
+                $sources[] = [
+                    'key' => 'lens:has-watermark',
+                    'label' => Craft::t('lens', 'Has Watermark'),
+                    'criteria' => ['lensHasWatermark' => true, 'kind' => 'image'],
+                    'hasThumbs' => true,
+                    'defaultSort' => ['dateCreated', 'desc'],
+                    'iconMask' => $iconPath,
+                ];
+
+                $sources[] = [
+                    'key' => 'lens:has-brand-logo',
+                    'label' => Craft::t('lens', 'Has Brand Logo'),
+                    'criteria' => ['lensContainsBrandLogo' => true, 'kind' => 'image'],
+                    'hasThumbs' => true,
+                    'defaultSort' => ['dateCreated', 'desc'],
+                    'iconMask' => $iconPath,
                 ];
 
                 if (!empty($sources)) {
-                    $event->sources[] = ['type' => 'heading', 'heading' => 'Lens'];
                     array_push($event->sources, ...$sources);
                 }
             }

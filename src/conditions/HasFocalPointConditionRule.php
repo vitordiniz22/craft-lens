@@ -17,9 +17,14 @@ use craft\elements\db\ElementQueryInterface;
  */
 class HasFocalPointConditionRule extends BaseLightswitchConditionRule implements ElementConditionRuleInterface
 {
+    public function getGroupLabel(): string
+    {
+        return 'Lens';
+    }
+
     public function getLabel(): string
     {
-        return Craft::t('lens', 'Lens - Has Focal Point');
+        return Craft::t('lens', 'Has Focal Point');
     }
 
     public function getExclusiveQueryParams(): array

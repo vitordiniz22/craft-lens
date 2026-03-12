@@ -19,9 +19,14 @@ use vitordiniz22\craftlens\Plugin;
  */
 class LensStatusConditionRule extends BaseMultiSelectConditionRule implements ElementConditionRuleInterface
 {
+    public function getGroupLabel(): string
+    {
+        return 'Lens';
+    }
+
     public function getLabel(): string
     {
-        return Craft::t('lens', 'Lens - Status');
+        return Craft::t('lens', 'Status');
     }
 
     public function getExclusiveQueryParams(): array
