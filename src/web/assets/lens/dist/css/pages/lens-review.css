@@ -411,7 +411,6 @@
 .lens-ai-suggestion-inline {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
   gap: 6px 10px;
   font-size: 13px;
   line-height: 1.4;

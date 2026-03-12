@@ -223,7 +223,6 @@ class SearchService extends Component
         $this->applyWatermarkFilter($query, $filters);
         $this->applyBrandLogoFilter($query, $filters);
         $this->applyQualityPresetFilter($query, $filters);
-        $this->applyGpsFilter($query, $filters);
         $this->applyFocalPointFilter($query, $filters);
         $this->applyMissingAltTextFilter($query, $filters);
         $this->applyUnprocessedFilter($query, $filters);
@@ -532,28 +531,6 @@ class SearchService extends Component
         }
 
         $query->andWhere(['not', ['lens.overallQualityScore' => null]]);
-    }
-
-    /**
-     * Filter assets by GPS data availability (via EXIF join).
-     */
-    private function applyGpsFilter(Query $query, array $filters): void
-    {
-        if (!isset($filters['hasGps'])) {
-            return;
-        }
-
-        $subQuery = (new Query())
-            ->select(['assetId'])
-            ->from(Install::TABLE_EXIF_METADATA)
-            ->where(['not', ['latitude' => null]])
-            ->andWhere(['not', ['longitude' => null]]);
-
-        if ($filters['hasGps']) {
-            $query->andWhere(['in', 'assets.id', $subQuery]);
-        } else {
-            $query->andWhere(['not in', 'assets.id', $subQuery]);
-        }
     }
 
     /**

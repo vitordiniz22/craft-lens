@@ -14,7 +14,6 @@
 - OCR text extraction from images.
 - Image quality scoring (sharpness, exposure, noise, overall).
 - Focal point detection for smart cropping.
-- EXIF metadata extraction (camera info, GPS coordinates, dates).
 - Duplicate detection via perceptual hashing with similarity scores.
 
 #### Content Detection
@@ -52,8 +51,7 @@
 - `lensContainsBrandLogo()` / `lensDetectedBrand()`, `lensStockProvider()` — brand and stock filters.
 - `lensHasDuplicates()`, `lensTextSearch()` — duplicate and full-text search.
 - `lensQualityBelow()` / `lensSharpnessBelow()` / `lensExposureIssues()` — quality filters.
-- `lensHasGpsCoordinates()` / `lensHasExifData()` — EXIF and GPS filters.
-- 10 custom condition rules for element sources.
+- 9 custom condition rules for element sources.
 
 #### Console Commands
 - `lens/process-all` — Process all unprocessed assets (with `--reprocess` option).

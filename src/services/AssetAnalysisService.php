@@ -351,9 +351,6 @@ class AssetAnalysisService extends Component
 
     private function processImageAsset(Asset $asset, AssetAnalysisRecord $record): void
     {
-        // Extract EXIF metadata first (fast, local, no API cost)
-        $this->extractExifMetadata($asset, $record);
-
         // Determine language context for AI call
         $primaryLanguage = MultisiteHelper::getPrimarySiteLanguage();
         $additionalLanguages = MultisiteHelper::getAdditionalLanguages($asset);
@@ -432,19 +429,6 @@ class AssetAnalysisService extends Component
             $this->autoApplyEmptyNativeFields($asset, $result);
         } catch (\Throwable $e) {
             Logger::warning(LogCategory::AssetProcessing, 'Auto-apply empty fields failed (non-fatal): ' . $e->getMessage(), assetId: $asset->id);
-        }
-    }
-
-    /**
-     * Extract EXIF metadata from an image asset.
-     */
-    private function extractExifMetadata(Asset $asset, AssetAnalysisRecord $record): void
-    {
-        $exifRecord = Plugin::getInstance()->exifMetadata->processAsset($asset, $record);
-
-        if ($exifRecord !== null) {
-            $record->hasExifMetadata = true;
-            $record->save();
         }
     }
 

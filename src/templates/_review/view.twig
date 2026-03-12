@@ -136,19 +136,6 @@
                     </div>
                 </div>
 
-                {% if analysis.exif %}
-                    <div class="lens-section">
-                        <div class="lens-section-header">
-                            <span class="lens-section-header__title">{{ 'Technical Info'|t('lens') }}</span>
-                        </div>
-                        <div class="lens-section-body">
-                            {% include 'lens/_components/analysis/technical-section' with {
-                                analysis: analysis,
-                                exifData: analysis.exif
-                            } %}
-                        </div>
-                    </div>
-                {% endif %}
             </div>
         </div>
 

@@ -40,7 +40,6 @@ use vitordiniz22\craftlens\conditions\HasAiTagsConditionRule;
 use vitordiniz22\craftlens\conditions\HasFocalPointConditionRule;
 use vitordiniz22\craftlens\conditions\LensStatusConditionRule;
 use vitordiniz22\craftlens\conditions\NsfwFlaggedConditionRule;
-use vitordiniz22\craftlens\conditions\HasGpsCoordinatesConditionRule;
 use vitordiniz22\craftlens\conditions\StockProviderConditionRule;
 use vitordiniz22\craftlens\conditions\WatermarkFlaggedConditionRule;
 use vitordiniz22\craftlens\conditions\WatermarkTypeConditionRule;
@@ -55,8 +54,6 @@ use vitordiniz22\craftlens\services\BulkProcessingStatusService;
 use vitordiniz22\craftlens\services\ColorAggregationService;
 use vitordiniz22\craftlens\services\ContentStorageService;
 use vitordiniz22\craftlens\services\DuplicateDetectionService;
-use vitordiniz22\craftlens\services\ExifExtractionService;
-use vitordiniz22\craftlens\services\ExifMetadataService;
 use vitordiniz22\craftlens\services\LogService;
 use vitordiniz22\craftlens\services\PricingService;
 use vitordiniz22\craftlens\services\ReviewService;
@@ -96,8 +93,6 @@ use yii\web\Response;
  * @property-read SearchService $search
  * @property-read SetupStatusService $setupStatus
  * @property-read SiteContentService $siteContent
- * @property-read ExifExtractionService $exifExtraction
- * @property-read ExifMetadataService $exifMetadata
  * @property-read BulkProcessingStatusService $bulkProcessingStatus
  * @property-read LogService $log
  * @property-read SearchIndexService $searchIndex
@@ -167,8 +162,6 @@ class Plugin extends BasePlugin
                 'search' => SearchService::class,
                 'setupStatus' => SetupStatusService::class,
                 'siteContent' => SiteContentService::class,
-                'exifExtraction' => ExifExtractionService::class,
-                'exifMetadata' => ExifMetadataService::class,
                 'log' => LogService::class,
                 'searchIndex' => SearchIndexService::class,
             ],
@@ -438,7 +431,6 @@ class Plugin extends BasePlugin
                 if ($this->getIsPro()) {
                     $event->conditionRules[] = WatermarkTypeConditionRule::class;
                     $event->conditionRules[] = StockProviderConditionRule::class;
-                    $event->conditionRules[] = HasGpsCoordinatesConditionRule::class;
                 }
             }
         );

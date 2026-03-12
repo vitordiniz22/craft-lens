@@ -40,17 +40,11 @@ class AssetQueryBehavior extends Behavior
     public ?float $lensSharpnessBelow = null;
     public ?bool $lensExposureIssues = null;
     public ?bool $lensHasFocalPoint = null;
-    // EXIF/GPS filters
-    public ?bool $lensHasGpsCoordinates = null;
-    public ?bool $lensHasExifData = null;
-
     /** @var array[] Raw WHERE conditions requiring the lens join, used by complex condition rules */
     public array $lensRawWhereConditions = [];
 
     private bool $innerJoined = false;
     private bool $leftJoined = false;
-    private bool $exifMetadataJoined = false;
-
     /**
      * Sets the lens status filter.
      */
@@ -235,24 +229,6 @@ class AssetQueryBehavior extends Behavior
         return $this->owner;
     }
 
-    /**
-     * Filters assets by whether they have GPS coordinates.
-     */
-    public function lensHasGpsCoordinates(?bool $value): AssetQuery
-    {
-        $this->lensHasGpsCoordinates = $value;
-        return $this->owner;
-    }
-
-    /**
-     * Filters assets by whether they have EXIF metadata.
-     */
-    public function lensHasExifData(?bool $value): AssetQuery
-    {
-        $this->lensHasExifData = $value;
-        return $this->owner;
-    }
-
     // ------------------------------------------------------------------
     // Public apply methods for condition rules (Flow B: subQuery exists)
     // Each checks property + subQuery, then delegates to the private method.
@@ -318,13 +294,6 @@ class AssetQueryBehavior extends Behavior
     {
         if ($this->lensHasFocalPoint !== null && $this->owner->subQuery !== null) {
             $this->applyHasFocalPointFilter();
-        }
-    }
-
-    public function lensApplyHasGpsCoordinatesFilter(): void
-    {
-        if ($this->lensHasGpsCoordinates !== null && $this->owner->subQuery !== null) {
-            $this->applyHasGpsCoordinatesFilter();
         }
     }
 
@@ -429,14 +398,6 @@ class AssetQueryBehavior extends Behavior
 
         if ($this->lensHasFocalPoint !== null) {
             $this->applyHasFocalPointFilter();
-        }
-
-        if ($this->lensHasGpsCoordinates !== null) {
-            $this->applyHasGpsCoordinatesFilter();
-        }
-
-        if ($this->lensHasExifData !== null) {
-            $this->applyHasExifDataFilter();
         }
 
         if (!empty($this->lensRawWhereConditions)) {
@@ -702,20 +663,6 @@ class AssetQueryBehavior extends Behavior
         }
     }
 
-    private function ensureExifMetadataJoined(): void
-    {
-        if ($this->exifMetadataJoined) {
-            return;
-        }
-
-        $this->owner->subQuery->leftJoin(
-            Install::TABLE_EXIF_METADATA . ' lens_exif',
-            '[[lens_exif.assetId]] = [[elements.id]]'
-        );
-
-        $this->exifMetadataJoined = true;
-    }
-
     private function applyHasFocalPointFilter(): void
     {
         if ($this->lensHasFocalPoint) {
@@ -725,30 +672,4 @@ class AssetQueryBehavior extends Behavior
         }
     }
 
-    private function applyHasGpsCoordinatesFilter(): void
-    {
-        $this->ensureExifMetadataJoined();
-
-        if ($this->lensHasGpsCoordinates) {
-            $this->owner->subQuery->andWhere(['not', ['lens_exif.latitude' => null]]);
-            $this->owner->subQuery->andWhere(['not', ['lens_exif.longitude' => null]]);
-        } else {
-            $this->owner->subQuery->andWhere([
-                'or',
-                ['lens_exif.latitude' => null],
-                ['lens_exif.longitude' => null],
-            ]);
-        }
-    }
-
-    private function applyHasExifDataFilter(): void
-    {
-        $this->ensureExifMetadataJoined();
-
-        if ($this->lensHasExifData) {
-            $this->owner->subQuery->andWhere(['not', ['lens_exif.id' => null]]);
-        } else {
-            $this->owner->subQuery->andWhere(['lens_exif.id' => null]);
-        }
-    }
 }

@@ -54,7 +54,6 @@ Choose your AI provider — **OpenAI GPT**, **Google Gemini**, or **Anthropic Cl
 ### Quality & Metadata
 - **Quality scoring** — sharpness, exposure, and noise metrics so you publish your best work
 - **Focal point detection** for smart cropping that keeps the subject in frame
-- **EXIF metadata** — camera info, GPS coordinates, dates — all extracted and queryable
 - **Stock photo detection** — identify which assets came from stock providers
 
 ### Review Workflow
@@ -232,7 +231,6 @@ Lens registers 10 custom condition rules for use in element sources and queries:
 | **Lens - Watermark Type** | Filter by watermark classification |
 | **Lens - Stock Provider** | Filter by detected stock photo source |
 | **Lens - Contains Brand Logo** | Filter by brand/logo detection |
-| **Lens - Has GPS Coordinates** | Filter by EXIF location data |
 
 ## Templating
 

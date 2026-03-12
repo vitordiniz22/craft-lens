@@ -112,7 +112,6 @@ use yii\db\ActiveQueryInterface;
  *
  * Content table flags (for lazy loading):
  * @property bool $hasAnalysisContent
- * @property bool $hasExifMetadata
  *
  * Token usage and cost:
  * @property int|null $inputTokens
@@ -128,7 +127,6 @@ use yii\db\ActiveQueryInterface;
  * Relations:
  * @property-read Asset $asset
  * @property-read AnalysisContentRecord|null $analysisContent
- * @property-read ExifMetadataRecord|null $exifMetadata
  */
 class AssetAnalysisRecord extends ActiveRecord
 {
@@ -184,14 +182,6 @@ class AssetAnalysisRecord extends ActiveRecord
         return $this->hasOne(AnalysisContentRecord::class, ['analysisId' => 'id']);
     }
 
-    /**
-     * Returns the related EXIF metadata record.
-     */
-    public function getExifMetadata(): ActiveQueryInterface
-    {
-        return $this->hasOne(ExifMetadataRecord::class, ['analysisId' => 'id']);
-    }
-
     public function rules(): array
     {
         return [
@@ -208,7 +198,7 @@ class AssetAnalysisRecord extends ActiveRecord
             [['watermarkType'], 'string', 'max' => 30],
             [['watermarkType'], 'in', 'range' => array_column(WatermarkType::cases(), 'value')],
             [['extractedText', 'extractedTextAi'], 'string', 'max' => self::EXTRACTED_TEXT_MAX_LENGTH],
-            [['hasAnalysisContent', 'hasExifMetadata'], 'boolean'],
+            [['hasAnalysisContent'], 'boolean'],
             [['perceptualHash', 'fileContentHash'], 'string', 'max' => 64],
             [['inputTokens', 'outputTokens'], 'integer', 'min' => 0],
             [['actualCost'], 'number', 'min' => 0],

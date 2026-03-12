@@ -17,7 +17,6 @@ class Install extends Migration
     public const TABLE_ASSET_COLORS = '{{%lens_asset_colors}}';
     public const TABLE_DUPLICATE_GROUPS = '{{%lens_duplicate_groups}}';
     public const TABLE_ANALYSIS_CONTENT = '{{%lens_analysis_content}}';
-    public const TABLE_EXIF_METADATA = '{{%lens_exif_metadata}}';
     public const TABLE_ANALYSIS_SITE_CONTENT = '{{%lens_analysis_site_content}}';
     public const TABLE_LOGS = '{{%lens_logs}}';
     public const TABLE_SEARCH_INDEX = '{{%lens_search_index}}';
@@ -34,7 +33,6 @@ class Install extends Migration
     {
         $this->dropTableIfExists(self::TABLE_SEARCH_INDEX);
         $this->dropTableIfExists(self::TABLE_ANALYSIS_SITE_CONTENT);
-        $this->dropTableIfExists(self::TABLE_EXIF_METADATA);
         $this->dropTableIfExists(self::TABLE_ANALYSIS_CONTENT);
         $this->dropTableIfExists(self::TABLE_LOGS);
         $this->dropTableIfExists(self::TABLE_DUPLICATE_GROUPS);
@@ -139,7 +137,6 @@ class Install extends Migration
 
             // Content table flags
             'hasAnalysisContent' => $this->boolean()->notNull()->defaultValue(false),
-            'hasExifMetadata' => $this->boolean()->notNull()->defaultValue(false),
 
             // Token usage and cost
             'inputTokens' => $this->integer()->null(),
@@ -160,41 +157,6 @@ class Install extends Migration
             'rawResponse' => $this->json()->null(),
             'customPromptResult' => $this->text()->null(),
             'errorMessage' => $this->text()->null(),
-            'dateCreated' => $this->dateTime()->notNull(),
-            'dateUpdated' => $this->dateTime()->notNull(),
-            'uid' => $this->uid(),
-        ]);
-
-        // EXIF metadata table
-        $this->createTable(self::TABLE_EXIF_METADATA, [
-            'id' => $this->primaryKey(),
-            'analysisId' => $this->integer()->notNull(),
-            'assetId' => $this->integer()->notNull(),
-
-            // Camera information
-            'cameraMake' => $this->string(100)->null(),
-            'cameraModel' => $this->string(100)->null(),
-            'lens' => $this->string(200)->null(),
-            'focalLength' => $this->string(20)->null(),
-            'aperture' => $this->string(20)->null(),
-            'shutterSpeed' => $this->string(20)->null(),
-            'iso' => $this->integer()->null(),
-            'exposureMode' => $this->string(30)->null(),
-
-            // Date and dimensions
-            'dateTaken' => $this->dateTime()->null(),
-            'orientation' => $this->tinyInteger()->null(),
-            'width' => $this->integer()->null(),
-            'height' => $this->integer()->null(),
-
-            // GPS coordinates
-            'latitude' => $this->decimal(10, 8)->null(),
-            'longitude' => $this->decimal(11, 8)->null(),
-            'altitude' => $this->decimal(10, 2)->null(),
-
-            // Raw data for debugging/future use
-            'rawExif' => $this->json()->null(),
-
             'dateCreated' => $this->dateTime()->notNull(),
             'dateUpdated' => $this->dateTime()->notNull(),
             'uid' => $this->uid(),
@@ -326,16 +288,8 @@ class Install extends Migration
         $this->createIndex(null, self::TABLE_ASSET_ANALYSES, ['fileContentHash']);
         // Content table flags indexes
         $this->createIndex(null, self::TABLE_ASSET_ANALYSES, ['hasAnalysisContent']);
-        $this->createIndex(null, self::TABLE_ASSET_ANALYSES, ['hasExifMetadata']);
-
         // Analysis content indexes
         $this->createIndex(null, self::TABLE_ANALYSIS_CONTENT, ['analysisId'], true);
-
-        // EXIF metadata indexes
-        $this->createIndex(null, self::TABLE_EXIF_METADATA, ['analysisId'], true);
-        $this->createIndex(null, self::TABLE_EXIF_METADATA, ['assetId']);
-        $this->createIndex(null, self::TABLE_EXIF_METADATA, ['dateTaken']);
-        $this->createIndex(null, self::TABLE_EXIF_METADATA, ['latitude', 'longitude']);
 
         // Asset tags indexes
         $this->createIndex(null, self::TABLE_ASSET_TAGS, ['assetId']);
@@ -420,27 +374,6 @@ class Install extends Migration
             self::TABLE_ANALYSIS_CONTENT,
             ['analysisId'],
             self::TABLE_ASSET_ANALYSES,
-            ['id'],
-            'CASCADE',
-            'CASCADE'
-        );
-
-        // EXIF metadata foreign keys
-        $this->addForeignKey(
-            null,
-            self::TABLE_EXIF_METADATA,
-            ['analysisId'],
-            self::TABLE_ASSET_ANALYSES,
-            ['id'],
-            'CASCADE',
-            'CASCADE'
-        );
-
-        $this->addForeignKey(
-            null,
-            self::TABLE_EXIF_METADATA,
-            ['assetId'],
-            Table::ELEMENTS,
             ['id'],
             'CASCADE',
             'CASCADE'

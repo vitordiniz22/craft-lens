@@ -301,6 +301,7 @@
     text-decoration: underline;
     font-weight: 600;
     background: none;
+    white-space: nowrap;
     border: none;
     padding: 0;
     font-size: 12px;
@@ -888,27 +889,6 @@
     flex-direction: column;
     gap: 2px;
     margin: 8px 0 12px 0;
-}
-
-/* ==========================================================================
-   Technical / EXIF Section
-   ========================================================================== */
-
-.lens-exif-grid {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 4px 12px;
-    font-size: 13px;
-    width: 100%;
-}
-
-.lens-exif-label {
-    color: var(--medium-text-color);
-    font-weight: 500;
-}
-
-.lens-exif-value {
-    color: var(--text-color);
 }
 
 /* ==========================================================================

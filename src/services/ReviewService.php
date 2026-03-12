@@ -16,7 +16,6 @@ use vitordiniz22\craftlens\Plugin;
 use vitordiniz22\craftlens\records\AssetAnalysisRecord;
 use vitordiniz22\craftlens\records\AssetColorRecord;
 use vitordiniz22\craftlens\records\AssetTagRecord;
-use vitordiniz22\craftlens\records\ExifMetadataRecord;
 use yii\base\Component;
 use yii\base\InvalidArgumentException;
 
@@ -299,32 +298,6 @@ class ReviewService extends Component
             ->where(['analysisId' => $record->id])
             ->all();
 
-        // EXIF metadata (conditional)
-        $exifData = null;
-        if ($record->hasExifMetadata) {
-            $exifRecord = ExifMetadataRecord::findOne(['analysisId' => $record->id]);
-            if ($exifRecord !== null) {
-                $exifData = [
-                    'cameraMake' => $exifRecord->cameraMake,
-                    'cameraModel' => $exifRecord->cameraModel,
-                    'lens' => $exifRecord->lens,
-                    'focalLength' => $exifRecord->focalLength,
-                    'aperture' => $exifRecord->aperture,
-                    'shutterSpeed' => $exifRecord->shutterSpeed,
-                    'iso' => $exifRecord->iso,
-                    'exposureMode' => $exifRecord->exposureMode,
-                    'dateTaken' => $exifRecord->dateTaken,
-                    'width' => $exifRecord->width,
-                    'height' => $exifRecord->height,
-                    'latitude' => $exifRecord->latitude,
-                    'longitude' => $exifRecord->longitude,
-                    'altitude' => $exifRecord->altitude,
-                    'cameraDisplay' => $exifRecord->getCameraDisplayString(),
-                    'gpsDisplay' => $exifRecord->getGpsDisplayString(),
-                ];
-            }
-        }
-
         $similarImages = Plugin::getInstance()->duplicateDetection->getSimilarAssetsForDisplay($record->assetId);
         $siteContentData = $this->loadSiteContentData($record->id, $asset);
 
@@ -428,8 +401,7 @@ class ReviewService extends Component
             'noiseScore' => $record->noiseScore,
             'overallQualityScore' => $record->overallQualityScore,
 
-            // EXIF, duplicates
-            'exif' => $exifData,
+            // Duplicates
             'similarImages' => $similarImages,
 
             // Per-site content
