@@ -112,7 +112,7 @@
     padding-bottom: 16px;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 18px;
 }
 
 /* ==========================================================================
@@ -175,7 +175,7 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
 }
 
 .lens-field-label {
@@ -246,12 +246,39 @@
     gap: 6px;
 }
 
-/* Provenance indicators */
+/* Provenance indicators — button reset for craft-tooltip trigger */
+.lens-lock-icon,
+.lens-ai-badge-icon {
+    appearance: none;
+    -webkit-appearance: none;
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    cursor: default;
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
 .lens-lock-icon {
     font-size: 11px;
     line-height: 1.3;
     opacity: 0.6;
 }
+
+.lens-ai-badge-icon {
+    color: var(--violet-500);
+    fill: currentColor;
+    font-size: 12px;
+    line-height: 1;
+}
+
+.lens-ai-badge-icon svg {
+    pointer-events: none;
+}
+
 
 .lens-edit-meta {
     font-size: 12px;
@@ -297,6 +324,10 @@
     align-items: center;
     gap: 4px;
     font-size: 12px;
+}
+
+.lens-applied-indicator .status {
+    margin-inline-end: 3px;
 }
 
 /* ==========================================================================
@@ -611,7 +642,7 @@
 .lens-quality-metrics {
     display: flex;
     flex-direction: column;
-    gap: 1px;
+    gap: 4px;
     width: 100%;
 }
 
@@ -849,6 +880,7 @@
 
 .lens-people-edit-panel {
     margin-top: 12px;
+    margin-bottom: 12px;
 }
 
 .lens-people-edit-options {
@@ -1161,4 +1193,11 @@
 
 .lens-translation-summary__expand.hidden {
     display: none;
+}
+
+
+.lens-ai-suggestion-inline .lens-applied-indicator {
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }

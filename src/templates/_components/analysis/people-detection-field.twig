@@ -80,7 +80,9 @@
             {{ iconSvg('user')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
         </span>
         {% if isEdited %}
-            <span class="lens-lock-icon" data-lens-target="lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
+            {% include 'lens/_components/analysis/_tooltip-lock' only %}
+        {% else %}
+            {% include 'lens/_components/analysis/_tooltip-ai' with {hasTarget: true} only %}
         {% endif %}
         <span class="lens-field-label">{{ 'People Detection'|t('lens') }}</span>
         {% if not isEdited and analysis.containsPeopleConfidence is defined and analysis.containsPeopleConfidence and not (hideConfidence ?? false) %}
@@ -134,14 +136,16 @@
             {{ iconSvg('user')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
         </span>
         {% if not isReview and isEdited %}
-            <span class="lens-lock-icon" data-lens-target="lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
+            {% include 'lens/_components/analysis/_tooltip-lock' only %}
+        {% elseif not isReview and not isEdited %}
+            {% include 'lens/_components/analysis/_tooltip-ai' with {hasTarget: true} only %}
         {% endif %}
         <span class="lens-field-label">{{ 'People Detection'|t('lens') }}</span>
         {% if (isReview or not isEdited) and analysis.containsPeopleConfidence is defined and analysis.containsPeopleConfidence and not (hideConfidence ?? false) %}
             <span class="badge"{% if not isReview %} data-lens-target="confidence-badge"{% endif %}>{{ (analysis.containsPeopleConfidence * 100)|round }}%</span>
         {% endif %}
         {% if not isReview %}
-            <button type="button" class="lens-edit-trigger" data-lens-action="people-edit" title="{{ 'Edit'|t('lens') }}">&#9998;</button>
+            {% include 'lens/_components/analysis/_tooltip-edit' with {editAction: 'people-edit'} only %}
         {% endif %}
         <span class="lens-detection-badge lens-detection-badge--clear" data-lens-target="people-badge">
             {% if hasPeople %}
@@ -189,7 +193,7 @@
         : (isEdited and ((analysis.containsPeopleAi != analysis.containsPeople) or (analysis.faceCountAi != analysis.faceCount)))
     %}
     <div class="lens-ai-suggestion-inline" data-lens-target="people-ai-suggestion"{% if not aiDiffers %} hidden{% endif %}>
-        <span class="lens-ai-suggestion-icon">{{ iconSvg('wand-magic-sparkles')|attr({width: 12, height: 12}) }}</span>
+        {% include 'lens/_components/analysis/_tooltip-ai' only %}
         <span data-lens-target="people-ai-text">
             {{ 'AI suggested: "{text}"'|t('lens', {
                 text: _self.peopleDetectionText(analysis.containsPeopleAi, analysis.faceCountAi)

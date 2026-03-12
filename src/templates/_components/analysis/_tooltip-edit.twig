@@ -1,0 +1,9 @@
+{#
+ # Edit pencil icon — triggers inline editing
+ #
+ # Expected variables:
+ #   editAction - string, the data-lens-action value (e.g. 'field-edit', 'detection-edit')
+ #}
+<craft-tooltip text="{{ 'Edit'|t('lens') }}">
+    <button type="button" class="lens-edit-trigger" data-lens-action="{{ editAction }}">&#9998;</button>
+</craft-tooltip>

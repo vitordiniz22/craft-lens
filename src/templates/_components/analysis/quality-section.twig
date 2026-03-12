@@ -17,7 +17,7 @@
     <div class="lens-accent-bar">
         <div class="lens-field-header" data-lens-target="field-header">
             {% if fpEdited %}
-                <span class="lens-lock-icon" data-lens-target="lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
+                {% include 'lens/_components/analysis/_tooltip-lock' only %}
             {% endif %}
             <span class="lens-field-label">{{ 'Focal Point'|t('lens') }}</span>
             {% if not fpEdited and analysis.focalPointConfidence and not (hideConfidence ?? false) %}
@@ -25,11 +25,28 @@
             {% endif %}
         </div>
 
-        <div class="lens-field-display">
-            <p data-lens-target="focal-display-text">{{ 'X: {x}, Y: {y}'|t('lens', {
+        <div class="lens-ai-suggestion-inline">
+            {% include 'lens/_components/analysis/_tooltip-ai' only %}
+            <span data-lens-target="focal-display-text">{{ 'X: {x}, Y: {y}'|t('lens', {
                 x: (analysis.focalPointX * 100)|round ~ '%',
                 y: (analysis.focalPointY * 100)|round ~ '%'
-            }) }}</p>
+            }) }}</span>
+            {% if fieldState == 'unlocked' and asset is defined %}
+                {% if fpAlreadyApplied %}
+                    <span class="lens-applied-indicator">
+                        <span class="status on"></span>
+                        <span class="smalltext">{{ 'Applied'|t('lens') }}</span>
+                    </span>
+                {% else %}
+                    <button type="button" class="lens-revert-trigger"
+                            data-lens-action="apply-focal-point"
+                            data-lens-asset-id="{{ asset.id }}"
+                            data-lens-focal-x="{{ analysis.focalPointX }}"
+                            data-lens-focal-y="{{ analysis.focalPointY }}">
+                        {{ 'Apply to Asset'|t('lens') }}
+                    </button>
+                {% endif %}
+            {% endif %}
         </div>
 
         {# Asset FP conflict — editing mode only, when asset has a different FP #}
@@ -40,7 +57,7 @@
 
             <div class="lens-ai-suggestion-inline" data-lens-target="focal-asset-conflict"
                 {% if fpMatchesAsset %}style="display: none;"{% endif %}>
-                <span class="lens-ai-suggestion-icon lens-ai-suggestion-icon--ai">{{ iconSvg('wand-magic-sparkles')|attr({width: 12, height: 12}) }}</span>
+                {% include 'lens/_components/analysis/_tooltip-ai' with {extraClass: 'lens-ai-suggestion-icon--ai'} only %}
                 <span class="lens-ai-suggestion-icon lens-ai-suggestion-icon--action">{{ iconSvg('triangle-exclamation')|attr({width: 12, height: 12}) }}</span>
                 <span data-lens-target="focal-asset-conflict-text">
                     {{ 'Different focal point suggested'|t('lens') }}
@@ -70,7 +87,7 @@
 
             <div class="lens-ai-suggestion-inline" data-lens-target="focal-ai-suggestion"
                  {% if not fpAiDiffers %}style="display: none;"{% endif %}>
-                <span class="lens-ai-suggestion-icon">{{ iconSvg('wand-magic-sparkles')|attr({width: 12, height: 12}) }}</span>
+                {% include 'lens/_components/analysis/_tooltip-ai' only %}
                 <span data-lens-target="focal-ai-text">
                     {{ 'AI suggested: X: {x}, Y: {y}'|t('lens', {
                         x: (analysis.focalPointXAi * 100)|round ~ '%',
@@ -87,28 +104,6 @@
             </div>
         {% endif %}
 
-        {# Apply to asset row - only in unlocked mode #}
-        {% if fieldState == 'unlocked' and asset is defined %}
-            <div class="lens-apply-row">
-                {% if fpAlreadyApplied %}
-                    <div class="lens-applied-indicator">
-                        <span class="status on"></span>
-                        <span class="smalltext">{{ 'Applied'|t('lens') }}</span>
-                    </div>
-                {% else %}
-                    <button type="button" class="btn small submit"
-                            data-lens-action="apply-focal-point"
-                            data-lens-asset-id="{{ asset.id }}"
-                            data-lens-focal-x="{{ analysis.focalPointX }}"
-                            data-lens-focal-y="{{ analysis.focalPointY }}">
-                        {{ 'Apply to Asset'|t('lens') }}
-                    </button>
-                    {% if asset.getHasFocalPoint() %}
-                        <span class="smalltext light">{{ 'Will replace current focal point'|t('lens') }}</span>
-                    {% endif %}
-                {% endif %}
-            </div>
-        {% endif %}
     </div>
 {% else %}
     <div class="lens-accent-bar">

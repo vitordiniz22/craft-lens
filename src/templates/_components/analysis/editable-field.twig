@@ -31,7 +31,7 @@
 <div class="lens-editable-field{% if featured %} lens-panel-featured{% endif %}">
     <div class="lens-field-header" data-lens-target="field-header">
         {% if isEdited %}
-            <span class="lens-lock-icon" data-lens-target="lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
+            {% include 'lens/_components/analysis/_tooltip-lock' only %}
         {% endif %}
         {% if label is defined and label %}
             <span class="lens-field-label">{{ label }}</span>
@@ -73,7 +73,7 @@
 
     <div class="lens-field-header" data-lens-target="field-header">
         {% if not isReview and isEdited %}
-            <span class="lens-lock-icon" data-lens-target="lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
+            {% include 'lens/_components/analysis/_tooltip-lock' only %}
         {% endif %}
         {% if label is defined and label %}
             <span class="lens-field-label">{{ label }}</span>
@@ -88,7 +88,7 @@
             {% if not isEdited and confidence and not (hideConfidence ?? false) %}
                 <span class="badge" data-lens-target="confidence-badge">{{ (confidence * 100)|round }}%</span>
             {% endif %}
-            <button type="button" class="lens-edit-trigger" data-lens-action="field-edit" title="{{ 'Edit'|t('lens') }}">&#9998;</button>
+            {% include 'lens/_components/analysis/_tooltip-edit' with {editAction: 'field-edit'} only %}
         {% endif %}
     </div>
 
@@ -139,14 +139,14 @@
     {% if isReview %}
         {% if aiValue and aiValue != value %}
             <div class="lens-ai-suggestion-inline">
-                <span class="lens-ai-suggestion-icon">{{ iconSvg('wand-magic-sparkles')|attr({width: 12, height: 12}) }}</span>
+                {% include 'lens/_components/analysis/_tooltip-ai' only %}
                 {{ 'AI: "{value}"'|t('lens', {value: aiValue|truncate(60)}) }}
             </div>
         {% endif %}
     {% else %}
         {% set showAiSuggestion = isEdited and aiValue and aiValue != value %}
         <div class="lens-ai-suggestion-inline" data-lens-target="field-ai-suggestion"{% if not showAiSuggestion %} hidden{% endif %}>
-            <span class="lens-ai-suggestion-icon">{{ iconSvg('wand-magic-sparkles')|attr({width: 12, height: 12}) }}</span>
+            {% include 'lens/_components/analysis/_tooltip-ai' only %}
             <span data-lens-target="ai-suggestion-text">
                 {% if showAiSuggestion %}
                     {{ 'AI suggested: "{value}"'|t('lens', {value: aiValue|truncate(100)}) }}

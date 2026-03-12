@@ -77,7 +77,7 @@
 {% if analysis.assetHasFocalPoint and analysis.assetFocalPoint %}
     <div class="lens-ai-suggestion-inline" data-lens-target="fp-actions"
          {% if fpMatchesAsset %}style="display: none;"{% endif %}>
-        <span class="lens-ai-suggestion-icon lens-ai-suggestion-icon--ai">{{ iconSvg('wand-magic-sparkles')|attr({width: 12, height: 12}) }}</span>
+        <craft-tooltip text="{{ 'AI suggested'|t('lens') }}"><button type="button" class="lens-ai-badge-icon lens-ai-suggestion-icon--ai">{{ iconSvg('wand-magic-sparkles')|attr({width: 12, height: 12}) }}</button></craft-tooltip>
         <span class="lens-ai-suggestion-icon lens-ai-suggestion-icon--action">{{ iconSvg('triangle-exclamation')|attr({width: 12, height: 12}) }}</span>
         <span data-lens-target="fp-actions-text">
             {{ 'Different focal point suggested'|t('lens') }}
@@ -107,7 +107,7 @@
 
     <div class="lens-ai-suggestion-inline" data-lens-target="fp-ai-revert"
          {% if fpMatchesAi %}style="display: none;"{% endif %}>
-        <span class="lens-ai-suggestion-icon lens-ai-suggestion-icon--ai">{{ iconSvg('wand-magic-sparkles')|attr({width: 12, height: 12}) }}</span>
+        <craft-tooltip text="{{ 'AI suggested'|t('lens') }}"><button type="button" class="lens-ai-badge-icon lens-ai-suggestion-icon--ai">{{ iconSvg('wand-magic-sparkles')|attr({width: 12, height: 12}) }}</button></craft-tooltip>
         <span data-lens-target="fp-ai-revert-text">
             {{ 'AI suggested: {x}, {y}'|t('lens', {
                 x: (analysis.focalPointXAi * 100)|round ~ '%',

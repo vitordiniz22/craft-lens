@@ -35,7 +35,9 @@
             {{ iconSvg(icon)|attr({width: 12, height: 12, fill: 'currentColor'}) }}
         </span>
         {% if isEdited %}
-            <span class="lens-lock-icon" data-lens-target="lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
+            {% include 'lens/_components/analysis/_tooltip-lock' only %}
+        {% else %}
+            {% include 'lens/_components/analysis/_tooltip-ai' with {hasTarget: true} only %}
         {% endif %}
         <span class="lens-field-label">{{ label }}</span>
         {% if not isEdited and (confidence ?? null) and not (hideConfidence ?? false) %}
@@ -84,14 +86,16 @@
             {{ iconSvg(icon)|attr({width: 12, height: 12, fill: 'currentColor'}) }}
         </span>
         {% if not isReview and isEdited %}
-            <span class="lens-lock-icon" data-lens-target="lock-icon" title="{{ 'Protected from reprocessing'|t('lens') }}">&#128274;</span>
+            {% include 'lens/_components/analysis/_tooltip-lock' only %}
+        {% elseif not isReview and not isEdited %}
+            {% include 'lens/_components/analysis/_tooltip-ai' with {hasTarget: true} only %}
         {% endif %}
         <span class="lens-field-label">{{ label }}</span>
         {% if (isReview or not isEdited) and (confidence ?? null) and not (hideConfidence ?? false) %}
             <span class="badge"{% if not isReview %} data-lens-target="confidence-badge"{% endif %}>{{ (confidence * 100)|round }}%</span>
         {% endif %}
         {% if not isReview %}
-            <button type="button" class="lens-edit-trigger" data-lens-action="detection-edit" title="{{ 'Edit'|t('lens') }}">&#9998;</button>
+            {% include 'lens/_components/analysis/_tooltip-edit' with {editAction: 'detection-edit'} only %}
         {% endif %}
         <span class="lens-detection-badge {{ detected ? 'lens-detection-badge--flagged' : 'lens-detection-badge--clear' }}" data-lens-target="detection-badge">
             {% if detected %}
@@ -143,7 +147,7 @@
     {# AI suggestion — purple bar, shown when value differs from AI #}
     {% set aiDiffers = isReview ? (detectedAi != detected) : (isEdited and (detectedAi != detected)) %}
     <div class="lens-ai-suggestion-inline" data-lens-target="detection-ai-suggestion"{% if not aiDiffers %} hidden{% endif %}>
-        <span class="lens-ai-suggestion-icon">{{ iconSvg('wand-magic-sparkles')|attr({width: 12, height: 12}) }}</span>
+        {% include 'lens/_components/analysis/_tooltip-ai' only %}
         <span data-lens-target="detection-ai-text">
             {{ 'AI suggested: "{value}"'|t('lens', {value: detectedAi ? detectedLabel : clearedLabel}) }}
         </span>

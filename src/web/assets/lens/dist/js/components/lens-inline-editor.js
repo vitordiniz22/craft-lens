@@ -538,25 +538,48 @@
 
         _showLockIcon: function(fieldEl) {
             var header = fieldEl.querySelector('[data-lens-target="field-header"]');
-            if (header && !header.querySelector('[data-lens-target="lock-icon"]')) {
-                var lock = document.createElement('span');
-                lock.className = 'lens-lock-icon';
-                lock.dataset.lensTarget = 'lock-icon';
-                lock.title = Craft.t('lens', 'Protected from reprocessing');
-                lock.innerHTML = '&#128274;';
+            if (!header) return;
+
+            // Hide AI badge icon (wand) + its craft-tooltip wrapper — lock replaces it visually
+            var aiBadge = header.querySelector('[data-lens-target="ai-badge-icon"]');
+            if (aiBadge) {
+                var aiBadgeTooltip = aiBadge.closest('craft-tooltip');
+                window.Lens.core.DOM.hide(aiBadgeTooltip || aiBadge);
+            }
+
+            // Remove confidence badge (field is now user-edited)
+            var confidenceBadge = header.querySelector('[data-lens-target="confidence-badge"]');
+            if (confidenceBadge) confidenceBadge.remove();
+
+            if (!header.querySelector('[data-lens-target="lock-icon"]')) {
+                var tpl = document.querySelector('[data-lens-target="lock-template"]');
+                if (!tpl) return;
+                var tooltip = tpl.content.cloneNode(true);
+
                 // Insert after detection icon (if present), otherwise before first child
                 var detectionIcon = header.querySelector('[data-lens-target="detection-icon"]');
                 if (detectionIcon && detectionIcon.nextSibling) {
-                    header.insertBefore(lock, detectionIcon.nextSibling);
+                    header.insertBefore(tooltip, detectionIcon.nextSibling);
                 } else {
-                    header.insertBefore(lock, header.firstChild);
+                    header.insertBefore(tooltip, header.firstChild);
                 }
             }
         },
 
         _removeLockIcon: function(fieldEl) {
             var lock = fieldEl.querySelector('[data-lens-target="lock-icon"]');
-            if (lock) lock.remove();
+            if (lock) {
+                // Remove the craft-tooltip wrapper along with the lock
+                var lockTooltip = lock.closest('craft-tooltip');
+                (lockTooltip || lock).remove();
+            }
+
+            // Restore AI badge icon (wand) + its craft-tooltip wrapper
+            var aiBadge = fieldEl.querySelector('[data-lens-target="ai-badge-icon"]');
+            if (aiBadge) {
+                var aiBadgeTooltip = aiBadge.closest('craft-tooltip');
+                window.Lens.core.DOM.show(aiBadgeTooltip || aiBadge);
+            }
         },
 
         _updateEditMeta: function(fieldEl, data) {

@@ -76,7 +76,7 @@
             {% if confidence and not (hideConfidence ?? false) %}
                 <span class="badge" data-lens-target="confidence-badge">{{ (confidence * 100)|round }}%</span>
             {% endif %}
-            <button type="button" class="lens-edit-trigger" data-lens-action="alt-proxy-edit" title="{{ 'Edit'|t('lens') }}">&#9998;</button>
+            {% include 'lens/_components/analysis/_tooltip-edit' with {editAction: 'alt-proxy-edit'} only %}
         {% endif %}
     </div>
 
@@ -92,7 +92,7 @@
         </div>
 
         {# Editable suggestion input #}
-        <textarea class="text fullwidth" name="altText" rows="2" maxlength="500">{{ suggestionValue }}</textarea>
+        <textarea class="text fullwidth" name="altText" rows="2" maxlength="500" data-lens-target="bridge-review-input"{% if aiValue ?? null %} data-lens-ai-value="{{ aiValue }}"{% endif %}>{{ suggestionValue }}</textarea>
 
         {# Status line #}
         <div class="lens-native-status">
@@ -147,14 +147,24 @@
         {% endif %}
     {% endif %}
 
-    {# AI suggestion inline (informational, if user has edited the suggestion) #}
+    {# AI suggestion inline — shows original AI value when suggestion has been edited #}
     {% if isReview %}
-        {% if (aiValue ?? null) and aiValue != suggestionValue %}
-            <div class="lens-ai-suggestion-inline">
-                <span class="lens-ai-suggestion-icon">{{ iconSvg('wand-magic-sparkles')|attr({width: 12, height: 12}) }}</span>
-                {{ 'AI: "{value}"'|t('lens', {value: aiValue|truncate(60)}) }}
-            </div>
-        {% endif %}
+        {% set showProxyAi = (aiValue ?? null) and aiValue != suggestionValue %}
+        <div class="lens-ai-suggestion-inline" data-lens-target="bridge-review-ai"{% if not showProxyAi %} hidden{% endif %}>
+            {% include 'lens/_components/analysis/_tooltip-ai' only %}
+            <span data-lens-target="bridge-review-ai-text">
+                {% if showProxyAi %}
+                    {{ 'AI: "{value}"'|t('lens', {value: aiValue|truncate(60)}) }}
+                {% endif %}
+            </span>
+            {% if aiValue ?? null %}
+                <button type="button" class="lens-revert-trigger"
+                        data-lens-action="bridge-review-revert"
+                        data-lens-ai-value="{{ aiValue }}"{% if not showProxyAi %} hidden{% endif %}>
+                    {{ 'Revert to AI'|t('lens') }}
+                </button>
+            {% endif %}
+        </div>
     {% endif %}
 </div>
 

@@ -411,13 +411,20 @@
 .lens-ai-suggestion-inline {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  font-size: 13px;
+  line-height: 1.4;
   color: var(--violet-800);
   margin-top: 4px;
   padding: 6px 8px;
   background: var(--violet-100);
   border-radius: var(--small-border-radius);
+}
+
+.lens-ai-suggestion-inline .lens-revert-trigger,
+.lens-ai-suggestion-inline .lens-applied-indicator {
+  margin-left: auto;
 }
 
 .lens-ai-suggestion-inline[hidden] {

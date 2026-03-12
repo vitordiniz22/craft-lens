@@ -371,19 +371,6 @@ class Plugin extends BasePlugin
                     return;
                 }
 
-                if (!$event->isNew) {
-                    $record = $this->assetAnalysis->getAnalysis($asset->id);
-                    if ($record !== null) {
-                        $this->analysisEdit->syncNativeFieldsToRecord($asset, $record);
-
-                        try {
-                            $this->searchIndex->reindexField($record, 'title');
-                            $this->searchIndex->reindexField($record, 'alt');
-                        } catch (Throwable $e) {
-                            Logger::warning(LogCategory::SearchIndex, 'Title/alt reindex failed on asset save: ' . $e->getMessage(), assetId: $asset->id);
-                        }
-                    }
-                }
             }
         );
 

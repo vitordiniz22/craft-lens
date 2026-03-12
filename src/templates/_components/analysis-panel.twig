@@ -120,13 +120,7 @@
             <div class="lens-section">
                 <div class="lens-section-header">
                     <span class="lens-section-header__title">{{ 'Description'|t('lens') }}</span>
-                    <p class="lens-section-header__intro">
-                        {% if readOnly or isProcessing %}
-                            {{ 'AI-suggested metadata.'|t('lens') }}
-                        {% else %}
-                            {{ 'AI-suggested metadata. Click the pencil to edit.'|t('lens') }}
-                        {% endif %}
-                    </p>
+                    <p class="lens-section-header__intro">{{ 'AI-suggested metadata.'|t('lens') }}</p>
                 </div>
                 <div class="lens-section-body">
                     {% include 'lens/_components/analysis/content-section' with {
@@ -293,5 +287,18 @@
                 {% endif %}
             </div>
         {% endif %}
+    {% endif %}
+
+    {# Templates for dynamically inserted elements — cloned by JS #}
+    {% if fieldState is defined and fieldState == 'unlocked' %}
+        <template data-lens-target="lock-template">
+            {% include 'lens/_components/analysis/_tooltip-lock' only %}
+        </template>
+        <template data-lens-target="applied-template">
+            <span class="lens-applied-indicator">
+                <span class="status on"></span>
+                <span class="smalltext">{{ 'Applied'|t('lens') }}</span>
+            </span>
+        </template>
     {% endif %}
 </div>

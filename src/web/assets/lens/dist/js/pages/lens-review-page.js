@@ -18,6 +18,7 @@
             this._bindKeyboardShortcuts();
             this._bindPeopleDetection();
             this._bindDetectionToggles();
+            this._bindBridgeReviewInputs();
             this._bindFormSubmit();
             this._initialized = true;
         },
@@ -142,6 +143,53 @@
                         aiSuggestion.hidden = (currentDetected === aiDetected);
                     }
                 });
+            });
+        },
+
+        // ================================================================
+        // Bridge Review Inputs — Dynamic AI suggestion + client-side revert
+        // ================================================================
+
+        _bindBridgeReviewInputs: function() {
+            var DOM = window.Lens.core.DOM;
+
+            // Show/hide AI suggestion inline as user types in bridge review inputs
+            DOM.delegate('[data-lens-target="bridge-review-input"]', 'input', function(e, input) {
+                var container = input.closest('.lens-accent-bar') || input.closest('.lens-alt-proxy');
+                if (!container) return;
+
+                var aiDiv = container.querySelector('[data-lens-target="bridge-review-ai"]');
+                var aiValue = input.dataset.lensAiValue;
+                if (!aiDiv || !aiValue) return;
+
+                var differs = (input.value !== aiValue);
+                aiDiv.hidden = !differs;
+
+                // Also show/hide the revert button
+                var revertBtn = aiDiv.querySelector('[data-lens-action="bridge-review-revert"]');
+                if (revertBtn) revertBtn.hidden = !differs;
+
+                // Update AI text if showing
+                if (differs) {
+                    var textSpan = aiDiv.querySelector('[data-lens-target="bridge-review-ai-text"]');
+                    if (textSpan) {
+                        var truncated = aiValue.length > 60 ? aiValue.substring(0, 60) + '...' : aiValue;
+                        textSpan.textContent = Craft.t('lens', 'AI: "{value}"', { value: truncated });
+                    }
+                }
+            });
+
+            // Client-side revert: restore input value to original AI value
+            DOM.delegate('[data-lens-action="bridge-review-revert"]', 'click', function(e, btn) {
+                var container = btn.closest('.lens-accent-bar') || btn.closest('.lens-alt-proxy');
+                if (!container) return;
+
+                var input = container.querySelector('[data-lens-target="bridge-review-input"]');
+                var aiValue = btn.dataset.lensAiValue;
+                if (input && aiValue) {
+                    input.value = aiValue;
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                }
             });
         },
 

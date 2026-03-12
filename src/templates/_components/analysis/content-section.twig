@@ -134,32 +134,9 @@
     } %}
 {% endif %}
 
-{# ── Other Languages / Translations ── #}
-{# Build list of "other" languages (excluding current site if secondary) #}
-{% set otherSiteContent = [] %}
-{% if (siteContent ?? [])|length %}
-    {% for site in siteContent %}
-        {% if site.siteId != currentSiteId %}
-            {% set otherSiteContent = otherSiteContent|merge([site]) %}
-        {% endif %}
-    {% endfor %}
-{% endif %}
-
-{# On the review page, use the compact translation-summary component #}
 {% if fieldState == 'editing' %}
     {% include 'lens/_components/analysis/translation-summary' with {
         siteContent: siteContent,
-        isTitleTranslatable: isTitleTranslatable,
-        isAltTranslatable: isAltTranslatable,
-        analysisId: resolvedAnalysisId,
-        fieldState: fieldState
-    } %}
-
-{# On the analysis panel, use collapsible tabbed section #}
-{% elseif otherSiteContent|length %}
-    {% include 'lens/_components/analysis/_translations-tabbed' with {
-        otherSiteContent: otherSiteContent,
-        isSecondarySite: isSecondarySite,
         isTitleTranslatable: isTitleTranslatable,
         isAltTranslatable: isAltTranslatable,
         analysisId: resolvedAnalysisId,
