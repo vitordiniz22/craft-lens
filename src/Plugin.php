@@ -443,14 +443,15 @@ class Plugin extends BasePlugin
                 $iconPath = $this->getBasePath() . '/icon-mask.svg';
 
                 $sourceDefinitions = [
+                    'not-analysed' => ['Not Analysed', ['lensStatus' => 'untagged', 'kind' => 'image']],
                     'missing-alt-text' => ['Missing Alt Text', ['hasAlt' => false, 'kind' => 'image']],
-                    'missing-focal-point' => ['Missing Focal Point', ['lensHasFocalPoint' => false, 'kind' => 'image']],
                     'nsfw-flagged' => ['NSFW Flagged', ['lensNsfwFlagged' => true, 'kind' => 'image']],
+                    'low-quality' => ['Low Quality', ['lensLowQuality' => true, 'kind' => 'image']],
+                    'web-readiness-issues' => ['Web Readiness Issues', ['lensWebReadinessIssues' => ['fileTooLarge', 'resolutionTooSmall', 'unsupportedFormat'], 'kind' => 'image']],
+                    'missing-focal-point' => ['Missing Focal Point', ['lensHasFocalPoint' => false, 'kind' => 'image']],
                     'contains-people' => ['Contains People', ['lensContainsPeople' => true, 'kind' => 'image']],
                     'has-watermark' => ['Has Watermark', ['lensHasWatermark' => true, 'kind' => 'image']],
                     'has-brand-logo' => ['Has Brand Logo', ['lensContainsBrandLogo' => true, 'kind' => 'image']],
-                    'low-quality' => ['Low Quality', ['lensLowQuality' => true, 'kind' => 'image']],
-                    'web-readiness-issues' => ['Web Readiness Issues', ['lensWebReadinessIssues' => ['fileTooLarge', 'resolutionTooSmall', 'unsupportedFormat'], 'kind' => 'image']],
                 ];
 
                 foreach ($sourceDefinitions as $key => [$label, $criteria]) {
