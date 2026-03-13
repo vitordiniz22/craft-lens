@@ -76,8 +76,10 @@ class LensAnalysisElement extends BaseUiElement
                 $tags = $plugin->tagAggregation->getTagsForAnalysis($analysis->id);
                 $colors = $plugin->colorAggregation->getColorsForAnalysis($analysis->id);
 
-                $similarImages = $plugin->duplicateDetection->getSimilarAssetsForDisplay($element->id);
-                $totalSimilarCount = $plugin->duplicateDetection->getUnresolvedDuplicateCountForAsset($element->id);
+                if ($plugin->getIsPro()) {
+                    $similarImages = $plugin->duplicateDetection->getSimilarAssetsForDisplay($element->id);
+                    $totalSimilarCount = $plugin->duplicateDetection->getUnresolvedDuplicateCountForAsset($element->id);
+                }
 
                 if (MultisiteHelper::needsMultisiteContent($element)) {
                     $siteRecords = $plugin->siteContent->getAllSiteContent($analysis->id);

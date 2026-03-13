@@ -563,7 +563,7 @@ class StatisticsService extends Component
             ];
         }
 
-        if ($duplicateCount > 0) {
+        if ($duplicateCount > 0 && $plugin->getIsPro()) {
             $items[] = [
                 'type' => 'duplicates',
                 'label' => Craft::t('lens', 'Duplicates'),

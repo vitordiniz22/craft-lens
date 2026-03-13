@@ -84,10 +84,6 @@ class DuplicateDetectionService extends Component
      */
     public function findDuplicatesForAssets(array $assetIds, int $threshold = 10): int
     {
-        if (!Plugin::getInstance()->getIsPro()) {
-            return 0;
-        }
-
         if (count($assetIds) < 2) {
             return 0;
         }

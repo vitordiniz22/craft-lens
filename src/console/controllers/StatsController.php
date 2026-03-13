@@ -114,6 +114,11 @@ class StatsController extends Controller
      */
     public function actionScanDuplicates(): int
     {
+        if (!Plugin::getInstance()->getIsPro()) {
+            $this->stderr("Duplicate detection requires the Pro edition.\n", Console::FG_RED);
+            return ExitCode::CONFIG;
+        }
+
         $this->stdout("Running full duplicate scan...\n");
 
         $service = Plugin::getInstance()->duplicateDetection;

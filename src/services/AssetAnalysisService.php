@@ -537,7 +537,7 @@ class AssetAnalysisService extends Component
 
     private function findDuplicatesForAsset(Asset $asset, AssetAnalysisRecord $record): void
     {
-        if (empty($record->perceptualHash)) {
+        if (empty($record->perceptualHash) || !Plugin::getInstance()->getIsPro()) {
             return;
         }
 
