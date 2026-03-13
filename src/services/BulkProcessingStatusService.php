@@ -6,7 +6,6 @@ namespace vitordiniz22\craftlens\services;
 
 use Craft;
 use craft\elements\Asset;
-use vitordiniz22\craftlens\enums\AiProvider;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\Logger;
@@ -382,27 +381,11 @@ class BulkProcessingStatusService extends Component
      */
     private function estimateCostFromTokens(int $assetCount): float
     {
-        $settings = Plugin::getInstance()->getSettings();
-        $pricing = Plugin::getInstance()->pricing;
-
         try {
-            $costPerAsset = match ($settings->getAiProviderEnum()) {
-                AiProvider::OpenAi => $pricing->calculateOpenAiCost(
-                    $settings->openaiModel,
-                    self::DEFAULT_INPUT_TOKENS,
-                    self::DEFAULT_OUTPUT_TOKENS
-                ),
-                AiProvider::Gemini => $pricing->calculateGeminiCost(
-                    $settings->geminiModel,
-                    self::DEFAULT_INPUT_TOKENS,
-                    self::DEFAULT_OUTPUT_TOKENS
-                ),
-                AiProvider::Claude => $pricing->calculateClaudeCost(
-                    $settings->claudeModel,
-                    self::DEFAULT_INPUT_TOKENS,
-                    self::DEFAULT_OUTPUT_TOKENS
-                ),
-            };
+            $costPerAsset = Plugin::getInstance()->pricing->calculateCostForCurrentProvider(
+                self::DEFAULT_INPUT_TOKENS,
+                self::DEFAULT_OUTPUT_TOKENS
+            );
         } catch (\Throwable $e) {
             Logger::warning(LogCategory::JobStatus, 'Cost estimation failed, using fallback', exception: $e);
             $costPerAsset = 0.001;

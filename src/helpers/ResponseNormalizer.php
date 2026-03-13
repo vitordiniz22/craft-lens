@@ -231,6 +231,10 @@ final class ResponseNormalizer
      */
     public static function clampConfidence(float|int|string $value): float
     {
+        if (is_string($value) && !is_numeric($value)) {
+            return 0.0;
+        }
+
         return min(1.0, max(0.0, (float) $value));
     }
 

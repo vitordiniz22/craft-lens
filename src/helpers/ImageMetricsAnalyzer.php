@@ -35,6 +35,9 @@ class ImageMetricsAnalyzer
     private const SHARPNESS_SIGMOID_RATE = 0.01;
     private const SHARPNESS_SIGMOID_MIDPOINT = 200;
 
+    // Multiplier to scale normalized variance into a useful range for sigmoid input
+    private const VARIANCE_SCALE_FACTOR = 10000;
+
     // AI overall quality threshold (kept from old system)
     public const OVERALL_QUALITY_AI_THRESHOLD = 0.4;
 
@@ -156,7 +159,7 @@ class ImageMetricsAnalyzer
         $normalizedStdDev = $stdDev / $maxQuantum;
 
         // Square to get variance-like metric
-        $variance = $normalizedStdDev * $normalizedStdDev * 10000;
+        $variance = $normalizedStdDev * $normalizedStdDev * self::VARIANCE_SCALE_FACTOR;
 
         $clone->clear();
 
@@ -284,178 +287,115 @@ class ImageMetricsAnalyzer
     {
         $checks = [];
 
-        // Sharpness
-        if ($raw['sharpnessScore'] !== null) {
-            $score = (float) $raw['sharpnessScore'];
-
-            if ($score < self::SHARPNESS_BLURRY) {
-                $checks['sharpness'] = [
-                    'status' => 'warning',
-                    'icon' => 'eye',
-                    'label' => Craft::t('lens', 'Sharpness'),
-                    'value' => null,
-                    'verdict' => Craft::t('lens', 'Blurry'),
-                    'recommendation' => Craft::t('lens', 'Sharpness is low, consider replacing this image'),
-                ];
-            } elseif ($score < self::SHARPNESS_SOFT) {
-                $checks['sharpness'] = [
-                    'status' => 'warning',
-                    'icon' => 'eye',
-                    'label' => Craft::t('lens', 'Sharpness'),
-                    'value' => null,
-                    'verdict' => Craft::t('lens', 'Soft'),
-                    'recommendation' => Craft::t('lens', 'Image is slightly soft, may lack detail at full size'),
-                ];
-            } else {
-                $checks['sharpness'] = [
-                    'status' => 'pass',
-                    'icon' => 'eye',
-                    'label' => Craft::t('lens', 'Sharpness'),
-                    'value' => null,
-                    'verdict' => Craft::t('lens', 'Sharp'),
-                    'recommendation' => null,
-                ];
-            }
-        }
-
-        // Brightness
-        if ($raw['exposureScore'] !== null) {
-            $score = (float) $raw['exposureScore'];
-
-            if ($score < self::BRIGHTNESS_DARK) {
-                $checks['brightness'] = [
-                    'status' => 'warning',
-                    'icon' => 'sun',
-                    'label' => Craft::t('lens', 'Brightness'),
-                    'value' => null,
-                    'verdict' => Craft::t('lens', 'Too dark'),
-                    'recommendation' => Craft::t('lens', 'Image appears underexposed, consider adjusting levels'),
-                ];
-            } elseif ($score > self::BRIGHTNESS_BRIGHT) {
-                $checks['brightness'] = [
-                    'status' => 'warning',
-                    'icon' => 'sun',
-                    'label' => Craft::t('lens', 'Brightness'),
-                    'value' => null,
-                    'verdict' => Craft::t('lens', 'Too bright'),
-                    'recommendation' => Craft::t('lens', 'Image appears overexposed, highlights may be clipped'),
-                ];
-            } else {
-                $checks['brightness'] = [
-                    'status' => 'pass',
-                    'icon' => 'sun',
-                    'label' => Craft::t('lens', 'Brightness'),
-                    'value' => null,
-                    'verdict' => Craft::t('lens', 'Good'),
-                    'recommendation' => null,
-                ];
-            }
-        }
-
-        // Contrast
-        if ($raw['contrastScore'] !== null) {
-            $score = (float) $raw['contrastScore'];
-
-            if ($score < self::CONTRAST_FLAT) {
-                $checks['contrast'] = [
-                    'status' => 'warning',
-                    'icon' => 'circle-half-stroke',
-                    'label' => Craft::t('lens', 'Contrast'),
-                    'value' => null,
-                    'verdict' => Craft::t('lens', 'Flat'),
-                    'recommendation' => Craft::t('lens', 'Very low contrast, image may appear washed out'),
-                ];
-            } elseif ($score < self::CONTRAST_LOW) {
-                $checks['contrast'] = [
-                    'status' => 'warning',
-                    'icon' => 'circle-half-stroke',
-                    'label' => Craft::t('lens', 'Contrast'),
-                    'value' => null,
-                    'verdict' => Craft::t('lens', 'Low contrast'),
-                    'recommendation' => Craft::t('lens', 'Low contrast may reduce visual impact'),
-                ];
-            } else {
-                $checks['contrast'] = [
-                    'status' => 'pass',
-                    'icon' => 'circle-half-stroke',
-                    'label' => Craft::t('lens', 'Contrast'),
-                    'value' => null,
-                    'verdict' => Craft::t('lens', 'Good'),
-                    'recommendation' => null,
-                ];
-            }
-        }
-
-        // JPEG Quality (only shown for JPEG files)
-        if ($raw['jpegQuality'] !== null) {
-            $quality = (int) $raw['jpegQuality'];
-
-            if ($quality < self::JPEG_HEAVY_ARTIFACTS) {
-                $checks['compression'] = [
-                    'status' => 'error',
-                    'icon' => 'file-zipper',
-                    'label' => Craft::t('lens', 'Compression'),
-                    'value' => $quality . '%',
-                    'verdict' => Craft::t('lens', 'Heavy artifacts'),
-                    'recommendation' => Craft::t('lens', 'JPEG quality is critically low, image is visibly degraded'),
-                ];
-            } elseif ($quality < self::JPEG_COMPRESSED) {
-                $checks['compression'] = [
-                    'status' => 'warning',
-                    'icon' => 'file-zipper',
-                    'label' => Craft::t('lens', 'Compression'),
-                    'value' => $quality . '%',
-                    'verdict' => Craft::t('lens', 'Compressed'),
-                    'recommendation' => Craft::t('lens', 'Noticeable compression, consider using a higher quality source'),
-                ];
-            } else {
-                $checks['compression'] = [
-                    'status' => 'pass',
-                    'icon' => 'file-zipper',
-                    'label' => Craft::t('lens', 'Compression'),
-                    'value' => $quality . '%',
-                    'verdict' => Craft::t('lens', 'Good'),
-                    'recommendation' => null,
-                ];
-            }
-        }
-
-        // Color Profile
-        if ($raw['colorProfile'] !== null) {
-            $profile = $raw['colorProfile'];
-            $displayName = self::profileDisplayName($profile);
-
-            if ($profile === 'cmyk') {
-                $checks['colorProfile'] = [
-                    'status' => 'warning',
-                    'icon' => 'palette',
-                    'label' => Craft::t('lens', 'Color Profile'),
-                    'value' => $displayName,
-                    'verdict' => Craft::t('lens', 'Not web-ready'),
-                    'recommendation' => Craft::t('lens', 'CMYK is for print, convert to sRGB for web display'),
-                ];
-            } elseif ($profile === 'srgb') {
-                $checks['colorProfile'] = [
-                    'status' => 'pass',
-                    'icon' => 'palette',
-                    'label' => Craft::t('lens', 'Color Profile'),
-                    'value' => $displayName,
-                    'verdict' => Craft::t('lens', 'Web standard'),
-                    'recommendation' => null,
-                ];
-            } else {
-                $checks['colorProfile'] = [
-                    'status' => 'warning',
-                    'icon' => 'palette',
-                    'label' => Craft::t('lens', 'Color Profile'),
-                    'value' => $displayName,
-                    'verdict' => Craft::t('lens', 'Not sRGB'),
-                    'recommendation' => Craft::t('lens', 'May render with shifted colors in some browsers'),
-                ];
-            }
-        }
+        self::addSharpnessCheck($checks, $raw);
+        self::addBrightnessCheck($checks, $raw);
+        self::addContrastCheck($checks, $raw);
+        self::addCompressionCheck($checks, $raw);
+        self::addColorProfileCheck($checks, $raw);
 
         return $checks;
+    }
+
+    /**
+     * Build a check result array with translated strings.
+     */
+    private static function checkResult(string $status, string $icon, string $label, ?string $value, string $verdict, ?string $recommendation): array
+    {
+        return [
+            'status' => $status,
+            'icon' => $icon,
+            'label' => Craft::t('lens', $label),
+            'value' => $value,
+            'verdict' => Craft::t('lens', $verdict),
+            'recommendation' => $recommendation !== null ? Craft::t('lens', $recommendation) : null,
+        ];
+    }
+
+    private static function addSharpnessCheck(array &$checks, array $raw): void
+    {
+        if ($raw['sharpnessScore'] === null) {
+            return;
+        }
+
+        $score = (float) $raw['sharpnessScore'];
+
+        if ($score < self::SHARPNESS_BLURRY) {
+            $checks['sharpness'] = self::checkResult('warning', 'eye', 'Sharpness', null, 'Blurry', 'Sharpness is low, consider replacing this image');
+        } elseif ($score < self::SHARPNESS_SOFT) {
+            $checks['sharpness'] = self::checkResult('warning', 'eye', 'Sharpness', null, 'Soft', 'Image is slightly soft, may lack detail at full size');
+        } else {
+            $checks['sharpness'] = self::checkResult('pass', 'eye', 'Sharpness', null, 'Sharp', null);
+        }
+    }
+
+    private static function addBrightnessCheck(array &$checks, array $raw): void
+    {
+        if ($raw['exposureScore'] === null) {
+            return;
+        }
+
+        $score = (float) $raw['exposureScore'];
+
+        if ($score < self::BRIGHTNESS_DARK) {
+            $checks['brightness'] = self::checkResult('warning', 'sun', 'Brightness', null, 'Too dark', 'Image appears underexposed, consider adjusting levels');
+        } elseif ($score > self::BRIGHTNESS_BRIGHT) {
+            $checks['brightness'] = self::checkResult('warning', 'sun', 'Brightness', null, 'Too bright', 'Image appears overexposed, highlights may be clipped');
+        } else {
+            $checks['brightness'] = self::checkResult('pass', 'sun', 'Brightness', null, 'Good', null);
+        }
+    }
+
+    private static function addContrastCheck(array &$checks, array $raw): void
+    {
+        if ($raw['contrastScore'] === null) {
+            return;
+        }
+
+        $score = (float) $raw['contrastScore'];
+
+        if ($score < self::CONTRAST_FLAT) {
+            $checks['contrast'] = self::checkResult('warning', 'circle-half-stroke', 'Contrast', null, 'Flat', 'Very low contrast, image may appear washed out');
+        } elseif ($score < self::CONTRAST_LOW) {
+            $checks['contrast'] = self::checkResult('warning', 'circle-half-stroke', 'Contrast', null, 'Low contrast', 'Low contrast may reduce visual impact');
+        } else {
+            $checks['contrast'] = self::checkResult('pass', 'circle-half-stroke', 'Contrast', null, 'Good', null);
+        }
+    }
+
+    private static function addCompressionCheck(array &$checks, array $raw): void
+    {
+        if ($raw['jpegQuality'] === null) {
+            return;
+        }
+
+        $quality = (int) $raw['jpegQuality'];
+        $value = $quality . '%';
+
+        if ($quality < self::JPEG_HEAVY_ARTIFACTS) {
+            $checks['compression'] = self::checkResult('error', 'file-zipper', 'Compression', $value, 'Heavy artifacts', 'JPEG quality is critically low, image is visibly degraded');
+        } elseif ($quality < self::JPEG_COMPRESSED) {
+            $checks['compression'] = self::checkResult('warning', 'file-zipper', 'Compression', $value, 'Compressed', 'Noticeable compression, consider using a higher quality source');
+        } else {
+            $checks['compression'] = self::checkResult('pass', 'file-zipper', 'Compression', $value, 'Good', null);
+        }
+    }
+
+    private static function addColorProfileCheck(array &$checks, array $raw): void
+    {
+        if ($raw['colorProfile'] === null) {
+            return;
+        }
+
+        $profile = $raw['colorProfile'];
+        $displayName = self::profileDisplayName($profile);
+
+        if ($profile === 'cmyk') {
+            $checks['colorProfile'] = self::checkResult('warning', 'palette', 'Color Profile', $displayName, 'Not web-ready', 'CMYK is for print, convert to sRGB for web display');
+        } elseif ($profile === 'srgb') {
+            $checks['colorProfile'] = self::checkResult('pass', 'palette', 'Color Profile', $displayName, 'Web standard', null);
+        } else {
+            $checks['colorProfile'] = self::checkResult('warning', 'palette', 'Color Profile', $displayName, 'Not sRGB', 'May render with shifted colors in some browsers');
+        }
     }
 
     private static function profileDisplayName(string $profile): string

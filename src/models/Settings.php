@@ -41,6 +41,11 @@ class Settings extends Model
     // Batch Processing
     public const BATCH_SIZE = 20;
 
+    // Supported models per provider (single source of truth for validation and defaults)
+    public const OPENAI_MODELS = ['gpt-5.2', 'gpt-5-mini', 'gpt-5-nano'];
+    public const GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.5-pro'];
+    public const CLAUDE_MODELS = ['claude-sonnet-4-5-20250929', 'claude-opus-4-5-20251101', 'claude-haiku-4-5-20251001'];
+
     public function rules(): array
     {
         return [
@@ -53,11 +58,11 @@ class Settings extends Model
             [['geminiApiKey'], 'required', 'when' => fn() => $this->aiProvider === AiProvider::Gemini->value],
             [['claudeApiKey'], 'required', 'when' => fn() => $this->aiProvider === AiProvider::Claude->value],
             [['claudeModel'], 'required', 'when' => fn() => $this->aiProvider === AiProvider::Claude->value],
-            [['claudeModel'], 'in', 'range' => ['claude-sonnet-4-5-20250929', 'claude-opus-4-5-20251101', 'claude-haiku-4-5-20251001']],
+            [['claudeModel'], 'in', 'range' => self::CLAUDE_MODELS],
             [['openaiModel'], 'required', 'when' => fn() => $this->aiProvider === AiProvider::OpenAi->value],
-            [['openaiModel'], 'in', 'range' => ['gpt-5.2', 'gpt-5-mini', 'gpt-5-nano']],
+            [['openaiModel'], 'in', 'range' => self::OPENAI_MODELS],
             [['geminiModel'], 'required', 'when' => fn() => $this->aiProvider === AiProvider::Gemini->value],
-            [['geminiModel'], 'in', 'range' => ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.5-pro']],
+            [['geminiModel'], 'in', 'range' => self::GEMINI_MODELS],
 
             // Boolean toggles
             [[
@@ -126,5 +131,27 @@ class Settings extends Model
     public function getClaudeApiKey(): string
     {
         return $this->getApiKey('claudeApiKey');
+    }
+
+    /**
+     * Get IDs of volumes enabled for Lens processing, or null if all volumes are enabled.
+     *
+     * @return int[]|null null means no volume filter (all volumes enabled)
+     */
+    public function getEnabledVolumeIds(): ?array
+    {
+        if (empty($this->enabledVolumes) || in_array('*', $this->enabledVolumes, true)) {
+            return null;
+        }
+
+        $ids = [];
+
+        foreach (Craft::$app->getVolumes()->getAllVolumes() as $volume) {
+            if (in_array($volume->uid, $this->enabledVolumes, true)) {
+                $ids[] = $volume->id;
+            }
+        }
+
+        return $ids;
     }
 }

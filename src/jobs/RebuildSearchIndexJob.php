@@ -24,7 +24,12 @@ class RebuildSearchIndexJob extends BaseJob
     {
         Logger::info(LogCategory::SearchIndex, 'Background search index rebuild started');
 
-        $indexed = Plugin::getInstance()->searchIndex->rebuildAll();
+        try {
+            $indexed = Plugin::getInstance()->searchIndex->rebuildAll();
+        } catch (\Throwable $e) {
+            Logger::error(LogCategory::SearchIndex, 'Search index rebuild failed: ' . $e->getMessage(), exception: $e);
+            throw $e;
+        }
 
         Logger::info(
             LogCategory::SearchIndex,

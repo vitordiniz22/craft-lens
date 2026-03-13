@@ -365,20 +365,10 @@ class SearchService extends Component
             ->limit(self::NATIVE_SEARCH_LIMIT);
 
         // Respect plugin volume settings.
-        $configured = Plugin::getInstance()->getSettings()->enabledVolumes;
+        $volumeIds = Plugin::getInstance()->getSettings()->getEnabledVolumeIds();
 
-        if (!empty($configured) && !\in_array('*', $configured, true)) {
-            $volumeIds = [];
-
-            foreach (Craft::$app->getVolumes()->getAllVolumes() as $volume) {
-                if (\in_array($volume->uid, $configured, true)) {
-                    $volumeIds[] = $volume->id;
-                }
-            }
-
-            if (!empty($volumeIds)) {
-                $assetQuery->volumeId($volumeIds);
-            }
+        if ($volumeIds !== null && !empty($volumeIds)) {
+            $assetQuery->volumeId($volumeIds);
         }
 
         return array_map('intval', $assetQuery->ids());
@@ -801,18 +791,10 @@ class SearchService extends Component
      */
     private function applyVolumeFilter(Query $query): void
     {
-        $configured = Plugin::getInstance()->getSettings()->enabledVolumes;
+        $volumeIds = Plugin::getInstance()->getSettings()->getEnabledVolumeIds();
 
-        if (empty($configured) || \in_array('*', $configured, true)) {
+        if ($volumeIds === null) {
             return;
-        }
-
-        $volumeIds = [];
-
-        foreach (Craft::$app->getVolumes()->getAllVolumes() as $volume) {
-            if (\in_array($volume->uid, $configured, true)) {
-                $volumeIds[] = $volume->id;
-            }
         }
 
         if (empty($volumeIds)) {

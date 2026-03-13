@@ -125,21 +125,7 @@ class StatisticsService extends Component
      */
     private function getEnabledVolumeIds(): ?array
     {
-        $enabledUids = Plugin::getInstance()->getSettings()->enabledVolumes;
-
-        if (empty($enabledUids) || in_array('*', $enabledUids, true)) {
-            return null;
-        }
-
-        $ids = [];
-
-        foreach (Craft::$app->getVolumes()->getAllVolumes() as $volume) {
-            if (in_array($volume->uid, $enabledUids, true)) {
-                $ids[] = $volume->id;
-            }
-        }
-
-        return $ids;
+        return Plugin::getInstance()->getSettings()->getEnabledVolumeIds();
     }
 
     /**

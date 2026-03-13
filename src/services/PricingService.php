@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace vitordiniz22\craftlens\services;
 
+use vitordiniz22\craftlens\enums\AiProvider;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\Logger;
+use vitordiniz22\craftlens\Plugin;
 use yii\base\Component;
 
 /**
@@ -96,6 +98,34 @@ class PricingService extends Component
 
         return ($inputTokens / 1_000_000) * $pricing['input']
              + ($outputTokens / 1_000_000) * $pricing['output'];
+    }
+
+    /**
+     * Calculate cost for the currently configured AI provider.
+     */
+    public function calculateCostForCurrentProvider(int $inputTokens, int $outputTokens): float
+    {
+        $settings = Plugin::getInstance()->getSettings();
+
+        return match ($settings->getAiProviderEnum()) {
+            AiProvider::OpenAi => $this->calculateOpenAiCost($settings->openaiModel, $inputTokens, $outputTokens),
+            AiProvider::Gemini => $this->calculateGeminiCost($settings->geminiModel, $inputTokens, $outputTokens),
+            AiProvider::Claude => $this->calculateClaudeCost($settings->claudeModel, $inputTokens, $outputTokens),
+        };
+    }
+
+    /**
+     * Get supported model names for a provider.
+     *
+     * @return string[]
+     */
+    public function getSupportedModels(AiProvider $provider): array
+    {
+        return match ($provider) {
+            AiProvider::OpenAi => array_keys(self::OPENAI_PRICING),
+            AiProvider::Gemini => array_keys(self::GEMINI_PRICING),
+            AiProvider::Claude => array_keys(self::CLAUDE_PRICING),
+        };
     }
 
     /**

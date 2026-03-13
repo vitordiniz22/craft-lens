@@ -20,6 +20,10 @@ use yii\db\Query;
  */
 class AssetQueryBehavior extends Behavior
 {
+    // Exposure score thresholds for "exposure issues" filter
+    private const EXPOSURE_LOW_THRESHOLD = 0.3;
+    private const EXPOSURE_HIGH_THRESHOLD = 0.7;
+
     public string|array|null $lensStatus = null;
     public ?bool $lensContainsPeople = null;
     public ?float $lensConfidenceBelow = null;
@@ -378,7 +382,7 @@ class AssetQueryBehavior extends Behavior
         }
 
         if ($this->lensContainsPeople !== null) {
-            $this->applyContainsPeopleFilter();
+            $this->applySimpleFilter('lens.containsPeople', $this->lensContainsPeople);
         }
 
         if ($this->lensConfidenceBelow !== null) {
@@ -404,23 +408,23 @@ class AssetQueryBehavior extends Behavior
         }
 
         if ($this->lensNsfwFlagged !== null) {
-            $this->applyNsfwFlaggedFilter();
+            $this->applySimpleFilter('lens.isFlaggedNsfw', $this->lensNsfwFlagged);
         }
 
         if ($this->lensHasWatermark !== null) {
-            $this->applyHasWatermarkFilter();
+            $this->applySimpleFilter('lens.hasWatermark', $this->lensHasWatermark);
         }
 
         if ($this->lensWatermarkType !== null) {
-            $this->applyWatermarkTypeFilter();
+            $this->applySimpleFilter('lens.watermarkType', $this->lensWatermarkType);
         }
 
         if ($this->lensWatermarkTypes !== null && !empty($this->lensWatermarkTypes)) {
-            $this->applyWatermarkTypesFilter();
+            $this->applySimpleFilter('lens.watermarkType', $this->lensWatermarkTypes);
         }
 
         if ($this->lensContainsBrandLogo !== null) {
-            $this->applyContainsBrandLogoFilter();
+            $this->applySimpleFilter('lens.containsBrandLogo', $this->lensContainsBrandLogo);
         }
 
         if ($this->lensDetectedBrand !== null) {
@@ -502,40 +506,13 @@ class AssetQueryBehavior extends Behavior
         }
     }
 
-    private function applyContainsPeopleFilter(): void
+    /**
+     * Apply a simple equality filter on a Lens column.
+     */
+    private function applySimpleFilter(string $column, mixed $value): void
     {
         $this->ensureJoined();
-        $this->owner->subQuery->andWhere(['lens.containsPeople' => $this->lensContainsPeople]);
-    }
-
-    private function applyNsfwFlaggedFilter(): void
-    {
-        $this->ensureJoined();
-        $this->owner->subQuery->andWhere(['lens.isFlaggedNsfw' => $this->lensNsfwFlagged]);
-    }
-
-    private function applyHasWatermarkFilter(): void
-    {
-        $this->ensureJoined();
-        $this->owner->subQuery->andWhere(['lens.hasWatermark' => $this->lensHasWatermark]);
-    }
-
-    private function applyWatermarkTypeFilter(): void
-    {
-        $this->ensureJoined();
-        $this->owner->subQuery->andWhere(['lens.watermarkType' => $this->lensWatermarkType]);
-    }
-
-    private function applyWatermarkTypesFilter(): void
-    {
-        $this->ensureJoined();
-        $this->owner->subQuery->andWhere(['lens.watermarkType' => $this->lensWatermarkTypes]);
-    }
-
-    private function applyContainsBrandLogoFilter(): void
-    {
-        $this->ensureJoined();
-        $this->owner->subQuery->andWhere(['lens.containsBrandLogo' => $this->lensContainsBrandLogo]);
+        $this->owner->subQuery->andWhere([$column => $value]);
     }
 
     private function applyRawWhereConditions(): void
@@ -697,15 +674,19 @@ class AssetQueryBehavior extends Behavior
     private function applyQualityBelowFilter(): void
     {
         $this->ensureJoined();
-        $this->owner->subQuery->andWhere(['<', 'lens.overallQualityScore', $this->lensQualityBelow]);
-        $this->owner->subQuery->andWhere(['not', ['lens.overallQualityScore' => null]]);
+        $this->owner->subQuery->andWhere(['and',
+            ['not', ['lens.overallQualityScore' => null]],
+            ['<', 'lens.overallQualityScore', $this->lensQualityBelow],
+        ]);
     }
 
     private function applySharpnessBelowFilter(): void
     {
         $this->ensureJoined();
-        $this->owner->subQuery->andWhere(['<', 'lens.sharpnessScore', $this->lensSharpnessBelow]);
-        $this->owner->subQuery->andWhere(['not', ['lens.sharpnessScore' => null]]);
+        $this->owner->subQuery->andWhere(['and',
+            ['not', ['lens.sharpnessScore' => null]],
+            ['<', 'lens.sharpnessScore', $this->lensSharpnessBelow],
+        ]);
     }
 
     private function applyExposureIssuesFilter(): void
@@ -716,16 +697,16 @@ class AssetQueryBehavior extends Behavior
             // Assets with exposure issues (too dark OR too bright)
             $this->owner->subQuery->andWhere([
                 'or',
-                ['<', 'lens.exposureScore', 0.3],
-                ['>', 'lens.exposureScore', 0.7],
+                ['<', 'lens.exposureScore', self::EXPOSURE_LOW_THRESHOLD],
+                ['>', 'lens.exposureScore', self::EXPOSURE_HIGH_THRESHOLD],
             ]);
             $this->owner->subQuery->andWhere(['not', ['lens.exposureScore' => null]]);
         } else {
             // Assets with good exposure
             $this->owner->subQuery->andWhere([
                 'and',
-                ['>=', 'lens.exposureScore', 0.3],
-                ['<=', 'lens.exposureScore', 0.7],
+                ['>=', 'lens.exposureScore', self::EXPOSURE_LOW_THRESHOLD],
+                ['<=', 'lens.exposureScore', self::EXPOSURE_HIGH_THRESHOLD],
             ]);
         }
     }

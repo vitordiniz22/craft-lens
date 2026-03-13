@@ -335,15 +335,16 @@ class Plugin extends BasePlugin
                 $view->registerAssetBundle(LensAsset::class);
 
                 $template = $event->template;
-                if (str_starts_with($template, 'lens/_review')) {
-                    $view->registerAssetBundle(LensReviewAsset::class);
-                    $view->registerAssetBundle(LensAssetActionsAsset::class);
-                } elseif (str_starts_with($template, 'lens/_search')) {
-                    $view->registerAssetBundle(LensSearchAsset::class);
-                } elseif (str_starts_with($template, 'lens/_bulk')) {
-                    $view->registerAssetBundle(LensBulkAsset::class);
-                } elseif (str_starts_with($template, 'lens/_logs')) {
-                    $view->registerAssetBundle(LensLogsAsset::class);
+                $featureBundles = match (true) {
+                    str_starts_with($template, 'lens/_review') => [LensReviewAsset::class, LensAssetActionsAsset::class],
+                    str_starts_with($template, 'lens/_search') => [LensSearchAsset::class],
+                    str_starts_with($template, 'lens/_bulk') => [LensBulkAsset::class],
+                    str_starts_with($template, 'lens/_logs') => [LensLogsAsset::class],
+                    default => [],
+                };
+
+                foreach ($featureBundles as $bundle) {
+                    $view->registerAssetBundle($bundle);
                 }
             }
         );
@@ -465,84 +466,28 @@ class Plugin extends BasePlugin
                     return;
                 }
 
-                $sources = [];
-
                 $iconPath = $this->getBasePath() . '/icon-mask.svg';
 
-                $sources[] = [
-                    'key' => 'lens:missing-alt-text',
-                    'label' => Craft::t('lens', 'Missing Alt Text'),
-                    'criteria' => ['hasAlt' => false, 'kind' => 'image'],
-                    'hasThumbs' => true,
-                    'defaultSort' => ['dateCreated', 'desc'],
-                    'iconMask' => $iconPath,
+                $sourceDefinitions = [
+                    'missing-alt-text' => ['Missing Alt Text', ['hasAlt' => false, 'kind' => 'image']],
+                    'missing-focal-point' => ['Missing Focal Point', ['lensHasFocalPoint' => false, 'kind' => 'image']],
+                    'nsfw-flagged' => ['NSFW Flagged', ['lensNsfwFlagged' => true, 'kind' => 'image']],
+                    'contains-people' => ['Contains People', ['lensContainsPeople' => true, 'kind' => 'image']],
+                    'has-watermark' => ['Has Watermark', ['lensHasWatermark' => true, 'kind' => 'image']],
+                    'has-brand-logo' => ['Has Brand Logo', ['lensContainsBrandLogo' => true, 'kind' => 'image']],
+                    'low-quality' => ['Low Quality', ['lensLowQuality' => true, 'kind' => 'image']],
+                    'web-readiness-issues' => ['Web Readiness Issues', ['lensWebReadinessIssues' => ['fileTooLarge', 'resolutionTooSmall', 'unsupportedFormat'], 'kind' => 'image']],
                 ];
 
-                $sources[] = [
-                    'key' => 'lens:missing-focal-point',
-                    'label' => Craft::t('lens', 'Missing Focal Point'),
-                    'criteria' => ['lensHasFocalPoint' => false, 'kind' => 'image'],
-                    'hasThumbs' => true,
-                    'defaultSort' => ['dateCreated', 'desc'],
-                    'iconMask' => $iconPath,
-                ];
-
-                $sources[] = [
-                    'key' => 'lens:nsfw-flagged',
-                    'label' => Craft::t('lens', 'NSFW Flagged'),
-                    'criteria' => ['lensNsfwFlagged' => true, 'kind' => 'image'],
-                    'hasThumbs' => true,
-                    'defaultSort' => ['dateCreated', 'desc'],
-                    'iconMask' => $iconPath,
-                ];
-
-                $sources[] = [
-                    'key' => 'lens:contains-people',
-                    'label' => Craft::t('lens', 'Contains People'),
-                    'criteria' => ['lensContainsPeople' => true, 'kind' => 'image'],
-                    'hasThumbs' => true,
-                    'defaultSort' => ['dateCreated', 'desc'],
-                    'iconMask' => $iconPath,
-                ];
-
-                $sources[] = [
-                    'key' => 'lens:has-watermark',
-                    'label' => Craft::t('lens', 'Has Watermark'),
-                    'criteria' => ['lensHasWatermark' => true, 'kind' => 'image'],
-                    'hasThumbs' => true,
-                    'defaultSort' => ['dateCreated', 'desc'],
-                    'iconMask' => $iconPath,
-                ];
-
-                $sources[] = [
-                    'key' => 'lens:has-brand-logo',
-                    'label' => Craft::t('lens', 'Has Brand Logo'),
-                    'criteria' => ['lensContainsBrandLogo' => true, 'kind' => 'image'],
-                    'hasThumbs' => true,
-                    'defaultSort' => ['dateCreated', 'desc'],
-                    'iconMask' => $iconPath,
-                ];
-
-                $sources[] = [
-                    'key' => 'lens:low-quality',
-                    'label' => Craft::t('lens', 'Low Quality'),
-                    'criteria' => ['lensLowQuality' => true, 'kind' => 'image'],
-                    'hasThumbs' => true,
-                    'defaultSort' => ['dateCreated', 'desc'],
-                    'iconMask' => $iconPath,
-                ];
-
-                $sources[] = [
-                    'key' => 'lens:web-readiness-issues',
-                    'label' => Craft::t('lens', 'Web Readiness Issues'),
-                    'criteria' => ['lensWebReadinessIssues' => ['fileTooLarge', 'resolutionTooSmall', 'unsupportedFormat'], 'kind' => 'image'],
-                    'hasThumbs' => true,
-                    'defaultSort' => ['dateCreated', 'desc'],
-                    'iconMask' => $iconPath,
-                ];
-
-                if (!empty($sources)) {
-                    array_push($event->sources, ...$sources);
+                foreach ($sourceDefinitions as $key => [$label, $criteria]) {
+                    $event->sources[] = [
+                        'key' => "lens:{$key}",
+                        'label' => Craft::t('lens', $label),
+                        'criteria' => $criteria,
+                        'hasThumbs' => true,
+                        'defaultSort' => ['dateCreated', 'desc'],
+                        'iconMask' => $iconPath,
+                    ];
                 }
             }
         );

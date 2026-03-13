@@ -42,9 +42,24 @@ class SettingsController extends Controller
         $plugin = Plugin::getInstance();
         $settings = $plugin->getSettings();
 
-        $settingsData = $this->request->getBodyParam('settings');
+        $settingsData = $this->request->getBodyParam('settings', []);
 
-        $settings->setAttributes($settingsData);
+        $allowedKeys = [
+            'aiProvider',
+            'openaiApiKey',
+            'openaiModel',
+            'geminiApiKey',
+            'geminiModel',
+            'claudeApiKey',
+            'claudeModel',
+            'autoProcessOnUpload',
+            'requireReviewBeforeApply',
+            'enabledVolumes',
+            'enableSemanticSearch',
+            'logRetentionDays',
+        ];
+
+        $settings->setAttributes(array_intersect_key((array) $settingsData, array_flip($allowedKeys)));
 
         if (!$settings->validate()) {
             Logger::warning(LogCategory::Configuration, 'Settings validation failed', context: ['errors' => $settings->getErrors()]);

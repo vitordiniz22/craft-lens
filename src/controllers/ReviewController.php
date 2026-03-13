@@ -174,13 +174,20 @@ class ReviewController extends Controller
         $faceCount = $this->request->getBodyParam('faceCount');
 
         if ($faceCount !== null) {
-            $modifications['faceCount'] = (int) $faceCount;
+            $faceCountInt = (int) $faceCount;
+
+            if ($faceCountInt < 0 || $faceCountInt > 10000) {
+                throw new BadRequestHttpException('Invalid face count');
+            }
+
+            $modifications['faceCount'] = $faceCountInt;
         }
 
         $nsfwScore = $this->request->getBodyParam('nsfwScore');
 
         if ($nsfwScore !== null) {
-            $modifications['nsfwScore'] = (float) $nsfwScore;
+            $nsfwScoreFloat = (float) $nsfwScore;
+            $modifications['nsfwScore'] = min(1.0, max(0.0, $nsfwScoreFloat));
         }
 
         foreach (['containsPeople', 'hasWatermark', 'containsBrandLogo'] as $field) {
