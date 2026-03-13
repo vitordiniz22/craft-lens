@@ -113,7 +113,7 @@
                         </td>
                     </tr>
                     {% if log.stackTrace or log.context or log.requestPayload or log.responsePayload %}
-                        <tr id="lens-detail-{{ log.id }}" class="lens-log-detail">
+                        <tr data-lens-detail-id="lens-detail-{{ log.id }}" class="lens-log-detail">
                             <td colspan="6" class="lens-log-detail-cell">
                                 {% if log.stackTrace %}
                                     <div class="lens-log-detail-section">

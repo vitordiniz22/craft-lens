@@ -143,6 +143,8 @@
 
                     Craft.cp.displayNotice(Craft.t('lens', 'Reverted to AI value.'));
                 }
+            }).catch(() => {
+                Craft.cp.displayError(Craft.t('lens', 'Failed to revert.'));
             });
         },
 
@@ -253,6 +255,8 @@
                 }
 
                 Craft.cp.displayNotice(Craft.t('lens', 'Reverted to AI values.'));
+            }).catch(() => {
+                Craft.cp.displayError(Craft.t('lens', 'Failed to revert.'));
             });
         },
 
@@ -407,6 +411,8 @@
 
                     Craft.cp.displayNotice(Craft.t('lens', 'Reverted to AI value.'));
                 }
+            }).catch(() => {
+                Craft.cp.displayError(Craft.t('lens', 'Failed to revert.'));
             });
         },
 
@@ -599,7 +605,8 @@
             var aiSuggestion = fieldEl.querySelector('[data-lens-target="field-ai-suggestion"]');
             if (aiSuggestion) {
                 if (data.aiValue && data.aiValue !== data.value) {
-                    var truncated = data.aiValue.length > 100 ? data.aiValue.substring(0, 100) + '...' : data.aiValue;
+                    var maxLen = window.Lens.config.THRESHOLDS.AI_SUGGESTION_PREVIEW_LENGTH;
+                    var truncated = data.aiValue.length > maxLen ? data.aiValue.substring(0, maxLen) + '...' : data.aiValue;
                     var textSpan = aiSuggestion.querySelector('[data-lens-target="ai-suggestion-text"]');
                     if (textSpan) {
                         textSpan.textContent = Craft.t('lens', 'AI suggested: "{value}"', { value: truncated });

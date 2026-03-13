@@ -10,6 +10,10 @@
  * Defensive design: Every reference to Craft internals ($search, $searchContainer,
  * $clearSearchBtn, $toolbar) is guarded. If Craft renames or removes any of these,
  * the worst case is both search bars appear — the modal never breaks.
+ *
+ * NOTE: This file patches Craft internals and intentionally uses jQuery + class
+ * selectors to match Craft's modal DOM structure. The data-lens-* convention
+ * applies only to Lens-owned elements injected into the modal.
  */
 (function() {
     'use strict';
@@ -18,12 +22,13 @@
         return;
     }
 
+    var _config = window.Lens && window.Lens.config;
     var SEARCH_ACTION = 'lens/semantic-search/search';
-    var DEBOUNCE_MS = window.Lens && window.Lens.config
-        ? window.Lens.config.POLLING.SEMANTIC_SEARCH_DEBOUNCE_MS
+    var DEBOUNCE_MS = _config
+        ? _config.POLLING.SEMANTIC_SEARCH_DEBOUNCE_MS
         : 350;
-    var SEARCH_LIMIT = 50;
-    var MIN_QUERY_LENGTH = 2;
+    var SEARCH_LIMIT = _config ? _config.SEARCH.MODAL_LIMIT : 50;
+    var MIN_QUERY_LENGTH = _config ? _config.SEARCH.MIN_QUERY_LENGTH : 2;
 
     // Store the original createModal before patching
     var _originalCreateModal = Craft.AssetSelectInput.prototype.createModal;

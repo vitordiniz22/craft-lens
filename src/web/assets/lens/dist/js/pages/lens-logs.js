@@ -30,10 +30,15 @@
                 var targetId = btn.dataset.lensDetailId;
                 if (!targetId) return;
 
-                var row = document.getElementById(targetId);
+                var row = document.querySelector('[data-lens-detail-id="' + targetId + '"]');
                 if (row) {
-                    var isHidden = window.getComputedStyle(row).display === 'none';
-                    row.style.display = isHidden ? 'table-row' : 'none';
+                    var isHidden = row.hidden || window.getComputedStyle(row).display === 'none';
+                    if (isHidden) {
+                        row.style.display = 'table-row';
+                        row.hidden = false;
+                    } else {
+                        DOM.hide(row);
+                    }
                 }
             });
         },

@@ -1016,15 +1016,8 @@
 }
 
 /* ==========================================================================
-   Translations Section (Collapsible Tabbed Panel)
+   Translation Shared Styles
    ========================================================================== */
-
-.lens-translations-section {
-    margin-top: 4px;
-    border: 1px solid var(--hairline-color);
-    border-radius: var(--medium-border-radius);
-    overflow: hidden;
-}
 
 .lens-translations-header {
     display: flex;
@@ -1061,6 +1054,14 @@
     transform: rotate(90deg);
 }
 
+.lens-translations-body {
+    padding: 12px 14px 4px;
+}
+
+.lens-translations-body.hidden {
+    display: none;
+}
+
 .lens-translation-lang-chip {
     display: inline-flex;
     align-items: center;
@@ -1072,58 +1073,6 @@
     color: var(--blue-700);
     text-transform: uppercase;
     letter-spacing: 0.3px;
-}
-
-.lens-translations-body {
-    padding: 12px 14px 4px;
-}
-
-.lens-translations-body.hidden {
-    display: none;
-}
-
-/* Tab bar */
-.lens-translations-tabs {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    margin-bottom: 12px;
-}
-
-.lens-translations-tab {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 4px 10px;
-    border: 1px solid var(--hairline-color);
-    border-radius: 14px;
-    background: transparent;
-    cursor: pointer;
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--medium-text-color);
-    transition: all 0.15s;
-}
-
-.lens-translations-tab:hover {
-    background: var(--gray-050);
-    border-color: var(--gray-300);
-}
-
-.lens-translations-tab.is-active {
-    background: var(--blue-050);
-    border-color: var(--blue-300);
-    color: var(--blue-700);
-    font-weight: 600;
-}
-
-/* Per-language group */
-.lens-translation-group {
-    padding-bottom: 8px;
-}
-
-.lens-translation-group.hidden {
-    display: none;
 }
 
 .lens-translation-group__header {

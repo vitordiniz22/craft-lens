@@ -149,6 +149,46 @@
         },
 
         /**
+         * Flash a duplicate chip to indicate a duplicate add attempt.
+         * Shared by tag and color editors.
+         * @param {HTMLElement} editor - Editor container
+         * @param {string} itemSelector - Selector for chip elements (e.g., '[data-lens-tag]')
+         * @param {string} value - Value to match against
+         * @param {Function} getValue - Function to extract value from chip element
+         */
+        flashDuplicateChip: function(editor, itemSelector, value, getValue) {
+            var chips = editor.querySelectorAll(itemSelector);
+
+            for (var i = 0; i < chips.length; i++) {
+                if (getValue(chips[i]).toLowerCase() === value.toLowerCase()) {
+                    chips[i].classList.remove('is-duplicate-flash');
+                    void chips[i].offsetWidth;
+                    chips[i].classList.add('is-duplicate-flash');
+                    chips[i].addEventListener('animationend', function() {
+                        this.classList.remove('is-duplicate-flash');
+                    }, { once: true });
+                    break;
+                }
+            }
+        },
+
+        /**
+         * Update item count label for tag/color editors.
+         * @param {HTMLElement} editor - Editor container
+         * @param {string} itemSelector - Selector for countable items
+         * @param {string} labelKey - Translation key (e.g., 'Tags', 'Colors')
+         */
+        updateItemCount: function(editor, itemSelector, labelKey) {
+            if (!editor) return;
+
+            var count = editor.querySelectorAll(itemSelector).length;
+            var label = editor.querySelector('[data-lens-target="field-label"]');
+            if (label) {
+                label.textContent = Craft.t('lens', labelKey) + ' (' + count + ')';
+            }
+        },
+
+        /**
          * Generic container creation for tag chips or color swatches.
          * @private
          */

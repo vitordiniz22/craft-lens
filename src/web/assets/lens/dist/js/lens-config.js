@@ -64,7 +64,22 @@
             /**
              * Show character counter above this input length
              */
-            TAG_LENGTH_WARNING_THRESHOLD: 200
+            TAG_LENGTH_WARNING_THRESHOLD: 200,
+
+            /**
+             * Tag input near-limit visual threshold
+             */
+            TAG_LENGTH_NEAR_LIMIT: 240,
+
+            /**
+             * Bridge review AI text truncation length
+             */
+            AI_PREVIEW_LENGTH: 60,
+
+            /**
+             * Inline editor AI suggestion truncation length
+             */
+            AI_SUGGESTION_PREVIEW_LENGTH: 100
         },
 
         /**
@@ -99,7 +114,22 @@
             /**
              * Duration of new chip entrance animation
              */
-            CHIP_APPEAR_MS: 200
+            CHIP_APPEAR_MS: 200,
+
+            /**
+             * Focal point hint auto-dismiss delay
+             */
+            HINT_AUTO_DISMISS_MS: 4000,
+
+            /**
+             * Focal point hint fade transition
+             */
+            HINT_FADE_MS: 300,
+
+            /**
+             * Bulk processing progress poll interval
+             */
+            BULK_PROGRESS_POLL_MS: 5000
         },
 
         /**
@@ -139,6 +169,21 @@
             PENDING_REVIEW: 'pending_review',
             APPROVED: 'approved',
             REJECTED: 'rejected'
+        },
+
+        /**
+         * Search configuration
+         */
+        SEARCH: {
+            /**
+             * Maximum results for semantic search modal
+             */
+            MODAL_LIMIT: 50,
+
+            /**
+             * Minimum query length before executing search
+             */
+            MIN_QUERY_LENGTH: 2
         },
 
         /**

@@ -83,7 +83,7 @@
             checkboxes.forEach(function(cb) {
                 var item = cb.closest('[data-lens-confidence]');
                 var confidence = item ? parseFloat(item.dataset.lensConfidence) : 0;
-                cb.checked = confidence >= 0.8;
+                cb.checked = confidence >= window.Lens.config.THRESHOLDS.HIGH_CONFIDENCE;
             });
             this._updateSelectionCount();
         },
@@ -93,8 +93,8 @@
         // ================================================================
 
         _bindFormSubmit: function() {
-            this._form.addEventListener('submit', function(e) {
-                var count = e.target.querySelectorAll('[data-lens-control="bulk-checkbox"]:checked').length;
+            DOM.delegate('[data-lens-target="bulk-review-form"]', 'submit', function(e, form) {
+                var count = form.querySelectorAll('[data-lens-control="bulk-checkbox"]:checked').length;
                 var action = e.submitter ? e.submitter.textContent.trim() : '';
 
                 if (!confirm(Craft.t('lens', 'Are you sure you want to {action} {count} analyses?', {
@@ -107,7 +107,8 @@
 
                 // Switch action input if submitter specifies a different form action
                 if (e.submitter && e.submitter.dataset.lensFormAction) {
-                    e.target.querySelector('input[name="action"]').value = e.submitter.dataset.lensFormAction;
+                    var actionInput = form.querySelector('input[name="action"]');
+                    if (actionInput) actionInput.value = e.submitter.dataset.lensFormAction;
                 }
             });
         }

@@ -20,8 +20,8 @@
         if (!group) return;
         var detail = group.querySelector('[data-lens-target="error-group-detail"]');
         if (!detail) return;
-        var isExpanded = detail.style.display !== 'none';
-        detail.style.display = isExpanded ? 'none' : '';
+        var isExpanded = !detail.hidden;
+        DOM.toggle(detail, !isExpanded);
         group.classList.toggle('lens-error-group--expanded', !isExpanded);
     });
 })();

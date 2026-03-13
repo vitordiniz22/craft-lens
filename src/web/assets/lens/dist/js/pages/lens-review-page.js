@@ -8,6 +8,8 @@
     window.Lens = window.Lens || {};
     window.Lens.pages = window.Lens.pages || {};
 
+    var DOM = window.Lens.core.DOM;
+
     const LensReviewPage = {
         _initialized: false,
 
@@ -28,7 +30,7 @@
         // ================================================================
 
         _bindKeyboardShortcuts: function() {
-            document.addEventListener('keydown', (e) => {
+            document.addEventListener('keydown', function(e) {
                 // Don't trigger if user is typing in an input/textarea
                 if (e.target.matches('input, textarea')) return;
 
@@ -55,44 +57,37 @@
         // ================================================================
 
         _bindPeopleDetection: function() {
-            var peopleRadios = document.querySelectorAll('input[data-lens-control="people-mode-review"]');
-            if (peopleRadios.length === 0) return;
+            DOM.delegate('input[data-lens-control="people-mode-review"]', 'change', function(e, radio) {
+                if (!radio.checked) return;
 
-            peopleRadios.forEach(function(radio) {
-                radio.addEventListener('change', function() {
-                    if (!radio.checked) return;
+                // Use PeopleDetectionService for mapping
+                var fields = window.Lens.services.PeopleDetection.modeToFields(radio.value);
+                if (!fields) return;
 
-                    // Use PeopleDetectionService for mapping
-                    var fields = window.Lens.services.PeopleDetection.modeToFields(radio.value);
-                    if (!fields) return;
+                // Update hidden inputs
+                var containsPeopleInput = DOM.findControl('field-containsPeople');
+                var faceCountInput = DOM.findControl('field-faceCount');
 
-                    // Update hidden inputs
-                    var containsPeopleInput = window.Lens.core.DOM.findControl('field-containsPeople');
-                    var faceCountInput = window.Lens.core.DOM.findControl('field-faceCount');
+                if (containsPeopleInput) containsPeopleInput.value = fields.containsPeople ? '1' : '0';
+                if (faceCountInput) faceCountInput.value = fields.faceCount.toString();
 
-                    if (containsPeopleInput) containsPeopleInput.value = fields.containsPeople ? '1' : '0';
-                    if (faceCountInput) faceCountInput.value = fields.faceCount.toString();
+                var container = radio.closest('[data-lens-target="people-detection"]');
+                if (!container) return;
 
-                    var container = radio.closest('[data-lens-target="people-detection"]');
-                    if (!container) return;
+                // Update status badge text
+                var displayText = container.querySelector('[data-lens-target="people-display-text"]');
+                if (displayText) {
+                    displayText.textContent = Lens.utils.formatPeopleDetectionText(fields.containsPeople, fields.faceCount);
+                }
 
-                    // Update status badge text
-                    var displayText = container.querySelector('[data-lens-target="people-display-text"]');
-                    if (displayText) {
-                        displayText.textContent = fields.containsPeople
-                            ? Lens.utils.formatPeopleDetectionText(fields.containsPeople, fields.faceCount)
-                            : Craft.t('lens', 'Clear');
-                    }
-
-                    // Toggle AI suggestion visibility based on whether selection matches AI
-                    var aiSuggestion = container.querySelector('[data-lens-target="people-ai-suggestion"]');
-                    if (aiSuggestion) {
-                        var aiContainsPeople = container.dataset.lensContainsPeopleAi === '1';
-                        var aiFaceCount = parseInt(container.dataset.lensFaceCountAi, 10) || 0;
-                        var matchesAi = (fields.containsPeople === aiContainsPeople) && (fields.faceCount === aiFaceCount);
-                        aiSuggestion.hidden = matchesAi;
-                    }
-                });
+                // Toggle AI suggestion visibility based on whether selection matches AI
+                var aiSuggestion = container.querySelector('[data-lens-target="people-ai-suggestion"]');
+                if (aiSuggestion) {
+                    var aiContainsPeople = container.dataset.lensContainsPeopleAi === '1';
+                    var aiFaceCount = parseInt(container.dataset.lensFaceCountAi, 10) || 0;
+                    var matchesAi = (fields.containsPeople === aiContainsPeople) && (fields.faceCount === aiFaceCount);
+                    aiSuggestion.hidden = matchesAi;
+                }
             });
         },
 
@@ -101,48 +96,43 @@
         // ================================================================
 
         _bindDetectionToggles: function() {
-            var detectionRadios = document.querySelectorAll('input[data-lens-control="detection-radio-review"]');
-            if (detectionRadios.length === 0) return;
+            DOM.delegate('input[data-lens-control="detection-radio-review"]', 'change', function(e, radio) {
+                if (!radio.checked) return;
 
-            detectionRadios.forEach(function(radio) {
-                radio.addEventListener('change', function() {
-                    if (!radio.checked) return;
+                var fieldName = radio.dataset.lensField;
+                if (!fieldName) return;
 
-                    var fieldName = radio.dataset.lensField;
-                    if (!fieldName) return;
+                // Update the corresponding hidden input
+                var hiddenInput = DOM.findControl('field-' + fieldName);
+                if (hiddenInput) {
+                    hiddenInput.value = radio.value;
+                }
 
-                    // Update the corresponding hidden input
-                    var hiddenInput = window.Lens.core.DOM.findControl('field-' + fieldName);
-                    if (hiddenInput) {
-                        hiddenInput.value = radio.value;
-                    }
+                var container = radio.closest('[data-lens-target="detection-toggle"]');
+                if (!container) return;
 
-                    var container = radio.closest('[data-lens-target="detection-toggle"]');
-                    if (!container) return;
+                var currentDetected = parseFloat(radio.value) > 0;
 
-                    var currentDetected = parseFloat(radio.value) > 0;
+                // Update accent bar and icon styling
+                container.classList.toggle('lens-accent-bar', currentDetected);
+                container.classList.toggle('lens-accent-bar--red', currentDetected);
+                var icon = container.querySelector('[data-lens-target="detection-icon"]');
+                if (icon) icon.classList.toggle('lens-detection-icon--flagged', currentDetected);
 
-                    // Update accent bar and icon styling
-                    container.classList.toggle('lens-accent-bar', currentDetected);
-                    container.classList.toggle('lens-accent-bar--red', currentDetected);
-                    var icon = container.querySelector('[data-lens-target="detection-icon"]');
-                    if (icon) icon.classList.toggle('lens-detection-icon--flagged', currentDetected);
+                // Update status badge
+                var badge = container.querySelector('[data-lens-target="detection-badge"]');
+                if (badge) {
+                    badge.className = 'lens-detection-badge ' + (currentDetected ? 'lens-detection-badge--flagged' : 'lens-detection-badge--clear');
+                    var srcIcon = container.querySelector('[data-lens-target="' + (currentDetected ? 'detection-icon-flagged' : 'detection-icon-clear') + '"]');
+                    badge.innerHTML = (srcIcon ? srcIcon.innerHTML : '') + ' ' + Craft.t('lens', currentDetected ? 'Flagged' : 'Clear');
+                }
 
-                    // Update status badge
-                    var badge = container.querySelector('[data-lens-target="detection-badge"]');
-                    if (badge) {
-                        badge.className = 'lens-detection-badge ' + (currentDetected ? 'lens-detection-badge--flagged' : 'lens-detection-badge--clear');
-                        var srcIcon = container.querySelector(currentDetected ? '.lens-segmented-control__icon--flagged' : '.lens-segmented-control__icon--clear');
-                        badge.innerHTML = (srcIcon ? srcIcon.innerHTML : '') + ' ' + Craft.t('lens', currentDetected ? 'Flagged' : 'Clear');
-                    }
-
-                    // Toggle AI suggestion visibility based on whether selection matches AI
-                    var aiSuggestion = container.querySelector('[data-lens-target="detection-ai-suggestion"]');
-                    if (aiSuggestion) {
-                        var aiDetected = container.dataset.lensDetectedAi === '1';
-                        aiSuggestion.hidden = (currentDetected === aiDetected);
-                    }
-                });
+                // Toggle AI suggestion visibility based on whether selection matches AI
+                var aiSuggestion = container.querySelector('[data-lens-target="detection-ai-suggestion"]');
+                if (aiSuggestion) {
+                    var aiDetected = container.dataset.lensDetectedAi === '1';
+                    aiSuggestion.hidden = (currentDetected === aiDetected);
+                }
             });
         },
 
@@ -151,11 +141,9 @@
         // ================================================================
 
         _bindBridgeReviewInputs: function() {
-            var DOM = window.Lens.core.DOM;
-
             // Show/hide AI suggestion inline as user types in bridge review inputs
             DOM.delegate('[data-lens-target="bridge-review-input"]', 'input', function(e, input) {
-                var container = input.closest('.lens-accent-bar') || input.closest('.lens-alt-proxy');
+                var container = input.closest('[data-lens-target="bridge-field"]');
                 if (!container) return;
 
                 var aiDiv = container.querySelector('[data-lens-target="bridge-review-ai"]');
@@ -173,7 +161,8 @@
                 if (differs) {
                     var textSpan = aiDiv.querySelector('[data-lens-target="bridge-review-ai-text"]');
                     if (textSpan) {
-                        var truncated = aiValue.length > 60 ? aiValue.substring(0, 60) + '...' : aiValue;
+                        var maxLen = window.Lens.config.THRESHOLDS.AI_PREVIEW_LENGTH;
+                        var truncated = aiValue.length > maxLen ? aiValue.substring(0, maxLen) + '...' : aiValue;
                         textSpan.textContent = Craft.t('lens', 'AI: "{value}"', { value: truncated });
                     }
                 }
@@ -181,7 +170,7 @@
 
             // Client-side revert: restore input value to original AI value
             DOM.delegate('[data-lens-action="bridge-review-revert"]', 'click', function(e, btn) {
-                var container = btn.closest('.lens-accent-bar') || btn.closest('.lens-alt-proxy');
+                var container = btn.closest('[data-lens-target="bridge-field"]');
                 if (!container) return;
 
                 var input = container.querySelector('[data-lens-target="bridge-review-input"]');
@@ -204,7 +193,7 @@
             form.addEventListener('submit', function() {
                 // Serialize tags → JSON string in hidden input
                 var tagEditor = document.querySelector('[data-lens-target="tag-editor"]');
-                var tagsInput = window.Lens.core.DOM.findControl('field-tags');
+                var tagsInput = DOM.findControl('field-tags');
                 if (tagEditor && tagsInput && window.Lens.services && window.Lens.services.Taxonomy) {
                     var tags = window.Lens.services.Taxonomy.collectTags(tagEditor);
                     tagsInput.value = JSON.stringify(tags);
@@ -212,7 +201,7 @@
 
                 // Serialize colors → JSON string in hidden input
                 var colorEditor = document.querySelector('[data-lens-target="color-editor"]');
-                var colorsInput = window.Lens.core.DOM.findControl('field-colors');
+                var colorsInput = DOM.findControl('field-colors');
                 if (colorEditor && colorsInput && window.Lens.services && window.Lens.services.Taxonomy) {
                     var colors = window.Lens.services.Taxonomy.collectColors(colorEditor);
                     colorsInput.value = JSON.stringify(colors);
@@ -240,7 +229,7 @@
                     });
 
                     if (Object.keys(siteContent).length > 0) {
-                        var siteContentInput = window.Lens.core.DOM.findControl('field-siteContent');
+                        var siteContentInput = DOM.findControl('field-siteContent');
                         if (!siteContentInput) {
                             siteContentInput = document.createElement('input');
                             siteContentInput.type = 'hidden';

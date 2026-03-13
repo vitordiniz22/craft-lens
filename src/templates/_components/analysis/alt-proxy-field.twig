@@ -58,7 +58,9 @@
 {% set isReview = fieldState == 'editing' %}
 
 <div class="lens-alt-proxy"
-     {% if not isReview %}
+     {% if isReview %}
+     data-lens-target="bridge-field"
+     {% else %}
      data-lens-target="alt-proxy-field"
      data-lens-asset-id="{{ assetId }}"
      data-lens-analysis-id="{{ analysisId }}"

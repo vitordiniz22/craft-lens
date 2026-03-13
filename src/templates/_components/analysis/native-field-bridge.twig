@@ -80,7 +80,9 @@
 {% set isReview = fieldState == 'editing' %}
 
 <div class="lens-accent-bar"
-     {% if not isReview %}
+     {% if isReview %}
+     data-lens-target="bridge-field"
+     {% else %}
      data-lens-target="native-bridge"
      data-lens-field="{{ fieldName }}"
      data-lens-analysis-id="{{ analysisId }}"
@@ -146,6 +148,7 @@
                     </span>
                 {% else %}
                     <button type="button" class="lens-revert-trigger"
+                            data-lens-target="native-apply-link"
                             data-lens-action="{{ applyAction }}"
                             data-lens-asset-id="{{ assetId }}"
                             data-lens-analysis-id="{{ analysisId }}"

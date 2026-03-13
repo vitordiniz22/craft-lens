@@ -93,8 +93,8 @@
          * @param {number} [delay=0] - Optional delay in ms before reload
          */
         safeReload: function(delay) {
-            if (window._lensReloading) return;
-            window._lensReloading = true;
+            if (window.Lens._reloading) return;
+            window.Lens._reloading = true;
 
             if (delay) {
                 setTimeout(function() { window.location.reload(); }, delay);

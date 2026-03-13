@@ -116,7 +116,7 @@
                        data-lens-control="{{ isReview ? 'detection-radio-review' : 'detection-radio' }}"
                        {% if isReview %}data-lens-field="{{ fieldName }}"{% endif %}
                        {% if detected %}checked{% endif %}>
-                <span class="lens-segmented-control__icon lens-segmented-control__icon--flagged">
+                <span class="lens-segmented-control__icon lens-segmented-control__icon--flagged" data-lens-target="detection-icon-flagged">
                     {{ iconSvg('triangle-exclamation')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
                 </span>
                 <span>{{ 'Flagged'|t('lens') }}</span>
@@ -126,7 +126,7 @@
                        data-lens-control="{{ isReview ? 'detection-radio-review' : 'detection-radio' }}"
                        {% if isReview %}data-lens-field="{{ fieldName }}"{% endif %}
                        {% if not detected %}checked{% endif %}>
-                <span class="lens-segmented-control__icon lens-segmented-control__icon--clear">
+                <span class="lens-segmented-control__icon lens-segmented-control__icon--clear" data-lens-target="detection-icon-clear">
                     {{ iconSvg('check')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
                 </span>
                 <span>{{ 'Clear'|t('lens') }}</span>

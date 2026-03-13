@@ -281,13 +281,7 @@
         // ================================================================
 
         _updateTagCount: function(editor) {
-            if (!editor) return;
-
-            var count = editor.querySelectorAll('[data-lens-tag]').length;
-            var label = editor.querySelector('[data-lens-target="field-header"] .lens-field-label');
-            if (label) {
-                label.textContent = Craft.t('lens', 'Tags') + ' (' + count + ')';
-            }
+            window.Lens.services.Taxonomy.updateItemCount(editor, '[data-lens-tag]', 'Tags');
         },
 
         // ================================================================
@@ -320,20 +314,10 @@
         // ================================================================
 
         _flashDuplicateChip: function(editor, tagName) {
-            var normalized = tagName.toLowerCase();
-            var chips = editor.querySelectorAll('[data-lens-tag]');
-
-            for (var i = 0; i < chips.length; i++) {
-                if (chips[i].dataset.lensTag.toLowerCase() === normalized) {
-                    chips[i].classList.remove('is-duplicate-flash');
-                    void chips[i].offsetWidth;
-                    chips[i].classList.add('is-duplicate-flash');
-                    chips[i].addEventListener('animationend', function() {
-                        this.classList.remove('is-duplicate-flash');
-                    }, { once: true });
-                    break;
-                }
-            }
+            window.Lens.services.Taxonomy.flashDuplicateChip(
+                editor, '[data-lens-tag]', tagName,
+                function(chip) { return chip.dataset.lensTag; }
+            );
         },
 
         // ================================================================
@@ -357,7 +341,7 @@
                     wrapper.appendChild(indicator);
                 }
                 indicator.textContent = length + '/' + max;
-                indicator.classList.toggle('is-near-limit', length >= 240);
+                indicator.classList.toggle('is-near-limit', length >= window.Lens.config.THRESHOLDS.TAG_LENGTH_NEAR_LIMIT);
             } else if (indicator) {
                 indicator.remove();
             }

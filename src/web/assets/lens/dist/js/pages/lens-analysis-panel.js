@@ -43,7 +43,7 @@
             if (!tpl) return null;
             var el = tpl.content.cloneNode(true);
             if (text) {
-                var label = el.querySelector('.smalltext');
+                var label = el.querySelector('[data-lens-target="applied-label"]');
                 if (label) label.textContent = text;
             }
             return el;
@@ -210,7 +210,7 @@
             if (!bridge) return;
 
             // Swap the apply link for an Applied indicator inside the purple bar
-            var applyLink = bridge.querySelector('[data-lens-target="native-apply-row"] .lens-revert-trigger');
+            var applyLink = bridge.querySelector('[data-lens-target="native-apply-link"]');
             if (applyLink) {
                 var applied = this._cloneAppliedIndicator();
                 if (applied) applyLink.replaceWith(applied);
@@ -334,31 +334,23 @@
          * @param {string} value - The new value
          */
         _syncNativeField: function (fieldName, value) {
-            // Craft's element editor renders native fields with predictable IDs.
-            // Title: <input id="title" name="title">
-            // Alt:   <textarea id="alt" name="alt"> (when AltField is in layout)
-            // In namespaced contexts the ID may differ, so we also query by name.
             var input = document.getElementById(fieldName) ||
                         document.querySelector(
                             'input[name="' + fieldName + '"], textarea[name="' + fieldName + '"]'
                         );
 
             if (input) {
-                input.value = value;
+                let $form = $(input).closest('form[data-confirm-unload]');
 
-                // Trigger change event so Craft's editor detects the modification
+                input.value = value;
                 input.dispatchEvent(new Event('input', { bubbles: true }));
 
-                // Reset form baseline — the value was already saved server-side,
-                // so Craft shouldn't warn about unsaved changes on navigation.
-                var $form = $(input).closest('form[data-confirm-unload]');
                 if ($form.length) {
-                    var serializer = $form.data('serializer');
+                    let serializer = $form.data('serializer');
                     $form.data('initialSerializedValue', typeof serializer === 'function' ? serializer() : $form.serialize());
                 }
             }
 
-            // Also update the page heading/title if it's the title field
             if (fieldName === 'title') {
                 var heading = document.querySelector('#header h1, .so-header h1');
                 if (heading) {
@@ -369,7 +361,6 @@
 
         _handleApplyFocalPoint: function (e, btn) {
             if (btn.disabled) return;
-            btn.disabled = true;
 
             const assetId = btn.dataset.lensAssetId;
             const focalX = parseFloat(btn.dataset.lensFocalX);
@@ -379,34 +370,33 @@
                 Craft.cp.displayError(
                     Craft.t('lens', 'Invalid focal point coordinates.'),
                 );
-                btn.disabled = false;
                 return;
             }
 
-            var originalText = btn.textContent;
-            btn.textContent = Craft.t('lens', 'Applying…');
+            window.Lens.core.ButtonState.withLoading(
+                btn,
+                Craft.t('lens', 'Applying…'),
+                () => {
+                    return window.Lens.core.API.applyFocalPoint(assetId, {
+                        x: focalX,
+                        y: focalY,
+                    }).then((response) => {
+                        if (response.data.success) {
+                            // Swap link for Applied indicator
+                            var applied = this._cloneAppliedIndicator();
+                            if (applied) btn.replaceWith(applied);
 
-            window.Lens.core.API.applyFocalPoint(assetId, {
-                x: focalX,
-                y: focalY,
-            }).then((response) => {
-                if (response.data.success) {
-                    // Swap link for Applied indicator
-                    var applied = this._cloneAppliedIndicator();
-                    if (applied) btn.replaceWith(applied);
-
-                    Craft.cp.displayNotice(
-                        Craft.t('lens', 'Focal point applied to asset.'),
-                    );
-                }
-            }).catch(function() {
-                btn.textContent = originalText;
-                btn.disabled = false;
-            });
+                            Craft.cp.displayNotice(
+                                Craft.t('lens', 'Focal point applied to asset.'),
+                            );
+                        }
+                    });
+                },
+            );
         },
 
         // ================================================================
-        // Translations (collapse/expand, tabs, summary expand)
+        // Translations (collapse/expand, summary expand)
         // ================================================================
 
         initTranslations: function () {
@@ -419,13 +409,6 @@
                 this._handleTranslationToggle.bind(this),
             );
 
-            // Tab switching
-            DOM.delegate(
-                '[data-lens-action="translation-tab"]',
-                'click',
-                this._handleTranslationTab.bind(this),
-            );
-
             // Summary row expand (review page)
             DOM.delegate(
                 '[data-lens-action="translation-expand"]',
@@ -435,8 +418,7 @@
         },
 
         _handleTranslationToggle: function (e, header) {
-            var section = header.closest('[data-lens-target="translations-section"]')
-                || header.closest('.lens-translation-summary');
+            var section = header.closest('.lens-translation-summary');
             if (!section) return;
 
             var body = section.querySelector('[data-lens-target="translations-body"]');
@@ -445,34 +427,6 @@
             var isExpanded = header.getAttribute('aria-expanded') === 'true';
             header.setAttribute('aria-expanded', isExpanded ? 'false' : 'true');
             window.Lens.core.DOM.toggleClass(body, !isExpanded);
-        },
-
-        _handleTranslationTab: function (e, tab) {
-            var section = tab.closest('[data-lens-target="translations-section"]');
-            if (!section) return;
-
-            var siteId = tab.dataset.lensTabSite;
-            if (!siteId) return;
-
-            // Deactivate all tabs
-            var tabs = section.querySelectorAll('[data-lens-action="translation-tab"]');
-            for (var i = 0; i < tabs.length; i++) {
-                tabs[i].classList.remove('is-active');
-            }
-
-            // Activate clicked tab
-            tab.classList.add('is-active');
-
-            // Hide all tab panels, show matching one
-            var panels = section.querySelectorAll('.lens-translation-group[data-lens-site-id]');
-            for (var j = 0; j < panels.length; j++) {
-                panels[j].classList.add('hidden');
-            }
-
-            var target = section.querySelector('.lens-translation-group[data-lens-site-id="' + siteId + '"]');
-            if (target) {
-                target.classList.remove('hidden');
-            }
         },
 
         _handleTranslationExpand: function (e, row) {

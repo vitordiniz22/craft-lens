@@ -15,7 +15,7 @@
     {# Tags #}
     <div class="lens-editable-field" data-lens-target="tag-editor" data-lens-analysis-id="{{ analysis.id }}"{{ autoSave ? ' data-lens-auto-save="1"' }}>
         <div class="lens-field-header" data-lens-target="field-header">
-            <span class="lens-field-label">{{ 'Tags'|t('lens') }} ({{ analysisTags|length }})</span>
+            <span class="lens-field-label" data-lens-target="field-label">{{ 'Tags'|t('lens') }} ({{ analysisTags|length }})</span>
         </div>
 
         <div class="lens-tag-chips" data-lens-target="tag-chips">
@@ -56,7 +56,7 @@
     {# Colors #}
     <div class="lens-editable-field" data-lens-target="color-editor" data-lens-analysis-id="{{ analysis.id }}"{{ autoSave ? ' data-lens-auto-save="1"' }}>
         <div class="lens-field-header" data-lens-target="field-header">
-            <span class="lens-field-label">{{ 'Colors'|t('lens') }} ({{ analysisColors|length }})</span>
+            <span class="lens-field-label" data-lens-target="field-label">{{ 'Colors'|t('lens') }} ({{ analysisColors|length }})</span>
         </div>
 
         <div class="lens-tag-chips" data-lens-target="color-swatches">

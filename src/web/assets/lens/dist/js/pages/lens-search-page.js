@@ -8,7 +8,9 @@
     window.Lens = window.Lens || {};
     window.Lens.pages = window.Lens.pages || {};
 
-    const LensSearchPage = {
+    var DOM = window.Lens.core.DOM;
+
+    var LensSearchPage = {
         _initialized: false,
 
         init: function () {
@@ -30,21 +32,21 @@
         },
 
         initFilterToggle: function () {
-            const panel = document.querySelector(
-                '[data-lens-target="filters-panel"]',
+            var panel = document.querySelector(
+                '[data-lens-target="filters-panel"]'
             );
 
-            window.Lens.core.DOM.delegate(
+            DOM.delegate(
                 '[data-lens-action="toggle-filters"]',
                 'click',
-                (e, btn) => {
-                    if (panel) window.Lens.core.DOM.toggleClass(panel);
-                },
+                function () {
+                    if (panel) DOM.toggleClass(panel);
+                }
             );
         },
 
         initFilterChips: function () {
-            window.Lens.core.DOM.delegate(
+            DOM.delegate(
                 '[data-lens-action="remove-filter-chip"]',
                 'click',
                 function (e, btn) {
@@ -56,56 +58,56 @@
                         url.searchParams.delete(param.trim());
                     });
                     window.location.assign(url.toString());
-                },
+                }
             );
         },
 
         initClearSearch: function () {
-            window.Lens.core.DOM.delegate(
+            DOM.delegate(
                 '[data-lens-action="clear-search"]',
                 'click',
-                (e, btn) => {
+                function () {
                     var input = document.querySelector(
-                        '[data-lens-control="search-query"]',
+                        '[data-lens-control="search-query"]'
                     );
                     if (input) {
                         input.value = '';
                         var form = input.closest('form');
                         if (form) form.submit();
                     }
-                },
+                }
             );
         },
 
         initFormCleanup: function () {
-            const form = document.querySelector(
-                '[data-lens-target="search-form"]',
+            var form = document.querySelector(
+                '[data-lens-target="search-form"]'
             );
             if (!form) return;
 
-            form.addEventListener('submit', () => {
-                let selects = form.querySelectorAll('select');
-                let hiddenInputs = form.querySelectorAll(
-                    'input[type="hidden"]',
+            form.addEventListener('submit', function () {
+                var selects = form.querySelectorAll('select');
+                var hiddenInputs = form.querySelectorAll(
+                    'input[type="hidden"]'
                 );
-                let inputs = form.querySelectorAll(
-                    'input[type="text"], input[type="number"], input[type="date"]',
+                var inputs = form.querySelectorAll(
+                    'input[type="text"], input[type="number"], input[type="date"]'
                 );
 
-                inputs.forEach((input) => {
+                inputs.forEach(function (input) {
                     if (!input.value) input.disabled = true;
                 });
 
-                hiddenInputs.forEach((input) => {
+                hiddenInputs.forEach(function (input) {
                     if (!input.value) input.disabled = true;
                 });
 
-                selects.forEach((select) => {
+                selects.forEach(function (select) {
                     if (select.multiple) {
                         var hasSelection = Array.from(select.options).some(
                             function (opt) {
                                 return opt.selected;
-                            },
+                            }
                         );
 
                         if (!hasSelection) select.disabled = true;
@@ -114,47 +116,43 @@
                     }
                 });
 
-                setTimeout(() => {
-                    inputs.forEach((input) => (input.disabled = false));
-                    hiddenInputs.forEach((input) => (input.disabled = false));
-                    selects.forEach((select) => (select.disabled = false));
+                setTimeout(function () {
+                    inputs.forEach(function (input) { input.disabled = false; });
+                    hiddenInputs.forEach(function (input) { input.disabled = false; });
+                    selects.forEach(function (select) { select.disabled = false; });
                 }, window.Lens.config.ANIMATION.FORM_FIELD_DEBOUNCE_MS);
             });
         },
 
         initSearchEnterKey: function () {
-            const input = window.Lens.core.DOM.findControl('search-query');
-
-            if (!input) return;
-
-            input.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    const form = input.closest('form');
-
-                    if (form) form.submit();
+            DOM.delegate(
+                '[data-lens-control="search-query"]',
+                'keydown',
+                function (e, input) {
+                    if (e.key === 'Enter') {
+                        var form = input.closest('form');
+                        if (form) form.submit();
+                    }
                 }
-            });
+            );
         },
 
         initPresetButtonGroups: function () {
-            document.addEventListener('click', (e) => {
-                const btn = e.target.closest('[data-lens-value]');
-                if (!btn) return;
-
-                const group = btn.closest('[data-lens-preset]');
+            DOM.delegate('[data-lens-value]', 'click', function (e, btn) {
+                var group = btn.closest('[data-lens-preset]');
                 if (!group) return;
 
-                const groupName = group.dataset.lensPreset;
-                const value = btn.dataset.lensValue;
-                const isActive = btn.getAttribute('aria-pressed') === 'true';
+                var groupName = group.dataset.lensPreset;
+                var value = btn.dataset.lensValue;
+                var isActive = btn.getAttribute('aria-pressed') === 'true';
 
                 // Toggle this button
                 btn.setAttribute('aria-pressed', isActive ? 'false' : 'true');
                 btn.classList.toggle('active');
 
                 // Update hidden input
-                const hiddenInput = document.querySelector(
-                    'input[name="' + groupName + '"]',
+                var hiddenInput = document.querySelector(
+                    'input[name="' + groupName + '"]'
                 );
                 if (hiddenInput) {
                     hiddenInput.value = isActive ? '' : value;
@@ -162,29 +160,29 @@
 
                 // Deactivate other buttons in same group
                 if (!isActive) {
-                    const siblings =
+                    var siblings =
                         group.querySelectorAll('[data-lens-value]');
-                    siblings.forEach((sibling) => {
+                    siblings.forEach(function (sibling) {
                         if (sibling !== btn) {
                             sibling.setAttribute('aria-pressed', 'false');
                             sibling.classList.remove('active');
                         }
                     });
                 }
-
             });
         },
 
         initColorInput: function () {
-            const colorInput = document.querySelector('input[name="color"]');
+            // Craft CMS native selector (forms.color() macro — no data-lens-* available)
+            var colorInput = document.querySelector('input[name="color"]');
             if (!colorInput) return;
 
-            const toleranceWrap = document.querySelector(
-                '[data-lens-target="color-tolerance-wrap"]',
+            var toleranceWrap = document.querySelector(
+                '[data-lens-target="color-tolerance-wrap"]'
             );
             if (!toleranceWrap) return;
 
-            const updateVisibility = () => {
+            var updateVisibility = function () {
                 if (colorInput.value.trim()) {
                     toleranceWrap.classList.remove('hidden');
                 } else {
@@ -199,9 +197,10 @@
             // native picker, which doesn't fire input/change. Instead,
             // observe the preview swatch — Craft always updates its
             // background-color when the value changes.
-            const container = colorInput.closest('.color-container');
+            // Craft CMS native selectors (no data-lens-* available)
+            var container = colorInput.closest('.color-container');
             if (container) {
-                const preview = container.querySelector('.color-preview');
+                var preview = container.querySelector('.color-preview');
                 if (preview) {
                     new MutationObserver(updateVisibility).observe(preview, {
                         attributes: true,
@@ -212,23 +211,25 @@
         },
 
         initColorToleranceSlider: function () {
-            const slider = window.Lens.core.DOM.findControl('color-tolerance');
-            if (!slider) return;
-
-            slider.addEventListener('input', () => {
-                const display = document.querySelector(
-                    '[data-lens-target="tolerance-value"]',
-                );
-                if (display) display.textContent = slider.value;
-                const label = document.querySelector(
-                    '[data-lens-target="tolerance-label"]',
-                );
-                if (label)
-                    label.textContent =
-                        '(' +
-                        this.getToleranceLabel(parseInt(slider.value)) +
-                        ')';
-            });
+            var self = this;
+            DOM.delegate(
+                '[data-lens-control="color-tolerance"]',
+                'input',
+                function (e, slider) {
+                    var display = document.querySelector(
+                        '[data-lens-target="tolerance-value"]'
+                    );
+                    if (display) display.textContent = slider.value;
+                    var label = document.querySelector(
+                        '[data-lens-target="tolerance-label"]'
+                    );
+                    if (label)
+                        label.textContent =
+                            '(' +
+                            self.getToleranceLabel(parseInt(slider.value)) +
+                            ')';
+                }
+            );
         },
 
         getToleranceLabel: function (value) {
@@ -239,8 +240,8 @@
         },
 
         initDatePickers: function () {
-            const dateFrom = window.Lens.core.DOM.findControl('date-from');
-            const dateTo = window.Lens.core.DOM.findControl('date-to');
+            var dateFrom = DOM.findControl('date-from');
+            var dateTo = DOM.findControl('date-to');
 
             if (dateFrom) jQuery(dateFrom).datepicker(Craft.datepickerOptions);
             if (dateTo) jQuery(dateTo).datepicker(Craft.datepickerOptions);
@@ -254,8 +255,7 @@
             // "/" to focus search
             if (e.key === '/' && !e.target.matches('input, textarea')) {
                 e.preventDefault();
-                const searchInput =
-                    window.Lens.core.DOM.findControl('search-query');
+                var searchInput = DOM.findControl('search-query');
                 if (searchInput) {
                     searchInput.focus();
                     searchInput.select();
@@ -264,11 +264,10 @@
 
             // Escape to clear search
             if (e.key === 'Escape') {
-                const searchInput =
-                    window.Lens.core.DOM.findControl('search-query');
-                if (searchInput && document.activeElement === searchInput) {
-                    searchInput.value = '';
-                    searchInput.blur();
+                var escInput = DOM.findControl('search-query');
+                if (escInput && document.activeElement === escInput) {
+                    escInput.value = '';
+                    escInput.blur();
                 }
             }
 
@@ -287,7 +286,7 @@
                 !e.target.matches('input, textarea, button, a')
             ) {
                 var focused = document.querySelector(
-                    '[data-lens-target="result-card"].focused',
+                    '[data-lens-target="result-card"][data-lens-focused]'
                 );
                 if (focused) {
                     var link = focused.querySelector('[data-lens-target="result-link"]');
@@ -298,28 +297,28 @@
 
         navigateResults: function (direction) {
             var results = document.querySelectorAll(
-                '[data-lens-target="result-card"]',
+                '[data-lens-target="result-card"]'
             );
             if (results.length === 0) return;
 
             var focused = document.querySelector(
-                '[data-lens-target="result-card"].focused',
+                '[data-lens-target="result-card"][data-lens-focused]'
             );
             var currentIndex = focused ? Array.from(results).indexOf(focused) : -1;
 
             var newIndex = currentIndex + direction;
 
             if (newIndex >= 0 && newIndex < results.length) {
-                if (focused) focused.classList.remove('focused');
-                results[newIndex].classList.add('focused');
+                if (focused) delete focused.dataset.lensFocused;
+                results[newIndex].dataset.lensFocused = '';
                 results[newIndex].focus();
             }
-        },
+        }
     };
 
     window.Lens.pages.SearchPage = LensSearchPage;
 
-    Lens.utils.onReady(function() {
+    Lens.utils.onReady(function () {
         LensSearchPage.init();
     });
 })();

@@ -198,6 +198,33 @@
                 assetId: assetId,
                 focalPoint: focalPoint
             }, options);
+        },
+
+        /**
+         * Fetch an HTML response from a CP URL with custom headers exposed.
+         * Used for endpoints that return HTML body + metadata in response headers.
+         * @param {string} cpPath - CP URL path (e.g., 'lens/bulk/progress')
+         * @param {Object} [options={}] - Additional options
+         * @returns {Promise<{html: string, headers: Object}>} Promise resolving with HTML and headers
+         */
+        fetchHtml: function(cpPath, options) {
+            options = options || {};
+
+            return Craft.sendActionRequest('GET', cpPath, {
+                headers: { 'Accept': 'text/html' },
+                responseType: 'text'
+            }).then(function(response) {
+                return {
+                    html: typeof response.data === 'string' ? response.data : '',
+                    headers: response.headers || {}
+                };
+            }).catch(function(error) {
+                if (options.showErrorNotice !== false) {
+                    var message = options.errorMessage || Craft.t('lens', 'Request failed');
+                    Craft.cp.displayError(message);
+                }
+                throw error;
+            });
         }
     };
 })();

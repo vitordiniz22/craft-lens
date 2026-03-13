@@ -123,13 +123,7 @@
         // ================================================================
 
         _updateColorCount: function(editor) {
-            if (!editor) return;
-
-            var count = editor.querySelectorAll('[data-lens-target="color-item"]').length;
-            var label = editor.querySelector('[data-lens-target="field-header"] .lens-field-label');
-            if (label) {
-                label.textContent = Craft.t('lens', 'Colors') + ' (' + count + ')';
-            }
+            window.Lens.services.Taxonomy.updateItemCount(editor, '[data-lens-target="color-item"]', 'Colors');
         },
 
         // ================================================================
@@ -161,20 +155,10 @@
         // ================================================================
 
         _flashDuplicateChip: function(editor, hex) {
-            var normalized = hex.toUpperCase();
-            var chips = editor.querySelectorAll('[data-lens-target="color-item"]');
-
-            for (var i = 0; i < chips.length; i++) {
-                if (chips[i].dataset.lensHex.toUpperCase() === normalized) {
-                    chips[i].classList.remove('is-duplicate-flash');
-                    void chips[i].offsetWidth;
-                    chips[i].classList.add('is-duplicate-flash');
-                    chips[i].addEventListener('animationend', function() {
-                        this.classList.remove('is-duplicate-flash');
-                    }, { once: true });
-                    break;
-                }
-            }
+            window.Lens.services.Taxonomy.flashDuplicateChip(
+                editor, '[data-lens-target="color-item"]', hex,
+                function(chip) { return chip.dataset.lensHex; }
+            );
         }
     };
 

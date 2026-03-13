@@ -95,7 +95,7 @@
             if (marker) {
                 marker.style.left = (x * 100) + '%';
                 marker.style.top = (y * 100) + '%';
-                marker.style.display = 'block';
+                window.Lens.core.DOM.show(marker);
 
                 // Trigger pulse animation
                 marker.classList.remove('lens-review-focal-marker--pulse');
@@ -142,28 +142,29 @@
 
                 // Source badge: AI (violet), Edited (amber), hidden when matches asset
                 var badge = document.querySelector('[data-lens-target="focal-status-badge"]');
+                var DOM = window.Lens.core.DOM;
                 if (badge) {
                     if (isAssetMatch) {
-                        badge.style.display = 'none';
+                        DOM.hide(badge);
                     } else if (isAiMatch) {
                         badge.textContent = Craft.t('lens', 'AI');
                         badge.className = 'lens-review-focal-badge';
-                        badge.style.display = '';
+                        DOM.show(badge);
                     } else {
                         badge.textContent = Craft.t('lens', 'Edited');
                         badge.className = 'lens-review-focal-badge lens-review-focal-badge--edited';
-                        badge.style.display = '';
+                        DOM.show(badge);
                     }
                 }
 
                 // Show AI suggestion revert rows when value differs from AI
                 var aiSuggestion = document.querySelector('[data-lens-target="focal-ai-suggestion"]');
                 if (aiSuggestion) {
-                    aiSuggestion.style.display = (!isAiMatch && hasAi) ? '' : 'none';
+                    DOM.toggle(aiSuggestion, !isAiMatch && hasAi);
                 }
                 var fpAiRevert = document.querySelector('[data-lens-target="fp-ai-revert"]');
                 if (fpAiRevert) {
-                    fpAiRevert.style.display = (!isAiMatch && hasAi) ? '' : 'none';
+                    DOM.toggle(fpAiRevert, !isAiMatch && hasAi);
                 }
             }
 
@@ -196,9 +197,10 @@
             }
 
             // Show/hide static reference marker
+            var DOM = window.Lens.core.DOM;
             var ref = document.querySelector('[data-lens-target="focal-ref"]');
             if (ref) {
-                ref.style.display = shouldHide ? 'none' : '';
+                DOM.toggle(ref, !shouldHide);
             }
 
             var contextText = isAiMatch
@@ -209,7 +211,7 @@
             var actions = document.querySelector('[data-lens-target="fp-actions"]');
             var actionsText = document.querySelector('[data-lens-target="fp-actions-text"]');
             if (actions) {
-                actions.style.display = shouldHide ? 'none' : '';
+                DOM.toggle(actions, !shouldHide);
                 actions.classList.toggle('lens-ai-suggestion-inline--warning', !isAiMatch);
             }
             if (actionsText && !shouldHide) {
@@ -220,7 +222,7 @@
             var conflict = document.querySelector('[data-lens-target="focal-asset-conflict"]');
             var conflictText = document.querySelector('[data-lens-target="focal-asset-conflict-text"]');
             if (conflict) {
-                conflict.style.display = shouldHide ? 'none' : '';
+                DOM.toggle(conflict, !shouldHide);
                 conflict.classList.toggle('lens-ai-suggestion-inline--warning', !isAiMatch);
             }
             if (conflictText && !shouldHide) {
@@ -235,14 +237,16 @@
         _autoDismissHint: function() {
             setTimeout(function() {
                 this._dismissHint();
-            }.bind(this), 4000);
+            }.bind(this), window.Lens.config.ANIMATION.HINT_AUTO_DISMISS_MS);
         },
 
         _dismissHint: function() {
             var hint = document.querySelector('[data-lens-target="focal-hint"]');
             if (hint && hint.style.opacity !== '0') {
                 hint.style.opacity = '0';
-                setTimeout(function() { hint.style.display = 'none'; }, 300);
+                setTimeout(function() {
+                    window.Lens.core.DOM.hide(hint);
+                }, window.Lens.config.ANIMATION.HINT_FADE_MS);
             }
         },
 
