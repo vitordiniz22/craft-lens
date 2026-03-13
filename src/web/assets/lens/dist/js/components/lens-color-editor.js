@@ -110,9 +110,9 @@
                 swatches.appendChild(item);
             }
 
-            item.classList.add('is-new');
+            item.classList.add('lens-is-new');
             item.addEventListener('animationend', function() {
-                this.classList.remove('is-new');
+                this.classList.remove('lens-is-new');
             }, { once: true });
 
             return true;

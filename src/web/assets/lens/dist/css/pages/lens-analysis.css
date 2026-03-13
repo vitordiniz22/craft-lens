@@ -533,7 +533,7 @@
     display: none;
 }
 
-.lens-tag-suggestions.is-visible {
+.lens-tag-suggestions.lens-is-visible {
     display: block;
 }
 
@@ -547,7 +547,7 @@
 }
 
 .lens-tag-suggestion:hover,
-.lens-tag-suggestion.is-active {
+.lens-tag-suggestion.lens-is-active {
     background: var(--gray-050);
 }
 
@@ -557,11 +557,11 @@
 }
 
 
-.lens-tag-chips .chip.is-duplicate-flash {
+.lens-tag-chips .chip.lens-is-duplicate-flash {
     animation: lens-chip-flash 0.8s ease;
 }
 
-.lens-tag-chips .chip.is-new {
+.lens-tag-chips .chip.lens-is-new {
     animation: lens-chip-appear 0.2s ease-out;
 }
 
@@ -573,7 +573,7 @@
     padding: 0 4px;
 }
 
-.lens-tag-length-indicator.is-near-limit {
+.lens-tag-length-indicator.lens-is-near-limit {
     color: var(--error-color);
     font-weight: 600;
 }
@@ -851,7 +851,7 @@
 }
 
 /* Saving indicator for auto-save */
-.lens-editable-field.is-saving {
+.lens-editable-field.lens-is-saving {
     opacity: 0.6;
     pointer-events: none;
 }

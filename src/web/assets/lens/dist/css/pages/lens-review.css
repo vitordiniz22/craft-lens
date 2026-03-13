@@ -37,7 +37,7 @@
 
 .lens-review-mode-toggle .btn.active {
   background: var(--link-color);
-  color: white;
+  color: var(--white);
 }
 
 
@@ -142,7 +142,7 @@
   left: 8px;
   font-size: 11px;
   line-height: normal;
-  color: white;
+  color: var(--white);
   background: rgba(0, 0, 0, 0.55);
   border-radius: 12px;
   padding: 3px 10px;

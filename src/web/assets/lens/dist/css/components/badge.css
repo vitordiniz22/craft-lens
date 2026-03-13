@@ -33,26 +33,19 @@
   color: var(--fg-error);
 }
 
-.lens-badge--amber {
-  background: var(--amber-100);
-  color: var(--amber-800);
-  text-transform: capitalize;
-}
-
 .lens-badge--info {
   background: var(--blue-100);
   color: var(--blue-700);
 }
 
 .lens-badge--duplicate {
-  background: rgba(180, 80, 0, 0.85);
-  color: white;
+  background: color-mix(in srgb, var(--orange-700) 85%, transparent);
+  color: var(--white);
 }
 
-.lens-badge--muted,
-.lens-badge--neutral {
-  background: rgba(128, 128, 128, 0.65);
-  color: white;
+.lens-badge--muted {
+  background: color-mix(in srgb, var(--gray-500) 65%, transparent);
+  color: var(--white);
 }
 
 /* Circle modifier — for single-character badges like "!" */

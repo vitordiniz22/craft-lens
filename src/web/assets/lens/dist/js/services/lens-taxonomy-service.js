@@ -167,11 +167,11 @@
 
             for (var i = 0; i < chips.length; i++) {
                 if (getValue(chips[i]).toLowerCase() === value.toLowerCase()) {
-                    chips[i].classList.remove('is-duplicate-flash');
+                    chips[i].classList.remove('lens-is-duplicate-flash');
                     void chips[i].offsetWidth;
-                    chips[i].classList.add('is-duplicate-flash');
+                    chips[i].classList.add('lens-is-duplicate-flash');
                     chips[i].addEventListener('animationend', function() {
-                        this.classList.remove('is-duplicate-flash');
+                        this.classList.remove('lens-is-duplicate-flash');
                     }, { once: true });
                     break;
                 }

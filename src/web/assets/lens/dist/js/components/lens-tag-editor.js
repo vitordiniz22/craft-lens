@@ -68,7 +68,7 @@
                 e.preventDefault();
 
                 const editor = input.closest('[data-lens-target="tag-editor"]');
-                const activeSuggestion = editor ? editor.querySelector('[data-lens-target="tag-suggestion-item"].is-active') : null;
+                const activeSuggestion = editor ? editor.querySelector('[data-lens-target="tag-suggestion-item"].lens-is-active') : null;
 
                 if (activeSuggestion) {
                     this._selectSuggestion(editor, activeSuggestion);
@@ -78,15 +78,15 @@
             } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
                 const editor = input.closest('[data-lens-target="tag-editor"]');
                 const suggestionsEl = editor ? editor.querySelector('[data-lens-target="tag-suggestions"]') : null;
-                if (!suggestionsEl || !suggestionsEl.classList.contains('is-visible')) return;
+                if (!suggestionsEl || !suggestionsEl.classList.contains('lens-is-visible')) return;
 
                 e.preventDefault();
 
                 const items = suggestionsEl.querySelectorAll('[data-lens-target="tag-suggestion-item"]');
-                const active = suggestionsEl.querySelector('[data-lens-target="tag-suggestion-item"].is-active');
+                const active = suggestionsEl.querySelector('[data-lens-target="tag-suggestion-item"].lens-is-active');
                 let idx = active ? Array.from(items).indexOf(active) : -1;
 
-                if (active) active.classList.remove('is-active');
+                if (active) active.classList.remove('lens-is-active');
 
                 if (e.key === 'ArrowDown') {
                     idx = (idx + 1) % items.length;
@@ -94,7 +94,7 @@
                     idx = idx <= 0 ? items.length - 1 : idx - 1;
                 }
 
-                items[idx].classList.add('is-active');
+                items[idx].classList.add('lens-is-active');
             }
         },
 
@@ -220,9 +220,9 @@
                 chips.appendChild(chip);
             }
 
-            chip.classList.add('is-new');
+            chip.classList.add('lens-is-new');
             chip.addEventListener('animationend', function() {
-                this.classList.remove('is-new');
+                this.classList.remove('lens-is-new');
             }, { once: true });
         },
 
@@ -250,7 +250,7 @@
             if (!suggestionsEl) return;
 
             if (!tags.length) {
-                suggestionsEl.classList.remove('is-visible');
+                suggestionsEl.classList.remove('lens-is-visible');
                 return;
             }
 
@@ -266,13 +266,13 @@
                 suggestionsEl.appendChild(item);
             });
 
-            suggestionsEl.classList.add('is-visible');
+            suggestionsEl.classList.add('lens-is-visible');
         },
 
         _hideSuggestions: function(editor) {
             const suggestionsEl = editor.querySelector('[data-lens-target="tag-suggestions"]');
             if (suggestionsEl) {
-                suggestionsEl.classList.remove('is-visible');
+                suggestionsEl.classList.remove('lens-is-visible');
             }
         },
 
@@ -341,7 +341,7 @@
                     wrapper.appendChild(indicator);
                 }
                 indicator.textContent = length + '/' + max;
-                indicator.classList.toggle('is-near-limit', length >= window.Lens.config.THRESHOLDS.TAG_LENGTH_NEAR_LIMIT);
+                indicator.classList.toggle('lens-is-near-limit', length >= window.Lens.config.THRESHOLDS.TAG_LENGTH_NEAR_LIMIT);
             } else if (indicator) {
                 indicator.remove();
             }

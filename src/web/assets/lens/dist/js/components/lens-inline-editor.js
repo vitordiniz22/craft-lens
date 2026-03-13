@@ -198,7 +198,7 @@
             }
 
             // Show saving state
-            fieldEl.classList.add('is-saving');
+            fieldEl.classList.add('lens-is-saving');
 
             this._savePeopleFields(analysisId, fields).then((responses) => {
                 this._updatePeopleDisplay(fieldEl, fields);
@@ -214,7 +214,7 @@
             }).catch(() => {
                 Craft.cp.displayError(Craft.t('lens', 'Failed to save.'));
             }).finally(() => {
-                fieldEl.classList.remove('is-saving');
+                fieldEl.classList.remove('lens-is-saving');
             });
         },
 
@@ -311,7 +311,7 @@
             if (hiddenInput) hiddenInput.value = value;
 
             // Show saving state
-            fieldEl.classList.add('is-saving');
+            fieldEl.classList.add('lens-is-saving');
 
             window.Lens.core.API.updateField(analysisId, fieldName, value)
                 .then((response) => {
@@ -361,7 +361,7 @@
                     Craft.cp.displayError(Craft.t('lens', 'Failed to save.'));
                 })
                 .finally(() => {
-                    fieldEl.classList.remove('is-saving');
+                    fieldEl.classList.remove('lens-is-saving');
                 });
         },
 
