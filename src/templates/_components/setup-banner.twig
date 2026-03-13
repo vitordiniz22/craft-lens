@@ -15,25 +15,25 @@
 
 {% if unresolvedChecks|length > 0 %}
 <div class="lens-setup-banner {{ hasCritical ? '' : (hasWarning ? 'lens-setup-banner--warning' : (hasInfo ? 'lens-setup-banner--info' : '')) }}">
-    <div class="lens-setup-banner-header">
-        <div class="lens-setup-banner-icon">{{ iconSvg('triangle-exclamation') }}</div>
-        <h3 class="lens-setup-banner-title">{{ title ?? 'Setup Required'|t('lens') }}</h3>
+    <div class="lens-setup-banner__header">
+        <div class="lens-setup-banner__icon">{{ iconSvg('triangle-exclamation') }}</div>
+        <h3 class="lens-setup-banner__title">{{ title ?? 'Setup Required'|t('lens') }}</h3>
     </div>
 
     {% if description ?? false %}
-        <p class="lens-setup-banner-description">{{ description }}</p>
+        <p class="lens-setup-banner__description">{{ description }}</p>
     {% else %}
-        <p class="lens-setup-banner-description">
+        <p class="lens-setup-banner__description">
             {{ 'Complete the following steps to enable all Lens features.'|t('lens') }}
         </p>
     {% endif %}
 
-    <div class="lens-setup-checklist">
+    <div class="lens-setup-banner__checklist">
         {# Show unresolved items first #}
         {% for check in unresolvedChecks %}
-            <div class="lens-setup-item">
-                <div class="lens-setup-item-content">
-                    <div class="lens-setup-item-status">
+            <div class="lens-setup-banner__item">
+                <div class="lens-setup-banner__item-content">
+                    <div class="lens-setup-banner__item-status">
                         {% if check.severity == 'critical' %}
                             <span class="status off"></span>
                         {% elseif check.severity == 'warning' %}
@@ -44,9 +44,9 @@
                             <span class="status"></span>
                         {% endif %}
                     </div>
-                    <span class="lens-setup-item-text">{{ check.message }}</span>
+                    <span class="lens-setup-banner__item-text">{{ check.message }}</span>
                 </div>
-                <div class="lens-setup-item-action">
+                <div class="lens-setup-banner__item-action">
                     <a href="{{ cpUrl(check.actionUrl) }}" class="btn small {{ check.severity == 'critical' ? 'submit' }}">
                         {{ check.actionLabel }}
                     </a>

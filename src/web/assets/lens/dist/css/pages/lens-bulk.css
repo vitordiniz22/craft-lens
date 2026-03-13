@@ -61,10 +61,6 @@
   flex-shrink: 0;
 }
 
-@keyframes lens-pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(0.85); }
-}
 
 /* Progress Bar */
 .lens-progress-section {

@@ -16,14 +16,14 @@
   border-color: var(--blue-200);
 }
 
-.lens-setup-banner-header {
+.lens-setup-banner__header {
   display: flex;
   align-items: center;
   gap: 10px;
   margin-bottom: 12px;
 }
 
-.lens-setup-banner-icon {
+.lens-setup-banner__icon {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -34,40 +34,40 @@
   flex-shrink: 0;
 }
 
-.lens-setup-banner-icon svg {
+.lens-setup-banner__icon svg {
   width: 12px;
   height: 12px;
   fill: white;
 }
 
-.lens-setup-banner--warning .lens-setup-banner-icon {
+.lens-setup-banner--warning .lens-setup-banner__icon {
   background: var(--bg-pending);
 }
 
-.lens-setup-banner--info .lens-setup-banner-icon {
+.lens-setup-banner--info .lens-setup-banner__icon {
   background: var(--link-color);
 }
 
-.lens-setup-banner-title {
+.lens-setup-banner__title {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
   color: var(--text-color);
 }
 
-.lens-setup-banner-description {
+.lens-setup-banner__description {
   margin: 0 0 16px 0;
   color: var(--medium-text-color);
   font-size: 14px;
 }
 
-.lens-setup-checklist {
+.lens-setup-banner__checklist {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.lens-setup-item {
+.lens-setup-banner__item {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -78,7 +78,7 @@
   border: 1px solid var(--hairline-color);
 }
 
-.lens-setup-item-content {
+.lens-setup-banner__item-content {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -86,7 +86,7 @@
   min-width: 0;
 }
 
-.lens-setup-item-status {
+.lens-setup-banner__item-status {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -95,19 +95,19 @@
   flex-shrink: 0;
 }
 
-.lens-setup-item-status .status {
+.lens-setup-banner__item-status .status {
   margin: 0;
 }
 
-.lens-setup-item-status .status.lens-status--info {
-  background-color: var(--blue-500, #3b82f6);
+.lens-setup-banner__item-status .status.lens-status--info {
+  background-color: var(--blue-500);
 }
 
-.lens-setup-item-text {
+.lens-setup-banner__item-text {
   font-size: 14px;
   color: var(--text-color);
 }
 
-.lens-setup-item-action {
+.lens-setup-banner__item-action {
   flex-shrink: 0;
 }

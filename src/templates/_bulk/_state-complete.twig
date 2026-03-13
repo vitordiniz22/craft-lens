@@ -66,12 +66,12 @@
                     {% set group = groups[0] %}
 
                     <div class="lens-inline-notice lens-inline-notice--warning" data-lens-target="error-groups">
-                        <div class="lens-notice-header">
-                            <span class="lens-notice-icon">{{ iconSvg('triangle-exclamation') }}</span>
-                            <h4 class="lens-notice-title">{{ 'Attention needed'|t('lens') }}</h4>
+                        <div class="lens-inline-notice__header">
+                            <span class="lens-inline-notice__icon">{{ iconSvg('triangle-exclamation') }}</span>
+                            <h4 class="lens-inline-notice__title">{{ 'Attention needed'|t('lens') }}</h4>
                         </div>
 
-                        <div class="lens-notice-content">
+                        <div class="lens-inline-notice__content">
                             {{ group.message }}
                         </div>
 
@@ -86,8 +86,8 @@
                     {# Multiple error types: grouped with expand/collapse #}
                     <div class="lens-error-groups" data-lens-target="error-groups">
                         <div class="lens-error-groups-header">
-                            <span class="lens-notice-icon">{{ iconSvg('triangle-exclamation') }}</span>
-                            <h4 class="lens-notice-title">{{ '{count} errors across {groups} error types'|t('lens', {count: failureReasons.totalFailed, groups: groups|length}) }}</h4>
+                            <span class="lens-inline-notice__icon">{{ iconSvg('triangle-exclamation') }}</span>
+                            <h4 class="lens-inline-notice__title">{{ '{count} errors across {groups} error types'|t('lens', {count: failureReasons.totalFailed, groups: groups|length}) }}</h4>
                         </div>
 
                         {% for group in groups %}

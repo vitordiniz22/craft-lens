@@ -42,13 +42,13 @@
   border: 1px solid var(--hairline-color);
 }
 
-.lens-notice-header {
+.lens-inline-notice__header {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.lens-notice-icon {
+.lens-inline-notice__icon {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -57,54 +57,54 @@
   flex-shrink: 0;
 }
 
-.lens-notice-icon svg {
+.lens-inline-notice__icon svg {
   width: 16px;
   height: 16px;
   fill: currentColor;
 }
 
-.lens-inline-notice--error .lens-notice-icon {
+.lens-inline-notice--error .lens-inline-notice__icon {
   color: var(--fg-error);
 }
 
-.lens-inline-notice--warning .lens-notice-icon {
+.lens-inline-notice--warning .lens-inline-notice__icon {
   color: var(--fg-warning);
 }
 
-.lens-inline-notice--info .lens-notice-icon {
+.lens-inline-notice--info .lens-inline-notice__icon {
   color: var(--fg-notice, var(--blue-600));
 }
 
-.lens-inline-notice--tip .lens-notice-icon {
+.lens-inline-notice--tip .lens-inline-notice__icon {
   color: var(--fg-success);
 }
 
-.lens-inline-notice--neutral .lens-notice-icon {
+.lens-inline-notice--neutral .lens-inline-notice__icon {
   color: var(--medium-text-color);
 }
 
-.lens-notice-title {
+.lens-inline-notice__title {
   font-size: 13px;
   font-weight: 600;
   color: var(--text-color);
   margin: 0;
 }
 
-.lens-notice-content {
+.lens-inline-notice__content {
   font-size: 13px;
   color: var(--medium-text-color);
   line-height: 1.5;
 }
 
-.lens-notice-action {
+.lens-inline-notice__action {
   margin-top: 4px;
 }
 
-.lens-notice-action .btn.small {
+.lens-inline-notice__action .btn.small {
   font-size: 12px;
 }
 
-.lens-notice-dismiss {
+.lens-inline-notice__dismiss {
   position: absolute;
   top: 8px;
   right: 8px;
@@ -117,26 +117,26 @@
   transition: opacity 0.15s;
 }
 
-.lens-notice-dismiss svg {
+.lens-inline-notice__dismiss svg {
   width: 12px;
   height: 12px;
   fill: currentColor;
 }
 
-.lens-notice-dismiss:hover {
+.lens-inline-notice__dismiss:hover {
   opacity: 1;
 }
 
 /* Thumbnail strip (used by similar-assets notice) */
 
-.lens-notice-thumbnails {
+.lens-inline-notice__thumbnails {
   display: flex;
   gap: 8px;
   overflow-x: auto;
   padding: 2px 0;
 }
 
-.lens-notice-thumb {
+.lens-inline-notice__thumb {
   position: relative;
   flex-shrink: 0;
   display: block;
@@ -148,18 +148,18 @@
   transition: border-color 0.15s;
 }
 
-.lens-notice-thumb:hover {
+.lens-inline-notice__thumb:hover {
   border-color: var(--link-color);
 }
 
-.lens-notice-thumb img {
+.lens-inline-notice__thumb img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
 
-.lens-notice-thumb-label {
+.lens-inline-notice__thumb-label {
   position: absolute;
   bottom: 0;
   left: 0;
@@ -168,12 +168,12 @@
   font-size: 10px;
   font-weight: 600;
   color: white;
-  background: rgba(0, 0, 0, 0.6);
+  background: var(--lens-overlay-dark-strong);
   padding: 1px 0;
   line-height: 1.4;
 }
 
-.lens-notice-thumb-more {
+.lens-inline-notice__thumb-more {
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -189,7 +189,7 @@
   transition: border-color 0.15s, background-color 0.15s;
 }
 
-.lens-notice-thumb-more:hover {
+.lens-inline-notice__thumb-more:hover {
   border-color: var(--link-color);
   background: var(--gray-050);
 }

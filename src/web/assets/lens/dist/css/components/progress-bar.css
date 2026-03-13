@@ -4,11 +4,11 @@
  *
  * Usage:
  *   <div class="lens-progress">
- *     <div class="lens-progress-fill" style="width: 50%"></div>
+ *     <div class="lens-progress__fill" style="width: 50%"></div>
  *   </div>
  *
  *   <div class="lens-progress lens-progress--animated">
- *     <div class="lens-progress-fill" style="width: 75%"></div>
+ *     <div class="lens-progress__fill" style="width: 75%"></div>
  *   </div>
  */
 
@@ -22,12 +22,12 @@
 }
 
 /* Complete state (success color) */
-.lens-progress--complete .lens-progress-fill {
+.lens-progress--complete .lens-progress__fill {
   background: var(--success-color);
 }
 
 /* Progress fill bar */
-.lens-progress-fill {
+.lens-progress__fill {
   height: 100%;
   background: var(--link-color);
   border-radius: inherit;
@@ -35,7 +35,7 @@
 }
 
 /* Animated variant (gradient + shimmer) */
-.lens-progress--animated .lens-progress-fill {
+.lens-progress--animated .lens-progress__fill {
   background: linear-gradient(
     90deg,
     var(--link-color) 0%,
@@ -44,7 +44,7 @@
   position: relative;
 }
 
-.lens-progress--animated .lens-progress-fill::after {
+.lens-progress--animated .lens-progress__fill::after {
   content: "";
   position: absolute;
   top: 0;

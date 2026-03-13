@@ -12,7 +12,7 @@
   text-align: center;
 }
 
-.lens-empty-icon {
+.lens-empty-state__icon {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -24,19 +24,19 @@
   color: var(--medium-text-color);
 }
 
-.lens-empty-icon svg {
+.lens-empty-state__icon svg {
   width: 28px;
   height: 28px;
 }
 
-.lens-empty-heading {
+.lens-empty-state__heading {
   margin: 0 0 8px 0;
   font-size: 15px;
   font-weight: 600;
   color: var(--text-color);
 }
 
-.lens-empty-description {
+.lens-empty-state__description {
   margin: 0 0 20px 0;
   font-size: 14px;
   color: var(--medium-text-color);
@@ -44,7 +44,7 @@
   line-height: 1.5;
 }
 
-.lens-empty-actions {
+.lens-empty-state__actions {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;

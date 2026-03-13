@@ -18,7 +18,7 @@
             </div>
             <div class="lens-coverage__metric-row">
                 <div class="lens-progress">
-                    <div class="lens-progress-fill" style="width: {{ altTextCoverage.percentage }}%; background-color: {{ altColor }}"></div>
+                    <div class="lens-progress__fill" style="width: {{ altTextCoverage.percentage }}%; background-color: {{ altColor }}"></div>
                 </div>
                 {% if altTextCoverage.total - altTextCoverage.withAltText > 0 %}
                     {% if lens.isPro %}
@@ -45,7 +45,7 @@
                 </div>
                 <div class="lens-coverage__metric-row">
                     <div class="lens-progress">
-                        <div class="lens-progress-fill" style="width: {{ taggedPercentage.percentage }}%; background-color: {{ tagColor }}"></div>
+                        <div class="lens-progress__fill" style="width: {{ taggedPercentage.percentage }}%; background-color: {{ tagColor }}"></div>
                     </div>
                     {% if taggedPercentage.total - taggedPercentage.withTags > 0 %}
                         <a href="{{ cpUrl('lens/search', {quickFilter: 'untagged'}) }}" class="lens-link">
@@ -68,7 +68,7 @@
             </div>
             <div class="lens-coverage__metric-row">
                 <div class="lens-progress">
-                    <div class="lens-progress-fill" style="width: {{ focalPointCoverage.percentage }}%; background-color: {{ fpColor }}"></div>
+                    <div class="lens-progress__fill" style="width: {{ focalPointCoverage.percentage }}%; background-color: {{ fpColor }}"></div>
                 </div>
                 {% if focalPointCoverage.total - focalPointCoverage.withFocalPoint > 0 %}
                     {% if lens.isPro %}

@@ -17,18 +17,18 @@
 {% endset %}
 
 <div class="lens-empty-state">
-    <div class="lens-empty-icon">
+    <div class="lens-empty-state__icon">
         {{ icon ?? defaultIcon|raw }}
     </div>
 
-    <h3 class="lens-empty-heading">{{ heading }}</h3>
+    <h3 class="lens-empty-state__heading">{{ heading }}</h3>
 
     {% if description ?? false %}
-        <p class="lens-empty-description">{{ description }}</p>
+        <p class="lens-empty-state__description">{{ description }}</p>
     {% endif %}
 
     {% if (cta ?? false) or (secondaryCta ?? false) %}
-        <div class="lens-empty-actions">
+        <div class="lens-empty-state__actions">
             {% if cta ?? false %}
                 <a href="{{ cpUrl(cta.url) }}" class="btn {{ cta.style ?? 'submit' }}">
                     {{ cta.label }}

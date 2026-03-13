@@ -28,7 +28,7 @@
                     </span>
                 </div>
                 <div class="lens-progress">
-                    <div class="lens-progress-fill" style="width: {{ percentComplete }}%"></div>
+                    <div class="lens-progress__fill" style="width: {{ percentComplete }}%"></div>
                 </div>
                 {% if queueInfo.estimatedMinutes is defined and queueInfo.estimatedMinutes %}
                     <div class="lens-processing__estimate">
@@ -53,7 +53,7 @@
                     </span>
                 </div>
                 <div class="lens-progress">
-                    <div class="lens-progress-fill" style="width: {{ percentComplete }}%"></div>
+                    <div class="lens-progress__fill" style="width: {{ percentComplete }}%"></div>
                 </div>
                 <div class="lens-processing__waiting-info">
                     <span class="lens-processing__waiting-count">{{ unprocessed|number_format }} {{ 'unprocessed'|t('lens') }}</span>
@@ -83,7 +83,7 @@
                     <span class="lens-processing__complete-icon">{{ iconSvg('check') }}</span>
                 </div>
                 <div class="lens-progress lens-progress--complete">
-                    <div class="lens-progress-fill" style="width: 100%"></div>
+                    <div class="lens-progress__fill" style="width: 100%"></div>
                 </div>
             </div>
         {% endif %}

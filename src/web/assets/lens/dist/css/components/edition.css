@@ -9,34 +9,34 @@
     justify-content: space-between;
     gap: 16px;
     padding: 16px 20px;
-    background: var(--gray-050, #f8f9fa);
+    background: var(--gray-050);
     border: 1px solid var(--hairline-color);
-    border-radius: var(--large-border-radius, 5px);
+    border-radius: var(--large-border-radius);
 }
 
-.lens-upgrade-banner-content {
+.lens-upgrade-banner__content {
     display: flex;
     align-items: flex-start;
     gap: 12px;
 }
 
-.lens-upgrade-banner-icon {
-    color: var(--ui-control-active-color, #0d99ff);
+.lens-upgrade-banner__icon {
+    color: var(--ui-control-active-color);
     flex-shrink: 0;
 }
 
-.lens-upgrade-banner-text strong {
+.lens-upgrade-banner__text strong {
     display: block;
     font-size: 14px;
     margin-bottom: 4px;
 }
 
-.lens-upgrade-banner-text span {
+.lens-upgrade-banner__text span {
     color: var(--medium-text-color);
 }
 
 /* Edition Badge (settings header) */
-.lens-edition-badge-container {
+.lens-edition-badge__container {
     display: flex;
     align-items: center;
     gap: 12px;
@@ -50,17 +50,17 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    border-radius: var(--small-border-radius, 3px);
+    border-radius: var(--small-border-radius);
 }
 
 .lens-edition-badge--pro {
-    color: var(--success-color, #27AE60);
-    background: color-mix(in srgb, var(--success-color, #27AE60) 10%, transparent);
+    color: var(--success-color);
+    background: color-mix(in srgb, var(--success-color) 10%, transparent);
 }
 
 .lens-edition-badge--lite {
     color: var(--medium-text-color);
-    background: var(--gray-100, #eee);
+    background: var(--gray-100);
 }
 
 .lens-edition-upgrade-link {
