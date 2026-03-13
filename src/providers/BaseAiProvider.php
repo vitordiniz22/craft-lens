@@ -552,7 +552,11 @@ abstract class BaseAiProvider implements AiProviderInterface
             return null;
         }
 
-        $bodyContents = $e->getResponse()->getBody()->getContents();
+        try {
+            $bodyContents = $e->getResponse()->getBody()->getContents();
+        } catch (\RuntimeException) {
+            return null;
+        }
         $body = json_decode($bodyContents, true);
 
         if (!is_array($body)) {

@@ -154,17 +154,10 @@ class AssetAnalysisService extends Component
             return [];
         }
 
-        $records = AssetAnalysisRecord::find()
+        return AssetAnalysisRecord::find()
             ->where(['assetId' => $assetIds])
+            ->indexBy('assetId')
             ->all();
-
-        $map = [];
-
-        foreach ($records as $record) {
-            $map[$record->assetId] = $record;
-        }
-
-        return $map;
     }
 
     /**
@@ -953,35 +946,37 @@ class AssetAnalysisService extends Component
         $cutoffDate = date('Y-m-d H:i:s', time() - ($minutes * 60));
         $statusLabel = strtolower($status->value);
 
-        $stuckRecords = AssetAnalysisRecord::find()
+        $stuckRows = AssetAnalysisRecord::find()
+            ->select(['id', 'assetId', 'dateUpdated'])
             ->where(['status' => $status->value])
             ->andWhere(['<', 'dateUpdated', $cutoffDate])
             ->limit(1000)
+            ->asArray()
             ->all();
 
-        if (empty($stuckRecords)) {
+        if (empty($stuckRows)) {
             return [];
         }
 
         $resetInfo = [];
         $assetIds = [];
 
-        foreach ($stuckRecords as $record) {
-            $dateUpdated = $record->dateUpdated instanceof \DateTime
-                ? $record->dateUpdated
-                : new \DateTime($record->dateUpdated);
+        foreach ($stuckRows as $row) {
+            $dateUpdated = $row['dateUpdated'] instanceof \DateTime
+                ? $row['dateUpdated']
+                : new \DateTime($row['dateUpdated']);
 
             $minutesStuck = (int) round((time() - $dateUpdated->getTimestamp()) / 60);
 
             Logger::warning(
                 LogCategory::AssetProcessing,
-                "Resetting stuck {$statusLabel} record for asset {$record->assetId} (stuck for {$minutesStuck} minutes)",
-                $record->assetId
+                "Resetting stuck {$statusLabel} record for asset {$row['assetId']} (stuck for {$minutesStuck} minutes)",
+                (int) $row['assetId']
             );
 
-            $assetIds[] = $record->assetId;
+            $assetIds[] = $row['assetId'];
             $resetInfo[] = [
-                'assetId' => $record->assetId,
+                'assetId' => (int) $row['assetId'],
                 'minutesStuck' => $minutesStuck,
             ];
         }

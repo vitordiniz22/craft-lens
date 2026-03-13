@@ -143,77 +143,7 @@ class ReviewController extends Controller
             throw new BadRequestHttpException('Invalid analysis ID');
         }
 
-        $modifications = [];
-
-        // Text fields — skip empty strings to avoid clearing data when form submits unmodified hidden inputs
-        foreach (['suggestedTitle', 'altText', 'longDescription', 'extractedText'] as $field) {
-            $value = $this->request->getBodyParam($field);
-            if ($value !== null && $value !== '') {
-                $modifications[$field] = $value;
-            }
-        }
-
-        // Tags (JSON-encoded array from hidden input)
-        $tagsJson = $this->request->getBodyParam('tags');
-        if ($tagsJson !== null) {
-            $tags = is_string($tagsJson) ? json_decode($tagsJson, true) : $tagsJson;
-            if (is_array($tags)) {
-                $modifications['tags'] = $tags;
-            }
-        }
-
-        // Colors (JSON-encoded array from hidden input)
-        $colorsJson = $this->request->getBodyParam('dominantColors');
-        if ($colorsJson !== null) {
-            $colors = is_string($colorsJson) ? json_decode($colorsJson, true) : $colorsJson;
-            if (is_array($colors)) {
-                $modifications['dominantColors'] = $colors;
-            }
-        }
-
-        $faceCount = $this->request->getBodyParam('faceCount');
-
-        if ($faceCount !== null) {
-            $faceCountInt = (int) $faceCount;
-
-            if ($faceCountInt < 0 || $faceCountInt > 10000) {
-                throw new BadRequestHttpException('Invalid face count');
-            }
-
-            $modifications['faceCount'] = $faceCountInt;
-        }
-
-        $nsfwScore = $this->request->getBodyParam('nsfwScore');
-
-        if ($nsfwScore !== null) {
-            $nsfwScoreFloat = (float) $nsfwScore;
-            $modifications['nsfwScore'] = min(1.0, max(0.0, $nsfwScoreFloat));
-        }
-
-        foreach (['containsPeople', 'hasWatermark', 'containsBrandLogo'] as $field) {
-            $value = $this->request->getBodyParam($field);
-            if ($value !== null) {
-                $modifications[$field] = (bool) $value;
-            }
-        }
-
-        $focalX = $this->request->getBodyParam('focalPointX');
-        $focalY = $this->request->getBodyParam('focalPointY');
-
-        if ($focalX !== null && $focalY !== null) {
-            $modifications['focalPointX'] = (float) $focalX;
-            $modifications['focalPointY'] = (float) $focalY;
-        }
-
-        $siteContentJson = $this->request->getBodyParam('siteContent');
-
-        if ($siteContentJson !== null) {
-            $siteContent = is_string($siteContentJson) ? json_decode($siteContentJson, true) : $siteContentJson;
-            if (is_array($siteContent) && !empty($siteContent)) {
-                $modifications['siteContent'] = $siteContent;
-            }
-        }
-
+        $modifications = $this->parseApprovalModifications();
         $userId = Craft::$app->getUser()->getId();
         $reviewService = Plugin::getInstance()->review;
 
@@ -455,6 +385,87 @@ class ReviewController extends Controller
     /**
      * Redirect to next review or browse page with appropriate message.
      */
+    /**
+     * Parse approval modifications from the request body.
+     *
+     * @return array<string, mixed>
+     */
+    private function parseApprovalModifications(): array
+    {
+        $modifications = [];
+
+        // Text fields — skip empty strings to avoid clearing data when form submits unmodified hidden inputs
+        foreach (['suggestedTitle', 'altText', 'longDescription', 'extractedText'] as $field) {
+            $value = $this->request->getBodyParam($field);
+            if ($value !== null && $value !== '') {
+                $modifications[$field] = $value;
+            }
+        }
+
+        // Tags (JSON-encoded array from hidden input)
+        $tagsJson = $this->request->getBodyParam('tags');
+        if ($tagsJson !== null) {
+            $tags = is_string($tagsJson) ? json_decode($tagsJson, true) : $tagsJson;
+            if (is_array($tags)) {
+                $modifications['tags'] = $tags;
+            }
+        }
+
+        // Colors (JSON-encoded array from hidden input)
+        $colorsJson = $this->request->getBodyParam('dominantColors');
+        if ($colorsJson !== null) {
+            $colors = is_string($colorsJson) ? json_decode($colorsJson, true) : $colorsJson;
+            if (is_array($colors)) {
+                $modifications['dominantColors'] = $colors;
+            }
+        }
+
+        $faceCount = $this->request->getBodyParam('faceCount');
+
+        if ($faceCount !== null) {
+            $faceCountInt = (int) $faceCount;
+
+            if ($faceCountInt < 0 || $faceCountInt > 10000) {
+                throw new BadRequestHttpException('Invalid face count');
+            }
+
+            $modifications['faceCount'] = $faceCountInt;
+        }
+
+        $nsfwScore = $this->request->getBodyParam('nsfwScore');
+
+        if ($nsfwScore !== null) {
+            $nsfwScoreFloat = (float) $nsfwScore;
+            $modifications['nsfwScore'] = min(1.0, max(0.0, $nsfwScoreFloat));
+        }
+
+        foreach (['containsPeople', 'hasWatermark', 'containsBrandLogo'] as $field) {
+            $value = $this->request->getBodyParam($field);
+            if ($value !== null) {
+                $modifications[$field] = (bool) $value;
+            }
+        }
+
+        $focalX = $this->request->getBodyParam('focalPointX');
+        $focalY = $this->request->getBodyParam('focalPointY');
+
+        if ($focalX !== null && $focalY !== null) {
+            $modifications['focalPointX'] = (float) $focalX;
+            $modifications['focalPointY'] = (float) $focalY;
+        }
+
+        $siteContentJson = $this->request->getBodyParam('siteContent');
+
+        if ($siteContentJson !== null) {
+            $siteContent = is_string($siteContentJson) ? json_decode($siteContentJson, true) : $siteContentJson;
+            if (is_array($siteContent) && !empty($siteContent)) {
+                $modifications['siteContent'] = $siteContent;
+            }
+        }
+
+        return $modifications;
+    }
+
     private function redirectToNextOrBrowse(string $successMessage): Response
     {
         $queueIds = Plugin::getInstance()->review->getPendingReviewIds();

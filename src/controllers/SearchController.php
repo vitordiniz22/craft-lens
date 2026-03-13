@@ -27,6 +27,8 @@ class SearchController extends Controller
 {
     use RequiresAiProviderTrait;
 
+    private const EXPORT_ROW_LIMIT = 10000;
+
     protected array|int|bool $allowAnonymous = false;
 
     public function actionIndex(): Response
@@ -108,13 +110,17 @@ class SearchController extends Controller
 
         $filters = FilterParser::fromRequest($request);
         unset($filters['offset']);
-        $filters['limit'] = 10000;
+        $filters['limit'] = self::EXPORT_ROW_LIMIT;
 
         try {
             $results = $plugin->search->search($filters);
         } catch (\Throwable $e) {
             Logger::error(LogCategory::AssetProcessing, 'CSV export query failed', exception: $e);
             throw $e;
+        }
+
+        if (count($results['assets']) >= self::EXPORT_ROW_LIMIT) {
+            Logger::warning(LogCategory::AssetProcessing, 'CSV export hit row limit', context: ['limit' => self::EXPORT_ROW_LIMIT]);
         }
 
         $assetIds = array_map(fn($asset) => $asset->id, $results['assets']);
@@ -125,134 +131,133 @@ class SearchController extends Controller
 
         $output = fopen('php://temp', 'r+');
 
-        fputcsv($output, [
-            'Asset ID',
-            'Title',
-            'Filename',
-            'URL',
-            'Alt Text',
-            'Alt Text Confidence',
-            'Suggested Title',
-            'Title Confidence',
-            'Long Description',
-            'Long Description Confidence',
-            'Tags',
-            'Colors',
-            'Status',
-            'Contains People',
-            'Face Count',
-            'Has Watermark',
-            'Watermark Type',
-            'Contains Brand Logo',
-            'Detected Brands',
-            'Sharpness Score',
-            'Exposure Score',
-            'Noise Score',
-            'Overall Quality Score',
-            'NSFW Score',
-            'NSFW Flagged',
-            'NSFW Categories',
-            'Extracted Text',
-            'Focal Point X',
-            'Focal Point Y',
-            'Focal Point Confidence',
-            'Provider',
-            'Model',
-            'Input Tokens',
-            'Output Tokens',
-            'Cost',
-            'Processed At',
-        ]);
-
-        $analysisMap = [];
-
-        if (!empty($assetIds)) {
-            foreach (AssetAnalysisRecord::find()->where(['assetId' => $assetIds])->all() as $analysis) {
-                $analysisMap[$analysis->assetId] = $analysis;
-            }
-        }
-
-        $analysisIds = array_map(fn($a) => $a->id, $analysisMap);
-
-        $tagsByAnalysis = [];
-        $colorsByAnalysis = [];
-
-        if (!empty($analysisIds)) {
-            foreach (AssetTagRecord::find()->where(['analysisId' => $analysisIds])->all() as $tag) {
-                $tagsByAnalysis[$tag->analysisId][] = $tag->tag;
-            }
-
-            foreach (AssetColorRecord::find()->where(['analysisId' => $analysisIds])->orderBy(['percentage' => SORT_DESC])->all() as $color) {
-                $colorsByAnalysis[$color->analysisId][] = $color->hex . ($color->percentage !== null ? ' (' . round($color->percentage * 100) . '%)' : '');
-            }
-        }
-
-        foreach ($results['assets'] as $asset) {
-            $analysis = $analysisMap[$asset->id] ?? null;
-
-            if ($analysis === null && !empty($assetIds) && $asset->kind === Asset::KIND_IMAGE) {
-                Logger::warning(
-                    LogCategory::AssetProcessing,
-                    'Image asset missing from analysis map during CSV export',
-                    assetId: $asset->id
-                );
-            }
-
-            $tags = '';
-            $colors = '';
-            $detectedBrands = '';
-            $nsfwCategories = '';
-
-            if ($analysis !== null) {
-                $tags = implode(', ', $tagsByAnalysis[$analysis->id] ?? []);
-                $colors = implode(', ', $colorsByAnalysis[$analysis->id] ?? []);
-                $detectedBrands = self::flattenJsonColumn($analysis->detectedBrands);
-                $nsfwCategories = self::flattenJsonColumn($analysis->nsfwCategories);
-            }
-
+        try {
             fputcsv($output, [
-                $asset->id,
-                $asset->title,
-                $asset->filename,
-                $asset->getUrl(),
-                $analysis?->altText ?? '',
-                $analysis?->altTextConfidence !== null ? round($analysis->altTextConfidence * 100) . '%' : '',
-                $analysis?->suggestedTitle ?? '',
-                $analysis?->titleConfidence !== null ? round($analysis->titleConfidence * 100) . '%' : '',
-                $analysis?->longDescription ?? '',
-                $analysis?->longDescriptionConfidence !== null ? round($analysis->longDescriptionConfidence * 100) . '%' : '',
-                $tags,
-                $colors,
-                $analysis ? AnalysisStatus::from($analysis->status)->label() : '',
-                $analysis !== null ? ($analysis->containsPeople ? 'Yes' : 'No') : '',
-                $analysis?->faceCount ?? '',
-                $analysis !== null ? ($analysis->hasWatermark ? 'Yes' : 'No') : '',
-                $analysis?->watermarkType ?? '',
-                $analysis !== null ? ($analysis->containsBrandLogo ? 'Yes' : 'No') : '',
-                $detectedBrands,
-                $analysis?->sharpnessScore !== null ? round($analysis->sharpnessScore * 100) . '%' : '',
-                $analysis?->exposureScore !== null ? round($analysis->exposureScore * 100) . '%' : '',
-                $analysis?->noiseScore !== null ? round($analysis->noiseScore * 100) . '%' : '',
-                $analysis?->overallQualityScore !== null ? round($analysis->overallQualityScore * 100) . '%' : '',
-                $analysis?->nsfwScore !== null ? round($analysis->nsfwScore * 100) . '%' : '',
-                $analysis !== null ? ($analysis->isFlaggedNsfw ? 'Yes' : 'No') : '',
-                $nsfwCategories,
-                $analysis?->extractedText ?? '',
-                $analysis?->focalPointX ?? '',
-                $analysis?->focalPointY ?? '',
-                $analysis?->focalPointConfidence !== null ? round($analysis->focalPointConfidence * 100) . '%' : '',
-                $analysis?->provider ?? '',
-                $analysis?->providerModel ?? '',
-                $analysis?->inputTokens ?? '',
-                $analysis?->outputTokens ?? '',
-                $analysis?->actualCost !== null ? '$' . number_format((float) $analysis->actualCost, 4) : '',
-                $analysis?->processedAt ?? '',
+                'Asset ID',
+                'Title',
+                'Filename',
+                'URL',
+                'Alt Text',
+                'Alt Text Confidence',
+                'Suggested Title',
+                'Title Confidence',
+                'Long Description',
+                'Long Description Confidence',
+                'Tags',
+                'Colors',
+                'Status',
+                'Contains People',
+                'Face Count',
+                'Has Watermark',
+                'Watermark Type',
+                'Contains Brand Logo',
+                'Detected Brands',
+                'Sharpness Score',
+                'Exposure Score',
+                'Noise Score',
+                'Overall Quality Score',
+                'NSFW Score',
+                'NSFW Flagged',
+                'NSFW Categories',
+                'Extracted Text',
+                'Focal Point X',
+                'Focal Point Y',
+                'Focal Point Confidence',
+                'Provider',
+                'Model',
+                'Input Tokens',
+                'Output Tokens',
+                'Cost',
+                'Processed At',
             ]);
-        }
 
-        rewind($output);
-        $csv = stream_get_contents($output);
-        fclose($output);
+            $analysisMap = !empty($assetIds)
+                ? AssetAnalysisRecord::find()->where(['assetId' => $assetIds])->indexBy('assetId')->all()
+                : [];
+
+            $analysisIds = array_map(fn($a) => $a->id, $analysisMap);
+
+            $tagsByAnalysis = [];
+            $colorsByAnalysis = [];
+
+            if (!empty($analysisIds)) {
+                foreach (AssetTagRecord::find()->where(['analysisId' => $analysisIds])->all() as $tag) {
+                    $tagsByAnalysis[$tag->analysisId][] = $tag->tag;
+                }
+
+                foreach (AssetColorRecord::find()->where(['analysisId' => $analysisIds])->orderBy(['percentage' => SORT_DESC])->all() as $color) {
+                    $colorsByAnalysis[$color->analysisId][] = $color->hex . ($color->percentage !== null ? ' (' . round($color->percentage * 100) . '%)' : '');
+                }
+            }
+
+            foreach ($results['assets'] as $asset) {
+                $analysis = $analysisMap[$asset->id] ?? null;
+
+                if ($analysis === null && !empty($assetIds) && $asset->kind === Asset::KIND_IMAGE) {
+                    Logger::warning(
+                        LogCategory::AssetProcessing,
+                        'Image asset missing from analysis map during CSV export',
+                        assetId: $asset->id
+                    );
+                }
+
+                $tags = '';
+                $colors = '';
+                $detectedBrands = '';
+                $nsfwCategories = '';
+
+                if ($analysis !== null) {
+                    $tags = implode(', ', $tagsByAnalysis[$analysis->id] ?? []);
+                    $colors = implode(', ', $colorsByAnalysis[$analysis->id] ?? []);
+                    $detectedBrands = self::flattenJsonColumn($analysis->detectedBrands);
+                    $nsfwCategories = self::flattenJsonColumn($analysis->nsfwCategories);
+                }
+
+                fputcsv($output, [
+                    $asset->id,
+                    $asset->title,
+                    $asset->filename,
+                    $asset->getUrl(),
+                    $analysis?->altText ?? '',
+                    self::formatConfidence($analysis?->altTextConfidence),
+                    $analysis?->suggestedTitle ?? '',
+                    self::formatConfidence($analysis?->titleConfidence),
+                    $analysis?->longDescription ?? '',
+                    self::formatConfidence($analysis?->longDescriptionConfidence),
+                    $tags,
+                    $colors,
+                    $analysis ? AnalysisStatus::from($analysis->status)->label() : '',
+                    $analysis !== null ? ($analysis->containsPeople ? 'Yes' : 'No') : '',
+                    $analysis?->faceCount ?? '',
+                    $analysis !== null ? ($analysis->hasWatermark ? 'Yes' : 'No') : '',
+                    $analysis?->watermarkType ?? '',
+                    $analysis !== null ? ($analysis->containsBrandLogo ? 'Yes' : 'No') : '',
+                    $detectedBrands,
+                    self::formatConfidence($analysis?->sharpnessScore),
+                    self::formatConfidence($analysis?->exposureScore),
+                    self::formatConfidence($analysis?->noiseScore),
+                    self::formatConfidence($analysis?->overallQualityScore),
+                    self::formatConfidence($analysis?->nsfwScore),
+                    $analysis !== null ? ($analysis->isFlaggedNsfw ? 'Yes' : 'No') : '',
+                    $nsfwCategories,
+                    $analysis?->extractedText ?? '',
+                    $analysis?->focalPointX ?? '',
+                    $analysis?->focalPointY ?? '',
+                    self::formatConfidence($analysis?->focalPointConfidence),
+                    $analysis?->provider ?? '',
+                    $analysis?->providerModel ?? '',
+                    $analysis?->inputTokens ?? '',
+                    $analysis?->outputTokens ?? '',
+                    $analysis?->actualCost !== null ? '$' . number_format((float) $analysis->actualCost, 4) : '',
+                    $analysis?->processedAt ?? '',
+                ]);
+            }
+
+            rewind($output);
+            $csv = stream_get_contents($output);
+        } finally {
+            fclose($output);
+        }
 
         $response = Craft::$app->getResponse();
         $response->format = Response::FORMAT_RAW;
@@ -300,6 +305,11 @@ class SearchController extends Controller
      * Yii2 auto-decodes JSON columns, so $value is always array|null.
      * Elements may be scalar ("violence") or nested ({"category":"violence","score":0.8}).
      */
+    private static function formatConfidence(?float $value): string
+    {
+        return $value !== null ? round($value * 100) . '%' : '';
+    }
+
     private static function flattenJsonColumn(?array $value): string
     {
         if (empty($value)) {

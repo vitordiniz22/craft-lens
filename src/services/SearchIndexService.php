@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace vitordiniz22\craftlens\services;
 
 use Craft;
+use Throwable;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\helpers\Stemmer;
+use vitordiniz22\craftlens\jobs\RebuildSearchIndexJob;
 use vitordiniz22\craftlens\migrations\Install;
 use vitordiniz22\craftlens\records\AssetAnalysisRecord;
 use yii\base\Component;
@@ -657,6 +659,28 @@ class SearchIndexService extends Component
      *
      * @param array<array<string, mixed>> $rows
      */
+    /**
+     * Auto-queue a background search index rebuild when the index table exists
+     * but is empty and there are analyzed assets (e.g. after a fresh deploy to
+     * an existing install or after re-installing the plugin).
+     */
+    public function maybeQueueRebuild(): void
+    {
+        try {
+            if (!$this->isIndexPopulated()) {
+                $hasAnalyzedAssets = AssetAnalysisRecord::find()
+                    ->where(['NOT', ['processedAt' => null]])
+                    ->exists();
+
+                if ($hasAnalyzedAssets) {
+                    Craft::$app->getQueue()->push(new RebuildSearchIndexJob());
+                }
+            }
+        } catch (Throwable) {
+            // Table may not exist yet (fresh install before migration runs); ignore silently
+        }
+    }
+
     private function batchInsert(array $rows): void
     {
         if (empty($rows)) {

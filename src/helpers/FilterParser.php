@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace vitordiniz22\craftlens\helpers;
 
 use craft\web\Request;
+use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\enums\QuickFilter;
 use vitordiniz22\craftlens\Plugin;
 
@@ -298,7 +299,8 @@ class FilterParser
 
             try {
                 return new \DateTime($dateStr, new \DateTimeZone($timezone));
-            } catch (\Exception) {
+            } catch (\Exception $e) {
+                Logger::warning(LogCategory::AssetProcessing, 'Failed to parse date parameter', context: ['input' => $dateStr, 'error' => $e->getMessage()]);
                 return null;
             }
         }
@@ -306,7 +308,8 @@ class FilterParser
         if (is_string($param) && trim($param) !== '') {
             try {
                 return new \DateTime($param);
-            } catch (\Exception) {
+            } catch (\Exception $e) {
+                Logger::warning(LogCategory::AssetProcessing, 'Failed to parse date parameter', context: ['input' => $param, 'error' => $e->getMessage()]);
                 return null;
             }
         }

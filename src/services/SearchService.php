@@ -97,12 +97,7 @@ class SearchService extends Component
                     'resultsCount' => 0,
                 ]);
 
-                return [
-                    'assets' => [],
-                    'total' => 0,
-                    'offset' => $offset,
-                    'limit' => $limit,
-                ];
+                return $this->emptyResult($offset, $limit);
             }
             // else: BM25 index empty and Craft native found nothing —
             // fall through to legacy LIKE search below.
@@ -118,12 +113,7 @@ class SearchService extends Component
                 ->getSimilarAssetIds($similarToAssetId);
 
             if (empty($similarAssetIds)) {
-                return [
-                    'assets' => [],
-                    'total' => 0,
-                    'offset' => $offset,
-                    'limit' => $limit,
-                ];
+                return $this->emptyResult($offset, $limit);
             }
         }
 
@@ -132,12 +122,7 @@ class SearchService extends Component
         $total = (int) (clone $baseQuery)->count();
 
         if ($total === 0) {
-            return [
-                'assets' => [],
-                'total' => 0,
-                'offset' => $offset,
-                'limit' => $limit,
-            ];
+            return $this->emptyResult($offset, $limit);
         }
 
         if ($hasRankedOrder && $rankedAssetIds !== null) {
@@ -196,6 +181,14 @@ class SearchService extends Component
      * Build the base query for matching assets. Returns a grouped query
      * selecting asset IDs that can be used for both counting and pagination.
      */
+    /**
+     * @return array{assets: list<never>, total: 0, offset: int, limit: int}
+     */
+    private function emptyResult(int $offset, int $limit): array
+    {
+        return ['assets' => [], 'total' => 0, 'offset' => $offset, 'limit' => $limit];
+    }
+
     private function buildMatchingQuery(array $filters, ?array $rankedAssetIds = null, ?array $similarAssetIds = null, bool $hasTextQuery = false): Query
     {
         $query = (new Query())

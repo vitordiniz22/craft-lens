@@ -249,12 +249,10 @@ class LogService extends Component
             return false;
         }
 
-        $data = is_string($record->retryJobData)
-            ? json_decode($record->retryJobData, true)
-            : $record->retryJobData;
+        $data = $record->retryJobData;
 
         if (!is_array($data)) {
-            Logger::warning(LogCategory::JobFailed, 'Invalid JSON in retry job data', context: ['logId' => $logId]);
+            Logger::warning(LogCategory::JobFailed, 'Invalid retry job data', context: ['logId' => $logId]);
             return false;
         }
 
@@ -266,7 +264,14 @@ class LogService extends Component
             return false;
         }
 
-        Queue::push(new $jobClass($jobParams));
+        $job = new $jobClass($jobParams);
+
+        if (!$job instanceof \craft\queue\BaseJob) {
+            Logger::error(LogCategory::JobFailed, "Retried job class {$jobClass} does not extend BaseJob");
+            return false;
+        }
+
+        Queue::push($job);
 
         $this->info(
             LogCategory::JobStarted->value,

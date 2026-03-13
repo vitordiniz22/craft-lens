@@ -20,7 +20,6 @@ use craft\events\RegisterElementSourcesEvent;
 use craft\events\RegisterUrlRulesEvent;
 use craft\events\ReplaceAssetEvent;
 use craft\events\TemplateEvent;
-use craft\fieldlayoutelements\assets\AltField;
 use craft\helpers\UrlHelper;
 use craft\log\MonologTarget;
 use craft\models\FieldLayout;
@@ -29,10 +28,10 @@ use craft\services\Gc;
 use craft\web\UrlManager;
 use craft\web\View;
 use Psr\Log\LogLevel;
-use Throwable;
 use vitordiniz22\craftlens\actions\FindDuplicatesAction;
 use vitordiniz22\craftlens\behaviors\AssetQueryBehavior;
 use vitordiniz22\craftlens\enums\LogCategory;
+use vitordiniz22\craftlens\helpers\FieldLayoutHelper;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\conditions\ContainsBrandLogoConditionRule;
 use vitordiniz22\craftlens\conditions\ContainsPeopleConditionRule;
@@ -47,9 +46,7 @@ use vitordiniz22\craftlens\conditions\WatermarkFlaggedConditionRule;
 use vitordiniz22\craftlens\conditions\WatermarkTypeConditionRule;
 use vitordiniz22\craftlens\conditions\WebReadinessConditionRule;
 use vitordiniz22\craftlens\fieldlayoutelements\LensAnalysisElement;
-use vitordiniz22\craftlens\jobs\RebuildSearchIndexJob;
 use vitordiniz22\craftlens\models\Settings;
-use vitordiniz22\craftlens\records\AssetAnalysisRecord;
 use vitordiniz22\craftlens\services\AiProviderService;
 use vitordiniz22\craftlens\services\AnalysisEditService;
 use vitordiniz22\craftlens\services\AssetAnalysisService;
@@ -193,30 +190,8 @@ class Plugin extends BasePlugin
         Craft::$app->onInit(function() {
             $this->registerCpRoutes();
             $this->registerTwigExtensions();
-            $this->maybeQueueSearchIndexRebuild();
+            $this->searchIndex->maybeQueueRebuild();
         });
-    }
-
-    /**
-     * Auto-queue a background search index rebuild when the index table exists
-     * but is empty and there are analyzed assets (e.g. after a fresh deploy to
-     * an existing install or after re-installing the plugin).
-     */
-    private function maybeQueueSearchIndexRebuild(): void
-    {
-        try {
-            if (!$this->searchIndex->isIndexPopulated()) {
-                $hasAnalyzedAssets = AssetAnalysisRecord::find()
-                    ->where(['NOT', ['processedAt' => null]])
-                    ->exists();
-
-                if ($hasAnalyzedAssets) {
-                    Craft::$app->getQueue()->push(new RebuildSearchIndexJob());
-                }
-            }
-        } catch (Throwable) {
-            // Table may not exist yet (fresh install before migration runs); ignore silently
-        }
     }
 
     public function getCpNavItem(): ?array
@@ -297,7 +272,6 @@ class Plugin extends BasePlugin
         $this->registerConditionRuleHandlers();
         $this->registerAssetQueryBehavior();
         $this->registerAssetSources();
-        $this->registerAssetSourceAutoSelect();
         $this->registerAssetSidebarHandler();
         $this->registerFieldLayoutElements();
         $this->registerElementActions();
@@ -491,25 +465,23 @@ class Plugin extends BasePlugin
                 }
             }
         );
-    }
 
-    private function registerAssetSourceAutoSelect(): void
-    {
-        if (Craft::$app->getRequest()->getIsConsoleRequest()) {
-            return;
+        // Auto-select source when arriving via dashboard link (e.g. ?lensFilter=missing-alt-text)
+        if (!Craft::$app->getRequest()->getIsConsoleRequest()) {
+            Craft::$app->getView()->hook('cp.layouts.elementindex', function() {
+                $lensFilter = Craft::$app->getRequest()->getQueryParam('lensFilter');
+                if ($lensFilter) {
+                    $safeKey = preg_replace('/[^a-z0-9\-]/', '', $lensFilter);
+                    if ($safeKey === null || $safeKey === '') {
+                        return;
+                    }
+                    $sourceKey = 'lens:' . $safeKey;
+                    Craft::$app->getView()->registerJs(
+                        "requestAnimationFrame(function() { var link = document.querySelector('[data-key=\"{$sourceKey}\"]'); if (link) link.click(); });"
+                    );
+                }
+            });
         }
-
-        Craft::$app->getView()->hook('cp.layouts.elementindex', function() {
-            // Auto-select source when arriving via dashboard link
-            $lensFilter = Craft::$app->getRequest()->getQueryParam('lensFilter');
-            if ($lensFilter) {
-                $safeKey = preg_replace('/[^a-z0-9\-]/', '', $lensFilter);
-                $sourceKey = 'lens:' . $safeKey;
-                Craft::$app->getView()->registerJs(
-                    "requestAnimationFrame(function() { var link = document.querySelector('[data-key=\"{$sourceKey}\"]'); if (link) link.click(); });"
-                );
-            }
-        });
     }
 
     private function registerAssetSidebarHandler(): void
@@ -531,7 +503,7 @@ class Plugin extends BasePlugin
                     return;
                 }
 
-                if ($this->hasFieldLayoutElement($asset)) {
+                if (FieldLayoutHelper::hasAnalysisElement($asset)) {
                     return;
                 }
 
@@ -548,35 +520,6 @@ class Plugin extends BasePlugin
                 $event->metadata[Craft::t('lens', 'Lens AI')] = $html;
             }
         );
-    }
-
-    private function hasFieldLayoutElement(Asset $asset): bool
-    {
-        return $this->fieldLayoutContains($asset, LensAnalysisElement::class);
-    }
-
-    public function hasAltFieldInLayout(Asset $asset): bool
-    {
-        return $this->fieldLayoutContains($asset, AltField::class);
-    }
-
-    private function fieldLayoutContains(Asset $asset, string $className): bool
-    {
-        $fieldLayout = $asset->getFieldLayout();
-
-        if ($fieldLayout === null) {
-            return false;
-        }
-
-        foreach ($fieldLayout->getTabs() as $tab) {
-            foreach ($tab->getElements() as $element) {
-                if ($element instanceof $className) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
     }
 
     private function registerFieldLayoutElements(): void
