@@ -217,8 +217,8 @@
                         if (!siteId) return;
 
                         var fields = {};
-                        var titleInput = group.querySelector('input[name="suggestedTitle"], textarea[name="suggestedTitle"]');
-                        var altInput = group.querySelector('input[name="altText"], textarea[name="altText"]');
+                        var titleInput = group.querySelector('[data-lens-control="field-suggestedTitle"]');
+                        var altInput = group.querySelector('[data-lens-control="field-altText"]');
 
                         if (titleInput && titleInput.value) fields.suggestedTitle = titleInput.value;
                         if (altInput && altInput.value) fields.altText = altInput.value;

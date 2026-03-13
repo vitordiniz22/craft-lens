@@ -418,7 +418,7 @@
         },
 
         _handleTranslationToggle: function (e, header) {
-            var section = header.closest('.lens-translation-summary');
+            var section = header.closest('[data-lens-target="translation-summary"]');
             if (!section) return;
 
             var body = section.querySelector('[data-lens-target="translations-body"]');

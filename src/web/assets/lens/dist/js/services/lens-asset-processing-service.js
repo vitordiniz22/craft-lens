@@ -62,8 +62,8 @@
                     options.onProgress(attempts, maxAttempts);
                 }
 
-                Craft.sendActionRequest('GET', 'lens/analysis/get-status', {
-                    params: { assetId: assetId }
+                window.Lens.core.API.get('lens/analysis/get-status', { assetId: assetId }, {
+                    showErrorNotice: false
                 }).then(function(response) {
                     if (stopped) return;
 
@@ -112,14 +112,14 @@
                     if (stopped) return;
 
                     // Retry a few times on network errors
-                    if (attempts < 3) {
+                    if (attempts < window.Lens.config.POLLING.NETWORK_ERROR_RETRIES) {
                         scheduleNext();
                     } else {
                         self._clearPoll(assetId);
 
                         const errorMsg = (err.response && err.response.data && err.response.data.error)
                             ? err.response.data.error
-                            : 'Failed to check analysis status. Please refresh manually.';
+                            : Craft.t('lens', 'Failed to check analysis status. Please refresh manually.');
 
                         Craft.cp.displayError(errorMsg);
 
@@ -168,7 +168,8 @@
          * @private
          */
         _isPendingStatus: function(status) {
-            const pendingStates = ['not_found', 'pending', 'processing'];
+            var S = window.Lens.config.STATUS;
+            var pendingStates = [S.NOT_FOUND, S.PENDING, S.PROCESSING];
             return pendingStates.indexOf(status) !== -1;
         },
 

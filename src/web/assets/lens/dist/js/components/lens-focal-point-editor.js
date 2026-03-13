@@ -11,12 +11,10 @@
     /**
      * Focal Point Editor Component
      */
-    /** Tolerance for focal point coordinate matching */
-    const FP_EPSILON = 0.005;
-
     function isFocalPointMatch(x, y, refX, refY) {
+        var epsilon = window.Lens.config.FOCAL_POINT.EPSILON;
         return !isNaN(refX) && !isNaN(refY) &&
-            Math.abs(x - refX) < FP_EPSILON && Math.abs(y - refY) < FP_EPSILON;
+            Math.abs(x - refX) < epsilon && Math.abs(y - refY) < epsilon;
     }
 
     const LensFocalPointEditor = {

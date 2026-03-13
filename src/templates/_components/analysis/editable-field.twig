@@ -95,9 +95,9 @@
     {% if isReview %}
         {# Review: direct inputs with name attributes for form submit #}
         {% if inputType == 'textarea' %}
-            <textarea class="text fullwidth" name="{{ fieldName }}" rows="{{ fieldName == 'longDescription' ? 6 : 2 }}"{% if maxlength %} maxlength="{{ maxlength }}"{% endif %}>{{ value }}</textarea>
+            <textarea class="text fullwidth" name="{{ fieldName }}" data-lens-control="field-{{ fieldName }}" rows="{{ fieldName == 'longDescription' ? 6 : 2 }}"{% if maxlength %} maxlength="{{ maxlength }}"{% endif %}>{{ value }}</textarea>
         {% else %}
-            <input type="text" class="text fullwidth" name="{{ fieldName }}" value="{{ value }}"{% if maxlength %} maxlength="{{ maxlength }}"{% endif %}>
+            <input type="text" class="text fullwidth" name="{{ fieldName }}" data-lens-control="field-{{ fieldName }}" value="{{ value }}"{% if maxlength %} maxlength="{{ maxlength }}"{% endif %}>
         {% endif %}
     {% else %}
         {# Display mode #}

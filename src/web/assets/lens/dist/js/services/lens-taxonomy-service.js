@@ -148,6 +148,12 @@
             return this._getOrCreateContainer(editor, 'color-swatches', 'lens-tag-chips');
         },
 
+        // --------------------------------------------------------------------
+        // DOM helpers shared by TagEditor and ColorEditor.
+        // These live in the service (rather than each component) to stay DRY.
+        // They only manipulate DOM within the editor containers passed to them.
+        // --------------------------------------------------------------------
+
         /**
          * Flash a duplicate chip to indicate a duplicate add attempt.
          * Shared by tag and color editors.

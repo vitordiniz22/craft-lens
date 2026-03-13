@@ -15,10 +15,16 @@
 
         init: function() {
             if (this._initialized) return;
+            if (!this._shouldInit()) return;
 
             this._bindDetailToggle();
             this._bindDeleteAll();
             this._initialized = true;
+        },
+
+        _shouldInit: function() {
+            return document.querySelector('[data-lens-action="toggle-log-detail"]') !== null ||
+                   document.querySelector('[data-lens-action="delete-all-logs"]') !== null;
         },
 
         // ================================================================

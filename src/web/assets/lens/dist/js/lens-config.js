@@ -27,6 +27,11 @@
             MAX_ATTEMPTS: 40,
 
             /**
+             * Number of retries on network errors before giving up
+             */
+            NETWORK_ERROR_RETRIES: 3,
+
+            /**
              * Debounce delay for tag autocomplete (milliseconds)
              */
             TAG_AUTOCOMPLETE_DEBOUNCE_MS: 250,
@@ -168,7 +173,8 @@
             FAILED: 'failed',
             PENDING_REVIEW: 'pending_review',
             APPROVED: 'approved',
-            REJECTED: 'rejected'
+            REJECTED: 'rejected',
+            NOT_FOUND: 'not_found'
         },
 
         /**
@@ -191,6 +197,16 @@
          */
         STORAGE: {
             DISMISSED_NOTICES: 'lens_dismissed_notices'
+        },
+
+        /**
+         * Focal point configuration
+         */
+        FOCAL_POINT: {
+            /**
+             * Tolerance for focal point coordinate matching
+             */
+            EPSILON: 0.005
         }
     };
 })();
