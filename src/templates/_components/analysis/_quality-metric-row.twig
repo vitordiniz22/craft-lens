@@ -1,0 +1,24 @@
+{#
+ # Quality Metric Row — Single row in a quality/readiness metrics list.
+ #
+ # Expected variables:
+ #   item - {status, icon, label, value (optional), verdict}
+ #}
+<div class="lens-quality-metric">
+    <span class="lens-readiness-icon lens-readiness-icon--{{ item.status }}">
+        {{ iconSvg(item.icon)|attr({width: 14, height: 14, fill: 'currentColor'}) }}
+    </span>
+    <span class="lens-metric-label">{{ item.label }}</span>
+    {% if item.value is defined and item.value is not null %}
+        <span class="lens-metric-value">{{ item.value }}</span>
+    {% endif %}
+    {% set badgeVariant = item.status == 'pass' ? 'clear' : (item.status == 'error' ? 'flagged' : 'warning') %}
+    <span class="lens-detection-badge lens-detection-badge--{{ badgeVariant }}">
+        {% if item.status == 'pass' %}
+            {{ iconSvg('check')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
+        {% else %}
+            {{ iconSvg('triangle-exclamation')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
+        {% endif %}
+        {{ item.verdict }}
+    </span>
+</div>

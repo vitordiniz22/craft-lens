@@ -15,24 +15,7 @@
     <span class="lens-field-label">{{ 'Quality'|t('lens') }}</span>
     <div class="lens-quality-metrics">
         {% for key, metric in qualityMetrics %}
-            <div class="lens-quality-metric">
-                <span class="lens-readiness-icon lens-readiness-icon--{{ metric.status }}">
-                    {{ iconSvg(metric.icon)|attr({width: 14, height: 14, fill: 'currentColor'}) }}
-                </span>
-                <span class="lens-metric-label">{{ metric.label }}</span>
-                {% if metric.value is defined and metric.value is not null %}
-                    <span class="lens-metric-value">{{ metric.value }}</span>
-                {% endif %}
-                {% set badgeVariant = metric.status == 'pass' ? 'clear' : (metric.status == 'error' ? 'flagged' : 'warning') %}
-                <span class="lens-detection-badge lens-detection-badge--{{ badgeVariant }}">
-                    {% if metric.status == 'pass' %}
-                        {{ iconSvg('check')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
-                    {% else %}
-                        {{ iconSvg('triangle-exclamation')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
-                    {% endif %}
-                    {{ metric.verdict }}
-                </span>
-            </div>
+            {% include 'lens/_components/analysis/_quality-metric-row' with {item: metric} only %}
         {% endfor %}
     </div>
 {% endif %}
@@ -43,24 +26,7 @@
     <span class="lens-field-label">{{ 'Web Readiness'|t('lens') }}</span>
     <div class="lens-quality-metrics">
         {% for key, check in wrChecks %}
-            <div class="lens-quality-metric">
-                <span class="lens-readiness-icon lens-readiness-icon--{{ check.status }}">
-                    {{ iconSvg(check.icon)|attr({width: 14, height: 14, fill: 'currentColor'}) }}
-                </span>
-                <span class="lens-metric-label">{{ check.label }}</span>
-                {% if check.value is defined and check.value is not null %}
-                    <span class="lens-metric-value">{{ check.value }}</span>
-                {% endif %}
-                {% set badgeVariant = check.status == 'pass' ? 'clear' : (check.status == 'error' ? 'flagged' : 'warning') %}
-                <span class="lens-detection-badge lens-detection-badge--{{ badgeVariant }}">
-                    {% if check.status == 'pass' %}
-                        {{ iconSvg('check')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
-                    {% else %}
-                        {{ iconSvg('triangle-exclamation')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
-                    {% endif %}
-                    {{ check.verdict }}
-                </span>
-            </div>
+            {% include 'lens/_components/analysis/_quality-metric-row' with {item: check} only %}
         {% endfor %}
     </div>
 {% elseif qualityMetrics|length == 0 %}
@@ -125,7 +91,7 @@
                 and (analysis.focalPointY|round(4) == analysis.assetFocalPoint.y|round(4)) %}
 
             <div class="lens-ai-suggestion-inline" data-lens-target="focal-asset-conflict"
-                {% if fpMatchesAsset %}style="display: none;"{% endif %}>
+                {% if fpMatchesAsset %}hidden{% endif %}>
                 {% include 'lens/_components/analysis/_tooltip-ai' with {extraClass: 'lens-ai-suggestion-icon--ai'} only %}
                 <span class="lens-ai-suggestion-icon lens-ai-suggestion-icon--action">{{ iconSvg('triangle-exclamation')|attr({width: 12, height: 12}) }}</span>
                 <span data-lens-target="focal-asset-conflict-text">
@@ -155,7 +121,7 @@
                 or analysis.focalPointYAi|round(4) != analysis.focalPointY|round(4)) %}
 
             <div class="lens-ai-suggestion-inline" data-lens-target="focal-ai-suggestion"
-                 {% if not fpAiDiffers %}style="display: none;"{% endif %}>
+                 {% if not fpAiDiffers %}hidden{% endif %}>
                 {% include 'lens/_components/analysis/_tooltip-ai' only %}
                 <span data-lens-target="focal-ai-text">
                     {{ 'AI suggested: X: {x}, Y: {y}'|t('lens', {

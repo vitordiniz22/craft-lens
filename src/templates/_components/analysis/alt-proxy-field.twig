@@ -16,6 +16,7 @@
  #}
 
 {% set fieldState = fieldState ?? 'readonly' %}
+{% set maxlength = 500 %}
 {% set hasSuggestion = suggestionValue is defined and suggestionValue is not empty %}
 {% set valuesMatch = hasSuggestion and nativeValue == suggestionValue %}
 
@@ -94,7 +95,7 @@
         </div>
 
         {# Editable suggestion input #}
-        <textarea class="text fullwidth" name="altText" rows="2" maxlength="500" data-lens-target="bridge-review-input"{% if aiValue ?? null %} data-lens-ai-value="{{ aiValue }}"{% endif %}>{{ suggestionValue }}</textarea>
+        <textarea class="text fullwidth" name="altText" rows="2" maxlength="{{ maxlength }}" data-lens-target="bridge-review-input"{% if aiValue ?? null %} data-lens-ai-value="{{ aiValue }}"{% endif %}>{{ suggestionValue }}</textarea>
 
         {# Status line #}
         <div class="lens-native-status">
@@ -118,7 +119,7 @@
 
         {# Edit mode (hidden by default) #}
         <div class="lens-field-edit" data-lens-target="alt-proxy-edit-area" hidden>
-            <textarea class="text fullwidth" rows="3" maxlength="500" data-lens-target="alt-proxy-input">{{ nativeValue }}</textarea>
+            <textarea class="text fullwidth" rows="3" maxlength="{{ maxlength }}" data-lens-target="alt-proxy-input">{{ nativeValue }}</textarea>
             <div class="lens-field-actions">
                 <button type="button" class="btn small submit" data-lens-action="alt-proxy-save">{{ 'Save'|t('lens') }}</button>
                 <button type="button" class="btn small" data-lens-action="alt-proxy-cancel">{{ 'Cancel'|t('lens') }}</button>
