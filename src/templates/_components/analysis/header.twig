@@ -1,14 +1,13 @@
 {#
  # Analysis Panel Header
- # Always visible — status badge, re-analyze button, meta line with cost.
  #
  # Expected variables: analysis, asset, static
  #}
 
 <div class="lens-panel-heading flex flex-justify items-center pb-s">
-    <div class="field width-100">
+    <div class="field">
         <div class="heading">
-            <label class="alt-label">{{ 'Lens Analysis'|t('lens') }}</label>
+            <label class="alt-label">{{ svg(craft.app.plugins.getPlugin('lens').basePath ~ '/icon.svg')|attr({width: 16, height: 16}) }} {{ 'Lens Analysis'|t('lens') }}</label>
         </div>
     </div>
     <div class="flex items-center gap-s">
