@@ -21,6 +21,10 @@
     gap: 15px;
 }
 
+/* .lens-analysis-panel > *:last-child {
+    border-bottom: none;
+} */
+
 .lens-empty-analysis {
     display: flex;
     flex-direction: column;
@@ -63,6 +67,7 @@
 .lens-panel-meta {
     font-size: 12px;
     color: var(--medium-text-color);
+    margin-top: -10px;
 }
 
 /* ==========================================================================
@@ -77,6 +82,11 @@
 
 .lens-section:last-child {
     border-bottom: none;
+}
+
+.lens-section:last-child .lens-section-body {
+    padding-bottom: 0;
+    gap: 10px;
 }
 
 .lens-section-header {
@@ -904,8 +914,19 @@
     color: var(--link-color);
 }
 
+/* Detection modifier on editable-field */
+.lens-editable-field--detection {
+    transition: opacity 0.3s ease;
+    padding: 10px;
+    border: 1px dashed var(--hairline-color);
+}
+
+.lens-editable-field--detection .lens-field-header {
+    margin-bottom: 0;
+}
+
 /* Saving indicator for auto-save */
-.lens-detection-row--saving {
+.lens-editable-field.is-saving {
     opacity: 0.6;
     pointer-events: none;
 }
@@ -915,7 +936,7 @@
     display: none;
 }
 
-.lens-detection-row.lens-accent-bar--red .lens-detection-detail {
+.lens-editable-field--detection.lens-accent-bar--red .lens-detection-detail {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
@@ -952,25 +973,12 @@
     padding-left: 8px;
 }
 
-/* ==========================================================================
-   People Detection Editor
-   ========================================================================== */
-
-.lens-people-detection {
-    /* Inherits from .lens-editable-field */
-    transition: opacity 0.3s ease;
-}
-
-.lens-people-edit-panel {
-    margin-top: 12px;
-    margin-bottom: 12px;
-}
-
-.lens-people-edit-options {
+/* Generic radio list (vertical radio group layout) */
+.lens-radio-list {
     display: flex;
     flex-direction: column;
     gap: 2px;
-    margin: 8px 0 12px 0;
+    margin: 12px 0;
 }
 
 /* ==========================================================================

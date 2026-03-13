@@ -30,6 +30,19 @@
 
 <div class="lens-analysis-panel" data-lens-target="analysis-panel" data-lens-asset-id="{{ asset.id }}" data-lens-analysis-status="{{ analysis ? analysis.status : 'not_found' }}">
 
+    {# Templates for dynamically inserted elements — cloned by JS #}
+    {% if fieldState is defined and fieldState == 'unlocked' %}
+        <template data-lens-target="lock-template">
+            {% include 'lens/_components/analysis/_tooltip-lock' only %}
+        </template>
+        <template data-lens-target="applied-template">
+            <span class="lens-applied-indicator">
+                <span class="status on"></span>
+                <span class="smalltext">{{ 'Applied'|t('lens') }}</span>
+            </span>
+        </template>
+    {% endif %}
+
     {# Header: Status + Re-analyze + Meta + Cost #}
     {% include 'lens/_components/analysis/header' with {analysis: analysis, asset: asset, static: readOnly} %}
 
@@ -275,18 +288,5 @@
                 {% endif %}
             </div>
         {% endif %}
-    {% endif %}
-
-    {# Templates for dynamically inserted elements — cloned by JS #}
-    {% if fieldState is defined and fieldState == 'unlocked' %}
-        <template data-lens-target="lock-template">
-            {% include 'lens/_components/analysis/_tooltip-lock' only %}
-        </template>
-        <template data-lens-target="applied-template">
-            <span class="lens-applied-indicator">
-                <span class="status on"></span>
-                <span class="smalltext">{{ 'Applied'|t('lens') }}</span>
-            </span>
-        </template>
     {% endif %}
 </div>

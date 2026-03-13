@@ -29,7 +29,7 @@
    ============================================================ #}
 {% if fieldState == 'readonly' %}
 
-<div class="lens-editable-field lens-detection-row{{ detected ? ' lens-accent-bar lens-accent-bar--red' : '' }}">
+<div class="lens-editable-field lens-editable-field--detection{{ detected ? ' lens-accent-bar lens-accent-bar--red' : '' }}">
     <div class="lens-field-header" data-lens-target="field-header">
         <span class="lens-detection-icon{{ detected ? ' lens-detection-icon--flagged' : '' }}" data-lens-target="detection-icon">
             {{ iconSvg(icon)|attr({width: 12, height: 12, fill: 'currentColor'}) }}
@@ -72,7 +72,7 @@
 
 {% set isReview = fieldState == 'editing' %}
 
-<div class="lens-editable-field lens-detection-row{{ detected ? ' lens-accent-bar lens-accent-bar--red' : '' }}"
+<div class="lens-editable-field lens-editable-field--detection{{ detected ? ' lens-accent-bar lens-accent-bar--red' : '' }}"
      data-lens-target="detection-toggle"
      data-lens-field="{{ fieldName }}"
      {% if not isReview %}data-lens-analysis-id="{{ analysisId }}"{% endif %}
