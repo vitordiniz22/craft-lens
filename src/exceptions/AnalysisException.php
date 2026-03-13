@@ -38,7 +38,38 @@ class AnalysisException extends Exception
             provider: $provider,
             assetId: $assetId,
             statusCode: $statusCode,
+            userMessage: self::buildUserMessage($provider, $message, $statusCode),
         );
+    }
+
+    /**
+     * Build a user-friendly error message based on error patterns.
+     */
+    private static function buildUserMessage(string $provider, string $message, ?int $statusCode): string
+    {
+        if ($statusCode !== null) {
+            return match ($statusCode) {
+                401 => "Your {$provider} API key appears to be invalid or expired. Please check your API key in the plugin settings.",
+                403 => "Access denied by {$provider}. Please verify your API key has the correct permissions.",
+                404 => "The AI model configured for {$provider} was not found. Please check your model settings.",
+                429 => "{$provider} rate limit exceeded. Please wait a moment and try again.",
+                413 => "The image is too large for {$provider} to process. Please resize or compress the image.",
+                500, 502, 503 => "{$provider} is temporarily unavailable. Please try again in a few minutes.",
+                default => "Analysis failed due to an error with {$provider}. Please try again or check the logs for more details.",
+            };
+        }
+
+        $lowerMessage = strtolower($message);
+
+        if (str_contains($lowerMessage, 'timed out') || str_contains($lowerMessage, 'timeout')) {
+            return "The request to {$provider} timed out. This usually means the service is slow or temporarily overloaded. Please try again in a few moments.";
+        }
+
+        if (str_contains($lowerMessage, 'connection failed') || str_contains($lowerMessage, 'could not resolve') || str_contains($lowerMessage, 'connection refused')) {
+            return "Could not connect to {$provider}. Please check your internet connection and try again.";
+        }
+
+        return "Analysis failed due to an error with {$provider}. Please try again or check the logs for more details.";
     }
 
     public static function invalidResponse(string $provider, ?int $assetId = null, ?string $detail = null): self

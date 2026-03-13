@@ -1,7 +1,8 @@
 {#
  # Image Assessment Section
- # Quality verdicts (from AI scores), web readiness (local PHP), text-in-image accessibility,
- # and focal point with Apply button.
+ # Row-based layout: icon + label + optional value + verdict badge per check.
+ # Quality metrics (Imagick) and Web Readiness checks shown as separate groups.
+ # Also: text-in-image accessibility notice and focal point with Apply button.
  #
  # Expected variables: analysis, asset (optional), fieldState, webReadiness, qualityMetrics
  #}
@@ -9,68 +10,61 @@
 {% set webReadiness = webReadiness ?? {issues: [], checks: {}} %}
 {% set qualityMetrics = qualityMetrics ?? {} %}
 
-{# ── Quality ──────────────────────────────────────────── #}
-{% if analysis.overallQualityScore is not null %}
-    <div class="lens-editable-field">
-        <div class="lens-field-header" data-lens-target="field-header">
-            <span class="lens-field-label">{{ 'Quality'|t('lens') }}</span>
-            <span class="badge badge--{{ analysis.overallQualityScore >= 0.7 ? 'success' : (analysis.overallQualityScore >= 0.4 ? 'warning' : 'error') }}">
-                {{ (analysis.overallQualityScore * 100)|round }}%
-            </span>
-        </div>
-
-        <div class="lens-quality-metrics">
-            {% for metric in qualityMetrics %}
-                <div class="lens-quality-metric">
-                    <span class="lens-metric-label">{{ metric.label }}</span>
-                    <div class="lens-metric-bar">
-                        <div class="lens-metric-fill" style="width: {{ metric.score * 100 }}%"></div>
-                    </div>
-                    <span class="lens-metric-value">{{ (metric.score * 100)|round }}%</span>
-                    {% if metric.verdict %}
-                        <span class="lens-detection-badge lens-detection-badge--{{ metric.status == 'pass' ? 'clear' : 'warning' }}">
-                            {{ iconSvg(metric.status == 'pass' ? 'check' : 'triangle-exclamation')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
-                            {{ metric.verdict }}
-                        </span>
+{# ── Quality Metrics (Imagick-based) ──────────────────── #}
+{% if qualityMetrics|length %}
+    <span class="lens-field-label">{{ 'Quality'|t('lens') }}</span>
+    <div class="lens-quality-metrics">
+        {% for key, metric in qualityMetrics %}
+            <div class="lens-quality-metric">
+                <span class="lens-readiness-icon lens-readiness-icon--{{ metric.status }}">
+                    {{ iconSvg(metric.icon)|attr({width: 14, height: 14, fill: 'currentColor'}) }}
+                </span>
+                <span class="lens-metric-label">{{ metric.label }}</span>
+                {% if metric.value is defined and metric.value is not null %}
+                    <span class="lens-metric-value">{{ metric.value }}</span>
+                {% endif %}
+                {% set badgeVariant = metric.status == 'pass' ? 'clear' : (metric.status == 'error' ? 'flagged' : 'warning') %}
+                <span class="lens-detection-badge lens-detection-badge--{{ badgeVariant }}">
+                    {% if metric.status == 'pass' %}
+                        {{ iconSvg('check')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
+                    {% else %}
+                        {{ iconSvg('triangle-exclamation')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
                     {% endif %}
-                </div>
-            {% endfor %}
-        </div>
-    </div>
-{% else %}
-    <div class="lens-editable-field lens-detection-item lens-detection-item--clear">
-        <div class="lens-field-header" data-lens-target="field-header">
-            <span class="lens-field-label">{{ 'Quality'|t('lens') }}</span>
-        </div>
-        <p class="light smalltext">{{ 'Quality metrics not available'|t('lens') }}</p>
+                    {{ metric.verdict }}
+                </span>
+            </div>
+        {% endfor %}
     </div>
 {% endif %}
 
 {# ── Web Readiness ────────────────────────────────────── #}
-{% if webReadiness.checks is defined and webReadiness.checks|length %}
-    <div class="lens-editable-field">
-        <div class="lens-field-header" data-lens-target="field-header">
-            <span class="lens-field-label">{{ 'Web Readiness'|t('lens') }}</span>
-            {% set issueCount = webReadiness.issues|length %}
-            {% if issueCount > 0 %}
-                <span class="badge badge--warning">{{ issueCount }}</span>
-            {% else %}
-                <span class="lens-detection-badge lens-detection-badge--clear">
-                    {{ iconSvg('check')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
-                    {{ 'Pass'|t('lens') }}
+{% set wrChecks = webReadiness.checks ?? {} %}
+{% if wrChecks|length %}
+    <span class="lens-field-label">{{ 'Web Readiness'|t('lens') }}</span>
+    <div class="lens-quality-metrics">
+        {% for key, check in wrChecks %}
+            <div class="lens-quality-metric">
+                <span class="lens-readiness-icon lens-readiness-icon--{{ check.status }}">
+                    {{ iconSvg(check.icon)|attr({width: 14, height: 14, fill: 'currentColor'}) }}
                 </span>
-            {% endif %}
-        </div>
-
-        <div class="lens-assessment-checks">
-            {% for check in webReadiness.checks %}
-                <div class="lens-assessment-check lens-assessment-check--{{ check.status }}">
-                    <span class="lens-assessment-icon">{{ iconSvg(check.status == 'pass' ? 'check' : 'triangle-exclamation')|attr({width: 12, height: 12, fill: 'currentColor'}) }}</span>
-                    <span class="lens-assessment-label">{{ check.label }}</span>
-                </div>
-            {% endfor %}
-        </div>
+                <span class="lens-metric-label">{{ check.label }}</span>
+                {% if check.value is defined and check.value is not null %}
+                    <span class="lens-metric-value">{{ check.value }}</span>
+                {% endif %}
+                {% set badgeVariant = check.status == 'pass' ? 'clear' : (check.status == 'error' ? 'flagged' : 'warning') %}
+                <span class="lens-detection-badge lens-detection-badge--{{ badgeVariant }}">
+                    {% if check.status == 'pass' %}
+                        {{ iconSvg('check')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
+                    {% else %}
+                        {{ iconSvg('triangle-exclamation')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
+                    {% endif %}
+                    {{ check.verdict }}
+                </span>
+            </div>
+        {% endfor %}
     </div>
+{% elseif qualityMetrics|length == 0 %}
+    <p class="light smalltext">{{ 'Quality metrics not available'|t('lens') }}</p>
 {% endif %}
 
 {# ── Text in Image — Accessibility (Pro only) ────────── #}

@@ -11,7 +11,7 @@ use craft\elements\Asset;
 use craft\elements\conditions\ElementConditionRuleInterface;
 use craft\elements\db\AssetQuery;
 use craft\elements\db\ElementQueryInterface;
-use vitordiniz22\craftlens\helpers\QualityAdvice;
+use vitordiniz22\craftlens\helpers\ImageMetricsAnalyzer;
 use vitordiniz22\craftlens\Plugin;
 
 /**
@@ -50,7 +50,7 @@ class LowQualityConditionRule extends BaseLightswitchConditionRule implements El
             return !$this->value;
         }
 
-        $isLowQuality = (float) $analysis->overallQualityScore < QualityAdvice::OVERALL_QUALITY_THRESHOLD;
+        $isLowQuality = (float) $analysis->overallQualityScore < ImageMetricsAnalyzer::OVERALL_QUALITY_AI_THRESHOLD;
 
         return $this->matchValue($isLowQuality);
     }

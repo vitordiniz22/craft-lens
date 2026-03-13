@@ -671,14 +671,6 @@
     min-width: 70px;
 }
 
-.lens-metric-bar {
-    flex: 1;
-    height: 8px;
-    background: var(--gray-200);
-    border-radius: 3px;
-    overflow: hidden;
-}
-
 .lens-metric-value {
     min-width: 32px;
     text-align: right;
@@ -686,60 +678,18 @@
     color: var(--light-text-color);
 }
 
-.lens-metric-fill {
-    height: 100%;
-    background: linear-gradient(
-        90deg,
-        var(--red-500) 0%,
-        var(--amber-400) 40%,
-        var(--green-500) 80%
-    );
-    border-radius: 3px;
-    transition: width 0.3s ease;
-}
 
-
-/* ==========================================================================
-   Web Readiness & Assessment
-   ========================================================================== */
-
-.lens-assessment-checks {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    width: 100%;
-}
-
-.lens-assessment-check {
-    display: flex;
-    align-items: flex-start;
-    gap: 6px;
-    font-size: 12px;
-    line-height: 1.4;
-}
-
-.lens-assessment-icon {
+/* Web Readiness — icon colors per status */
+.lens-readiness-icon {
+    display: inline-flex;
+    align-items: center;
     flex-shrink: 0;
-    width: 16px;
-    text-align: center;
 }
 
-.lens-assessment-check--pass .lens-assessment-icon {
-    color: var(--green-500);
-}
-
-.lens-assessment-check--warning .lens-assessment-icon,
-.lens-assessment-check--error .lens-assessment-icon {
-    color: var(--amber-500);
-}
-
-.lens-assessment-label {
-    color: var(--text-color);
-}
-
-.lens-assessment-check--pass .lens-assessment-label {
-    color: var(--medium-text-color);
-}
+.lens-readiness-icon--pass { color: var(--green-500); }
+.lens-readiness-icon--warning { color: var(--amber-500); }
+.lens-readiness-icon--error { color: var(--red-500); }
+.lens-readiness-icon--info { color: var(--blue-500, #3b82f6); }
 
 .lens-assessment-notice {
     display: flex;
@@ -807,6 +757,11 @@
 .lens-detection-badge--warning {
     background: var(--amber-050, #fffbeb);
     color: var(--amber-700, #92400e);
+}
+
+.lens-detection-badge--info {
+    background: var(--blue-050, #eff6ff);
+    color: var(--blue-700, #1d4ed8);
 }
 
 

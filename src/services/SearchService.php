@@ -11,7 +11,7 @@ use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\enums\QuickFilter;
 use vitordiniz22\craftlens\helpers\ImageQualityChecker;
 use vitordiniz22\craftlens\helpers\Logger;
-use vitordiniz22\craftlens\helpers\QualityAdvice;
+use vitordiniz22\craftlens\helpers\ImageMetricsAnalyzer;
 use vitordiniz22\craftlens\migrations\Install;
 use vitordiniz22\craftlens\Plugin;
 use yii\base\Component;
@@ -691,7 +691,7 @@ class SearchService extends Component
     }
 
     /**
-     * Filter assets by specific quality issues (blurry, tooDark, overexposed, noisy, lowOverall).
+     * Filter assets by specific quality issues (blurry, tooDark, tooBright, lowContrast, lowOverall).
      */
     private function applyQualityIssuesFilter(Query $query, array $filters): void
     {
@@ -705,27 +705,27 @@ class SearchService extends Component
             match ($issue) {
                 'blurry' => $conditions[] = [
                     'and',
-                    ['<', 'lens.sharpnessScore', QualityAdvice::SHARPNESS_THRESHOLD],
+                    ['<', 'lens.sharpnessScore', ImageMetricsAnalyzer::SHARPNESS_BLURRY],
                     ['not', ['lens.sharpnessScore' => null]],
                 ],
                 'tooDark' => $conditions[] = [
                     'and',
-                    ['<', 'lens.exposureScore', QualityAdvice::EXPOSURE_DARK_THRESHOLD],
+                    ['<', 'lens.exposureScore', ImageMetricsAnalyzer::BRIGHTNESS_DARK],
                     ['not', ['lens.exposureScore' => null]],
                 ],
-                'overexposed' => $conditions[] = [
+                'tooBright' => $conditions[] = [
                     'and',
-                    ['>', 'lens.exposureScore', QualityAdvice::EXPOSURE_BRIGHT_THRESHOLD],
+                    ['>', 'lens.exposureScore', ImageMetricsAnalyzer::BRIGHTNESS_BRIGHT],
                     ['not', ['lens.exposureScore' => null]],
                 ],
-                'noisy' => $conditions[] = [
+                'lowContrast' => $conditions[] = [
                     'and',
-                    ['<', 'lens.noiseScore', QualityAdvice::NOISE_THRESHOLD],
+                    ['<', 'lens.noiseScore', ImageMetricsAnalyzer::CONTRAST_LOW],
                     ['not', ['lens.noiseScore' => null]],
                 ],
                 'lowOverall' => $conditions[] = [
                     'and',
-                    ['<', 'lens.overallQualityScore', QualityAdvice::OVERALL_QUALITY_THRESHOLD],
+                    ['<', 'lens.overallQualityScore', ImageMetricsAnalyzer::OVERALL_QUALITY_AI_THRESHOLD],
                     ['not', ['lens.overallQualityScore' => null]],
                 ],
                 default => null,

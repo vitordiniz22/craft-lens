@@ -15,6 +15,7 @@ enum WebReadinessRecommendation: string
     case FileLarge = 'file_large';
     case FileVeryLarge = 'file_very_large';
     case ResolutionTooSmall = 'resolution_too_small';
+    case ResolutionOversized = 'resolution_oversized';
     case BrowserUnsupportedFormat = 'browser_unsupported_format';
 
     public function label(): string
@@ -23,6 +24,7 @@ enum WebReadinessRecommendation: string
             self::FileLarge => Craft::t('lens', 'File size may impact performance'),
             self::FileVeryLarge => Craft::t('lens', 'File is very large'),
             self::ResolutionTooSmall => Craft::t('lens', 'Resolution may be too small'),
+            self::ResolutionOversized => Craft::t('lens', 'Resolution is oversized for web'),
             self::BrowserUnsupportedFormat => Craft::t('lens', 'Format not supported by browsers'),
         };
     }
@@ -33,6 +35,7 @@ enum WebReadinessRecommendation: string
             self::FileLarge => Craft::t('lens', 'For best web performance, keep images under 1MB or use Craft transforms for delivery.'),
             self::FileVeryLarge => Craft::t('lens', 'May cause slow loading, especially on mobile. Optimize the source or configure Craft transforms.'),
             self::ResolutionTooSmall => Craft::t('lens', 'Image may be too small for full-width layouts (1200px+ recommended).'),
+            self::ResolutionOversized => Craft::t('lens', 'Source exceeds 4096px. Use Craft image transforms to serve appropriately sized images.'),
             self::BrowserUnsupportedFormat => Craft::t('lens', 'TIFF format is not supported by most web browsers. Ensure Craft transforms convert this asset for delivery.'),
         };
     }

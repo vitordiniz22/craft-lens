@@ -185,6 +185,19 @@
                 <div class="lens-section-header">
                     <span class="lens-section-header__title">
                         {{ 'Image Assessment'|t('lens') }}
+                        {% set wrStatus = (webReadiness ?? {}).overallStatus ?? 'pass' %}
+                        {% set lowQuality = analysis.overallQualityScore is not null and analysis.overallQualityScore < 0.4 %}
+                        {% set hasQualityWarning = false %}
+                        {% set hasQualityError = false %}
+                        {% for metric in (qualityMetrics ?? []) %}
+                            {% if metric.status == 'error' %}{% set hasQualityError = true %}{% endif %}
+                            {% if metric.status == 'warning' %}{% set hasQualityWarning = true %}{% endif %}
+                        {% endfor %}
+                        {% if wrStatus == 'error' or lowQuality or hasQualityError %}
+                            <span class="lens-badge lens-badge--circle lens-badge--error">!</span>
+                        {% elseif wrStatus == 'warning' or hasQualityWarning %}
+                            <span class="lens-badge lens-badge--circle lens-badge--warning">!</span>
+                        {% endif %}
                     </span>
                     <p class="lens-section-header__intro">
                         {{ 'Technical checks to ensure your image is web-ready.'|t('lens') }}

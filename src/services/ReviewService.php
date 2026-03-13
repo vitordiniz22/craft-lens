@@ -400,6 +400,8 @@ class ReviewService extends Component
             'exposureScore' => $record->exposureScore,
             'noiseScore' => $record->noiseScore,
             'overallQualityScore' => $record->overallQualityScore,
+            'jpegQuality' => $record->jpegQuality,
+            'colorProfile' => $record->colorProfile,
 
             // Duplicates
             'similarImages' => $similarImages,

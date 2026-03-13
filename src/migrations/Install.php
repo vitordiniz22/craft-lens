@@ -111,11 +111,13 @@ class Install extends Migration
             'containsBrandLogoEditedBy' => $this->integer()->null(),
             'containsBrandLogoEditedAt' => $this->dateTime()->null(),
 
-            // Image quality scores
+            // Image quality scores (sharpness/exposure/noise computed locally via Imagick)
             'sharpnessScore' => $this->decimal(5, 4)->null(),
             'exposureScore' => $this->decimal(5, 4)->null(),
             'noiseScore' => $this->decimal(5, 4)->null(),
             'overallQualityScore' => $this->decimal(5, 4)->null(),
+            'jpegQuality' => $this->tinyInteger()->unsigned()->null(),
+            'colorProfile' => $this->string(20)->null(),
             // Focal point detection (editable, shared edit tracking for X+Y)
             'focalPointX' => $this->decimal(5, 4)->null(),
             'focalPointXAi' => $this->decimal(5, 4)->null(),

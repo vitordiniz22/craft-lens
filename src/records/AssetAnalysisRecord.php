@@ -85,11 +85,13 @@ use yii\db\ActiveQueryInterface;
  * @property int|null $containsBrandLogoEditedBy
  * @property \DateTime|null $containsBrandLogoEditedAt
  *
- * Image quality scores:
+ * Image quality scores (sharpness/exposure/noise computed locally via Imagick):
  * @property float|null $sharpnessScore
  * @property float|null $exposureScore
  * @property float|null $noiseScore
  * @property float|null $overallQualityScore
+ * @property int|null $jpegQuality
+ * @property string|null $colorProfile
  *
  * Focal point detection (editable):
  * @property float|null $focalPointX

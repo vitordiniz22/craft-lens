@@ -157,9 +157,6 @@ abstract class BaseAiProvider implements AiProviderInterface
         $instructions[] = '- "nsfwCategories": Array of objects with "category" (one of: adult, violence, hate, self-harm, sexual-minors, drugs) and "confidence" (0.0-1.0). Only include categories with confidence > 0.1';
         $instructions[] = '  Violence category should include: fighting, weapons (guns, knives, swords), blood, injuries, physical assault, warfare, dead bodies, torture';
         $instructions[] = '  Adult category should include: nudity, sexual content, suggestive poses, intimate acts, revealing clothing, shirtless individuals';
-        $instructions[] = '- "sharpnessScore": Image focus/sharpness quality (0.0=very blurry, 1.0=perfectly sharp)';
-        $instructions[] = '- "exposureScore": Exposure quality (0.0=very dark, 0.5=neutral/well-exposed, 1.0=very bright/overexposed)';
-        $instructions[] = '- "noiseScore": Image noise/grain level (0.0=very noisy, 1.0=clean/no noise)';
         $instructions[] = '- "overallQualityScore": Combined technical quality assessment (0.0-1.0) for professional DAM use';
         $instructions[] = '  CRITICAL: This score must reflect production-readiness and usability. Quality detracting factors that MUST reduce the score:';
         $instructions[] = '  • Watermarks (visible overlays, stock photo watermarks, distracting logos): Reduce score significantly (by 30-50%) depending on obtrusiveness. Obtrusive watermarks should score ≤0.4';
@@ -273,9 +270,6 @@ abstract class BaseAiProvider implements AiProviderInterface
             detectedBrands: $detectedBrands,
             inputTokens: $usage['inputTokens'],
             outputTokens: $usage['outputTokens'],
-            sharpnessScore: ResponseNormalizer::clampConfidence($data['sharpnessScore'] ?? 0.0),
-            exposureScore: ResponseNormalizer::clampConfidence($data['exposureScore'] ?? 0.0),
-            noiseScore: ResponseNormalizer::clampConfidence($data['noiseScore'] ?? 0.0),
             overallQualityScore: ResponseNormalizer::clampConfidence($data['overallQualityScore'] ?? 0.0),
             focalPointX: isset($data['focalPointX']) ? ResponseNormalizer::clampConfidence((float) $data['focalPointX']) : null,
             focalPointY: isset($data['focalPointY']) ? ResponseNormalizer::clampConfidence((float) $data['focalPointY']) : null,

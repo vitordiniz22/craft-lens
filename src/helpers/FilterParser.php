@@ -217,7 +217,7 @@ class FilterParser
     private static function parseArrayFilters(Request $request, array &$filters): void
     {
         $arrayFilters = [
-            'qualityIssues' => ['blurry', 'tooDark', 'overexposed', 'noisy', 'lowOverall'],
+            'qualityIssues' => ['blurry', 'tooDark', 'tooBright', 'lowContrast', 'lowOverall'],
             'webReadinessIssues' => ['fileTooLarge', 'resolutionTooSmall', 'unsupportedFormat'],
         ];
 

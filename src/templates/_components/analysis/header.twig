@@ -47,7 +47,11 @@
             'gemini': 'Gemini',
             'claude': 'Claude'
         } %}
-        {{ 'Analyzed {time}'|t('lens', {time: analysis.processedAt|date('short')}) }}
+        {% if analysis.status == lens.status.failed %}
+            {{ 'Failed {time}'|t('lens', {time: analysis.processedAt|date('short')}) }}
+        {% else %}
+            {{ 'Analyzed {time}'|t('lens', {time: analysis.processedAt|date('short')}) }}
+        {% endif %}
         {% if analysis.provider %}
             &middot; {{ providerNames[analysis.provider] ?? analysis.provider|capitalize }}
             {%- if analysis.providerModel %} ({{ analysis.providerModel }}){% endif %}

@@ -52,10 +52,10 @@ Choose your AI provider — **OpenAI GPT**, **Google Gemini**, or **Anthropic Cl
 - **OCR** — text extracted directly from images, fully searchable
 
 ### Quality & Assessment
-- **Image Assessment** — per-asset audit covering technical quality, web readiness, and accessibility with actionable recommendations
-- **Quality verdicts** — sharpness, exposure, and noise metrics with plain-language advice ("Image appears blurry — consider replacing")
-- **Web readiness** — file size, format support, and resolution checks
-- **Text-in-image detection** — flags images with embedded text for accessibility, recommending HTML alternatives for screen readers
+- **Image Assessment** — per-asset audit covering technical quality, web readiness, and accessibility
+- **Quality analysis** — sharpness, brightness, contrast, JPEG compression quality, and color profile detection via Imagick
+- **Web readiness** — file size, resolution, and format compatibility checks
+- **Text-in-image detection** — flags images with embedded text and recommends HTML alternatives for screen readers
 - **Focal point detection** for smart cropping that keeps the subject in frame
 - **Stock photo detection** — identify which assets came from stock providers
 
@@ -91,6 +91,7 @@ Disabled by default. Enable it in **Lens** → **Settings**.
 - **PHP** 8.3 or later
 - **MySQL** 8.0+ or **PostgreSQL** 13+
 - An API key from one of: [OpenAI](https://platform.openai.com/), [Google AI](https://ai.google.dev/), or [Anthropic](https://www.anthropic.com/)
+- **Imagick PHP extension** (recommended) — enables local quality analysis (sharpness, brightness, contrast, JPEG quality, color profile detection). Without it, the Quality section is hidden and only Web Readiness checks are shown
 
 ## Installation
 

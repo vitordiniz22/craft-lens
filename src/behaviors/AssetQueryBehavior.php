@@ -8,7 +8,7 @@ use craft\elements\db\AssetQuery;
 use craft\helpers\Db;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\helpers\ImageQualityChecker;
-use vitordiniz22\craftlens\helpers\QualityAdvice;
+use vitordiniz22\craftlens\helpers\ImageMetricsAnalyzer;
 use vitordiniz22\craftlens\migrations\Install;
 use yii\base\Behavior;
 use yii\db\Query;
@@ -743,14 +743,14 @@ class AssetQueryBehavior extends Behavior
     {
         if ($this->lensLowQuality) {
             $this->ensureJoined();
-            $this->owner->subQuery->andWhere(['<', 'lens.overallQualityScore', QualityAdvice::OVERALL_QUALITY_THRESHOLD]);
+            $this->owner->subQuery->andWhere(['<', 'lens.overallQualityScore', ImageMetricsAnalyzer::OVERALL_QUALITY_AI_THRESHOLD]);
             $this->owner->subQuery->andWhere(['not', ['lens.overallQualityScore' => null]]);
         } else {
             $this->ensureLeftJoined();
             $this->owner->subQuery->andWhere([
                 'or',
                 ['lens.overallQualityScore' => null],
-                ['>=', 'lens.overallQualityScore', QualityAdvice::OVERALL_QUALITY_THRESHOLD],
+                ['>=', 'lens.overallQualityScore', ImageMetricsAnalyzer::OVERALL_QUALITY_AI_THRESHOLD],
             ]);
         }
     }

@@ -40,6 +40,7 @@ class WebReadinessConditionRule extends BaseMultiSelectConditionRule implements 
         return [
             'fileTooLarge' => Craft::t('lens', 'File Too Large (>1MB)'),
             'resolutionTooSmall' => Craft::t('lens', 'Resolution Too Small'),
+            'resolutionOversized' => Craft::t('lens', 'Resolution Oversized (>4096px)'),
             'unsupportedFormat' => Craft::t('lens', 'Unsupported Format'),
         ];
     }
@@ -76,6 +77,7 @@ class WebReadinessConditionRule extends BaseMultiSelectConditionRule implements 
             $matches = match ($value) {
                 'fileTooLarge' => ($element->size ?? 0) >= ImageQualityChecker::FILE_SIZE_WARNING,
                 'resolutionTooSmall' => ($element->width ?? 0) > 0 && ($element->width ?? 0) < ImageQualityChecker::MIN_WIDTH_RECOMMENDED,
+                'resolutionOversized' => ($element->width ?? 0) > ImageQualityChecker::MAX_WIDTH_RECOMMENDED,
                 'unsupportedFormat' => in_array(strtolower($element->getExtension()), ['tif', 'tiff'], true),
                 default => false,
             };

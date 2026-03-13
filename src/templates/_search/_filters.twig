@@ -72,8 +72,8 @@
                 {% set qualityIssueOptions = [
                     {value: 'blurry', label: 'Blurry'|t('lens')},
                     {value: 'tooDark', label: 'Too Dark'|t('lens')},
-                    {value: 'overexposed', label: 'Overexposed'|t('lens')},
-                    {value: 'noisy', label: 'Noisy'|t('lens')},
+                    {value: 'tooBright', label: 'Too Bright'|t('lens')},
+                    {value: 'lowContrast', label: 'Low Contrast'|t('lens')},
                     {value: 'lowOverall', label: 'Low Overall Quality'|t('lens')},
                 ] %}
                 {% set activeQualityIssues = filters.qualityIssues ?? [] %}

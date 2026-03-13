@@ -17,6 +17,7 @@ use vitordiniz22\craftlens\enums\WatermarkType;
 use vitordiniz22\craftlens\exceptions\AnalysisException;
 use vitordiniz22\craftlens\exceptions\ConfigurationException;
 use vitordiniz22\craftlens\helpers\AssetTitleHelper;
+use vitordiniz22\craftlens\helpers\ImageMetricsAnalyzer;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\helpers\MultisiteHelper;
 use vitordiniz22\craftlens\helpers\PerceptualHashHelper;
@@ -356,6 +357,9 @@ class AssetAnalysisService extends Component
         $additionalLanguages = MultisiteHelper::getAdditionalLanguages($asset);
         $sites = MultisiteHelper::getSitesNeedingContent($asset);
 
+        // Local image quality analysis via Imagick (before AI to avoid holding temp file)
+        $localMetrics = ImageMetricsAnalyzer::analyze($asset);
+
         // AI call is external HTTP — keep outside transaction to avoid long-held locks
         $result = Plugin::getInstance()->aiProvider->analyzeAsset($asset, $primaryLanguage, $additionalLanguages);
         $settings = $this->getSettings();
@@ -375,6 +379,16 @@ class AssetAnalysisService extends Component
             $record->outputTokens = $result->outputTokens;
             $record->actualCost = $this->calculateActualCost($result, $settings, $providerModel);
             $this->applyAiResultToRecord($record, $result);
+
+            // Apply local Imagick metrics (overwrites AI quality scores with reliable local data)
+            if ($localMetrics !== null) {
+                $record->sharpnessScore = $localMetrics['raw']['sharpnessScore'];
+                $record->exposureScore = $localMetrics['raw']['exposureScore'];
+                $record->noiseScore = $localMetrics['raw']['contrastScore'];
+                $record->jpegQuality = $localMetrics['raw']['jpegQuality'];
+                $record->colorProfile = $localMetrics['raw']['colorProfile'];
+            }
+
             $record->processedAt = DateTimeHelper::now();
             $record->fileContentHash = $fileContentHash;
             $record->save();
@@ -735,9 +749,6 @@ class AssetAnalysisService extends Component
             $record->containsBrandLogo = $result->containsBrandLogo;
         }
 
-        $record->sharpnessScore = $result->sharpnessScore;
-        $record->exposureScore = $result->exposureScore;
-        $record->noiseScore = $result->noiseScore;
         $record->overallQualityScore = $result->overallQualityScore;
 
         $record->focalPointXAi = $result->focalPointX;
