@@ -44,19 +44,16 @@
     <div class="lens-panel-meta">
         {% set providerNames = {
             'openai': 'OpenAI',
-            'gemini': 'Google Gemini',
+            'gemini': 'Gemini',
             'claude': 'Claude'
         } %}
-        {{ 'Analyzed {time}'|t('lens', {time: analysis.processedAt|datetime('short')}) }}
+        {{ 'Analyzed {time}'|t('lens', {time: analysis.processedAt|date('short')}) }}
         {% if analysis.provider %}
             &middot; {{ providerNames[analysis.provider] ?? analysis.provider|capitalize }}
             {%- if analysis.providerModel %} ({{ analysis.providerModel }}){% endif %}
         {% endif %}
         {% if analysis.actualCost %}
             &middot; ${{ analysis.actualCost|number_format(4) }}
-            {%- if analysis.inputTokens and analysis.outputTokens %}
-                ({{ (analysis.inputTokens + analysis.outputTokens)|number_format }} tokens)
-            {%- endif %}
         {% endif %}
     </div>
 {% endif %}

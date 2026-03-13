@@ -23,7 +23,7 @@ class ClaudeProvider extends BaseAiProvider
 
     public function getDisplayName(): string
     {
-        return 'Claude (Anthropic)';
+        return 'Claude';
     }
 
     public function validateCredentials(Settings $settings): void

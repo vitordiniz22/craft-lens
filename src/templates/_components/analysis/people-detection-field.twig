@@ -104,12 +104,12 @@
     {% if hasPeople and analysis.faceCount > 0 %}
         <p class="lens-detection-help">
             <span class="lens-detection-help__icon">{{ iconSvg('lightbulb')|attr({width: 12, height: 12, fill: 'currentColor'}) }}</span>
-            {{ 'May require model releases for commercial use'|t('lens') }}
+            {{ 'Identifiable faces detected. Model releases may be required for commercial use.'|t('lens') }}
         </p>
     {% elseif hasPeople %}
         <p class="lens-detection-help">
             <span class="lens-detection-help__icon">{{ iconSvg('lightbulb')|attr({width: 12, height: 12, fill: 'currentColor'}) }}</span>
-            {{ 'People visible but faces obscured. May still require releases for commercial use.'|t('lens') }}
+            {{ 'People detected without visible faces. Model releases may still apply.'|t('lens') }}
         </p>
     {% endif %}
 </div>
@@ -165,9 +165,9 @@
                 <p class="lens-detection-help" data-lens-target="people-help-text">
                     <span class="lens-detection-help__icon">{{ iconSvg('lightbulb')|attr({width: 12, height: 12, fill: 'currentColor'}) }}</span>
                     {% if hasPeople and analysis.faceCount > 0 %}
-                        {{ 'May require model releases for commercial use'|t('lens') }}
+                        {{ 'Identifiable faces detected. Model releases may be required for commercial use.'|t('lens') }}
                     {% elseif hasPeople %}
-                        {{ 'People visible but faces obscured. May still require releases for commercial use.'|t('lens') }}
+                        {{ 'People detected without visible faces. Model releases may still apply.'|t('lens') }}
                     {% endif %}
                 </p>
             </div>

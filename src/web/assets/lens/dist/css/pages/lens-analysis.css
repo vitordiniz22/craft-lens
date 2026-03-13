@@ -95,7 +95,7 @@
     align-items: center;
     width: 100%;
     gap: 8px;
-    margin-bottom: 30px;
+    margin-bottom: 25px;
 }
 
 .lens-section-header__title {
@@ -184,7 +184,7 @@
 .lens-field-header {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     margin-bottom: 14px;
 }
 
@@ -276,12 +276,14 @@
     font-size: 11px;
     line-height: 1.3;
     opacity: 0.6;
+    margin-bottom: 4px;
 }
 
 .lens-ai-badge-icon {
     color: var(--violet-500);
     fill: currentColor;
     font-size: 12px;
+    margin-top: 4px;
     line-height: 1;
 }
 
@@ -319,7 +321,7 @@
 }
 
 .lens-revert-trigger:hover {
-    color: var(--link-hover-color);
+    color: var(--violet-800);
 }
 
 /* Apply button row */
@@ -653,7 +655,7 @@
 .lens-quality-metrics {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
     width: 100%;
 }
 
@@ -664,14 +666,14 @@
 }
 
 .lens-metric-label {
-    font-size: 12px;
+    font-size: 14px;
     color: var(--medium-text-color);
     min-width: 70px;
 }
 
 .lens-metric-bar {
     flex: 1;
-    height: 6px;
+    height: 8px;
     background: var(--gray-200);
     border-radius: 3px;
     overflow: hidden;
@@ -680,7 +682,7 @@
 .lens-metric-value {
     min-width: 32px;
     text-align: right;
-    font-size: 11px;
+    font-size: 14px;
     color: var(--light-text-color);
 }
 
@@ -696,25 +698,6 @@
     transition: width 0.3s ease;
 }
 
-/* ==========================================================================
-   Quality Metric Verdicts
-   ========================================================================== */
-
-.lens-metric-verdict {
-    font-size: 11px;
-    font-weight: 500;
-    white-space: nowrap;
-    min-width: 50px;
-    text-align: right;
-}
-
-.lens-metric-verdict--pass {
-    color: var(--green-500);
-}
-
-.lens-metric-verdict--warning {
-    color: var(--amber-500);
-}
 
 /* ==========================================================================
    Web Readiness & Assessment
@@ -819,6 +802,11 @@
 .lens-detection-badge--flagged {
     background: var(--red-100);
     color: var(--red-700);
+}
+
+.lens-detection-badge--warning {
+    background: var(--amber-050, #fffbeb);
+    color: var(--amber-700, #92400e);
 }
 
 

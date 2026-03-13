@@ -24,7 +24,7 @@ class OpenAiProvider extends BaseAiProvider
 
     public function getDisplayName(): string
     {
-        return 'OpenAI Vision';
+        return 'OpenAI';
     }
 
     public function validateCredentials(Settings $settings): void

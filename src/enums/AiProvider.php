@@ -16,7 +16,7 @@ enum AiProvider: string
     {
         return match ($this) {
             self::OpenAi => 'OpenAI',
-            self::Gemini => 'Google Gemini',
+            self::Gemini => 'Gemini',
             self::Claude => 'Claude',
         };
     }

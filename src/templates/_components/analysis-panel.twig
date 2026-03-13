@@ -133,7 +133,7 @@
             <div class="lens-section">
                 <div class="lens-section-header">
                     <span class="lens-section-header__title">{{ 'Description'|t('lens') }}</span>
-                    <p class="lens-section-header__intro">{{ 'AI-suggested metadata.'|t('lens') }}</p>
+                    <p class="lens-section-header__intro">{{ 'Ready-to-use metadata for accessibility and search.'|t('lens') }}</p>
                 </div>
                 <div class="lens-section-body">
                     {% include 'lens/_components/analysis/content-section' with {
@@ -187,7 +187,7 @@
                         {{ 'Image Assessment'|t('lens') }}
                     </span>
                     <p class="lens-section-header__intro">
-                        {{ 'Quality verdicts, web readiness, and focal point suggestion.'|t('lens') }}
+                        {{ 'Technical checks to ensure your image is web-ready.'|t('lens') }}
                     </p>
                 </div>
                 <div class="lens-section-body">
@@ -214,11 +214,7 @@
                         {% endif %}
                     </span>
                     <p class="lens-section-header__intro">
-                        {% if readOnly or isProcessing %}
-                            {{ 'Content safety flags and detection results.'|t('lens') }}
-                        {% else %}
-                            {{ 'Content safety flags and detection results. Click the pencil to edit.'|t('lens') }}
-                        {% endif %}
+                        {{ 'Safety signals to help guide editorial decisions.'|t('lens') }}
                     </p>
                 </div>
                 <div class="lens-section-body">

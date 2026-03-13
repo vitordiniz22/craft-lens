@@ -34,7 +34,7 @@ class ImageQualityChecker
             $issues[] = WebReadinessRecommendation::FileVeryLarge;
             $checks['fileSize'] = [
                 'status' => 'error',
-                'label' => Craft::t('lens', '{size} — may cause slow loading. Optimize or use Craft transforms', [
+                'label' => Craft::t('lens', '{size} — too large for web delivery. Use Craft image transforms to reduce.', [
                     'size' => self::formatFileSize($fileSize),
                 ]),
             ];
@@ -42,7 +42,7 @@ class ImageQualityChecker
             $issues[] = WebReadinessRecommendation::FileLarge;
             $checks['fileSize'] = [
                 'status' => 'warning',
-                'label' => Craft::t('lens', '{size} — consider optimizing or using Craft transforms', [
+                'label' => Craft::t('lens', '{size} — consider applying Craft image transforms for better performance.', [
                     'size' => self::formatFileSize($fileSize),
                 ]),
             ];

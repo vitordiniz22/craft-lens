@@ -23,7 +23,7 @@ class GeminiProvider extends BaseAiProvider
 
     public function getDisplayName(): string
     {
-        return 'Google Gemini';
+        return 'Gemini';
     }
 
     public function validateCredentials(Settings $settings): void

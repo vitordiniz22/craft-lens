@@ -28,8 +28,9 @@
                     </div>
                     <span class="lens-metric-value">{{ (metric.score * 100)|round }}%</span>
                     {% if metric.verdict %}
-                        <span class="lens-metric-verdict lens-metric-verdict--{{ metric.status }}">
-                            {{ metric.status == 'pass' ? '✓' : '⚠' }} {{ metric.verdict }}
+                        <span class="lens-detection-badge lens-detection-badge--{{ metric.status == 'pass' ? 'clear' : 'warning' }}">
+                            {{ iconSvg(metric.status == 'pass' ? 'check' : 'triangle-exclamation')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
+                            {{ metric.verdict }}
                         </span>
                     {% endif %}
                 </div>
@@ -54,14 +55,17 @@
             {% if issueCount > 0 %}
                 <span class="badge badge--warning">{{ issueCount }}</span>
             {% else %}
-                <span class="badge badge--success">✓</span>
+                <span class="lens-detection-badge lens-detection-badge--clear">
+                    {{ iconSvg('check')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
+                    {{ 'Pass'|t('lens') }}
+                </span>
             {% endif %}
         </div>
 
         <div class="lens-assessment-checks">
             {% for check in webReadiness.checks %}
                 <div class="lens-assessment-check lens-assessment-check--{{ check.status }}">
-                    <span class="lens-assessment-icon">{{ check.status == 'pass' ? '✓' : '⚠' }}</span>
+                    <span class="lens-assessment-icon">{{ iconSvg(check.status == 'pass' ? 'check' : 'triangle-exclamation')|attr({width: 12, height: 12, fill: 'currentColor'}) }}</span>
                     <span class="lens-assessment-label">{{ check.label }}</span>
                 </div>
             {% endfor %}
@@ -72,7 +76,7 @@
 {# ── Text in Image — Accessibility (Pro only) ────────── #}
 {% if lens.isPro and analysis.extractedText is defined and analysis.extractedText is not empty %}
     <div class="lens-assessment-notice lens-assessment-notice--info">
-        <span class="lens-assessment-icon">⚠</span>
+        <span class="lens-assessment-icon">{{ iconSvg('triangle-exclamation')|attr({width: 12, height: 12, fill: 'currentColor'}) }}</span>
         <span>{{ 'This image contains embedded text. Ensure this text is also available as HTML on the page for screen reader accessibility.'|t('lens') }}</span>
     </div>
 {% endif %}

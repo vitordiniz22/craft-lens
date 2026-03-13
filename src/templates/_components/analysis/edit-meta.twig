@@ -11,17 +11,19 @@
  #   isEdited  - bool, whether the field has been edited
  #}
 
-<div class="lens-edit-meta" data-lens-target="{{ target }}"{% if not isEdited %} hidden{% endif %}>
-    {% if isEdited and editedBy %}
-        {% set editor = craft.users.id(editedBy).one() %}
-        {% if editor %}
-            {% set userHtml %}<a href="{{ editor.cpEditUrl }}">{{ editor.friendlyName }}</a>{% endset %}
-        {% else %}
-            {% set userHtml %}{{ 'Unknown'|t('lens') }}{% endset %}
+{% if lens.isPro %}
+    <div class="lens-edit-meta" data-lens-target="{{ target }}"{% if not isEdited %} hidden{% endif %}>
+        {% if isEdited and editedBy %}
+            {% set editor = craft.users.id(editedBy).one() %}
+            {% if editor %}
+                {% set userHtml %}<a href="{{ editor.cpEditUrl }}">{{ editor.friendlyName }}</a>{% endset %}
+            {% else %}
+                {% set userHtml %}{{ 'Unknown'|t('lens') }}{% endset %}
+            {% endif %}
+            {{ 'Edited by {user} on {date}'|t('lens', {
+                user: userHtml,
+                date: editedAt|date('short')
+            })|raw }}
         {% endif %}
-        {{ 'Edited by {user} on {date}'|t('lens', {
-            user: userHtml,
-            date: editedAt|date('short')
-        })|raw }}
-    {% endif %}
-</div>
+    </div>
+{% endif %}
