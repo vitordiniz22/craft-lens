@@ -131,10 +131,10 @@
    Zero-value dimming
    ========================================================================== */
 
-.lens-metric-card[data-lens-count="0"] {
+.lens-metric-card--empty {
     opacity: 0.5;
 }
 
-.lens-metric-card[data-lens-count="0"] .lens-metric-card__value {
+.lens-metric-card--empty .lens-metric-card__value {
     color: var(--medium-text-color);
 }

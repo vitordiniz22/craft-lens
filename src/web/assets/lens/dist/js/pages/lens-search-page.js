@@ -286,7 +286,7 @@
                 !e.target.matches('input, textarea, button, a')
             ) {
                 var focused = document.querySelector(
-                    '[data-lens-target="result-card"][data-lens-focused]'
+                    '[data-lens-target="result-card"].lens-asset-card--focused'
                 );
                 if (focused) {
                     var link = focused.querySelector('[data-lens-target="result-link"]');
@@ -302,15 +302,15 @@
             if (results.length === 0) return;
 
             var focused = document.querySelector(
-                '[data-lens-target="result-card"][data-lens-focused]'
+                '[data-lens-target="result-card"].lens-asset-card--focused'
             );
             var currentIndex = focused ? Array.from(results).indexOf(focused) : -1;
 
             var newIndex = currentIndex + direction;
 
             if (newIndex >= 0 && newIndex < results.length) {
-                if (focused) delete focused.dataset.lensFocused;
-                results[newIndex].dataset.lensFocused = '';
+                if (focused) focused.classList.remove('lens-asset-card--focused');
+                results[newIndex].classList.add('lens-asset-card--focused');
                 results[newIndex].focus();
             }
         }

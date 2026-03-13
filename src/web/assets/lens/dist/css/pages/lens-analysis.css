@@ -36,12 +36,12 @@
     gap: 6px;
 }
 
-/* Loading state for all analysis panel buttons */
+/* Intentional Craft CP override: loading state for buttons within analysis panel */
 .lens-analysis-panel .btn.loading {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    cursor: wait !important;
+    cursor: wait;
     opacity: 0.65;
 }
 
@@ -253,7 +253,6 @@
 .lens-lock-icon,
 .lens-ai-badge-icon {
     appearance: none;
-    -webkit-appearance: none;
     background: none;
     border: none;
     padding: 0;

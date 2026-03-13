@@ -102,9 +102,9 @@
   flex-shrink: 0;
 }
 
-.lens-complete-icon svg {
-  width: 20px !important;
-  height: 20px !important;
+.lens-complete-icon > svg {
+  width: 20px;
+  height: 20px;
 }
 
 .lens-complete-header h2 {

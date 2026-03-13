@@ -328,7 +328,7 @@ a.lens-result-title--ai {
 }
 
 /* Arrow-key navigation highlight */
-.lens-asset-card[data-lens-focused] {
+.lens-asset-card.lens-asset-card--focused {
     outline: 2px solid var(--focus-ring-color);
     outline-offset: 2px;
 }

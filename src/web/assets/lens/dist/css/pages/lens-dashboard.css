@@ -154,9 +154,9 @@
     flex-shrink: 0;
 }
 
-.lens-processing__complete-icon svg {
-    width: 16px !important;
-    height: 16px !important;
+.lens-processing__complete-icon > svg {
+    width: 16px;
+    height: 16px;
 }
 
 /* ==========================================================================
@@ -235,7 +235,7 @@
     min-width: 0;
 }
 
-/* Badge spacing within chips */
+/* Intentional Craft CP override: adjust badge spacing within native Craft chips */
 .inline-chips .chip .badge {
     margin-left: 4px;
 }

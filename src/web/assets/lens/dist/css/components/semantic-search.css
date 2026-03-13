@@ -1,6 +1,6 @@
 /* Lens Enhanced Search — replaces native search in asset selector modal */
 
-/* Toolbar alignment when Lens label is present */
+/* Intentional Craft CP override: align Craft's .toolbar when Lens search label is present */
 .toolbar:has(.lens-semantic-search__label) {
     display: flex;
     align-items: center;
