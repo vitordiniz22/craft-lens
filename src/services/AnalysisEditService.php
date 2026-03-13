@@ -168,42 +168,51 @@ class AnalysisEditService extends Component
             );
         }
 
-        AssetTagRecord::deleteAll(['analysisId' => $record->id]);
+        $transaction = Craft::$app->getDb()->beginTransaction();
 
-        $result = [];
-        foreach ($tags as $tagData) {
-            if (!is_array($tagData)) {
-                continue;
-            }
+        try {
+            AssetTagRecord::deleteAll(['analysisId' => $record->id]);
 
-            $tagName = trim((string)($tagData['tag'] ?? $tagData['name'] ?? ''));
+            $result = [];
+            foreach ($tags as $tagData) {
+                if (!is_array($tagData)) {
+                    continue;
+                }
 
-            if ($tagName === '') {
-                continue;
-            }
+                $tagName = trim((string)($tagData['tag'] ?? $tagData['name'] ?? ''));
 
-            $isAi = filter_var($tagData['isAi'] ?? false, FILTER_VALIDATE_BOOLEAN);
+                if ($tagName === '') {
+                    continue;
+                }
 
-            $tagRecord = new AssetTagRecord();
-            $tagRecord->assetId = $record->assetId;
-            $tagRecord->analysisId = $record->id;
-            $tagRecord->tag = $tagName;
-            $tagRecord->tagNormalized = mb_strtolower($tagName);
-            $tagRecord->confidence = $isAi ? ($tagData['confidence'] ?? null) : 1.0;
-            $tagRecord->isAi = $isAi;
+                $isAi = filter_var($tagData['isAi'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
-            if (!$tagRecord->save(false)) {
-                Logger::warning(LogCategory::Review, 'Failed to save tag record', assetId: $record->assetId, context: [
+                $tagRecord = new AssetTagRecord();
+                $tagRecord->assetId = $record->assetId;
+                $tagRecord->analysisId = $record->id;
+                $tagRecord->tag = $tagName;
+                $tagRecord->tagNormalized = mb_strtolower($tagName);
+                $tagRecord->confidence = $isAi ? ($tagData['confidence'] ?? null) : 1.0;
+                $tagRecord->isAi = $isAi;
+
+                if (!$tagRecord->save(false)) {
+                    Logger::warning(LogCategory::Review, 'Failed to save tag record', assetId: $record->assetId, context: [
+                        'tag' => $tagName,
+                    ]);
+                    continue;
+                }
+
+                $result[] = [
                     'tag' => $tagName,
-                ]);
-                continue;
+                    'confidence' => $tagRecord->confidence,
+                    'isAi' => (bool)$tagRecord->isAi,
+                ];
             }
 
-            $result[] = [
-                'tag' => $tagName,
-                'confidence' => $tagRecord->confidence,
-                'isAi' => (bool)$tagRecord->isAi,
-            ];
+            $transaction->commit();
+        } catch (\Throwable $e) {
+            $transaction->rollBack();
+            throw $e;
         }
 
         Logger::info(LogCategory::Review, 'Tags updated via panel', assetId: $record->assetId, context: [
@@ -240,40 +249,49 @@ class AnalysisEditService extends Component
             );
         }
 
-        AssetColorRecord::deleteAll(['analysisId' => $record->id]);
+        $transaction = Craft::$app->getDb()->beginTransaction();
 
-        $result = [];
-        foreach ($colors as $colorData) {
-            if (!is_array($colorData) || !isset($colorData['hex'])) {
-                continue;
-            }
+        try {
+            AssetColorRecord::deleteAll(['analysisId' => $record->id]);
 
-            $hex = trim((string)$colorData['hex']);
-            if ($hex === '' || !preg_match('/^#[0-9A-Fa-f]{6}$/', $hex)) {
-                continue;
-            }
+            $result = [];
+            foreach ($colors as $colorData) {
+                if (!is_array($colorData) || !isset($colorData['hex'])) {
+                    continue;
+                }
 
-            $isAi = filter_var($colorData['isAi'] ?? false, FILTER_VALIDATE_BOOLEAN);
+                $hex = trim((string)$colorData['hex']);
+                if ($hex === '' || !preg_match('/^#[0-9A-Fa-f]{6}$/', $hex)) {
+                    continue;
+                }
 
-            $colorRecord = new AssetColorRecord();
-            $colorRecord->assetId = $record->assetId;
-            $colorRecord->analysisId = $record->id;
-            $colorRecord->hex = $hex;
-            $colorRecord->percentage = $colorData['percentage'] ?? null;
-            $colorRecord->isAi = $isAi;
+                $isAi = filter_var($colorData['isAi'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
-            if (!$colorRecord->save(false)) {
-                Logger::warning(LogCategory::Review, 'Failed to save color record', assetId: $record->assetId, context: [
+                $colorRecord = new AssetColorRecord();
+                $colorRecord->assetId = $record->assetId;
+                $colorRecord->analysisId = $record->id;
+                $colorRecord->hex = $hex;
+                $colorRecord->percentage = $colorData['percentage'] ?? null;
+                $colorRecord->isAi = $isAi;
+
+                if (!$colorRecord->save(false)) {
+                    Logger::warning(LogCategory::Review, 'Failed to save color record', assetId: $record->assetId, context: [
+                        'hex' => $hex,
+                    ]);
+                    continue;
+                }
+
+                $result[] = [
                     'hex' => $hex,
-                ]);
-                continue;
+                    'percentage' => $colorRecord->percentage,
+                    'isAi' => (bool)$colorRecord->isAi,
+                ];
             }
 
-            $result[] = [
-                'hex' => $hex,
-                'percentage' => $colorRecord->percentage,
-                'isAi' => (bool)$colorRecord->isAi,
-            ];
+            $transaction->commit();
+        } catch (\Throwable $e) {
+            $transaction->rollBack();
+            throw $e;
         }
 
         Logger::info(LogCategory::Review, 'Colors updated via panel', assetId: $record->assetId, context: [

@@ -33,6 +33,7 @@ class SemanticSearchController extends Controller
         $this->requireCpRequest();
         $this->requirePostRequest();
         $this->requireAcceptsJson();
+        $this->requirePermission('accessPlugin-lens');
         Plugin::getInstance()->requireProEdition();
 
         if (!Plugin::getInstance()->getSettings()->enableSemanticSearch) {

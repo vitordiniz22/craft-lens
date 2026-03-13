@@ -6,6 +6,7 @@ namespace vitordiniz22\craftlens\records;
 
 use craft\db\ActiveRecord;
 use vitordiniz22\craftlens\migrations\Install;
+use vitordiniz22\craftlens\records\AssetAnalysisRecord;
 use yii\db\ActiveQueryInterface;
 
 /**
@@ -82,7 +83,8 @@ class AnalysisSiteContentRecord extends ActiveRecord
         return [
             [['analysisId', 'siteId', 'language'], 'required'],
             [['language'], 'string', 'max' => 10],
-            [['altText', 'altTextAi', 'suggestedTitle', 'suggestedTitleAi'], 'string', 'max' => 500],
+            [['altText', 'altTextAi'], 'string', 'max' => AssetAnalysisRecord::ALT_TEXT_MAX_LENGTH],
+            [['suggestedTitle', 'suggestedTitleAi'], 'string', 'max' => AssetAnalysisRecord::SUGGESTED_TITLE_MAX_LENGTH],
             [['altTextConfidence', 'titleConfidence'], 'number', 'min' => 0, 'max' => 1],
             [['altTextEditedBy', 'suggestedTitleEditedBy'], 'integer'],
         ];

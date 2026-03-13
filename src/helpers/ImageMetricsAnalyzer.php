@@ -31,6 +31,10 @@ class ImageMetricsAnalyzer
     public const JPEG_HEAVY_ARTIFACTS = 30;
     public const JPEG_COMPRESSED = 60;
 
+    // Sigmoid parameters for sharpness normalization
+    private const SHARPNESS_SIGMOID_RATE = 0.01;
+    private const SHARPNESS_SIGMOID_MIDPOINT = 200;
+
     // AI overall quality threshold (kept from old system)
     public const OVERALL_QUALITY_AI_THRESHOLD = 0.4;
 
@@ -157,7 +161,7 @@ class ImageMetricsAnalyzer
         $clone->clear();
 
         // Normalize to 0-1 using sigmoid
-        return 1.0 / (1.0 + \exp(-0.01 * ($variance - 200)));
+        return 1.0 / (1.0 + \exp(-self::SHARPNESS_SIGMOID_RATE * ($variance - self::SHARPNESS_SIGMOID_MIDPOINT)));
     }
 
     /**

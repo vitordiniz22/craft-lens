@@ -20,6 +20,8 @@ use yii\db\Query;
  */
 class StatisticsService extends Component
 {
+    private const NSFW_SCORE_THRESHOLD = 0.5;
+
     /**
      * Get overview statistics for the dashboard.
      */
@@ -198,7 +200,7 @@ class StatisticsService extends Component
             ->where(['in', 'status', AnalysisStatus::processedValues()])
             ->andWhere([
                 'or',
-                ['>=', 'nsfwScore', 0.5],
+                ['>=', 'nsfwScore', self::NSFW_SCORE_THRESHOLD],
                 ['isFlaggedNsfw' => true],
             ])
             ->count();
@@ -230,7 +232,7 @@ class StatisticsService extends Component
         $total = $this->getTotalImageCount($volumeIds);
 
         if ($total === 0) {
-            return ['percentage' => 0.0, 'withAltText' => 0, 'total' => 0];
+            return $this->buildCoverageResult(0, 0, 'withAltText');
         }
 
         $query = Asset::find()
@@ -240,7 +242,7 @@ class StatisticsService extends Component
 
         if ($volumeIds !== null) {
             if (empty($volumeIds)) {
-                return ['percentage' => 0.0, 'withAltText' => 0, 'total' => $total];
+                return $this->buildCoverageResult(0, $total, 'withAltText');
             }
 
             $query->volumeId($volumeIds);
@@ -248,11 +250,7 @@ class StatisticsService extends Component
 
         $withAltText = (int) $query->count();
 
-        return [
-            'percentage' => round(($withAltText / $total) * 100, 1),
-            'withAltText' => $withAltText,
-            'total' => $total,
-        ];
+        return $this->buildCoverageResult($withAltText, $total, 'withAltText');
     }
 
     /**
@@ -267,7 +265,7 @@ class StatisticsService extends Component
         $total = $this->getTotalImageCount($volumeIds);
 
         if ($total === 0) {
-            return ['percentage' => 0.0, 'withTags' => 0, 'total' => 0];
+            return $this->buildCoverageResult(0, 0, 'withTags');
         }
 
         $query = (new Query())
@@ -276,17 +274,13 @@ class StatisticsService extends Component
             ->innerJoin(Install::TABLE_ASSET_ANALYSES . ' lens', '[[tags.analysisId]] = [[lens.id]]');
         if ($volumeIds !== null) {
             if (empty($volumeIds)) {
-                return ['percentage' => 0.0, 'withTags' => 0, 'total' => $total];
+                return $this->buildCoverageResult(0, $total, 'withTags');
             }
             $query->andWhere(['in', '[[lens.assetId]]', $this->buildVolumeSubquery($volumeIds)]);
         }
         $withTags = (int) $query->scalar();
 
-        return [
-            'percentage' => round(($withTags / $total) * 100, 1),
-            'withTags' => $withTags,
-            'total' => $total,
-        ];
+        return $this->buildCoverageResult($withTags, $total, 'withTags');
     }
 
     /**
@@ -305,7 +299,7 @@ class StatisticsService extends Component
         $total = $this->getTotalImageCount($volumeIds);
 
         if ($total === 0) {
-            return ['percentage' => 0.0, 'withFocalPoint' => 0, 'total' => 0];
+            return $this->buildCoverageResult(0, 0, 'withFocalPoint');
         }
 
         $query = Asset::find()
@@ -314,18 +308,14 @@ class StatisticsService extends Component
 
         if ($volumeIds !== null) {
             if (empty($volumeIds)) {
-                return ['percentage' => 0.0, 'withFocalPoint' => 0, 'total' => $total];
+                return $this->buildCoverageResult(0, $total, 'withFocalPoint');
             }
             $query->volumeId($volumeIds);
         }
 
         $withFocalPoint = (int) $query->count();
 
-        return [
-            'percentage' => round(($withFocalPoint / $total) * 100, 1),
-            'withFocalPoint' => $withFocalPoint,
-            'total' => $total,
-        ];
+        return $this->buildCoverageResult($withFocalPoint, $total, 'withFocalPoint');
     }
 
     /**
@@ -575,5 +565,19 @@ class StatisticsService extends Component
         }
 
         return $items;
+    }
+
+    /**
+     * Build a standardized coverage result array.
+     *
+     * @return array{percentage: float, total: int}
+     */
+    private function buildCoverageResult(int $matchingCount, int $total, string $key): array
+    {
+        return [
+            'percentage' => $total > 0 ? round(($matchingCount / $total) * 100, 1) : 0.0,
+            $key => $matchingCount,
+            'total' => $total,
+        ];
     }
 }

@@ -33,6 +33,7 @@ class BulkProcessingStatusService extends Component
      */
     private const DEFAULT_INPUT_TOKENS = 1500;
     private const DEFAULT_OUTPUT_TOKENS = 500;
+    private const SESSION_TTL = 3600;
 
     /**
      * Get the full status response for the AJAX endpoint.
@@ -114,7 +115,7 @@ class BulkProcessingStatusService extends Component
             'volumeId' => $volumeId,
             'initialUnprocessed' => $unprocessedCount,
             'completedAt' => null,
-        ], 3600); // 1 hour TTL
+        ], self::SESSION_TTL); // 1 hour TTL
     }
 
     /**
@@ -156,7 +157,8 @@ class BulkProcessingStatusService extends Component
                 ->count();
 
             return (int) $count > 0;
-        } catch (\Throwable) {
+        } catch (\Throwable $e) {
+            Logger::warning(LogCategory::JobStatus, 'Queue monitoring query failed', exception: $e);
             return false;
         }
     }
@@ -177,6 +179,7 @@ class BulkProcessingStatusService extends Component
                 ->select(['timePushed', 'description'])
                 ->from('{{%queue}}')
                 ->where($lensJobCondition)
+                ->limit(1000)
                 ->all();
 
             $pendingJobs = 0;
@@ -203,7 +206,8 @@ class BulkProcessingStatusService extends Component
                 'reservedJobs' => $reservedJobs,
                 'jobDescription' => $jobDescription ?: Craft::t('lens', 'Processing assets'),
             ];
-        } catch (\Throwable) {
+        } catch (\Throwable $e) {
+            Logger::warning(LogCategory::JobStatus, 'Queue info query failed', exception: $e);
             return [
                 'pendingJobs' => 0,
                 'reservedJobs' => 0,
@@ -399,7 +403,8 @@ class BulkProcessingStatusService extends Component
                     self::DEFAULT_OUTPUT_TOKENS
                 ),
             };
-        } catch (\Throwable) {
+        } catch (\Throwable $e) {
+            Logger::warning(LogCategory::JobStatus, 'Cost estimation failed, using fallback', exception: $e);
             $costPerAsset = 0.001;
         }
 
@@ -423,12 +428,7 @@ class BulkProcessingStatusService extends Component
 
     private function getAnalyzedCount(null|int|array $volumeId = null): int
     {
-        $query = AssetAnalysisRecord::find()
-            ->where(['in', 'status', AnalysisStatus::processedValues()]);
-
-        $this->applyVolumeFilter($query, $volumeId);
-
-        return (int) $query->count();
+        return $this->countByStatus(AnalysisStatus::processedValues(), $volumeId);
     }
 
     private function getUnprocessedCount(null|int|array $volumeId = null): int
@@ -455,32 +455,17 @@ class BulkProcessingStatusService extends Component
 
     private function getFailedCount(null|int|array $volumeId = null): int
     {
-        $query = AssetAnalysisRecord::find()
-            ->where(['status' => AnalysisStatus::Failed->value]);
-
-        $this->applyVolumeFilter($query, $volumeId);
-
-        return (int) $query->count();
+        return $this->countByStatus([AnalysisStatus::Failed->value], $volumeId);
     }
 
     private function getProcessingCount(null|int|array $volumeId = null): int
     {
-        $query = AssetAnalysisRecord::find()
-            ->where(['status' => AnalysisStatus::Processing->value]);
-
-        $this->applyVolumeFilter($query, $volumeId);
-
-        return (int) $query->count();
+        return $this->countByStatus([AnalysisStatus::Processing->value], $volumeId);
     }
 
     private function getPendingReviewCount(null|int|array $volumeId = null): int
     {
-        $query = AssetAnalysisRecord::find()
-            ->where(['status' => AnalysisStatus::PendingReview->value]);
-
-        $this->applyVolumeFilter($query, $volumeId);
-
-        return (int) $query->count();
+        return $this->countByStatus([AnalysisStatus::PendingReview->value], $volumeId);
     }
 
     /**
@@ -597,6 +582,7 @@ class BulkProcessingStatusService extends Component
             ->innerJoin(Install::TABLE_ANALYSIS_CONTENT . ' c', 'c.[[analysisId]] = a.[[id]]')
             ->where(['in', 'a.id', $failedAnalysisIds])
             ->andWhere(['not', ['c.errorMessage' => null]])
+            ->limit(5000)
             ->all();
 
         $assetIdsByMessage = [];
@@ -684,6 +670,21 @@ class BulkProcessingStatusService extends Component
      * @param \yii\db\ActiveQuery $query The query to filter
      * @param int|array|null $volumeId Volume ID(s) to filter by (null = no filter)
      */
+    /**
+     * Count analysis records matching one or more statuses, optionally filtered by volume.
+     *
+     * @param string[] $statusValues
+     */
+    private function countByStatus(array $statusValues, null|int|array $volumeId = null): int
+    {
+        $query = AssetAnalysisRecord::find()
+            ->where(['in', 'status', $statusValues]);
+
+        $this->applyVolumeFilter($query, $volumeId);
+
+        return (int) $query->count();
+    }
+
     private function applyVolumeFilter($query, null|int|array $volumeId): void
     {
         if ($volumeId === null) {

@@ -110,6 +110,10 @@ class ClaudeProvider extends BaseAiProvider
             }
 
             $usage = $body['usage'] ?? [];
+            $logPayload = $payload;
+            $imageBytes = strlen($logPayload['messages'][0]['content'][1]['source']['data'] ?? '');
+            $logPayload['messages'][0]['content'][1]['source']['data'] = "[base64 image removed — {$imageBytes} bytes]";
+
             Logger::apiCall(
                 provider: $this->getName(),
                 message: "Image analysis completed for asset {$assetId}",
@@ -118,7 +122,7 @@ class ClaudeProvider extends BaseAiProvider
                 httpStatusCode: $response->getStatusCode(),
                 inputTokens: (int) ($usage['input_tokens'] ?? 0),
                 outputTokens: (int) ($usage['output_tokens'] ?? 0),
-                requestPayload: $payload,
+                requestPayload: $logPayload,
                 responsePayload: $body,
             );
 

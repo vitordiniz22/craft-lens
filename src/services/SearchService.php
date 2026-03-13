@@ -29,6 +29,10 @@ use yii\db\Query;
 class SearchService extends Component
 {
     private const DEFAULT_LIMIT = 50;
+    private const NATIVE_SEARCH_LIMIT = 500;
+    private const DEFAULT_COLOR_TOLERANCE = 30;
+    private const QUALITY_HIGH_THRESHOLD = 0.7;
+    private const QUALITY_LOW_THRESHOLD = 0.4;
 
 
     /**
@@ -358,7 +362,7 @@ class SearchService extends Component
             ->search($query)
             ->siteId($primarySiteId)
             ->status(null)
-            ->limit(500);
+            ->limit(self::NATIVE_SEARCH_LIMIT);
 
         // Respect plugin volume settings.
         $configured = Plugin::getInstance()->getSettings()->enabledVolumes;
@@ -523,7 +527,7 @@ class SearchService extends Component
             return;
         }
 
-        $tolerance = $filters['colorTolerance'] ?? 30;
+        $tolerance = $filters['colorTolerance'] ?? self::DEFAULT_COLOR_TOLERANCE;
         $matchingAssetIds = $this->findAssetsWithColorHex($filters['color'], $tolerance);
 
         if (empty($matchingAssetIds)) {
@@ -617,14 +621,14 @@ class SearchService extends Component
 
         switch ($filters['qualityPreset']) {
             case 'high':
-                $query->andWhere(['>=', 'lens.overallQualityScore', 0.7]);
+                $query->andWhere(['>=', 'lens.overallQualityScore', self::QUALITY_HIGH_THRESHOLD]);
                 break;
             case 'medium':
-                $query->andWhere(['>=', 'lens.overallQualityScore', 0.4]);
-                $query->andWhere(['<', 'lens.overallQualityScore', 0.7]);
+                $query->andWhere(['>=', 'lens.overallQualityScore', self::QUALITY_LOW_THRESHOLD]);
+                $query->andWhere(['<', 'lens.overallQualityScore', self::QUALITY_HIGH_THRESHOLD]);
                 break;
             case 'low':
-                $query->andWhere(['<', 'lens.overallQualityScore', 0.4]);
+                $query->andWhere(['<', 'lens.overallQualityScore', self::QUALITY_LOW_THRESHOLD]);
                 break;
         }
 

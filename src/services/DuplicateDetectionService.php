@@ -20,12 +20,16 @@ use yii\db\Query;
  */
 class DuplicateDetectionService extends Component
 {
+    private const DEFAULT_HAMMING_THRESHOLD = 10;
+    private const COMPARISON_CHUNK_SIZE = 500;
+    private const MAX_HAMMING_DISTANCE = 256;
+
     /**
      * Find duplicates for a specific asset by comparing perceptual hashes.
      *
      * @return DuplicateGroupRecord[]
      */
-    public function findDuplicatesForAsset(int $assetId, int $threshold = 10): array
+    public function findDuplicatesForAsset(int $assetId, int $threshold = self::DEFAULT_HAMMING_THRESHOLD): array
     {
         $record = AssetAnalysisRecord::findOne(['assetId' => $assetId]);
 
@@ -82,7 +86,7 @@ class DuplicateDetectionService extends Component
      * @param int[] $assetIds
      * @return int Number of duplicate pairs found
      */
-    public function findDuplicatesForAssets(array $assetIds, int $threshold = 10): int
+    public function findDuplicatesForAssets(array $assetIds, int $threshold = self::DEFAULT_HAMMING_THRESHOLD): int
     {
         if (count($assetIds) < 2) {
             return 0;
@@ -134,25 +138,31 @@ class DuplicateDetectionService extends Component
      *
      * @return int Number of new duplicate pairs found
      */
-    public function runFullScan(int $threshold = 10): int
+    public function runFullScan(int $threshold = self::DEFAULT_HAMMING_THRESHOLD): int
     {
         Logger::info(LogCategory::Duplicate, 'Starting full duplicate scan');
 
-        $hashes = (new Query())
+        $hashes = [];
+
+        $hashQuery = (new Query())
             ->select(['id', 'assetId', 'perceptualHash'])
             ->from(AssetAnalysisRecord::tableName())
             ->where(['not', ['perceptualHash' => null]])
-            ->orderBy(['assetId' => SORT_ASC])
-            ->all();
+            ->orderBy(['assetId' => SORT_ASC]);
+
+        foreach ($hashQuery->batch(1000) as $batch) {
+            foreach ($batch as $row) {
+                $hashes[] = $row;
+            }
+        }
 
         $existingPairs = $this->loadExistingPairs();
         $count = count($hashes);
         $newPairs = 0;
-        $chunkSize = 500;
 
         // Process in chunks to keep transactions short and memory bounded.
-        for ($chunkStart = 0; $chunkStart < $count; $chunkStart += $chunkSize) {
-            $chunkEnd = min($chunkStart + $chunkSize, $count);
+        for ($chunkStart = 0; $chunkStart < $count; $chunkStart += self::COMPARISON_CHUNK_SIZE) {
+            $chunkEnd = min($chunkStart + self::COMPARISON_CHUNK_SIZE, $count);
             $transaction = Craft::$app->getDb()->beginTransaction();
 
             try {
@@ -312,7 +322,7 @@ class DuplicateDetectionService extends Component
         $record->canonicalAssetId = $canonicalId;
         $record->duplicateAssetId = $duplicateId;
         $record->hammingDistance = $distance;
-        $record->similarity = 1.0 - $distance / 256;
+        $record->similarity = 1.0 - $distance / self::MAX_HAMMING_DISTANCE;
 
         if (!$record->save()) {
             Logger::warning(LogCategory::Duplicate, 'Failed to save duplicate pair record', context: [
@@ -502,9 +512,11 @@ class DuplicateDetectionService extends Component
 
         $pairs = [];
 
-        foreach ($query->all() as $pair) {
-            $key = $pair->canonicalAssetId . '_' . $pair->duplicateAssetId;
-            $pairs[$key] = $pair;
+        foreach ($query->batch(1000) as $batch) {
+            foreach ($batch as $pair) {
+                $key = $pair->canonicalAssetId . '_' . $pair->duplicateAssetId;
+                $pairs[$key] = $pair;
+            }
         }
 
         return $pairs;

@@ -37,6 +37,8 @@ use yii\db\IntegrityException;
  */
 class AssetAnalysisService extends Component
 {
+    private const STUCK_THRESHOLD_MINUTES = 10;
+
     /**
      * Queue an asset for analysis.
      */
@@ -226,7 +228,7 @@ class AssetAnalysisService extends Component
 
                 $minutesStuck = (time() - $dateUpdated->getTimestamp()) / 60;
 
-                if ($minutesStuck > 10) {
+                if ($minutesStuck > self::STUCK_THRESHOLD_MINUTES) {
                     Logger::warning(
                         LogCategory::AssetProcessing,
                         "Asset {$asset->id} was stuck in pending status for " . round($minutesStuck) . " minutes - resetting",
@@ -954,6 +956,7 @@ class AssetAnalysisService extends Component
         $stuckRecords = AssetAnalysisRecord::find()
             ->where(['status' => $status->value])
             ->andWhere(['<', 'dateUpdated', $cutoffDate])
+            ->limit(1000)
             ->all();
 
         if (empty($stuckRecords)) {
@@ -1003,6 +1006,7 @@ class AssetAnalysisService extends Component
             ->where(['not', ['watermarkDetails' => null]])
             ->andWhere(['watermarkType' => WatermarkType::Stock->value])
             ->asArray()
+            ->limit(5000)
             ->all();
 
         $providers = [];

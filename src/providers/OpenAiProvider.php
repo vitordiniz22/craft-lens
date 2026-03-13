@@ -108,6 +108,11 @@ class OpenAiProvider extends BaseAiProvider
 
             $usage = Plugin::getInstance()->pricing->extractOpenAiUsage($body);
 
+            $logPayload = $payload;
+            $dataUrl = $logPayload['messages'][0]['content'][1]['image_url']['url'] ?? '';
+            $imageBytes = strlen($dataUrl);
+            $logPayload['messages'][0]['content'][1]['image_url']['url'] = "[base64 data URL removed — {$imageBytes} bytes]";
+
             Logger::apiCall(
                 provider: $this->getName(),
                 message: "Image analysis completed for asset {$assetId}",
@@ -116,7 +121,7 @@ class OpenAiProvider extends BaseAiProvider
                 httpStatusCode: $response->getStatusCode(),
                 inputTokens: $usage['inputTokens'],
                 outputTokens: $usage['outputTokens'],
-                requestPayload: $payload,
+                requestPayload: $logPayload,
                 responsePayload: $body,
             );
 
@@ -140,9 +145,12 @@ class OpenAiProvider extends BaseAiProvider
         return !$this->isReasoningModel($model);
     }
 
+    private const REASONING_MAX_TOKENS = 16000;
+    private const DEFAULT_MAX_TOKENS = 1000;
+
     private function getMaxCompletionTokens(string $model): int
     {
-        return $this->isReasoningModel($model) ? 16000 : 1000;
+        return $this->isReasoningModel($model) ? self::REASONING_MAX_TOKENS : self::DEFAULT_MAX_TOKENS;
     }
 
     /**

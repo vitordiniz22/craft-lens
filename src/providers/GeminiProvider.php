@@ -108,6 +108,10 @@ class GeminiProvider extends BaseAiProvider
             }
 
             $usage = $body['usageMetadata'] ?? [];
+            $logPayload = $payload;
+            $imageBytes = strlen($logPayload['contents'][0]['parts'][1]['inline_data']['data'] ?? '');
+            $logPayload['contents'][0]['parts'][1]['inline_data']['data'] = "[base64 image removed — {$imageBytes} bytes]";
+
             Logger::apiCall(
                 provider: $this->getName(),
                 message: "Image analysis completed for asset {$assetId}",
@@ -116,7 +120,7 @@ class GeminiProvider extends BaseAiProvider
                 httpStatusCode: $response->getStatusCode(),
                 inputTokens: (int) ($usage['promptTokenCount'] ?? 0),
                 outputTokens: (int) ($usage['candidatesTokenCount'] ?? 0),
-                requestPayload: $payload,
+                requestPayload: $logPayload,
                 responsePayload: $body,
             );
 

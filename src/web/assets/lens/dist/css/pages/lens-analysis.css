@@ -645,6 +645,8 @@
     display: flex;
     align-items: center;
     gap: 12px;
+    padding: 4px 10px;
+    border: 1px dashed var(--hairline-color);
 }
 
 .lens-metric-label {
@@ -721,7 +723,7 @@
     gap: 4px;
     font-size: 12px;
     font-weight: 500;
-    padding: 2px 8px;
+    padding: 1px 8px;
     border-radius: 10px;
     white-space: nowrap;
 }

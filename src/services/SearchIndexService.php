@@ -29,6 +29,9 @@ class SearchIndexService extends Component
     /** BM25 tuning constant k1 — controls term frequency saturation */
     private const K1 = 1.2;
 
+    private const MIN_FUZZY_TERM_LENGTH = 4;
+    private const FUZZY_CANDIDATE_LIMIT = 500;
+
     /** Field weight map: field name → BM25 weight multiplier */
     private const FIELD_WEIGHTS = [
         'tag' => 1.50,
@@ -477,7 +480,7 @@ class SearchIndexService extends Component
         }
 
         // Tier 2: Levenshtein (only worthwhile for terms >= 4 chars)
-        if (mb_strlen($stemmedTerm, 'UTF-8') < 4) {
+        if (mb_strlen($stemmedTerm, 'UTF-8') < self::MIN_FUZZY_TERM_LENGTH) {
             return [];
         }
 
@@ -493,7 +496,7 @@ class SearchIndexService extends Component
             ->where(['LIKE', 'token', $prefix2 . '%', false])
             ->andWhere(['>=', new \yii\db\Expression('LENGTH(token)'), $termLen - 1])
             ->andWhere(['<=', new \yii\db\Expression('LENGTH(token)'), $termLen + 1])
-            ->limit(500)
+            ->limit(self::FUZZY_CANDIDATE_LIMIT)
             ->all();
 
         $matched = array_filter($candidates, function (array $row) use ($stemmedTerm): bool {
