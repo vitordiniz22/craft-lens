@@ -10,7 +10,6 @@ use vitordiniz22\craftlens\dto\AnalysisResult;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\helpers\MultisiteHelper;
-use vitordiniz22\craftlens\Plugin;
 use vitordiniz22\craftlens\records\AnalysisSiteContentRecord;
 use vitordiniz22\craftlens\records\AssetAnalysisRecord;
 use yii\base\Component;
@@ -53,10 +52,6 @@ class SiteContentService extends Component
         bool $altTranslatable = true,
         bool $titleTranslatable = true,
     ): void {
-        if (!Plugin::getInstance()->getIsPro()) {
-            return;
-        }
-
         if (empty($result->siteContent)) {
             return;
         }

@@ -80,7 +80,8 @@
         analysisId: resolvedAnalysisId,
         assetId: resolvedAssetId,
         fieldState: fieldState,
-        applyAction: 'apply-title'
+        applyAction: 'apply-title',
+        siteId: (isSecondarySite and isTitleTranslatable) ? currentSiteId : null
     } %}
 {% endif %}
 
@@ -119,7 +120,8 @@
             analysisId: resolvedAnalysisId,
             assetId: resolvedAssetId,
             fieldState: fieldState,
-            applyAction: 'apply-alt'
+            applyAction: 'apply-alt',
+            siteId: (isSecondarySite and isAltTranslatable) ? currentSiteId : null
         } %}
     {% endif %}
 {% else %}

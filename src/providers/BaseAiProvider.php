@@ -93,10 +93,14 @@ abstract class BaseAiProvider implements AiProviderInterface
     {
         $primaryName = $this->languageDisplayName($primaryLanguage);
 
+        $hasTranslations = !empty($additionalLanguages);
+        $languageNote = $hasTranslations
+            ? sprintf('Write all TOP-LEVEL text fields in %s (%s). Translations for other languages go in a separate "siteContent" object (described below).', $primaryName, $primaryLanguage)
+            : sprintf('Write ALL text fields in %s (%s) only.', $primaryName, $primaryLanguage);
+
         $instructions = [sprintf(
-            'Analyze this image and provide the following information in JSON format. LANGUAGE: Write ALL text fields in %s (%s) only.',
-            $primaryName,
-            $primaryLanguage
+            'Analyze this image and provide the following information in JSON format. LANGUAGE: %s',
+            $languageNote
         )];
 
         $instructions[] = sprintf('- "altText": A natural, descriptive alt text for accessibility (1-2 sentences, in %s)', $primaryName);
@@ -187,12 +191,17 @@ abstract class BaseAiProvider implements AiProviderInterface
             $langEntries = array_map(fn(string $code) => sprintf('%s (%s)', $this->languageDisplayName($code), $code), $additionalLanguages);
             $langList = implode(', ', $langEntries);
             $instructions[] = '';
+            $instructions[] = '--- TRANSLATIONS ---';
             $instructions[] = sprintf(
-                'Additionally, provide TRANSLATIONS in a separate "siteContent" object keyed by language code for: %s. '
-                . 'The top-level fields above MUST remain in %s — siteContent contains the translations only.',
-                $langList,
-                $primaryName
+                'The top-level fields above are in %s. Now provide TRANSLATIONS of "altText" and "suggestedTitle" '
+                . 'into each of the following languages: %s.',
+                $primaryName,
+                $langList
             );
+            $instructions[] = 'Return these translations in a "siteContent" object keyed by language code. '
+                . 'Each entry MUST include both "altText" and "suggestedTitle" fully translated into that language. '
+                . 'Do NOT leave altText or suggestedTitle as null, empty, or in the original language.';
+            $instructions[] = 'Expected structure:';
             $instructions[] = '"siteContent": {';
 
             foreach ($additionalLanguages as $lang) {
