@@ -1,12 +1,83 @@
 {#
- # Focal Point & Quality Section
- # Focal point coordinates with Apply button + quality metric bars.
+ # Image Assessment Section
+ # Quality verdicts (from AI scores), web readiness (local PHP), text-in-image accessibility,
+ # and focal point with Apply button.
  #
- # Expected variables: analysis, asset (optional), fieldState
+ # Expected variables: analysis, asset (optional), fieldState, webReadiness, qualityMetrics
  #}
 {% set fieldState = fieldState ?? 'readonly' %}
+{% set webReadiness = webReadiness ?? {issues: [], checks: {}} %}
+{% set qualityMetrics = qualityMetrics ?? {} %}
 
-{# Focal Point #}
+{# ── Quality ──────────────────────────────────────────── #}
+{% if analysis.overallQualityScore is not null %}
+    <div class="lens-editable-field">
+        <div class="lens-field-header" data-lens-target="field-header">
+            <span class="lens-field-label">{{ 'Quality'|t('lens') }}</span>
+            <span class="badge badge--{{ analysis.overallQualityScore >= 0.7 ? 'success' : (analysis.overallQualityScore >= 0.4 ? 'warning' : 'error') }}">
+                {{ (analysis.overallQualityScore * 100)|round }}%
+            </span>
+        </div>
+
+        <div class="lens-quality-metrics">
+            {% for metric in qualityMetrics %}
+                <div class="lens-quality-metric">
+                    <span class="lens-metric-label">{{ metric.label }}</span>
+                    <div class="lens-metric-bar">
+                        <div class="lens-metric-fill" style="width: {{ metric.score * 100 }}%"></div>
+                    </div>
+                    <span class="lens-metric-value">{{ (metric.score * 100)|round }}%</span>
+                    {% if metric.verdict %}
+                        <span class="lens-metric-verdict lens-metric-verdict--{{ metric.status }}">
+                            {{ metric.status == 'pass' ? '✓' : '⚠' }} {{ metric.verdict }}
+                        </span>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% else %}
+    <div class="lens-editable-field lens-detection-item lens-detection-item--clear">
+        <div class="lens-field-header" data-lens-target="field-header">
+            <span class="lens-field-label">{{ 'Quality'|t('lens') }}</span>
+        </div>
+        <p class="light smalltext">{{ 'Quality metrics not available'|t('lens') }}</p>
+    </div>
+{% endif %}
+
+{# ── Web Readiness ────────────────────────────────────── #}
+{% if webReadiness.checks is defined and webReadiness.checks|length %}
+    <div class="lens-editable-field">
+        <div class="lens-field-header" data-lens-target="field-header">
+            <span class="lens-field-label">{{ 'Web Readiness'|t('lens') }}</span>
+            {% set issueCount = webReadiness.issues|length %}
+            {% if issueCount > 0 %}
+                <span class="badge badge--warning">{{ issueCount }}</span>
+            {% else %}
+                <span class="badge badge--success">✓</span>
+            {% endif %}
+        </div>
+
+        <div class="lens-assessment-checks">
+            {% for check in webReadiness.checks %}
+                <div class="lens-assessment-check lens-assessment-check--{{ check.status }}">
+                    <span class="lens-assessment-icon">{{ check.status == 'pass' ? '✓' : '⚠' }}</span>
+                    <span class="lens-assessment-label">{{ check.label }}</span>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endif %}
+
+{# ── Text in Image — Accessibility (Pro only) ────────── #}
+{% if lens.isPro and analysis.extractedText is defined and analysis.extractedText is not empty %}
+    <div class="lens-assessment-notice lens-assessment-notice--info">
+        <span class="lens-assessment-icon">⚠</span>
+        <span>{{ 'This image contains embedded text. Ensure this text is also available as HTML on the page for screen reader accessibility.'|t('lens') }}</span>
+    </div>
+{% endif %}
+
+{# ── Focal Point ──────────────────────────────────────── #}
 {% if analysis.focalPointX is not null and analysis.focalPointY is not null %}
     {% if fieldState == 'unlocked' and asset is defined %}
         {% set currentFp = asset.getFocalPoint() %}
@@ -113,54 +184,5 @@
         <div class="lens-field-display">
             <p class="light">{{ 'No focal point suggested'|t('lens') }}</p>
         </div>
-    </div>
-{% endif %}
-
-{# Quality Metrics — always read-only #}
-{% if analysis.overallQualityScore is not null %}
-    <div class="lens-editable-field">
-        <div class="lens-field-header" data-lens-target="field-header">
-            <span class="lens-field-label">{{ 'Image Quality'|t('lens') }}</span>
-            <span class="badge badge--{{ analysis.overallQualityScore >= 0.7 ? 'success' : (analysis.overallQualityScore >= 0.4 ? 'warning' : 'error') }}">
-                {{ (analysis.overallQualityScore * 100)|round }}%
-            </span>
-        </div>
-
-        <div class="lens-quality-metrics">
-            {% if analysis.sharpnessScore is not null %}
-                <div class="lens-quality-metric">
-                    <span class="lens-metric-label">{{ 'Sharpness'|t('lens') }}</span>
-                    <div class="lens-metric-bar">
-                        <div class="lens-metric-fill" style="width: {{ analysis.sharpnessScore * 100 }}%"></div>
-                    </div>
-                    <span class="lens-metric-value">{{ (analysis.sharpnessScore * 100)|round }}%</span>
-                </div>
-            {% endif %}
-            {% if analysis.exposureScore is not null %}
-                <div class="lens-quality-metric">
-                    <span class="lens-metric-label">{{ 'Exposure'|t('lens') }}</span>
-                    <div class="lens-metric-bar">
-                        <div class="lens-metric-fill" style="width: {{ analysis.exposureScore * 100 }}%"></div>
-                    </div>
-                    <span class="lens-metric-value">{{ (analysis.exposureScore * 100)|round }}%</span>
-                </div>
-            {% endif %}
-            {% if analysis.noiseScore is not null %}
-                <div class="lens-quality-metric">
-                    <span class="lens-metric-label">{{ 'Clarity'|t('lens') }}</span>
-                    <div class="lens-metric-bar">
-                        <div class="lens-metric-fill" style="width: {{ analysis.noiseScore * 100 }}%"></div>
-                    </div>
-                    <span class="lens-metric-value">{{ (analysis.noiseScore * 100)|round }}%</span>
-                </div>
-            {% endif %}
-        </div>
-    </div>
-{% else %}
-    <div class="lens-editable-field lens-detection-item lens-detection-item--clear">
-        <div class="lens-field-header" data-lens-target="field-header">
-            <span class="lens-field-label">{{ 'Image Quality'|t('lens') }}</span>
-        </div>
-        <p class="light smalltext">{{ 'Quality metrics not available'|t('lens') }}</p>
     </div>
 {% endif %}

@@ -9,7 +9,9 @@ use craft\elements\Asset;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\enums\QuickFilter;
+use vitordiniz22\craftlens\helpers\ImageQualityChecker;
 use vitordiniz22\craftlens\helpers\Logger;
+use vitordiniz22\craftlens\helpers\QualityAdvice;
 use vitordiniz22\craftlens\migrations\Install;
 use vitordiniz22\craftlens\Plugin;
 use yii\base\Component;
@@ -226,6 +228,9 @@ class SearchService extends Component
         $this->applyFocalPointFilter($query, $filters);
         $this->applyMissingAltTextFilter($query, $filters);
         $this->applyUnprocessedFilter($query, $filters);
+        $this->applyQualityIssuesFilter($query, $filters);
+        $this->applyWebReadinessIssuesFilter($query, $filters);
+        $this->applyHasTextInImageFilter($query, $filters);
         $this->applyVolumeFilter($query);
 
         return $query;
@@ -590,6 +595,107 @@ class SearchService extends Component
                 AnalysisStatus::Rejected->value,
             ]],
         ]);
+    }
+
+    /**
+     * Filter assets by specific quality issues (blurry, tooDark, overexposed, noisy, lowOverall).
+     */
+    private function applyQualityIssuesFilter(Query $query, array $filters): void
+    {
+        if (empty($filters['qualityIssues'])) {
+            return;
+        }
+
+        $conditions = ['or'];
+
+        foreach ($filters['qualityIssues'] as $issue) {
+            match ($issue) {
+                'blurry' => $conditions[] = [
+                    'and',
+                    ['<', 'lens.sharpnessScore', QualityAdvice::SHARPNESS_THRESHOLD],
+                    ['not', ['lens.sharpnessScore' => null]],
+                ],
+                'tooDark' => $conditions[] = [
+                    'and',
+                    ['<', 'lens.exposureScore', QualityAdvice::EXPOSURE_DARK_THRESHOLD],
+                    ['not', ['lens.exposureScore' => null]],
+                ],
+                'overexposed' => $conditions[] = [
+                    'and',
+                    ['>', 'lens.exposureScore', QualityAdvice::EXPOSURE_BRIGHT_THRESHOLD],
+                    ['not', ['lens.exposureScore' => null]],
+                ],
+                'noisy' => $conditions[] = [
+                    'and',
+                    ['<', 'lens.noiseScore', QualityAdvice::NOISE_THRESHOLD],
+                    ['not', ['lens.noiseScore' => null]],
+                ],
+                'lowOverall' => $conditions[] = [
+                    'and',
+                    ['<', 'lens.overallQualityScore', QualityAdvice::OVERALL_QUALITY_THRESHOLD],
+                    ['not', ['lens.overallQualityScore' => null]],
+                ],
+                default => null,
+            };
+        }
+
+        if (count($conditions) > 1) {
+            $query->andWhere($conditions);
+        }
+    }
+
+    /**
+     * Filter assets by web readiness issues (fileTooLarge, resolutionTooSmall, unsupportedFormat).
+     */
+    private function applyWebReadinessIssuesFilter(Query $query, array $filters): void
+    {
+        if (empty($filters['webReadinessIssues'])) {
+            return;
+        }
+
+        $conditions = ['or'];
+
+        foreach ($filters['webReadinessIssues'] as $issue) {
+            match ($issue) {
+                'fileTooLarge' => $conditions[] = ['>=', 'assets.size', ImageQualityChecker::FILE_SIZE_WARNING],
+                'resolutionTooSmall' => $conditions[] = [
+                    'and',
+                    ['>', 'assets.width', 0],
+                    ['<', 'assets.width', ImageQualityChecker::MIN_WIDTH_RECOMMENDED],
+                ],
+                'unsupportedFormat' => $conditions[] = [
+                    'or',
+                    ['like', 'assets.filename', '%.tif', false],
+                    ['like', 'assets.filename', '%.tiff', false],
+                ],
+                default => null,
+            };
+        }
+
+        if (count($conditions) > 1) {
+            $query->andWhere($conditions);
+        }
+    }
+
+    /**
+     * Filter assets by whether they contain embedded text (OCR).
+     */
+    private function applyHasTextInImageFilter(Query $query, array $filters): void
+    {
+        if (!isset($filters['hasTextInImage'])) {
+            return;
+        }
+
+        if ($filters['hasTextInImage']) {
+            $query->andWhere(['not', ['lens.extractedText' => null]]);
+            $query->andWhere(['!=', 'lens.extractedText', '']);
+        } else {
+            $query->andWhere([
+                'or',
+                ['lens.extractedText' => null],
+                ['lens.extractedText' => ''],
+            ]);
+        }
     }
 
     /**

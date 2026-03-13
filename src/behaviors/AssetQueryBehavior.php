@@ -7,6 +7,8 @@ namespace vitordiniz22\craftlens\behaviors;
 use craft\elements\db\AssetQuery;
 use craft\helpers\Db;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
+use vitordiniz22\craftlens\helpers\ImageQualityChecker;
+use vitordiniz22\craftlens\helpers\QualityAdvice;
 use vitordiniz22\craftlens\migrations\Install;
 use yii\base\Behavior;
 use yii\db\Query;
@@ -40,6 +42,9 @@ class AssetQueryBehavior extends Behavior
     public ?float $lensSharpnessBelow = null;
     public ?bool $lensExposureIssues = null;
     public ?bool $lensHasFocalPoint = null;
+    public ?bool $lensLowQuality = null;
+    public ?array $lensWebReadinessIssues = null;
+    public ?bool $lensHasTextInImage = null;
     /** @var array[] Raw WHERE conditions requiring the lens join, used by complex condition rules */
     public array $lensRawWhereConditions = [];
 
@@ -229,6 +234,35 @@ class AssetQueryBehavior extends Behavior
         return $this->owner;
     }
 
+    /**
+     * Filters assets with low overall quality score.
+     */
+    public function lensLowQuality(?bool $value): AssetQuery
+    {
+        $this->lensLowQuality = $value;
+        return $this->owner;
+    }
+
+    /**
+     * Filters assets by web readiness issues.
+     *
+     * @param string[]|null $value
+     */
+    public function lensWebReadinessIssues(?array $value): AssetQuery
+    {
+        $this->lensWebReadinessIssues = $value;
+        return $this->owner;
+    }
+
+    /**
+     * Filters assets that contain embedded text (OCR).
+     */
+    public function lensHasTextInImage(?bool $value): AssetQuery
+    {
+        $this->lensHasTextInImage = $value;
+        return $this->owner;
+    }
+
     // ------------------------------------------------------------------
     // Public apply methods for condition rules (Flow B: subQuery exists)
     // Each checks property + subQuery, then delegates to the private method.
@@ -294,6 +328,27 @@ class AssetQueryBehavior extends Behavior
     {
         if ($this->lensHasFocalPoint !== null && $this->owner->subQuery !== null) {
             $this->applyHasFocalPointFilter();
+        }
+    }
+
+    public function lensApplyLowQualityFilter(): void
+    {
+        if ($this->lensLowQuality !== null && $this->owner->subQuery !== null) {
+            $this->applyLowQualityFilter();
+        }
+    }
+
+    public function lensApplyWebReadinessFilter(): void
+    {
+        if ($this->lensWebReadinessIssues !== null && !empty($this->lensWebReadinessIssues) && $this->owner->subQuery !== null) {
+            $this->applyWebReadinessFilter();
+        }
+    }
+
+    public function lensApplyHasTextInImageFilter(): void
+    {
+        if ($this->lensHasTextInImage !== null && $this->owner->subQuery !== null) {
+            $this->applyHasTextInImageFilter();
         }
     }
 
@@ -398,6 +453,18 @@ class AssetQueryBehavior extends Behavior
 
         if ($this->lensHasFocalPoint !== null) {
             $this->applyHasFocalPointFilter();
+        }
+
+        if ($this->lensLowQuality !== null) {
+            $this->applyLowQualityFilter();
+        }
+
+        if ($this->lensWebReadinessIssues !== null && !empty($this->lensWebReadinessIssues)) {
+            $this->applyWebReadinessFilter();
+        }
+
+        if ($this->lensHasTextInImage !== null) {
+            $this->applyHasTextInImageFilter();
         }
 
         if (!empty($this->lensRawWhereConditions)) {
@@ -672,4 +739,62 @@ class AssetQueryBehavior extends Behavior
         }
     }
 
+    private function applyLowQualityFilter(): void
+    {
+        if ($this->lensLowQuality) {
+            $this->ensureJoined();
+            $this->owner->subQuery->andWhere(['<', 'lens.overallQualityScore', QualityAdvice::OVERALL_QUALITY_THRESHOLD]);
+            $this->owner->subQuery->andWhere(['not', ['lens.overallQualityScore' => null]]);
+        } else {
+            $this->ensureLeftJoined();
+            $this->owner->subQuery->andWhere([
+                'or',
+                ['lens.overallQualityScore' => null],
+                ['>=', 'lens.overallQualityScore', QualityAdvice::OVERALL_QUALITY_THRESHOLD],
+            ]);
+        }
+    }
+
+    private function applyWebReadinessFilter(): void
+    {
+        $this->ensureJoined();
+        $conditions = ['or'];
+
+        foreach ($this->lensWebReadinessIssues as $issue) {
+            match ($issue) {
+                'fileTooLarge' => $conditions[] = ['>=', 'assets.size', ImageQualityChecker::FILE_SIZE_WARNING],
+                'resolutionTooSmall' => $conditions[] = [
+                    'and',
+                    ['>', 'assets.width', 0],
+                    ['<', 'assets.width', ImageQualityChecker::MIN_WIDTH_RECOMMENDED],
+                ],
+                'unsupportedFormat' => $conditions[] = [
+                    'or',
+                    ['like', 'assets.filename', '%.tif', false],
+                    ['like', 'assets.filename', '%.tiff', false],
+                ],
+                default => null,
+            };
+        }
+
+        if (count($conditions) > 1) {
+            $this->owner->subQuery->andWhere($conditions);
+        }
+    }
+
+    private function applyHasTextInImageFilter(): void
+    {
+        $this->ensureJoined();
+
+        if ($this->lensHasTextInImage) {
+            $this->owner->subQuery->andWhere(['not', ['lens.extractedText' => null]]);
+            $this->owner->subQuery->andWhere(['!=', 'lens.extractedText', '']);
+        } else {
+            $this->owner->subQuery->andWhere([
+                'or',
+                ['lens.extractedText' => null],
+                ['lens.extractedText' => ''],
+            ]);
+        }
+    }
 }

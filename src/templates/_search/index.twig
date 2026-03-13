@@ -91,6 +91,36 @@
                             <button type="button" data-lens-action="remove-filter-chip" data-lens-filter-param="qualityPreset" title="{{ 'Remove filter'|t('lens') }}">&times;</button>
                         </span>
                     {% endif %}
+                    {% if (filters.qualityIssues ?? [])|length %}
+                        {% set qualityIssueLabels = {
+                            blurry: 'Blurry'|t('lens'),
+                            tooDark: 'Too Dark'|t('lens'),
+                            overexposed: 'Overexposed'|t('lens'),
+                            noisy: 'Noisy'|t('lens'),
+                            lowOverall: 'Low Overall'|t('lens'),
+                        } %}
+                        <span class="lens-filter-chip" data-lens-filter-param="qualityIssues[]">
+                            {{ 'Quality Issues'|t('lens') }}: <strong>{{ filters.qualityIssues|map(v => qualityIssueLabels[v] ?? v)|join(', ') }}</strong>
+                            <button type="button" data-lens-action="remove-filter-chip" data-lens-filter-param="qualityIssues[]" title="{{ 'Remove filter'|t('lens') }}">&times;</button>
+                        </span>
+                    {% endif %}
+                    {% if (filters.webReadinessIssues ?? [])|length %}
+                        {% set webReadinessLabels = {
+                            fileTooLarge: 'File Too Large'|t('lens'),
+                            resolutionTooSmall: 'Resolution Too Small'|t('lens'),
+                            unsupportedFormat: 'Unsupported Format'|t('lens'),
+                        } %}
+                        <span class="lens-filter-chip" data-lens-filter-param="webReadinessIssues[]">
+                            {{ 'Web Readiness'|t('lens') }}: <strong>{{ filters.webReadinessIssues|map(v => webReadinessLabels[v] ?? v)|join(', ') }}</strong>
+                            <button type="button" data-lens-action="remove-filter-chip" data-lens-filter-param="webReadinessIssues[]" title="{{ 'Remove filter'|t('lens') }}">&times;</button>
+                        </span>
+                    {% endif %}
+                    {% if filters.hasTextInImage is defined and filters.hasTextInImage is not null %}
+                        <span class="lens-filter-chip" data-lens-filter-param="hasTextInImage">
+                            {{ 'Text in Image'|t('lens') }}: <strong>{{ filters.hasTextInImage ? 'Yes'|t('lens') : 'No'|t('lens') }}</strong>
+                            <button type="button" data-lens-action="remove-filter-chip" data-lens-filter-param="hasTextInImage" title="{{ 'Remove filter'|t('lens') }}">&times;</button>
+                        </span>
+                    {% endif %}
                     {% if filters.hasWatermark is defined and filters.hasWatermark is not null %}
                         <span class="lens-filter-chip" data-lens-filter-param="hasWatermark">
                             {{ 'Watermark'|t('lens') }}: <strong>{{ filters.hasWatermark ? 'Yes'|t('lens') : 'No'|t('lens') }}</strong>

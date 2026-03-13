@@ -65,6 +65,64 @@
             </div>
         </div>
 
+        {# Quality Issues — checkbox group #}
+        <div class="field">
+            <div class="heading"><label>{{ 'Quality Issues'|t('lens') }}</label></div>
+            <div class="input">
+                {% set qualityIssueOptions = [
+                    {value: 'blurry', label: 'Blurry'|t('lens')},
+                    {value: 'tooDark', label: 'Too Dark'|t('lens')},
+                    {value: 'overexposed', label: 'Overexposed'|t('lens')},
+                    {value: 'noisy', label: 'Noisy'|t('lens')},
+                    {value: 'lowOverall', label: 'Low Overall Quality'|t('lens')},
+                ] %}
+                {% set activeQualityIssues = filters.qualityIssues ?? [] %}
+                {% for option in qualityIssueOptions %}
+                    <div>
+                        <label>
+                            <input type="checkbox" name="qualityIssues[]" value="{{ option.value }}"
+                                   {% if option.value in activeQualityIssues %}checked{% endif %}>
+                            {{ option.label }}
+                        </label>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        {# Web Readiness Issues — checkbox group #}
+        <div class="field">
+            <div class="heading"><label>{{ 'Web Readiness'|t('lens') }}</label></div>
+            <div class="input">
+                {% set webReadinessOptions = [
+                    {value: 'fileTooLarge', label: 'File Too Large (>1MB)'|t('lens')},
+                    {value: 'resolutionTooSmall', label: 'Resolution Too Small'|t('lens')},
+                    {value: 'unsupportedFormat', label: 'Unsupported Format'|t('lens')},
+                ] %}
+                {% set activeWebIssues = filters.webReadinessIssues ?? [] %}
+                {% for option in webReadinessOptions %}
+                    <div>
+                        <label>
+                            <input type="checkbox" name="webReadinessIssues[]" value="{{ option.value }}"
+                                   {% if option.value in activeWebIssues %}checked{% endif %}>
+                            {{ option.label }}
+                        </label>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        {# Has Text in Image #}
+        {{ forms.selectField({
+            label: 'Text in Image'|t('lens'),
+            name: 'hasTextInImage',
+            options: [
+                {value: '', label: 'Any'|t('lens')},
+                {value: '1', label: 'Has Text'|t('lens')},
+                {value: '0', label: 'No Text'|t('lens')},
+            ],
+            value: (filters.hasTextInImage ?? null) is same as(true) ? '1' : ((filters.hasTextInImage ?? null) is same as(false) ? '0' : ''),
+        }) }}
+
         {# — Row 2: Image Marks — #}
 
         {# Has Watermark #}

@@ -25,6 +25,7 @@ class FilterParser
         'qualityPreset', 'hasFocalPoint',
         'nsfwFlagged', 'missingAltText', 'unprocessed',
         'similarTo',
+        'qualityIssues', 'webReadinessIssues', 'hasTextInImage',
     ];
 
     /**
@@ -44,6 +45,7 @@ class FilterParser
         self::parseBooleanFilters($request, $filters);
         self::parseMissingAltText($request, $filters);
         self::parseEnumFilters($request, $filters);
+        self::parseArrayFilters($request, $filters);
         self::parseQuickFilter($request, $filters);
         self::parsePagination($request, $filters);
         self::parseNsfwFlagged($request, $filters);
@@ -175,7 +177,7 @@ class FilterParser
     {
         $booleanFilterKeys = [
             'hasDuplicates', 'hasWatermark', 'containsBrandLogo',
-            'hasFocalPoint', 'unprocessed',
+            'hasFocalPoint', 'unprocessed', 'hasTextInImage',
         ];
 
         foreach ($booleanFilterKeys as $key) {
@@ -208,6 +210,26 @@ class FilterParser
 
             if ($value !== null && in_array($value, $allowedValues, true)) {
                 $filters[$key] = $value;
+            }
+        }
+    }
+
+    private static function parseArrayFilters(Request $request, array &$filters): void
+    {
+        $arrayFilters = [
+            'qualityIssues' => ['blurry', 'tooDark', 'overexposed', 'noisy', 'lowOverall'],
+            'webReadinessIssues' => ['fileTooLarge', 'resolutionTooSmall', 'unsupportedFormat'],
+        ];
+
+        foreach ($arrayFilters as $key => $allowedValues) {
+            $value = $request->getQueryParam($key);
+
+            if (is_array($value)) {
+                $filtered = array_values(array_intersect($value, $allowedValues));
+
+                if (!empty($filtered)) {
+                    $filters[$key] = $filtered;
+                }
             }
         }
     }

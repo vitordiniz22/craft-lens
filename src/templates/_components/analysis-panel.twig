@@ -166,21 +166,23 @@
             </div>
         {% endif %}
 
-        {# Section 3: Focal Point & Quality #}
+        {# Section 3: Image Assessment #}
         {% if analysis.status not in [lens.status.failed] and (not isProcessing or isReprocessing) %}
             <div class="lens-section">
                 <div class="lens-section-header">
                     <span class="lens-section-header__title">
-                        {{ 'Quality & Focal Point'|t('lens') }}
+                        {{ 'Image Assessment'|t('lens') }}
                     </span>
                     <p class="lens-section-header__intro">
-                        {{ 'AI quality assessment score and suggested focal point for smart cropping.'|t('lens') }}
+                        {{ 'Quality verdicts, web readiness, and focal point suggestion.'|t('lens') }}
                     </p>
                 </div>
                 <div class="lens-section-body">
                     {% include 'lens/_components/analysis/quality-section' with {
                         analysis: analysis, asset: asset,
-                        fieldState: fieldState
+                        fieldState: fieldState,
+                        webReadiness: webReadiness ?? {issues: [], checks: {}},
+                        qualityMetrics: qualityMetrics ?? {}
                     } %}
                 </div>
             </div>

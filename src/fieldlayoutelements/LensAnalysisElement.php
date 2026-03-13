@@ -10,8 +10,10 @@ use craft\elements\Asset;
 use craft\fieldlayoutelements\BaseUiElement;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\AssetTitleHelper;
+use vitordiniz22\craftlens\helpers\ImageQualityChecker;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\helpers\MultisiteHelper;
+use vitordiniz22\craftlens\helpers\QualityAdvice;
 use vitordiniz22\craftlens\Plugin;
 use vitordiniz22\craftlens\web\assets\lens\LensAssetActionsAsset;
 
@@ -129,6 +131,12 @@ class LensAnalysisElement extends BaseUiElement
                     'isTitleTranslatable' => MultisiteHelper::isTitleTranslatable($element->getVolume()->id),
                     'currentSiteId' => $element->siteId,
                     'primarySiteId' => Craft::$app->getSites()->getPrimarySite()->id,
+                    'webReadiness' => ImageQualityChecker::assess($element),
+                    'qualityMetrics' => $analysis ? QualityAdvice::assess(
+                        $analysis->sharpnessScore !== null ? (float) $analysis->sharpnessScore : null,
+                        $analysis->exposureScore !== null ? (float) $analysis->exposureScore : null,
+                        $analysis->noiseScore !== null ? (float) $analysis->noiseScore : null,
+                    ) : [],
                 ]
             );
         } catch (\Throwable $e) {

@@ -38,11 +38,14 @@ use vitordiniz22\craftlens\conditions\ContainsBrandLogoConditionRule;
 use vitordiniz22\craftlens\conditions\ContainsPeopleConditionRule;
 use vitordiniz22\craftlens\conditions\HasAiTagsConditionRule;
 use vitordiniz22\craftlens\conditions\HasFocalPointConditionRule;
+use vitordiniz22\craftlens\conditions\HasTextInImageConditionRule;
+use vitordiniz22\craftlens\conditions\LowQualityConditionRule;
 use vitordiniz22\craftlens\conditions\LensStatusConditionRule;
 use vitordiniz22\craftlens\conditions\NsfwFlaggedConditionRule;
 use vitordiniz22\craftlens\conditions\StockProviderConditionRule;
 use vitordiniz22\craftlens\conditions\WatermarkFlaggedConditionRule;
 use vitordiniz22\craftlens\conditions\WatermarkTypeConditionRule;
+use vitordiniz22\craftlens\conditions\WebReadinessConditionRule;
 use vitordiniz22\craftlens\fieldlayoutelements\LensAnalysisElement;
 use vitordiniz22\craftlens\jobs\RebuildSearchIndexJob;
 use vitordiniz22\craftlens\models\Settings;
@@ -427,10 +430,13 @@ class Plugin extends BasePlugin
                 $event->conditionRules[] = ContainsPeopleConditionRule::class;
                 $event->conditionRules[] = WatermarkFlaggedConditionRule::class;
                 $event->conditionRules[] = ContainsBrandLogoConditionRule::class;
+                $event->conditionRules[] = WatermarkTypeConditionRule::class;
+                $event->conditionRules[] = LowQualityConditionRule::class;
+                $event->conditionRules[] = WebReadinessConditionRule::class;
 
                 if ($this->getIsPro()) {
-                    $event->conditionRules[] = WatermarkTypeConditionRule::class;
                     $event->conditionRules[] = StockProviderConditionRule::class;
+                    $event->conditionRules[] = HasTextInImageConditionRule::class;
                 }
             }
         );
@@ -512,6 +518,24 @@ class Plugin extends BasePlugin
                     'key' => 'lens:has-brand-logo',
                     'label' => Craft::t('lens', 'Has Brand Logo'),
                     'criteria' => ['lensContainsBrandLogo' => true, 'kind' => 'image'],
+                    'hasThumbs' => true,
+                    'defaultSort' => ['dateCreated', 'desc'],
+                    'iconMask' => $iconPath,
+                ];
+
+                $sources[] = [
+                    'key' => 'lens:low-quality',
+                    'label' => Craft::t('lens', 'Low Quality'),
+                    'criteria' => ['lensLowQuality' => true, 'kind' => 'image'],
+                    'hasThumbs' => true,
+                    'defaultSort' => ['dateCreated', 'desc'],
+                    'iconMask' => $iconPath,
+                ];
+
+                $sources[] = [
+                    'key' => 'lens:web-readiness-issues',
+                    'label' => Craft::t('lens', 'Web Readiness Issues'),
+                    'criteria' => ['lensWebReadinessIssues' => ['fileTooLarge', 'resolutionTooSmall', 'unsupportedFormat'], 'kind' => 'image'],
                     'hasThumbs' => true,
                     'defaultSort' => ['dateCreated', 'desc'],
                     'iconMask' => $iconPath,

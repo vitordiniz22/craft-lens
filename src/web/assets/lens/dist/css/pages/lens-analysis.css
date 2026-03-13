@@ -84,15 +84,15 @@
     flex-wrap: wrap;
     align-items: center;
     width: 100%;
-    gap: 6px;
-    margin-bottom: 20px;
+    gap: 8px;
+    margin-bottom: 30px;
 }
 
 .lens-section-header__title {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 500;
     color: var(--gray-600);
     letter-spacing: 0.02em;
@@ -175,7 +175,7 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    margin-bottom: 6px;
+    margin-bottom: 14px;
 }
 
 .lens-field-label {
@@ -684,6 +684,88 @@
     );
     border-radius: 3px;
     transition: width 0.3s ease;
+}
+
+/* ==========================================================================
+   Quality Metric Verdicts
+   ========================================================================== */
+
+.lens-metric-verdict {
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+    min-width: 50px;
+    text-align: right;
+}
+
+.lens-metric-verdict--pass {
+    color: var(--green-500);
+}
+
+.lens-metric-verdict--warning {
+    color: var(--amber-500);
+}
+
+/* ==========================================================================
+   Web Readiness & Assessment
+   ========================================================================== */
+
+.lens-assessment-checks {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+}
+
+.lens-assessment-check {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.lens-assessment-icon {
+    flex-shrink: 0;
+    width: 16px;
+    text-align: center;
+}
+
+.lens-assessment-check--pass .lens-assessment-icon {
+    color: var(--green-500);
+}
+
+.lens-assessment-check--warning .lens-assessment-icon,
+.lens-assessment-check--error .lens-assessment-icon {
+    color: var(--amber-500);
+}
+
+.lens-assessment-label {
+    color: var(--text-color);
+}
+
+.lens-assessment-check--pass .lens-assessment-label {
+    color: var(--medium-text-color);
+}
+
+.lens-assessment-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    font-size: 12px;
+    line-height: 1.4;
+    padding: 8px 10px;
+    border-radius: 4px;
+    margin-top: 4px;
+}
+
+.lens-assessment-notice--info {
+    background: var(--amber-050, #fffbeb);
+    color: var(--amber-700, #92400e);
+}
+
+.lens-assessment-notice--info .lens-assessment-icon {
+    color: var(--amber-500);
 }
 
 /* ==========================================================================

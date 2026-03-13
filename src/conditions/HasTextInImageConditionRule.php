@@ -1,0 +1,52 @@
+<?php
+
+declare(strict_types=1);
+
+namespace vitordiniz22\craftlens\conditions;
+
+use Craft;
+use craft\base\conditions\BaseLightswitchConditionRule;
+use craft\base\ElementInterface;
+use craft\elements\Asset;
+use craft\elements\conditions\ElementConditionRuleInterface;
+use craft\elements\db\AssetQuery;
+use craft\elements\db\ElementQueryInterface;
+use vitordiniz22\craftlens\Plugin;
+
+/**
+ * Condition rule for filtering assets that contain embedded text (OCR).
+ */
+class HasTextInImageConditionRule extends BaseLightswitchConditionRule implements ElementConditionRuleInterface
+{
+    public function getGroupLabel(): string
+    {
+        return 'Lens';
+    }
+
+    public function getLabel(): string
+    {
+        return Craft::t('lens', 'Has Text in Image');
+    }
+
+    public function getExclusiveQueryParams(): array
+    {
+        return ['lensHasTextInImage'];
+    }
+
+    public function modifyQuery(ElementQueryInterface $query): void
+    {
+        /** @var AssetQuery $query */
+        $query->lensHasTextInImage($this->value);
+        $query->lensApplyHasTextInImageFilter();
+    }
+
+    public function matchElement(ElementInterface $element): bool
+    {
+        /** @var Asset $element */
+        $analysis = Plugin::getInstance()->assetAnalysis->getAnalysis($element->id);
+
+        $hasText = $analysis !== null && !empty($analysis->extractedText);
+
+        return $this->matchValue($hasText);
+    }
+}

@@ -16,7 +16,7 @@
 
 ---
 
-Your asset library keeps growing, but nobody has the time to tag, describe, and organize thousands of images by hand. Finding that one photo you need means scrolling endlessly or relying on filenames like `IMG_4382.jpg`.
+Your asset library keeps growing, but nobody has the time to tag, describe, and organize thousands of images by hand — let alone check every image for quality issues, accessibility problems, or web readiness. Finding that one photo you need means scrolling endlessly or relying on filenames like `IMG_4382.jpg`.
 
 **Lens changes that.** It uses AI to automatically tag, describe, and catalog every asset in your library — so when you need to find something, you actually can. Alt text, color palettes, focal points, detected faces, text extracted via OCR, duplicate detection, content safety flags, and more — all generated automatically, all editable, all queryable from your templates.
 
@@ -51,8 +51,11 @@ Choose your AI provider — **OpenAI GPT**, **Google Gemini**, or **Anthropic Cl
 - **Brand/logo recognition** — instantly find every asset featuring a specific brand
 - **OCR** — text extracted directly from images, fully searchable
 
-### Quality & Metadata
-- **Quality scoring** — sharpness, exposure, and noise metrics so you publish your best work
+### Quality & Assessment
+- **Image Assessment** — per-asset audit covering technical quality, web readiness, and accessibility with actionable recommendations
+- **Quality verdicts** — sharpness, exposure, and noise metrics with plain-language advice ("Image appears blurry — consider replacing")
+- **Web readiness** — file size, format support, and resolution checks
+- **Text-in-image detection** — flags images with embedded text for accessibility, recommending HTML alternatives for screen readers
 - **Focal point detection** for smart cropping that keeps the subject in frame
 - **Stock photo detection** — identify which assets came from stock providers
 
