@@ -57,10 +57,11 @@ class SearchService extends Component
 
         // BM25 index path: resolve ranked IDs first when a text query is present.
         $rankedAssetIds = null;
-        $usedBm25 = false;
+        $hasRankedOrder = false;
         $rawQuery = $filters['query'] ?? null;
+        $hasTextQuery = $rawQuery !== null && trim($rawQuery) !== '';
 
-        if ($rawQuery !== null && trim($rawQuery) !== '') {
+        if ($hasTextQuery) {
             $terms = $this->parseSearchTerms($rawQuery);
 
             if (!empty($terms)) {
@@ -69,23 +70,38 @@ class SearchService extends Component
                 if (!empty($scores)) {
                     // Index returned matches — use BM25 relevance ordering.
                     $rankedAssetIds = array_keys($scores);
-                    $usedBm25 = true;
-                } elseif (Plugin::getInstance()->searchIndex->isIndexPopulated()) {
-                    // Index is populated but no tokens matched — genuine zero results.
-                    Logger::info(LogCategory::AssetProcessing, 'Asset search executed (BM25, zero results)', context: [
-                        'query' => $rawQuery,
-                        'resultsCount' => 0,
-                    ]);
-
-                    return [
-                        'assets' => [],
-                        'total' => 0,
-                        'offset' => $offset,
-                        'limit' => $limit,
-                    ];
+                    $hasRankedOrder = true;
                 }
-                // else: index is empty — fall through to legacy LIKE search below.
             }
+
+            // Also query Craft's native search index to surface assets that
+            // don't have Lens analysis (videos, documents, etc.) by their
+            // title, filename, extension, or native alt text.
+            $craftNativeIds = $this->getCraftNativeSearchIds($rawQuery);
+
+            if ($rankedAssetIds !== null) {
+                $rankedAssetIds = array_values(array_unique(
+                    array_merge($rankedAssetIds, $craftNativeIds)
+                ));
+            } elseif (!empty($craftNativeIds)) {
+                $rankedAssetIds = $craftNativeIds;
+                $hasRankedOrder = true;
+            } elseif (Plugin::getInstance()->searchIndex->isIndexPopulated()) {
+                // Both BM25 and Craft native returned zero — genuine zero results.
+                Logger::info(LogCategory::AssetProcessing, 'Asset search executed (zero results)', context: [
+                    'query' => $rawQuery,
+                    'resultsCount' => 0,
+                ]);
+
+                return [
+                    'assets' => [],
+                    'total' => 0,
+                    'offset' => $offset,
+                    'limit' => $limit,
+                ];
+            }
+            // else: BM25 index empty and Craft native found nothing —
+            // fall through to legacy LIKE search below.
         }
 
         // Similarity path: resolve ranked IDs when similarTo is set.
@@ -107,7 +123,7 @@ class SearchService extends Component
             }
         }
 
-        $baseQuery = $this->buildMatchingQuery($filters, $rankedAssetIds, $similarAssetIds);
+        $baseQuery = $this->buildMatchingQuery($filters, $rankedAssetIds, $similarAssetIds, $hasTextQuery);
 
         $total = (int) (clone $baseQuery)->count();
 
@@ -120,8 +136,8 @@ class SearchService extends Component
             ];
         }
 
-        if ($usedBm25 && $rankedAssetIds !== null) {
-            // Preserve BM25 relevance order using MySQL FIELD().
+        if ($hasRankedOrder && $rankedAssetIds !== null) {
+            // Preserve relevance order (BM25 + Craft native) using MySQL FIELD().
             // When combined with similarTo, use only the intersected IDs.
             $orderIds = ($similarAssetIds !== null)
                 ? array_values(array_intersect($rankedAssetIds, $similarAssetIds))
@@ -160,7 +176,7 @@ class SearchService extends Component
 
         Logger::info(LogCategory::AssetProcessing, 'Asset search executed', context: [
             'query' => $rawQuery,
-            'usedBm25' => $usedBm25,
+            'hasRankedOrder' => $hasRankedOrder,
             'resultsCount' => $total,
         ]);
 
@@ -176,22 +192,31 @@ class SearchService extends Component
      * Build the base query for matching assets. Returns a grouped query
      * selecting asset IDs that can be used for both counting and pagination.
      */
-    private function buildMatchingQuery(array $filters, ?array $rankedAssetIds = null, ?array $similarAssetIds = null): Query
+    private function buildMatchingQuery(array $filters, ?array $rankedAssetIds = null, ?array $similarAssetIds = null, bool $hasTextQuery = false): Query
     {
         $query = (new Query())
             ->select(['assets.id'])
             ->from('{{%assets}} assets')
             ->innerJoin('{{%elements}} elements', '[[assets.id]] = [[elements.id]]')
             ->where(['elements.dateDeleted' => null])
-            ->andWhere(['assets.kind' => Asset::KIND_IMAGE])
             ->groupBy(['assets.id']);
+
+        // Text-only searches may surface non-image assets (videos, documents)
+        // matched by Craft's native search index. However, when Lens-specific
+        // metadata filters are active (tags, quality, status, etc.), those
+        // filters use NULL/absence checks that non-image assets would
+        // incorrectly match (e.g., "no tags" would match every video).
+        // Restrict to images unless the query is text-only.
+        if (!$hasTextQuery || self::hasLensMetadataFilters($filters)) {
+            $query->andWhere(['assets.kind' => Asset::KIND_IMAGE]);
+        }
 
         $query->leftJoin(Install::TABLE_ASSET_ANALYSES . ' lens', '[[assets.id]] = [[lens.assetId]]');
 
         if ($similarAssetIds !== null) {
             // Constrain to only assets similar to the target asset.
             if ($rankedAssetIds !== null) {
-                // Intersect with BM25 results when both are active.
+                // Intersect with ranked results when both are active.
                 $intersected = array_values(array_intersect($rankedAssetIds, $similarAssetIds));
                 $query->andWhere(empty($intersected) ? '1 = 0' : ['assets.id' => $intersected]);
             } else {
@@ -200,7 +225,7 @@ class SearchService extends Component
         }
 
         if ($rankedAssetIds !== null && $similarAssetIds === null) {
-            // BM25 path: filter to pre-ranked IDs — no text-search table joins needed.
+            // Ranked path (BM25 + Craft native): filter to pre-ranked IDs.
             $query->andWhere(['assets.id' => $rankedAssetIds]);
         } elseif ($rankedAssetIds === null) {
             // Legacy LIKE path: join tables needed for text search.
@@ -285,6 +310,74 @@ class SearchService extends Component
         $terms = preg_split('/\s+/', trim($query));
 
         return array_filter($terms, fn($term) => strlen($term) >= 2);
+    }
+
+    /**
+     * Check whether any Lens-specific metadata filters are active.
+     *
+     * These filters query analysis tables (tags, status, quality, etc.) and
+     * use NULL/absence checks that non-image assets would incorrectly match.
+     * When active alongside a text query, the KIND_IMAGE restriction must
+     * remain to prevent false positives.
+     */
+    private static function hasLensMetadataFilters(array $filters): bool
+    {
+        $lensFilterKeys = [
+            'tags', 'status', 'containsPeople', 'faceCountPreset',
+            'confidenceMin', 'confidenceMax',
+            'nsfwScoreMin', 'nsfwScoreMax', 'nsfwFlagged',
+            'processedFrom', 'processedTo',
+            'color', 'noTags', 'hasDuplicates',
+            'hasWatermark', 'watermarkType', 'containsBrandLogo',
+            'qualityPreset', 'hasFocalPoint',
+            'missingAltText', 'unprocessed',
+            'qualityIssues', 'webReadinessIssues', 'hasTextInImage',
+        ];
+
+        foreach ($lensFilterKeys as $key) {
+            if (isset($filters[$key]) && $filters[$key] !== [] && $filters[$key] !== '') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Search Craft's native search index to find assets by title, filename,
+     * extension, or native alt text. This surfaces non-image assets (videos,
+     * documents) that don't have Lens analysis but match the query.
+     *
+     * @return int[]
+     */
+    private function getCraftNativeSearchIds(string $query): array
+    {
+        $primarySiteId = Craft::$app->getSites()->getPrimarySite()->id;
+
+        $assetQuery = Asset::find()
+            ->search($query)
+            ->siteId($primarySiteId)
+            ->status(null)
+            ->limit(500);
+
+        // Respect plugin volume settings.
+        $configured = Plugin::getInstance()->getSettings()->enabledVolumes;
+
+        if (!empty($configured) && !\in_array('*', $configured, true)) {
+            $volumeIds = [];
+
+            foreach (Craft::$app->getVolumes()->getAllVolumes() as $volume) {
+                if (\in_array($volume->uid, $configured, true)) {
+                    $volumeIds[] = $volume->id;
+                }
+            }
+
+            if (!empty($volumeIds)) {
+                $assetQuery->volumeId($volumeIds);
+            }
+        }
+
+        return array_map('intval', $assetQuery->ids());
     }
 
     /**

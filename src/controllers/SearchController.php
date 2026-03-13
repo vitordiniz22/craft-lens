@@ -190,10 +190,10 @@ class SearchController extends Controller
         foreach ($results['assets'] as $asset) {
             $analysis = $analysisMap[$asset->id] ?? null;
 
-            if ($analysis === null && !empty($assetIds)) {
+            if ($analysis === null && !empty($assetIds) && $asset->kind === Asset::KIND_IMAGE) {
                 Logger::warning(
                     LogCategory::AssetProcessing,
-                    'Asset missing from analysis map during CSV export',
+                    'Image asset missing from analysis map during CSV export',
                     assetId: $asset->id
                 );
             }
