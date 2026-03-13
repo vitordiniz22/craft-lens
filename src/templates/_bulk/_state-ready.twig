@@ -16,7 +16,7 @@
                 </select>
             </div>
         </div>
-        <hr class="lens-bulk-divider">
+        <hr>
     {% endif %}
 
     {% if stats.unprocessed == 0 and stats.failed == 0 %}
@@ -43,7 +43,7 @@
                 <div class="lens-bulk-status__info">
                     <span class="lens-bulk-status__count">{{ stats.unprocessed|number_format }}</span> {{ 'images ready for analysis'|t('lens') }}
                     {% if estimatedCost is defined and estimatedCost > 0 %}
-                        <span class="lens-processing__separator"> · </span>
+                        <span> · </span>
                         <span class="lens-bulk-status__cost">{{ 'Est.'|t('lens') }} ${{ estimatedCost|number_format(4) }}</span>
                     {% endif %}
                 </div>

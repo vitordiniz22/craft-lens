@@ -36,7 +36,7 @@
             <h2>{{ 'Processing Complete'|t('lens') }}</h2>
         </div>
 
-        <div class="lens-complete-summary">
+        <div>
             <div class="lens-summary-grid">
                 <div class="lens-summary-item">
                     <span class="lens-summary-value">{{ stats.analyzed }}</span>
@@ -98,7 +98,7 @@
                                     <span class="lens-error-group-message">{{ group.message }}</span>
                                 </button>
 
-                                <div class="lens-error-group-detail" style="display: none;" data-lens-target="error-group-detail">
+                                <div class="lens-error-group-detail" data-lens-target="error-group-detail" hidden>
                                     {% if group.assets|length > 0 %}
                                         {% include 'lens/_bulk/_error-asset-list' with {
                                             assets: group.assets,

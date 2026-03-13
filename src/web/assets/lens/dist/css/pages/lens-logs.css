@@ -51,6 +51,11 @@
   text-transform: uppercase;
 }
 
+.lens-log-level--info .status { background-color: #3b82f6; }
+.lens-log-level--warning .status { background-color: #f59e0b; }
+.lens-log-level--error .status { background-color: #ef4444; }
+.lens-log-level--critical .status { background-color: #dc2626; }
+
 .lens-log-category {
   font-size: 12px;
 }

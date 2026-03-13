@@ -1,7 +1,7 @@
 {# Filter Panel — included within the search form context in index.twig #}
 {% import '_includes/forms.twig' as forms %}
 
-<div class="pane lens-search-filters{% if not showFilterPanel %} hidden{% endif %}" data-lens-target="filters-panel">
+<div class="pane{% if not showFilterPanel %} hidden{% endif %}" data-lens-target="filters-panel">
     <div class="lens-filter-grid">
 
         {# — Row 1: Content Detection — #}

@@ -1,86 +1,45 @@
 {# Section 3: Metadata Coverage - only shows when assets have been analyzed #}
 {% if altTextCoverage.total > 0 %}
-<div class="lens-dashboard-section lens-coverage pane">
+<div class="lens-dashboard-section pane">
     <div class="lens-section-header">
         <h2 class="lens-section-header__title">{{ 'Library Health'|t('lens') }}</h2>
     </div>
 
     <div class="lens-coverage__metrics">
         {# Alt Text Coverage #}
-        {% set altColor = altTextCoverage.percentage >= 66 ? 'var(--green-500)' : (altTextCoverage.percentage >= 33 ? 'var(--amber-400)' : 'var(--red-500)') %}
-        <div class="lens-coverage__metric">
-            <div class="lens-coverage__metric-header">
-                <span class="lens-field-label">{{ 'Alt Text'|t('lens') }}</span>
-                <span class="lens-coverage__metric-stat">
-                    {{ altTextCoverage.percentage }}%
-                    <span class="lens-coverage__metric-counts">({{ altTextCoverage.withAltText }} {{ 'of'|t('lens') }} {{ altTextCoverage.total }})</span>
-                </span>
-            </div>
-            <div class="lens-coverage__metric-row">
-                <div class="lens-progress">
-                    <div class="lens-progress__fill" style="width: {{ altTextCoverage.percentage }}%; background-color: {{ altColor }}"></div>
-                </div>
-                {% if altTextCoverage.total - altTextCoverage.withAltText > 0 %}
-                    {% if lens.isPro %}
-                        <a href="{{ cpUrl('lens/search', {missingAltText: 1}) }}" class="lens-link">
-                    {% else %}
-                        <a href="{{ cpUrl('assets', {lensFilter: 'missing-alt-text'}) }}" class="lens-link">
-                    {% endif %}
-                        {{ 'View missing'|t('lens') }} &rarr;
-                    </a>
-                {% endif %}
-            </div>
-        </div>
+        {% set altMissing = altTextCoverage.total - altTextCoverage.withAltText %}
+        {% include 'lens/_dashboard/_coverage-metric' with {
+            label: 'Alt Text'|t('lens'),
+            percentage: altTextCoverage.percentage,
+            covered: altTextCoverage.withAltText,
+            total: altTextCoverage.total,
+            linkUrl: altMissing > 0 ? (lens.isPro ? cpUrl('lens/search', {missingAltText: 1}) : cpUrl('assets', {lensFilter: 'missing-alt-text'})) : null,
+            linkText: 'View missing'|t('lens'),
+        } only %}
 
         {# Tag Coverage (Pro only) #}
         {% if lens.isPro %}
-            {% set tagColor = taggedPercentage.percentage >= 66 ? 'var(--green-500)' : (taggedPercentage.percentage >= 33 ? 'var(--amber-400)' : 'var(--red-500)') %}
-            <div class="lens-coverage__metric">
-                <div class="lens-coverage__metric-header">
-                    <span class="lens-field-label">{{ 'Tags'|t('lens') }}</span>
-                    <span class="lens-coverage__metric-stat">
-                        {{ taggedPercentage.percentage }}%
-                        <span class="lens-coverage__metric-counts">({{ taggedPercentage.withTags }} {{ 'of'|t('lens') }} {{ taggedPercentage.total }})</span>
-                    </span>
-                </div>
-                <div class="lens-coverage__metric-row">
-                    <div class="lens-progress">
-                        <div class="lens-progress__fill" style="width: {{ taggedPercentage.percentage }}%; background-color: {{ tagColor }}"></div>
-                    </div>
-                    {% if taggedPercentage.total - taggedPercentage.withTags > 0 %}
-                        <a href="{{ cpUrl('lens/search', {quickFilter: 'untagged'}) }}" class="lens-link">
-                            {{ 'View untagged'|t('lens') }} &rarr;
-                        </a>
-                    {% endif %}
-                </div>
-            </div>
+            {% set tagMissing = taggedPercentage.total - taggedPercentage.withTags %}
+            {% include 'lens/_dashboard/_coverage-metric' with {
+                label: 'Tags'|t('lens'),
+                percentage: taggedPercentage.percentage,
+                covered: taggedPercentage.withTags,
+                total: taggedPercentage.total,
+                linkUrl: tagMissing > 0 ? cpUrl('lens/search', {quickFilter: 'untagged'}) : null,
+                linkText: 'View untagged'|t('lens'),
+            } only %}
         {% endif %}
 
         {# Focal Point Coverage #}
-        {% set fpColor = focalPointCoverage.percentage >= 66 ? 'var(--green-500)' : (focalPointCoverage.percentage >= 33 ? 'var(--amber-400)' : 'var(--red-500)') %}
-        <div class="lens-coverage__metric">
-            <div class="lens-coverage__metric-header">
-                <span class="lens-field-label">{{ 'Focal Point'|t('lens') }}</span>
-                <span class="lens-coverage__metric-stat">
-                    {{ focalPointCoverage.percentage }}%
-                    <span class="lens-coverage__metric-counts">({{ focalPointCoverage.withFocalPoint }} {{ 'of'|t('lens') }} {{ focalPointCoverage.total }})</span>
-                </span>
-            </div>
-            <div class="lens-coverage__metric-row">
-                <div class="lens-progress">
-                    <div class="lens-progress__fill" style="width: {{ focalPointCoverage.percentage }}%; background-color: {{ fpColor }}"></div>
-                </div>
-                {% if focalPointCoverage.total - focalPointCoverage.withFocalPoint > 0 %}
-                    {% if lens.isPro %}
-                        <a href="{{ cpUrl('lens/search', {hasFocalPoint: 0}) }}" class="lens-link">
-                    {% else %}
-                        <a href="{{ cpUrl('assets', {lensFilter: 'missing-focal-point'}) }}" class="lens-link">
-                    {% endif %}
-                        {{ 'View missing'|t('lens') }} &rarr;
-                    </a>
-                {% endif %}
-            </div>
-        </div>
+        {% set fpMissing = focalPointCoverage.total - focalPointCoverage.withFocalPoint %}
+        {% include 'lens/_dashboard/_coverage-metric' with {
+            label: 'Focal Point'|t('lens'),
+            percentage: focalPointCoverage.percentage,
+            covered: focalPointCoverage.withFocalPoint,
+            total: focalPointCoverage.total,
+            linkUrl: fpMissing > 0 ? (lens.isPro ? cpUrl('lens/search', {hasFocalPoint: 0}) : cpUrl('assets', {lensFilter: 'missing-focal-point'})) : null,
+            linkText: 'View missing'|t('lens'),
+        } only %}
     </div>
 </div>
 {% endif %}

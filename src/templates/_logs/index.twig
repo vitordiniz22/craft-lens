@@ -64,18 +64,12 @@
             </thead>
             <tbody>
                 {% for log in logs %}
-                    {% set levelColors = {
-                        info: '#3b82f6',
-                        warning: '#f59e0b',
-                        error: '#ef4444',
-                        critical: '#dc2626',
-                    } %}
-                    <tr class="lens-log-row" data-lens-log-id="{{ log.id }}">
+                    <tr data-lens-log-id="{{ log.id }}">
                         <td class="lens-log-date">
                             {{ log.dateCreated|date('Y-m-d H:i:s') }}
                         </td>
-                        <td>
-                            <span class="status" style="background-color: {{ levelColors[log.level] ?? '#6b7280' }};"></span>
+                        <td class="lens-log-level--{{ log.level }}">
+                            <span class="status"></span>
                             <span class="lens-log-level-text">{{ log.level }}</span>
                         </td>
                         <td>

@@ -1,6 +1,6 @@
 {# Section 2: Analysis Coverage - hidden when no assets in selected volumes #}
 {% if processingStats.totalImages > 0 %}
-<div class="lens-dashboard-section lens-processing pane">
+<div class="lens-dashboard-section pane">
     <div class="lens-section-header">
         <h2 class="lens-section-header__title">{{ 'Analysis Coverage'|t('lens') }}</h2>
     </div>
@@ -17,7 +17,7 @@
     <div class="lens-processing__status" data-state="{{ processingState }}">
         {% if processingState == 'processing' %}
             {# Processing state #}
-            <div class="lens-processing-active">
+            <div>
                 {% set progress = processingProgress %}
                 {% set percentComplete = progress.percentComplete|default(0) %}
                 <div class="lens-processing__progress-header">
@@ -44,7 +44,7 @@
             </div>
         {% elseif unprocessed > 0 %}
             {# Assets waiting state #}
-            <div class="lens-processing-waiting">
+            <div>
                 {% set percentComplete = totalImages > 0 ? min(100, ((processed / totalImages) * 100)) : 0 %}
                 <div class="lens-processing__progress-header">
                     <span class="lens-processing__progress-text">

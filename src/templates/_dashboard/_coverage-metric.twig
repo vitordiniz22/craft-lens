@@ -1,0 +1,33 @@
+{#
+ # Coverage Metric — Reusable progress bar with label, percentage, and optional link.
+ #
+ # Expected variables:
+ #   label      - string (translated display label)
+ #   percentage - int (0-100)
+ #   covered    - int (count with coverage)
+ #   total      - int (total count)
+ #   linkUrl    - string|null (optional "View missing" link URL)
+ #   linkText   - string|null (optional link label, defaults to 'View missing')
+ #}
+
+{% set color = percentage >= 66 ? 'var(--green-500)' : (percentage >= 33 ? 'var(--amber-400)' : 'var(--red-500)') %}
+
+<div class="lens-coverage__metric">
+    <div class="lens-coverage__metric-header">
+        <span class="lens-field-label">{{ label }}</span>
+        <span class="lens-coverage__metric-stat">
+            {{ percentage }}%
+            <span class="lens-coverage__metric-counts">({{ covered }} {{ 'of'|t('lens') }} {{ total }})</span>
+        </span>
+    </div>
+    <div class="lens-coverage__metric-row">
+        <div class="lens-progress">
+            <div class="lens-progress__fill" style="width: {{ percentage }}%; background-color: {{ color }}"></div>
+        </div>
+        {% if linkUrl ?? null %}
+            <a href="{{ linkUrl }}" class="lens-link">
+                {{ linkText ?? 'View missing'|t('lens') }} &rarr;
+            </a>
+        {% endif %}
+    </div>
+</div>
