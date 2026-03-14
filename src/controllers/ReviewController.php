@@ -25,8 +25,6 @@ class ReviewController extends Controller
 {
     use RequiresAiProviderTrait;
 
-    private const PER_PAGE = 50;
-
     protected array|int|bool $allowAnonymous = false;
 
     public function actionIndex(): Response
@@ -36,40 +34,14 @@ class ReviewController extends Controller
 
         Plugin::getInstance()->requireProEdition();
 
-        $reviewService = Plugin::getInstance()->review;
-        $page = max(1, (int) ($this->request->getParam('page') ?? 1));
-        $offset = ($page - 1) * self::PER_PAGE;
+        $queueIds = Plugin::getInstance()->review->getPendingReviewIds();
 
-        $totalCount = $reviewService->getPendingReviewCount();
-        $totalPages = max(1, (int) ceil($totalCount / self::PER_PAGE));
-
-        if ($totalCount === 0) {
-            return $this->renderTemplate('lens/_review/browse', [
-                'pendingCount' => 0,
-                'hasAnalyses' => AssetAnalysisRecord::find()->exists(),
-            ]);
+        if (!empty($queueIds)) {
+            return $this->redirect(UrlHelper::cpUrl("lens/review/{$queueIds[0]}"));
         }
 
-        $pendingReviews = $reviewService->getPendingReviews(self::PER_PAGE, $offset);
-        $ids = $this->extractIdsFromAnalyses($pendingReviews);
-        $assets = Asset::find()->id($ids['assetIds'])->siteId(Craft::$app->getSites()->getPrimarySite()->id)->indexBy('id')->all();
-        $tagCounts = $this->getTagCounts($ids['analysisIds']);
-        $items = $this->buildReviewItems($pendingReviews, $assets, $tagCounts);
-
-        $analysisMap = [];
-
-        foreach ($pendingReviews as $analysis) {
-            $analysisMap[$analysis->assetId] = $analysis;
-        }
-
-        return $this->renderTemplate('lens/_review/browse', [
-            'items' => $items,
-            'assets' => $assets,
-            'analysisMap' => $analysisMap,
-            'page' => $page,
-            'totalPages' => $totalPages,
-            'totalCount' => $totalCount,
-            'pendingCount' => $totalCount,
+        return $this->renderTemplate('lens/_review/empty', [
+            'hasAnalyses' => AssetAnalysisRecord::find()->exists(),
         ]);
     }
 
@@ -112,21 +84,10 @@ class ReviewController extends Controller
     }
 
     /**
-     * Focus view - redirects to first pending review or browse if queue is empty
+     * Focus view - alias for index, kept for backward compatibility.
      */
     public function actionFocus(): Response
     {
-        $this->requireCpRequest();
-        $this->requirePermission('accessPlugin-lens');
-        Plugin::getInstance()->requireProEdition();
-
-        $reviewService = Plugin::getInstance()->review;
-        $queueIds = $reviewService->getPendingReviewIds();
-
-        if (!empty($queueIds)) {
-            return $this->redirect(UrlHelper::cpUrl("lens/review/{$queueIds[0]}"));
-        }
-
         return $this->redirect(UrlHelper::cpUrl('lens/review'));
     }
 

@@ -3,12 +3,12 @@
  # Provides tab navigation and keyboard hints
  #
  # Expected variables:
- #   currentMode  - string, 'browse', 'focus', or 'bulk'
+ #   currentMode  - string, 'focus' or 'bulk'
  #   totalCount   - int, number of pending reviews
  #   currentIndex - int|null, current position in queue (focus mode only)
  #}
 
-{% set currentMode = currentMode ?? 'browse' %}
+{% set currentMode = currentMode ?? 'focus' %}
 {% set totalCount = totalCount ?? 0 %}
 
 <div class="lens-review-toolbar">
@@ -24,10 +24,6 @@
         </span>
         <div class="lens-review-mode-toggle btngroup">
             <a href="{{ cpUrl('lens/review') }}"
-               class="btn small {{ currentMode == 'browse' ? 'active' : '' }}">
-                {{ 'Browse'|t('lens') }}
-            </a>
-            <a href="{{ cpUrl('lens/review/focus') }}"
                class="btn small {{ currentMode == 'focus' ? 'active' : '' }}">
                 {{ 'Focus View'|t('lens') }}
             </a>
