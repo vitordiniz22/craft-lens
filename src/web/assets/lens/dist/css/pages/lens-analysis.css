@@ -120,6 +120,7 @@
     display: flex;
     flex-direction: column;
     gap: 18px;
+    container-type: inline-size;
 }
 
 /* ==========================================================================
@@ -644,22 +645,38 @@
 .lens-quality-metric {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 4px 10px;
+    gap: 8px;
+    padding: 4px 8px;
     border: 1px dashed var(--hairline-color);
 }
 
+@container (min-width: 500px) {
+    .lens-quality-metrics {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@container (min-width: 800px) {
+    .lens-quality-metrics {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
 .lens-metric-label {
-    font-size: 14px;
+    font-size: 13px;
     color: var(--medium-text-color);
     min-width: 70px;
+    white-space: nowrap;
 }
 
 .lens-metric-value {
     min-width: 32px;
     text-align: right;
-    font-size: 14px;
-    color: var(--light-text-color);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-color);
+    white-space: nowrap;
 }
 
 
