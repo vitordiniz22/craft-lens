@@ -56,7 +56,7 @@
             &middot; {{ providerNames[analysis.provider] ?? analysis.provider|capitalize }}
             {%- if analysis.providerModel %} ({{ analysis.providerModel }}){% endif %}
         {% endif %}
-        {% if analysis.actualCost %}
+        {% if lens.isPro and analysis.actualCost %}
             &middot; ${{ analysis.actualCost|number_format(4) }}
         {% endif %}
     </div>

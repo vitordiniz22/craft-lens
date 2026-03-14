@@ -16,19 +16,28 @@
     {% endif %}
 
     {% if not hasCriticalIssues %}
+        {% if not lens.isPro %}
+            {% include 'lens/_components/upgrade-banner' %}
+        {% endif %}
+
         {% if processingStats.totalImages == 0 %}
             {% include 'lens/_dashboard/_empty-state' %}
         {% else %}
-            {% include 'lens/_dashboard/_library-health' %}
-
             {% if lens.isPro %}
                 {% include 'lens/_dashboard/_processing-status' %}
                 {% include 'lens/_dashboard/_attention' %}
+            {% endif %}
+
+            {% include 'lens/_dashboard/_library-health' %}
+
+            {% if lens.isPro %}
                 {% include 'lens/_dashboard/_quick-insights' %}
                 {% include 'lens/_dashboard/_recent-activity' %}
                 {% include 'lens/_dashboard/_usage' %}
             {% else %}
-                {% include 'lens/_components/upgrade-banner' %}
+                {% include 'lens/_dashboard/_recent-activity' with {
+                    recentActivity: recentActivity|slice(0, 5)
+                } %}
             {% endif %}
         {% endif %}
     {% endif %}

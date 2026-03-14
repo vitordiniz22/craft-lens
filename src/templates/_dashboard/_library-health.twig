@@ -6,6 +6,20 @@
     </div>
 
     <div class="lens-coverage__metrics">
+        {# Analysis Coverage #}
+        {% if processingStats is defined %}
+            {% set analysisPercentage = processingStats.totalImages > 0 ? ((processingStats.analyzed / processingStats.totalImages) * 100)|round(1) : 0 %}
+            {% set unanalyzed = processingStats.totalImages - processingStats.analyzed %}
+            {% include 'lens/_dashboard/_coverage-metric' with {
+                label: 'Analyzed'|t('lens'),
+                percentage: analysisPercentage,
+                covered: processingStats.analyzed,
+                total: processingStats.totalImages,
+                linkUrl: unanalyzed > 0 ? (lens.isPro ? cpUrl('lens/search', {unprocessed: 1}) : cpUrl('assets', {lensFilter: 'not-analysed'})) : null,
+                linkText: 'View missing'|t('lens'),
+            } only %}
+        {% endif %}
+
         {# Alt Text Coverage #}
         {% set altMissing = altTextCoverage.total - altTextCoverage.withAltText %}
         {% include 'lens/_dashboard/_coverage-metric' with {
@@ -26,7 +40,7 @@
                 covered: taggedPercentage.withTags,
                 total: taggedPercentage.total,
                 linkUrl: tagMissing > 0 ? cpUrl('lens/search', {quickFilter: 'untagged'}) : null,
-                linkText: 'View untagged'|t('lens'),
+                linkText: 'View missing'|t('lens'),
             } only %}
         {% endif %}
 

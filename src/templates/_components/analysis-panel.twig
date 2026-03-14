@@ -60,40 +60,20 @@
     {% if analysis %}
         {% set errorMessage = analysis.analysisContent.errorMessage ?? null %}
         {% if analysis.status == lens.status.failed and errorMessage %}
-            <div class="lens-error-notice">
-                <div class="lens-error-header">
-                    <span class="lens-error-icon">{{ iconSvg('circle-exclamation')|attr({width: 20, height: 20}) }}</span>
-                    <strong>{{ 'Analysis Failed'|t('lens') }}</strong>
-                </div>
-
-                <p class="lens-error-message">{{ errorMessage }}</p>
-
-                {# Provide helpful suggestions based on error type #}
-                {% if 'too large' in errorMessage|lower %}
-                    <div class="lens-error-suggestion">
-                        <strong>{{ 'Suggestions'|t('lens') }}:</strong>
-                        <ul>
-                            <li>{{ 'Resize the image to a smaller resolution'|t('lens') }}</li>
-                            <li>{{ 'Compress the image to reduce file size'|t('lens') }}</li>
-                            {% if settings.aiProvider == 'claude' %}
-                                <li>{{ 'Switch to OpenAI or Gemini (they support larger files up to 15MB)'|t('lens') }} - <a href="{{ cpUrl('lens/settings') }}">{{ 'Change provider'|t('lens') }}</a></li>
-                            {% endif %}
-                        </ul>
+            {% embed 'lens/_components/inline-notice' with {
+                type: 'error',
+                title: 'Analysis Failed'|t('lens'),
+                message: errorMessage,
+            } %}
+                {% block action %}
+                    <div class="lens-inline-notice__action">
+                        <button type="button" class="btn small" data-lens-action="analyze" data-lens-asset-id="{{ asset.id }}" data-lens-loading-text="{{ 'Processing'|t('lens') }}">
+                            <div class="spinner small"></div>
+                            <span class="label" data-lens-target="button-label">{{ 'Try Again'|t('lens') }}</span>
+                        </button>
                     </div>
-                {% elseif 'not configured' in errorMessage or 'is invalid' in errorMessage or 'API key' in errorMessage %}
-                    <div class="lens-error-suggestion">
-                        <strong>{{ 'Action Required'|t('lens') }}:</strong>
-                        <p><a href="{{ cpUrl('lens/settings#provider') }}" class="btn small">{{ 'Configure API Settings'|t('lens') }}</a></p>
-                    </div>
-                {% endif %}
-
-                <div class="lens-error-actions">
-                    <button type="button" class="btn small" data-lens-action="analyze" data-lens-asset-id="{{ asset.id }}" data-lens-loading-text="{{ 'Processing'|t('lens') }}">
-                        <div class="spinner small"></div>
-                        <span class="label" data-lens-target="button-label">{{ 'Try Again'|t('lens') }}</span>
-                    </button>
-                </div>
-            </div>
+                {% endblock %}
+            {% endembed %}
         {% endif %}
     {% endif %}
 

@@ -83,6 +83,7 @@ class AnalysisException extends Exception
             message: $message,
             provider: $provider,
             assetId: $assetId,
+            userMessage: "{$provider} returned an unexpected response that couldn't be processed. This is usually a temporary issue. Please try again.",
         );
     }
 

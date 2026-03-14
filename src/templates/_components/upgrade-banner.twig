@@ -1,14 +1,22 @@
 <div class="lens-upgrade-banner">
     <div class="lens-upgrade-banner__content">
         <div class="lens-upgrade-banner__icon">
-            {{ svg(craft.app.plugins.getPlugin('lens').basePath ~ '/icon.svg')|attr({width: 24, height: 24}) }}
+            {{ svg(craft.app.plugins.getPlugin('lens').basePath ~ '/icon.svg')|attr({width: 36, height: 36}) }}
         </div>
         <div class="lens-upgrade-banner__text">
-            <strong>{{ 'Lens Pro'|t('lens') }} &mdash; {{ 'Take full control of your media library'|t('lens') }}</strong>
-            <span>{{ 'Browse, search, and filter every asset with the Asset Browser. Supercharge Craft\'s asset picker with metadata-driven search. Process entire volumes in bulk, detect duplicates, review every AI suggestion before it\'s applied, and much more.'|t('lens') }}</span>
+            <h2 class="lens-section-header__title">{{ 'Unlock the full power of Lens'|t('lens') }}</h2>
+            <p class="lens-upgrade-banner__subtitle">{{ 'Everything in Lite, plus:'|t('lens') }}</p>
         </div>
     </div>
-    <a href="https://plugins.craftcms.com/lens" class="btn small submit" target="_blank">
+    <ul class="lens-upgrade-banner__features">
+        <li>{{ 'Asset Browser with advanced search & filters'|t('lens') }}</li>
+        <li>{{ 'Bulk processing for entire volumes'|t('lens') }}</li>
+        <li>{{ 'Review queue with approve/reject workflow'|t('lens') }}</li>
+        <li>{{ 'Duplicate & similar image detection'|t('lens') }}</li>
+        <li>{{ 'Enhanced asset picker with metadata search'|t('lens') }}</li>
+        <li>{{ 'Dashboard insights, usage stats & cost tracking'|t('lens') }}</li>
+    </ul>
+    <a href="https://plugins.craftcms.com/lens" class="btn submit" target="_blank">
         {{ 'Upgrade to Pro'|t('lens') }}
     </a>
 </div>

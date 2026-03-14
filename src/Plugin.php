@@ -444,6 +444,7 @@ class Plugin extends BasePlugin
 
                 $sourceDefinitions = [
                     'not-analysed' => ['Not Analysed', ['lensStatus' => 'untagged', 'kind' => 'image']],
+                    'failed' => ['Failed Analyses', ['lensStatus' => 'failed', 'kind' => 'image']],
                     'missing-alt-text' => ['Missing Alt Text', ['hasAlt' => false, 'kind' => 'image']],
                     'nsfw-flagged' => ['NSFW Flagged', ['lensNsfwFlagged' => true, 'kind' => 'image']],
                     'low-quality' => ['Low Quality', ['lensLowQuality' => true, 'kind' => 'image']],

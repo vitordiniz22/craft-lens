@@ -307,7 +307,7 @@ class StatisticsService extends Component
     /**
      * Get recent activity feed items for dashboard.
      *
-     * @return array<array{type: string, statusLabel: string, assetId: int|null, assetFilename: string|null, assetUrl: string|null, thumbnailUrl: string|null, timestamp: string, timeAgo: string}>
+     * @return array<array{type: string, statusLabel: string, assetId: int|null, assetTitle: string, assetUrl: string|null, thumbnailUrl: string|null, timestamp: string, timeAgo: string}>
      */
     public function getRecentActivity(int $limit = 10): array
     {
@@ -336,9 +336,11 @@ class StatisticsService extends Component
             $asset = $assets[$record->assetId] ?? null;
 
             $dateUpdated = $record->dateUpdated;
-            $timestamp = $dateUpdated instanceof DateTime
-                ? $dateUpdated
-                : new DateTime($dateUpdated);
+            if ($dateUpdated instanceof DateTime) {
+                $timestamp = $dateUpdated;
+            } else {
+                $timestamp = new DateTime($dateUpdated, new \DateTimeZone('UTC'));
+            }
 
             $thumbnailUrl = $asset !== null
                 ? Craft::$app->getAssets()->getThumbUrl($asset, 34, 34)
@@ -348,7 +350,7 @@ class StatisticsService extends Component
                 'type' => $statusTypeMap[$record->status] ?? 'analyzed',
                 'statusLabel' => AnalysisStatus::from($record->status)->label(),
                 'assetId' => $record->assetId,
-                'assetFilename' => $asset?->filename ?? Craft::t('lens', 'Deleted asset'),
+                'assetTitle' => $asset?->title ?? Craft::t('lens', 'Deleted asset'),
                 'assetUrl' => $asset?->getCpEditUrl(),
                 'thumbnailUrl' => $thumbnailUrl,
                 'timestamp' => $timestamp->format('c'),
@@ -364,7 +366,7 @@ class StatisticsService extends Component
      */
     private function formatTimeAgo(DateTime $timestamp): string
     {
-        $now = new DateTime();
+        $now = new DateTime('now', $timestamp->getTimezone());
         $diff = $now->diff($timestamp);
 
         if ($diff->days > 0) {
@@ -488,6 +490,7 @@ class StatisticsService extends Component
     public function getAttentionItems(?array $overviewStats = null): array
     {
         $plugin = Plugin::getInstance();
+        $isPro = $plugin->getIsPro();
         $overview = $overviewStats ?? $this->getOverviewStats();
         $nsfwCount = $this->getNsfwFlaggedCount();
         $watermarkedCount = $this->getWatermarkedCount();
@@ -495,7 +498,7 @@ class StatisticsService extends Component
 
         $items = [];
 
-        if ($overview['pendingReview'] > 0 && $plugin->getIsPro()) {
+        if ($overview['pendingReview'] > 0 && $isPro) {
             $items[] = [
                 'type' => 'pending_review',
                 'label' => Craft::t('lens', 'Pending Review'),
@@ -511,7 +514,9 @@ class StatisticsService extends Component
                 'type' => 'failed',
                 'label' => Craft::t('lens', 'Failed Analyses'),
                 'count' => $overview['failed'],
-                'url' => 'lens/search?status=' . AnalysisStatus::Failed->value,
+                'url' => $isPro
+                    ? 'lens/search?status=' . AnalysisStatus::Failed->value
+                    : 'assets?lensFilter=failed',
                 'color' => 'red',
                 'icon' => 'triangle-exclamation',
             ];
@@ -522,7 +527,9 @@ class StatisticsService extends Component
                 'type' => 'nsfw_flagged',
                 'label' => Craft::t('lens', 'NSFW Flagged'),
                 'count' => $nsfwCount,
-                'url' => 'lens/search?nsfwFlagged=1',
+                'url' => $isPro
+                    ? 'lens/search?nsfwFlagged=1'
+                    : 'assets?lensFilter=nsfw-flagged',
                 'color' => 'red',
                 'icon' => 'triangle-exclamation',
             ];
@@ -533,13 +540,15 @@ class StatisticsService extends Component
                 'type' => 'watermarked',
                 'label' => Craft::t('lens', 'Watermarked'),
                 'count' => $watermarkedCount,
-                'url' => 'lens/search?hasWatermark=1',
+                'url' => $isPro
+                    ? 'lens/search?hasWatermark=1'
+                    : 'assets?lensFilter=has-watermark',
                 'color' => 'amber',
                 'icon' => 'stamp',
             ];
         }
 
-        if ($duplicateCount > 0 && $plugin->getIsPro()) {
+        if ($duplicateCount > 0 && $isPro) {
             $items[] = [
                 'type' => 'duplicates',
                 'label' => Craft::t('lens', 'Duplicates'),
