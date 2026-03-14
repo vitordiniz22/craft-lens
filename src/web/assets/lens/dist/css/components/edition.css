@@ -66,34 +66,3 @@
     }
 }
 
-/* Edition Badge (settings header) */
-.lens-edition-badge__container {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 24px;
-}
-
-.lens-edition-badge {
-    display: inline-block;
-    padding: 3px 10px;
-    font-size: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    border-radius: var(--small-border-radius);
-}
-
-.lens-edition-badge--pro {
-    color: var(--success-color);
-    background: color-mix(in srgb, var(--success-color) 10%, transparent);
-}
-
-.lens-edition-badge--lite {
-    color: var(--medium-text-color);
-    background: var(--gray-100);
-}
-
-.lens-edition-upgrade-link {
-    font-size: 13px;
-}
