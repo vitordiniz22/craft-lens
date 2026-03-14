@@ -7,7 +7,7 @@
     <div class="lens-attention__cards">
         {% for item in attentionItems %}
             <a href="{{ cpUrl(item.url) }}" class="lens-metric-card lens-metric-card--inline">
-                <span class="lens-metric-card__icon" data-icon="{{ item.icon }}"></span>
+                <span class="lens-metric-card__icon">{{ iconSvg(item.icon)|attr({width: 16, height: 16, fill: 'currentColor'}) }}</span>
                 <span class="lens-metric-card__value">{{ item.count }}</span>
                 <span class="lens-metric-card__label">{{ item.label }}</span>
             </a>

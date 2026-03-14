@@ -1,33 +1,42 @@
 {#
- # Coverage Metric — Reusable progress bar with label, percentage, and optional link.
+ # Coverage Metric — Reusable table row with progress bar and details.
+ # Renders as two grid cells within the parent .lens-coverage__metrics grid.
  #
  # Expected variables:
  #   label      - string (translated display label)
  #   percentage - int (0-100)
  #   covered    - int (count with coverage)
  #   total      - int (total count)
- #   linkUrl    - string|null (optional "View missing" link URL)
+ #   linkUrl    - string|null (optional action link URL)
  #   linkText   - string|null (optional link label, defaults to 'View missing')
+ #   isProcessing - bool (optional, shows pulsing dot + animated bar)
  #}
 
 {% set color = percentage >= 66 ? 'var(--green-500)' : (percentage >= 33 ? 'var(--amber-400)' : 'var(--red-500)') %}
+{% set isProcessing = isProcessing ?? false %}
 
-<div class="lens-coverage__metric">
-    <div class="lens-coverage__metric-header">
-        <span class="lens-field-label">{{ label }}</span>
-        <span class="lens-coverage__metric-stat">
-            {{ percentage }}%
-            <span class="lens-coverage__metric-counts">({{ covered }} {{ 'of'|t('lens') }} {{ total }})</span>
-        </span>
-    </div>
-    <div class="lens-coverage__metric-row">
-        <div class="lens-progress">
-            <div class="lens-progress__fill" style="width: {{ percentage }}%; background-color: {{ color }}"></div>
-        </div>
-        {% if linkUrl ?? null %}
-            <a href="{{ linkUrl }}" class="lens-link">
-                {{ linkText ?? 'View missing'|t('lens') }} &rarr;
-            </a>
+{# Column 1: Label + Bar #}
+<div class="lens-coverage__bar-cell"{{ isProcessing ? ' data-lens-target="processing-metric"' }}>
+    <span class="lens-field-label">
+        {% if isProcessing %}
+            <span class="lens-processing__pulse"></span>
         {% endif %}
+        {{ label }}
+    </span>
+    <div class="lens-progress{{ isProcessing ? ' lens-progress--animated' : (percentage == 100 ? ' lens-progress--complete' : '') }}">
+        <div class="lens-progress__fill" style="width: {{ percentage }}%{{ not isProcessing ? '; background-color: ' ~ color : '' }}"{{ isProcessing ? ' data-lens-target="processing-fill"' }}></div>
     </div>
+</div>
+
+{# Column 2: Stats + Action #}
+<div class="lens-coverage__details-cell">
+    <span class="lens-coverage__metric-stat"{{ isProcessing ? ' data-lens-target="processing-text"' }}>
+        {{ percentage }}%
+        <span class="lens-coverage__metric-counts">({{ covered }} {{ 'of'|t('lens') }} {{ total }})</span>
+    </span>
+    {% if linkUrl ?? null %}
+        <a href="{{ linkUrl }}" class="lens-link">
+            {{ linkText ?? 'View missing'|t('lens') }} &rarr;
+        </a>
+    {% endif %}
 </div>

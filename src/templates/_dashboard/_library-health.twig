@@ -6,17 +6,32 @@
     </div>
 
     <div class="lens-coverage__metrics">
-        {# Analysis Coverage #}
+        {# Analysis Coverage — processing-aware for both editions #}
         {% if processingStats is defined %}
+            {% set isProcessing = (processingStats.processing|default(0)) > 0 %}
             {% set analysisPercentage = processingStats.totalImages > 0 ? ((processingStats.analyzed / processingStats.totalImages) * 100)|round(1) : 0 %}
             {% set unanalyzed = processingStats.totalImages - processingStats.analyzed %}
+
+            {# Link destination: Pro → bulk page, Lite → assets filter #}
+            {% if isProcessing %}
+                {% set linkUrl = lens.isPro ? cpUrl('lens/bulk') : cpUrl('assets', {lensFilter: 'not-analysed'}) %}
+                {% set linkText = lens.isPro ? 'View progress'|t('lens') : 'View assets'|t('lens') %}
+            {% elseif unanalyzed > 0 %}
+                {% set linkUrl = lens.isPro ? cpUrl('lens/bulk') : cpUrl('assets', {lensFilter: 'not-analysed'}) %}
+                {% set linkText = lens.isPro ? 'Bulk process'|t('lens') : 'View missing'|t('lens') %}
+            {% else %}
+                {% set linkUrl = null %}
+                {% set linkText = null %}
+            {% endif %}
+
             {% include 'lens/_dashboard/_coverage-metric' with {
-                label: 'Analyzed'|t('lens'),
+                label: isProcessing ? 'Processing'|t('lens') : 'Analyzed'|t('lens'),
                 percentage: analysisPercentage,
                 covered: processingStats.analyzed,
                 total: processingStats.totalImages,
-                linkUrl: unanalyzed > 0 ? (lens.isPro ? cpUrl('lens/search', {unprocessed: 1}) : cpUrl('assets', {lensFilter: 'not-analysed'})) : null,
-                linkText: 'View missing'|t('lens'),
+                linkUrl: linkUrl,
+                linkText: linkText,
+                isProcessing: isProcessing,
             } only %}
         {% endif %}
 
@@ -55,14 +70,39 @@
             linkText: 'View missing'|t('lens'),
         } only %}
     </div>
-
-    {# Image Quality (requires analyzed assets) #}
-    {% if qualityDistribution is defined and qualityDistribution and qualityDistribution.total > 0 %}
-        {% include 'lens/_dashboard/_quality-distribution' with {
-            qualityDistribution: qualityDistribution,
-            qualityIssueCounts: qualityIssueCounts,
-        } only %}
-    {% endif %}
-
 </div>
+
+{% if processingStats is defined and (processingStats.processing|default(0)) > 0 %}
+{% js %}
+(function() {
+    var grid = document.querySelector('.lens-coverage__metrics');
+    if (!grid || !grid.querySelector('[data-lens-target="processing-metric"]')) return;
+
+    var timer = setInterval(function() {
+        Craft.sendActionRequest('GET', 'lens/dashboard/processing-status')
+            .then(function(response) {
+                var data = response.data;
+                if (!data.success) return;
+
+                var textEl = grid.querySelector('[data-lens-target="processing-text"]');
+                if (textEl) {
+                    textEl.innerHTML = data.percentComplete + '% <span class="lens-coverage__metric-counts">(' + data.completed + ' ' + Craft.t('lens', 'of') + ' ' + data.total + ')</span>';
+                }
+
+                var fillEl = grid.querySelector('[data-lens-target="processing-fill"]');
+                if (fillEl) {
+                    fillEl.style.width = data.percentComplete + '%';
+                }
+
+                if (data.processing === 0) {
+                    clearInterval(timer);
+                    window.location.reload();
+                }
+            })
+            .catch(function() {});
+    }, 5000);
+})();
+{% endjs %}
+{% endif %}
+
 {% endif %}

@@ -7,6 +7,7 @@ namespace vitordiniz22\craftlens\services;
 use Craft;
 use craft\elements\Asset;
 use DateTime;
+use vitordiniz22\craftlens\enums\AiProvider;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\helpers\ImageMetricsAnalyzer;
 use vitordiniz22\craftlens\migrations\Install;
@@ -417,6 +418,42 @@ class StatisticsService extends Component
     }
 
     /**
+     * Get monthly usage history for the last N months (including current).
+     * Returns months in chronological order, skipping months with no activity.
+     *
+     * @return array<array{label: string, assetsProcessed: int, totalCost: float}>
+     */
+    public function getMonthlyUsageHistory(int $months = 6): array
+    {
+        $results = [];
+        $now = new DateTime();
+
+        for ($i = $months - 1; $i >= 0; $i--) {
+            $date = (clone $now)->modify("-{$i} months");
+            $from = (new DateTime($date->format('Y-m-01')))->format('Y-m-d 00:00:00');
+
+            if ($i === 0) {
+                $to = null;
+            } else {
+                $lastDay = (new DateTime($date->format('Y-m-t')));
+                $to = $lastDay->format('Y-m-d 23:59:59');
+            }
+
+            $summary = $this->getUsageSummaryForPeriod($from, $to);
+
+            if ($summary['assetsProcessed'] > 0) {
+                $results[] = [
+                    'label' => $date->format('M Y'),
+                    'assetsProcessed' => $summary['assetsProcessed'],
+                    'totalCost' => $summary['totalCost'],
+                ];
+            }
+        }
+
+        return $results;
+    }
+
+    /**
      * Get usage summary for a date range.
      *
      * @return array{assetsProcessed: int, totalCost: float, avgCostPerAsset: float}
@@ -562,6 +599,61 @@ class StatisticsService extends Component
             ];
         }
 
+        // Quality issues
+        $qualityIssues = $this->getQualityIssueCounts();
+
+        if ($qualityIssues['blurry'] > 0) {
+            $items[] = [
+                'type' => 'blurry',
+                'label' => Craft::t('lens', 'Blurry'),
+                'count' => $qualityIssues['blurry'],
+                'url' => $isPro
+                    ? 'lens/search?qualityIssues[]=blurry'
+                    : 'assets?lensFilter=blurry',
+                'color' => 'amber',
+                'icon' => 'eye',
+            ];
+        }
+
+        if ($qualityIssues['tooDark'] > 0) {
+            $items[] = [
+                'type' => 'too_dark',
+                'label' => Craft::t('lens', 'Too Dark'),
+                'count' => $qualityIssues['tooDark'],
+                'url' => $isPro
+                    ? 'lens/search?qualityIssues[]=tooDark'
+                    : 'assets?lensFilter=too-dark',
+                'color' => 'amber',
+                'icon' => 'sun',
+            ];
+        }
+
+        if ($qualityIssues['tooBright'] > 0) {
+            $items[] = [
+                'type' => 'too_bright',
+                'label' => Craft::t('lens', 'Too Bright'),
+                'count' => $qualityIssues['tooBright'],
+                'url' => $isPro
+                    ? 'lens/search?qualityIssues[]=tooBright'
+                    : 'assets?lensFilter=too-bright',
+                'color' => 'amber',
+                'icon' => 'sun',
+            ];
+        }
+
+        if ($qualityIssues['lowContrast'] > 0) {
+            $items[] = [
+                'type' => 'low_contrast',
+                'label' => Craft::t('lens', 'Low Contrast'),
+                'count' => $qualityIssues['lowContrast'],
+                'url' => $isPro
+                    ? 'lens/search?qualityIssues[]=lowContrast'
+                    : 'assets?lensFilter=low-contrast',
+                'color' => 'amber',
+                'icon' => 'circle-half-stroke',
+            ];
+        }
+
         return $items;
     }
 
@@ -657,6 +749,63 @@ class StatisticsService extends Component
             'tooBright' => (int) ($result['tooBright'] ?? 0),
             'lowContrast' => (int) ($result['lowContrast'] ?? 0),
         ];
+    }
+
+    /**
+     * Get total token usage across all analyses.
+     *
+     * @return array{totalTokens: int, inputTokens: int, outputTokens: int}
+     */
+    public function getTokenUsage(): array
+    {
+        $result = AssetAnalysisRecord::find()
+            ->select([
+                'SUM(inputTokens) as inputTokens',
+                'SUM(outputTokens) as outputTokens',
+            ])
+            ->where(['in', 'status', AnalysisStatus::processedValues()])
+            ->asArray()
+            ->one();
+
+        $input = (int) ($result['inputTokens'] ?? 0);
+        $output = (int) ($result['outputTokens'] ?? 0);
+
+        return [
+            'totalTokens' => $input + $output,
+            'inputTokens' => $input,
+            'outputTokens' => $output,
+        ];
+    }
+
+    /**
+     * Get cost/usage breakdown grouped by provider and model.
+     *
+     * @return array<array{provider: string, model: string, label: string, assets: int, cost: float}>
+     */
+    public function getProviderBreakdown(): array
+    {
+        $rows = AssetAnalysisRecord::find()
+            ->select([
+                'provider',
+                'providerModel',
+                'COUNT(*) as cnt',
+                'SUM(actualCost) as totalCost',
+            ])
+            ->where(['in', 'status', AnalysisStatus::processedValues()])
+            ->andWhere(['not', ['provider' => null]])
+            ->groupBy(['provider', 'providerModel'])
+            ->orderBy(['totalCost' => SORT_DESC])
+            ->asArray()
+            ->all();
+
+        return array_map(fn(array $r) => [
+            'provider' => $r['provider'],
+            'model' => $r['providerModel'],
+            'label' => AiProvider::from($r['provider'])->label()
+                . ' / ' . ($r['providerModel'] ?? '?'),
+            'assets' => (int) $r['cnt'],
+            'cost' => (float) $r['totalCost'],
+        ], $rows);
     }
 
     /**

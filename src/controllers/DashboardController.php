@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace vitordiniz22\craftlens\controllers;
 
 use craft\web\Controller;
+use vitordiniz22\craftlens\enums\AiProvider;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\Plugin;
@@ -16,6 +17,32 @@ use yii\web\Response;
 class DashboardController extends Controller
 {
     protected array|int|bool $allowAnonymous = false;
+
+    /**
+     * Lightweight AJAX endpoint for dashboard processing status polling.
+     */
+    public function actionProcessingStatus(): Response
+    {
+        $this->requireCpRequest();
+        $this->requirePermission('accessPlugin-lens');
+        $this->requireAcceptsJson();
+
+        $bulkStatus = Plugin::getInstance()->bulkProcessingStatus;
+        $stats = $bulkStatus->getStats();
+
+        $total = $stats['totalImages'];
+        $unprocessed = $stats['unprocessed'];
+        $processed = max(0, $total - $unprocessed);
+        $percentComplete = $total > 0 ? min(100, round(($processed / $total) * 100)) : 0;
+
+        return $this->asJson([
+            'success' => true,
+            'processing' => $stats['processing'] ?? 0,
+            'total' => number_format($total),
+            'completed' => number_format($processed),
+            'percentComplete' => $percentComplete,
+        ]);
+    }
 
     public function actionIndex(): Response
     {
@@ -52,16 +79,11 @@ class DashboardController extends Controller
                 'processingState' => $processingStatus['state'],
                 'processingStats' => $processingStats,
                 'processingProgress' => $processingStatus['progress'] ?? null,
-                'queueInfo' => $processingStatus['queueInfo'] ?? null,
 
                 // Section 3: Metadata Coverage
                 'altTextCoverage' => $stats->getAltTextCoverage(),
                 'taggedPercentage' => $stats->getTaggedPercentage(),
                 'focalPointCoverage' => $stats->getFocalPointCoverage(),
-
-                // Section 3b: Image Quality (Pro)
-                'qualityDistribution' => $plugin->getIsPro() ? $stats->getQualityDistribution() : null,
-                'qualityIssueCounts' => $plugin->getIsPro() ? $stats->getQualityIssueCounts() : null,
 
                 // Section 4: Quick Insights
                 'topTags' => $stats->getTopTags(10),
@@ -73,11 +95,19 @@ class DashboardController extends Controller
                 // Section 6: Usage
                 'monthlyUsage' => $stats->getMonthlyUsageSummary(),
                 'lastMonthUsage' => $stats->getLastMonthUsageSummary(),
+                'monthlyHistory' => $stats->getMonthlyUsageHistory(3),
                 'allTimeUsage' => $stats->getAllTimeUsage(),
                 'costProjection' => $stats->getCostProjection(
                     $overviewStats['unprocessed'],
                     $overviewStats['avgCostPerAsset'],
                 ),
+                'tokenUsage' => $stats->getTokenUsage(),
+                'providerBreakdown' => $stats->getProviderBreakdown(),
+                'currentModel' => match ($plugin->getSettings()->getAiProviderEnum()) {
+                    AiProvider::OpenAi => $plugin->getSettings()->openaiModel,
+                    AiProvider::Gemini => $plugin->getSettings()->geminiModel,
+                    AiProvider::Claude => $plugin->getSettings()->claudeModel,
+                },
             ]);
         } catch (\Throwable $e) {
             Logger::error(LogCategory::AssetProcessing, 'Dashboard data load failed', exception: $e);
