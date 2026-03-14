@@ -24,11 +24,14 @@
             {% include 'lens/_dashboard/_empty-state' %}
         {% else %}
             {% if lens.isPro %}
-                {% include 'lens/_dashboard/_processing-status' %}
                 {% include 'lens/_dashboard/_attention' %}
             {% endif %}
 
             {% include 'lens/_dashboard/_library-health' %}
+
+            {% if lens.isPro %}
+                {% include 'lens/_dashboard/_processing-status' %}
+            {% endif %}
 
             {% if lens.isPro %}
                 {% include 'lens/_dashboard/_quick-insights' %}
