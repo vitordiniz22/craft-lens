@@ -320,6 +320,9 @@ class ReviewService extends Component
             'altFieldInLayout' => FieldLayoutHelper::hasAltField($asset),
             'assetHasFocalPoint' => $asset->getHasFocalPoint(),
             'assetFocalPoint' => $asset->getHasFocalPoint() ? $asset->getFocalPoint() : null,
+            'provider' => $record->provider,
+            'providerModel' => $record->providerModel,
+            'processedAt' => $record->processedAt,
         ];
     }
 

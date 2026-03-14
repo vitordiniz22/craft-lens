@@ -17,22 +17,27 @@
 
             <div class="lens-stats-grid">
                 <div class="lens-metric-card lens-metric-card--stacked lens-metric-card--neutral{{ stats.totalImages == 0 ? ' lens-metric-card--empty' }}" data-lens-stat="totalImages">
+                    <div class="lens-metric-card__icon">{{ iconSvg('image')|attr({width: 20, height: 20, fill: 'currentColor'}) }}</div>
                     <div class="lens-metric-card__value" data-lens-target="stat-value">{{ stats.totalImages }}</div>
                     <div class="lens-metric-card__label">{{ 'Total Images'|t('lens') }}</div>
                 </div>
                 <a href="{{ _analyzedUrl }}" class="lens-metric-card lens-metric-card--stacked lens-metric-card--success{{ stats.analyzed == 0 ? ' lens-metric-card--empty' }}" data-lens-stat="analyzed">
+                    <div class="lens-metric-card__icon">{{ iconSvg('check')|attr({width: 20, height: 20, fill: 'currentColor'}) }}</div>
                     <div class="lens-metric-card__value" data-lens-target="stat-value">{{ stats.analyzed }}</div>
                     <div class="lens-metric-card__label">{{ 'Analyzed'|t('lens') }}</div>
                 </a>
                 <a href="{{ _unprocessedUrl }}" class="lens-metric-card lens-metric-card--stacked lens-metric-card--warning{{ stats.unprocessed == 0 ? ' lens-metric-card--empty' }}" data-lens-stat="unprocessed">
+                    <div class="lens-metric-card__icon">{{ iconSvg('clock')|attr({width: 20, height: 20, fill: 'currentColor'}) }}</div>
                     <div class="lens-metric-card__value" data-lens-target="stat-value">{{ stats.unprocessed }}</div>
                     <div class="lens-metric-card__label">{{ 'Unprocessed'|t('lens') }}</div>
                 </a>
                 <a href="{{ _reviewUrl }}" class="lens-metric-card lens-metric-card--stacked lens-metric-card--info{{ stats.pendingReview == 0 ? ' lens-metric-card--empty' }}" data-lens-stat="pendingReview">
+                    <div class="lens-metric-card__icon">{{ iconSvg('eye')|attr({width: 20, height: 20, fill: 'currentColor'}) }}</div>
                     <div class="lens-metric-card__value" data-lens-target="stat-value">{{ stats.pendingReview }}</div>
                     <div class="lens-metric-card__label">{{ 'Pending Review'|t('lens') }}</div>
                 </a>
                 <a href="{{ _failedUrl }}" class="lens-metric-card lens-metric-card--stacked lens-metric-card--error{{ stats.failed == 0 ? ' lens-metric-card--empty' }}" data-lens-stat="failed">
+                    <div class="lens-metric-card__icon">{{ iconSvg('triangle-exclamation')|attr({width: 20, height: 20, fill: 'currentColor'}) }}</div>
                     <div class="lens-metric-card__value" data-lens-target="stat-value">{{ stats.failed }}</div>
                     <div class="lens-metric-card__label">{{ 'Failed'|t('lens') }}</div>
                 </a>

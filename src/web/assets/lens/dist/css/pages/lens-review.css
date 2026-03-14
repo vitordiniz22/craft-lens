@@ -371,19 +371,6 @@
   box-shadow: 0 0 0 2px var(--link-color);
 }
 
-.lens-review-meta {
-  font-size: 12px;
-  color: var(--medium-text-color);
-}
-
-.lens-review-meta a {
-  color: var(--link-color);
-  text-decoration: none;
-}
-
-.lens-review-meta a:hover {
-  text-decoration: underline;
-}
 
 .lens-ai-suggestion-inline {
   display: flex;

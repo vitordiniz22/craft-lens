@@ -1,12 +1,13 @@
 {# Section 1: Needs Attention - only shows when issues exist #}
 {% if attentionItems|length %}
+{% set colorMap = {red: 'error', amber: 'warning', blue: 'info'} %}
 <div class="lens-dashboard-section">
     <div class="lens-section-header">
         <h2 class="lens-section-header__title">{{ 'Needs Attention'|t('lens') }}</h2>
     </div>
     <div class="lens-attention__cards">
         {% for item in attentionItems %}
-            <a href="{{ cpUrl(item.url) }}" class="lens-metric-card lens-metric-card--inline">
+            <a href="{{ cpUrl(item.url) }}" class="lens-metric-card lens-metric-card--inline lens-metric-card--{{ colorMap[item.color] ?? 'info' }}">
                 <span class="lens-metric-card__icon">{{ iconSvg(item.icon)|attr({width: 16, height: 16, fill: 'currentColor'}) }}</span>
                 <span class="lens-metric-card__value">{{ item.count }}</span>
                 <span class="lens-metric-card__label">{{ item.label }}</span>

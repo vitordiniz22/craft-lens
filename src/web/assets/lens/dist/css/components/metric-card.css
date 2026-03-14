@@ -46,6 +46,10 @@
     font-size: 32px;
 }
 
+.lens-metric-card--stacked .lens-metric-card__icon {
+    margin-bottom: 8px;
+}
+
 .lens-metric-card--stacked .lens-metric-card__label {
     margin-top: 4px;
 }
@@ -59,7 +63,6 @@
     align-items: center;
     gap: 8px;
     padding: 10px 16px;
-    border-left-color: var(--link-color);
 }
 
 .lens-metric-card--inline .lens-metric-card__value {
@@ -104,11 +107,18 @@
 
 .lens-metric-card--info {
     border-left-color: var(--link-color);
+    background: var(--bg-notice, var(--blue-050));
 }
 
 .lens-metric-card--info .lens-metric-card__value {
     color: var(--link-color);
 }
+
+/* Status-colored icons */
+.lens-metric-card--success .lens-metric-card__icon { color: var(--success-color); }
+.lens-metric-card--warning .lens-metric-card__icon { color: var(--warning-color); }
+.lens-metric-card--error .lens-metric-card__icon { color: var(--error-color); }
+.lens-metric-card--info .lens-metric-card__icon { color: var(--link-color); }
 
 /* ==========================================================================
    Clickable cards (any card rendered as <a> with href)
