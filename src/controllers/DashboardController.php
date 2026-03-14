@@ -59,6 +59,10 @@ class DashboardController extends Controller
                 'taggedPercentage' => $stats->getTaggedPercentage(),
                 'focalPointCoverage' => $stats->getFocalPointCoverage(),
 
+                // Section 3b: Image Quality (Pro)
+                'qualityDistribution' => $plugin->getIsPro() ? $stats->getQualityDistribution() : null,
+                'qualityIssueCounts' => $plugin->getIsPro() ? $stats->getQualityIssueCounts() : null,
+
                 // Section 4: Quick Insights
                 'topTags' => $stats->getTopTags(10),
                 'dominantColors' => $stats->getDominantColors(5),

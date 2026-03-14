@@ -204,6 +204,121 @@
 }
 
 /* ==========================================================================
+   Section 3b: Image Quality
+   ========================================================================== */
+
+.lens-health-subheader {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 10px;
+}
+
+.lens-health-subheader .lens-field-label {
+    margin: 0;
+}
+
+/* Stacked quality bar */
+.lens-quality-bar {
+    display: flex;
+    overflow: hidden;
+}
+
+.lens-quality-bar__segment {
+    height: 100%;
+    min-height: 10px;
+    transition: filter 0.15s ease;
+    display: block;
+}
+
+.lens-quality-bar__segment:hover {
+    filter: brightness(0.9);
+}
+
+.lens-quality-bar__segment--high {
+    background-color: var(--green-500);
+}
+
+.lens-quality-bar__segment--medium {
+    background-color: var(--amber-400);
+}
+
+.lens-quality-bar__segment--low {
+    background-color: var(--red-500);
+}
+
+/* Quality legend */
+.lens-quality-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 8px;
+    font-size: 13px;
+}
+
+.lens-quality-legend__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--medium-text-color);
+    text-decoration: none;
+}
+
+.lens-quality-legend__item:hover {
+    color: var(--text-color);
+}
+
+.lens-quality-legend__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.lens-quality-legend__dot--high {
+    background-color: var(--green-500);
+}
+
+.lens-quality-legend__dot--medium {
+    background-color: var(--amber-400);
+}
+
+.lens-quality-legend__dot--low {
+    background-color: var(--red-500);
+}
+
+/* Issue pills */
+.lens-quality-issues {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.lens-quality-issue {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    background: var(--gray-050);
+    border-radius: 12px;
+    font-size: 12px;
+    color: var(--medium-text-color);
+    text-decoration: none;
+    transition: background-color 0.15s ease;
+}
+
+.lens-quality-issue:hover {
+    background: var(--gray-100);
+    color: var(--text-color);
+}
+
+.lens-quality-issue__count {
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+/* ==========================================================================
    Section 4: Quick Actions
    ========================================================================== */
 
@@ -288,7 +403,7 @@
 
 .lens-activity__cell--status {
     width: 120px;
-    text-align: center;
+    text-align: right;
 }
 
 .lens-activity__cell--time {
@@ -300,8 +415,8 @@
 /* Thumbnail */
 .lens-activity__thumb-img,
 .lens-activity__thumb-placeholder {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     border-radius: var(--small-border-radius);
 }
 
@@ -510,4 +625,5 @@
     .lens-activity__thumb {
         display: none;
     }
+
 }

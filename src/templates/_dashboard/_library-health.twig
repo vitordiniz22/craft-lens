@@ -55,5 +55,14 @@
             linkText: 'View missing'|t('lens'),
         } only %}
     </div>
+
+    {# Image Quality (requires analyzed assets) #}
+    {% if qualityDistribution is defined and qualityDistribution and qualityDistribution.total > 0 %}
+        {% include 'lens/_dashboard/_quality-distribution' with {
+            qualityDistribution: qualityDistribution,
+            qualityIssueCounts: qualityIssueCounts,
+        } only %}
+    {% endif %}
+
 </div>
 {% endif %}
