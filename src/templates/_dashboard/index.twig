@@ -23,20 +23,14 @@
         {% if processingStats.totalImages == 0 %}
             {% include 'lens/_dashboard/_empty-state' %}
         {% else %}
-            {% if lens.isPro %}
-                {% include 'lens/_dashboard/_attention' %}
-            {% endif %}
+            {% include 'lens/_dashboard/_attention' %}
 
             {% include 'lens/_dashboard/_library-health' %}
 
             {% if lens.isPro %}
-                {% include 'lens/_dashboard/_processing-status' %}
-            {% endif %}
-
-            {% if lens.isPro %}
                 {% include 'lens/_dashboard/_quick-insights' %}
-                {% include 'lens/_dashboard/_recent-activity' %}
                 {% include 'lens/_dashboard/_usage' %}
+                {% include 'lens/_dashboard/_recent-activity' %}
             {% else %}
                 {% include 'lens/_dashboard/_recent-activity' with {
                     recentActivity: recentActivity|slice(0, 5)
