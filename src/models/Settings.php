@@ -102,6 +102,18 @@ class Settings extends Model
     }
 
     /**
+     * Returns the currently configured model name for the active AI provider.
+     */
+    public function getCurrentModel(): string
+    {
+        return match ($this->getAiProviderEnum()) {
+            AiProvider::OpenAi => $this->openaiModel,
+            AiProvider::Gemini => $this->geminiModel,
+            AiProvider::Claude => $this->claudeModel,
+        };
+    }
+
+    /**
      * Returns a parsed API key for a given property, supporting environment variables.
      */
     private function getApiKey(string $property): string

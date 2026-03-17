@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace vitordiniz22\craftlens\controllers;
 
 use craft\web\Controller;
-use vitordiniz22\craftlens\enums\AiProvider;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\Plugin;
@@ -103,11 +102,7 @@ class DashboardController extends Controller
                 ),
                 'tokenUsage' => $stats->getTokenUsage(),
                 'providerBreakdown' => $stats->getProviderBreakdown(),
-                'currentModel' => match ($plugin->getSettings()->getAiProviderEnum()) {
-                    AiProvider::OpenAi => $plugin->getSettings()->openaiModel,
-                    AiProvider::Gemini => $plugin->getSettings()->geminiModel,
-                    AiProvider::Claude => $plugin->getSettings()->claudeModel,
-                },
+                'currentModel' => $plugin->getSettings()->getCurrentModel(),
             ]);
         } catch (\Throwable $e) {
             Logger::error(LogCategory::AssetProcessing, 'Dashboard data load failed', exception: $e);

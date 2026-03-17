@@ -648,13 +648,7 @@ class AssetAnalysisService extends Component
 
     private function getProviderModel(): string
     {
-        $settings = $this->getSettings();
-
-        return match ($settings->getAiProviderEnum()) {
-            AiProvider::OpenAi => $settings->openaiModel,
-            AiProvider::Gemini => $settings->geminiModel,
-            AiProvider::Claude => $settings->claudeModel,
-        };
+        return $this->getSettings()->getCurrentModel();
     }
 
     private function calculateActualCost(AnalysisResult $result, Settings $settings, string $providerModel): float
@@ -903,7 +897,7 @@ class AssetAnalysisService extends Component
                 ['status' => AnalysisStatus::Failed->value]
             );
 
-            Craft::$app->getQueue()->push(new BulkAnalyzeAssetsJob([
+            Queue::push(new BulkAnalyzeAssetsJob([
                 'reprocess' => true,
             ]));
 

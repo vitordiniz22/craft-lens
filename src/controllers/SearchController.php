@@ -75,6 +75,12 @@ class SearchController extends Controller
             $similarityMap = $plugin->duplicateDetection->getSimilarityMapForAsset($similarToAsset->id);
         }
 
+        $clusterMap = [];
+
+        if (!empty($filters['hasDuplicates']) && !empty($assetIds)) {
+            $clusterMap = $plugin->duplicateDetection->getClusterKeysForAssets($assetIds);
+        }
+
         return $this->renderTemplate('lens/_search/index', [
             'assets' => $results['assets'],
             'total' => $results['total'],
@@ -93,6 +99,7 @@ class SearchController extends Controller
             'dupCountsMap' => $dupCountsMap,
             'similarityMap' => $similarityMap,
             'similarToAsset' => $similarToAsset,
+            'clusterMap' => $clusterMap,
         ]);
     }
 

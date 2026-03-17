@@ -1,0 +1,89 @@
+/**
+ * Stat Strip Component
+ * Horizontal row of key metric cells with optional icons.
+ * Uses auto-fit grid so it adapts to any number of cells.
+ *
+ * Usage:
+ *   <div class="lens-stat-strip">
+ *       <div class="lens-stat-strip__cell">
+ *           <div class="lens-stat-strip__icon">{{ iconSvg('coins')|attr({...}) }}</div>
+ *           <div class="lens-stat-strip__value">$0.03</div>
+ *           <div class="lens-stat-strip__label">Total Spent</div>
+ *       </div>
+ *       ...
+ *   </div>
+ */
+
+.lens-stat-strip {
+    display: flex;
+    border: 1px solid var(--hairline-color);
+    border-radius: var(--medium-border-radius);
+    overflow: hidden;
+}
+
+.lens-stat-strip__cell {
+    flex: 1;
+    padding: 14px 12px;
+    text-align: center;
+    min-width: 0;
+}
+
+.lens-stat-strip__cell + .lens-stat-strip__cell {
+    border-left: 1px solid var(--hairline-color);
+}
+
+.lens-stat-strip__icon {
+    color: var(--light-text-color);
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: center;
+}
+
+.lens-stat-strip__value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-color);
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.lens-stat-strip__label {
+    font-size: 11px;
+    color: var(--light-text-color);
+    margin-top: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+/* Size modifier: large values (dashboard hero stats) */
+.lens-stat-strip--lg .lens-stat-strip__cell {
+    padding: 16px 12px;
+}
+
+.lens-stat-strip--lg .lens-stat-strip__value {
+    font-size: 22px;
+    font-weight: 700;
+}
+
+/* Responsive: 2x2 wrap on narrow screens */
+@media (max-width: 768px) {
+    .lens-stat-strip {
+        flex-wrap: wrap;
+    }
+
+    .lens-stat-strip__cell {
+        flex: 1 1 50%;
+    }
+
+    .lens-stat-strip__cell:nth-child(2) {
+        border-left: 1px solid var(--hairline-color);
+    }
+
+    .lens-stat-strip__cell:nth-child(2n+1):not(:first-child) {
+        border-left: none;
+    }
+
+    .lens-stat-strip__cell:nth-child(n+3) {
+        border-top: 1px solid var(--hairline-color);
+    }
+}

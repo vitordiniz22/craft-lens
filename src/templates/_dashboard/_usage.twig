@@ -10,25 +10,25 @@
         ? allTimeUsage.totalCost / allTimeUsage.totalAssets : 0 %}
 
     {# ── Zone 1: Horizontal stat strip ── #}
-    <div class="lens-usage__strip">
-        <div class="lens-usage__strip-cell">
-            <div class="lens-usage__strip-icon" data-icon="share"></div>
-            <div class="lens-usage__strip-value">${{ allTimeUsage.totalCost|number_format(2) }}</div>
-            <div class="lens-usage__strip-label">{{ 'Total Spent'|t('lens') }}</div>
+    <div class="lens-stat-strip lens-stat-strip--lg">
+        <div class="lens-stat-strip__cell">
+            <div class="lens-stat-strip__icon">{{ iconSvg('coins')|attr({width: 18, height: 18, fill: 'currentColor'}) }}</div>
+            <div class="lens-stat-strip__value">${{ allTimeUsage.totalCost|number_format(2) }}</div>
+            <div class="lens-stat-strip__label">{{ 'Total Spent'|t('lens') }}</div>
         </div>
-        <div class="lens-usage__strip-cell">
-            <div class="lens-usage__strip-icon" data-icon="check"></div>
-            <div class="lens-usage__strip-value">{{ allTimeUsage.totalAssets|number_format }}</div>
-            <div class="lens-usage__strip-label">{{ 'Processed'|t('lens') }}</div>
+        <div class="lens-stat-strip__cell">
+            <div class="lens-stat-strip__icon">{{ iconSvg('images')|attr({width: 18, height: 18, fill: 'currentColor'}) }}</div>
+            <div class="lens-stat-strip__value">{{ allTimeUsage.totalAssets|number_format }} / {{ processingStats.totalImages|number_format }}</div>
+            <div class="lens-stat-strip__label">{{ 'Processed'|t('lens') }}</div>
         </div>
-        <div class="lens-usage__strip-cell">
-            <div class="lens-usage__strip-icon" data-icon="info"></div>
-            <div class="lens-usage__strip-value">${{ avgCost|number_format(4) }}</div>
-            <div class="lens-usage__strip-label">{{ 'Avg. Per Asset'|t('lens') }}</div>
+        <div class="lens-stat-strip__cell">
+            <div class="lens-stat-strip__icon">{{ iconSvg('gauge')|attr({width: 18, height: 18, fill: 'currentColor'}) }}</div>
+            <div class="lens-stat-strip__value">${{ avgCost|number_format(avgCost < 0.01 ? 4 : 2) }}</div>
+            <div class="lens-stat-strip__label">{{ 'Avg. Per Asset'|t('lens') }}</div>
         </div>
-        <div class="lens-usage__strip-cell">
-            <div class="lens-usage__strip-icon" data-icon="lightbulb"></div>
-            <div class="lens-usage__strip-value">
+        <div class="lens-stat-strip__cell">
+            <div class="lens-stat-strip__icon">{{ iconSvg('bolt')|attr({width: 18, height: 18, fill: 'currentColor'}) }}</div>
+            <div class="lens-stat-strip__value">
                 {% if tokenUsage.totalTokens >= 1000000 %}
                     {{ (tokenUsage.totalTokens / 1000000)|number_format(1) }}M
                 {% elseif tokenUsage.totalTokens >= 1000 %}
@@ -37,7 +37,7 @@
                     {{ tokenUsage.totalTokens|number_format }}
                 {% endif %}
             </div>
-            <div class="lens-usage__strip-label">{{ 'Tokens Used'|t('lens') }}</div>
+            <div class="lens-stat-strip__label">{{ 'Tokens Used'|t('lens') }}</div>
         </div>
     </div>
 
@@ -47,6 +47,7 @@
         <div class="lens-usage__providers">
             <h3 class="lens-field-label">{{ 'Provider Breakdown'|t('lens') }}</h3>
             {% for item in providerBreakdown %}
+            {% set perAssetCost = item.assets > 0 ? item.cost / item.assets : 0 %}
             <div class="lens-usage__provider-row">
                 <span class="lens-usage__provider-label">{{ item.label }}</span>
                 <div class="lens-progress">
@@ -55,44 +56,17 @@
                     </div>
                 </div>
                 <span class="lens-usage__provider-value">
-                    ${{ item.cost|number_format(2) }}
-                    <span class="lens-usage__provider-count">({{ item.assets|number_format }})</span>
+                    ${{ item.cost|number_format(2) }} · {{ item.assets|number_format }} {{ 'assets'|t('lens') }}
+                    {% if perAssetCost > 0 %}
+                        · ${{ perAssetCost|number_format(perAssetCost < 0.01 ? 4 : 2) }}/{{ 'img'|t('lens') }}
+                    {% endif %}
                 </span>
             </div>
             {% endfor %}
         </div>
     {% endif %}
 
-    {# ── Zone 3: Token efficiency breakdown ── #}
-    {% if tokenUsage.totalTokens > 0 %}
-    <div class="lens-usage__tokens">
-        <h3 class="lens-field-label">{{ 'Token Breakdown'|t('lens') }}</h3>
-        {% set inputPct = (tokenUsage.inputTokens / tokenUsage.totalTokens * 100)|round(1) %}
-        {% set outputPct = (100 - inputPct)|round(1) %}
-        <div class="lens-usage__token-bar">
-            <div class="lens-usage__token-segment lens-usage__token-segment--input"
-                 style="width: {{ inputPct }}%"
-                 title="{{ 'Input'|t('lens') }}: {{ tokenUsage.inputTokens|number_format }}">
-            </div>
-            <div class="lens-usage__token-segment lens-usage__token-segment--output"
-                 style="width: {{ outputPct }}%"
-                 title="{{ 'Output'|t('lens') }}: {{ tokenUsage.outputTokens|number_format }}">
-            </div>
-        </div>
-        <div class="lens-usage__token-legend">
-            <span>
-                <span class="lens-usage__token-dot lens-usage__token-dot--input"></span>
-                {{ 'Input'|t('lens') }}: {{ tokenUsage.inputTokens|number_format }}
-            </span>
-            <span>
-                <span class="lens-usage__token-dot lens-usage__token-dot--output"></span>
-                {{ 'Output'|t('lens') }}: {{ tokenUsage.outputTokens|number_format }}
-            </span>
-        </div>
-    </div>
-    {% endif %}
-
-    {# ── Zone 4: Monthly trend ── #}
+    {# ── Zone 3: Monthly trend ── #}
     {% if monthlyHistory|length %}
     <div class="lens-usage__trend">
         <h3 class="lens-field-label">{{ 'Monthly Trend'|t('lens') }}</h3>
@@ -111,17 +85,20 @@
             </div>
             <span class="lens-usage__trend-value">
                 ${{ month.totalCost|number_format(2) }}
-                <span class="lens-usage__trend-count">({{ month.assetsProcessed }})</span>
+                <span class="lens-usage__trend-count">· {{ month.assetsProcessed }} {{ 'assets'|t('lens') }}</span>
             </span>
         </div>
         {% endfor %}
     </div>
     {% endif %}
 
-    {# ── Zone 5: Cost projection ── #}
+    {# ── Zone 4: Cost projection ── #}
     {% if costProjection.remainingAssets > 0 %}
     <div class="lens-usage__projection">
-        <strong>{{ costProjection.remainingAssets|number_format }}</strong> {{ 'unprocessed'|t('lens') }} · {{ 'Est.'|t('lens') }} <strong>${{ costProjection.estimatedCost|number_format(2) }}</strong> {{ 'using'|t('lens') }} <strong>{{ currentModel }}</strong>
+        <div class="lens-usage__projection-text">
+            <strong>{{ costProjection.remainingAssets|number_format }}</strong> {{ 'unprocessed'|t('lens') }} · {{ 'Est.'|t('lens') }} <strong>${{ costProjection.estimatedCost|number_format(2) }}</strong> {{ 'using'|t('lens') }} <strong>{{ currentModel }}</strong>
+        </div>
+        <a href="{{ cpUrl('lens/bulk') }}" class="lens-link">{{ 'Process now'|t('lens') }} &rarr;</a>
     </div>
     {% else %}
     <div class="lens-usage__projection lens-usage__projection--complete">

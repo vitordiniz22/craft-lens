@@ -1,6 +1,6 @@
 /**
  * Bulk Processing Page
- * Progress states, complete/all-done states.
+ * Coverage bar, cost panel, progress states, complete/all-done states.
  */
 
 .lens-bulk-page {
@@ -20,28 +20,107 @@
   margin-top: 20px;
 }
 
-/* Bulk Status (mirrors dashboard processing status pattern) */
-.lens-bulk-status {
+
+/* =========================================================================
+   Coverage Bar
+   ========================================================================= */
+
+.lens-bulk-volume-filter {
+  margin-bottom: 16px;
+}
+
+.lens-bulk-volume-filter .lens-field-label {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.lens-coverage-bar {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 6px;
+  margin-bottom: 4px;
 }
 
-.lens-bulk-status__info {
+.lens-coverage-bar__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.lens-coverage-bar__summary {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--medium-text-color);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.lens-coverage-bar__legend {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.lens-coverage-bar__legend a {
+  text-decoration: none;
+}
+
+.lens-coverage-bar__legend a:hover {
+  opacity: 0.8;
+}
+
+
+/* =========================================================================
+   State-specific Pane Borders
+   ========================================================================= */
+
+.lens-bulk-pane--processing { border-top: 3px solid var(--link-color); }
+.lens-bulk-pane--success    { border-top: 3px solid var(--success-color); }
+.lens-bulk-pane--warning    { border-top: 3px solid var(--warning-color); }
+
+
+/* =========================================================================
+   Ready State - Cost Panel
+   ========================================================================= */
+
+/* Ready state hero — images to analyze count */
+.lens-ready-hero {
+  text-align: center;
+  margin: 20px 0;
+}
+
+.lens-ready-hero__value {
+  display: block;
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--text-color);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.lens-ready-hero__value--warning {
+  color: var(--warning-color);
+}
+
+.lens-ready-hero__label {
+  display: block;
   font-size: 13px;
   color: var(--medium-text-color);
+  margin-top: 4px;
 }
 
-.lens-bulk-status__count {
-  font-weight: 600;
-  color: var(--text-color);
+.lens-bulk-page .lens-inline-notice {
+  margin-top: 20px;
 }
 
-.lens-bulk-status__cost {
-  color: var(--medium-text-color);
-}
 
-/* Processing header with pulse indicator */
+/* =========================================================================
+   Processing State
+   ========================================================================= */
+
+
 .lens-processing-header {
   display: flex;
   align-items: center;
@@ -50,6 +129,19 @@
 
 .lens-processing-header h2 {
   margin: 0;
+}
+
+.lens-processing-scope {
+  display: block;
+  font-size: 12px;
+  color: var(--medium-text-color);
+  margin-top: 2px;
+}
+
+.lens-processing-hint {
+  font-size: 12px;
+  color: var(--light-text-color);
+  margin: 12px 0 0;
 }
 
 .lens-processing-pulse {
@@ -61,94 +153,128 @@
   flex-shrink: 0;
 }
 
-
-/* Progress Bar */
 .lens-progress-section {
-  margin: 24px 0;
+  margin: 24px 0 0;
 }
 
-.lens-progress-text {
+/* Hero percentage — the main focal point */
+.lens-progress-hero {
   text-align: center;
-  margin-top: 8px;
-  font-size: 14px;
-  color: var(--medium-text-color);
+  margin: 20px 0;
 }
 
-.lens-progress-details {
-  text-align: center;
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid var(--hairline-color);
-}
-
-.lens-progress-details p {
-  margin: 4px 0;
-}
-
-/* Complete State */
-.lens-complete-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.lens-complete-icon {
-  color: var(--success-color);
-  display: inline-flex;
-  align-items: center;
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-}
-
-.lens-complete-icon > svg {
-  width: 20px;
-  height: 20px;
-}
-
-.lens-complete-header h2 {
-  margin: 0;
-  color: var(--success-color);
-}
-
-.lens-summary-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
-}
-
-.lens-summary-item {
-  text-align: center;
-  padding: 12px 8px;
-}
-
-.lens-summary-value {
+.lens-progress-hero__percent {
   display: block;
-  font-size: 24px;
+  font-size: 36px;
   font-weight: 700;
   color: var(--text-color);
-  line-height: 1.2;
+  line-height: 1;
+  letter-spacing: -0.02em;
 }
 
-.lens-summary-warning .lens-summary-value {
-  color: var(--warning-color);
-}
-
-.lens-summary-label {
+.lens-progress-hero__count {
   display: block;
   font-size: 13px;
   color: var(--medium-text-color);
   margin-top: 4px;
 }
 
-.lens-total-cost {
+/* Live failure warning during processing */
+.lens-progress-warning {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 12px 0 0;
+  padding: 8px 12px;
+  background: color-mix(in srgb, var(--warning-color) 10%, transparent);
+  border-radius: var(--small-border-radius);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--warning-color);
+}
+
+.lens-progress-warning svg {
+  fill: currentColor;
+  flex-shrink: 0;
+}
+
+/* Stats row (uses shared .lens-stat-strip component) */
+.lens-bulk-page .lens-stat-strip {
+  margin-top: 20px;
+}
+
+/* =========================================================================
+   Complete State
+   ========================================================================= */
+
+.lens-complete-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.lens-complete-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--success-color) 12%, transparent);
+  color: var(--success-color);
+  flex-shrink: 0;
+}
+
+.lens-complete-icon > svg {
+  width: 22px;
+  height: 22px;
+  fill: currentColor;
+}
+
+.lens-complete-header h2 {
+  margin: 0;
+  color: var(--success-color);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* Warning variant — failures occurred */
+.lens-complete-header--warning .lens-complete-icon {
+  background: color-mix(in srgb, var(--warning-color) 12%, transparent);
+  color: var(--warning-color);
+}
+
+.lens-complete-header--warning h2 {
+  color: var(--warning-color);
+}
+
+/* Hero result — the key outcome number */
+.lens-complete-hero {
   text-align: center;
+  margin: 20px 0;
+}
+
+.lens-complete-hero__value {
+  display: block;
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--success-color);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.lens-complete-hero__value--warning {
+  color: var(--warning-color);
+}
+
+.lens-complete-hero__label {
+  display: block;
   font-size: 13px;
   color: var(--medium-text-color);
-  padding: 12px 0;
-  margin: 0;
-  border-top: 1px solid var(--hairline-color);
+  margin-top: 4px;
 }
 
 .lens-complete-actions {
@@ -159,27 +285,22 @@
 }
 
 
+
 @media (max-width: 640px) {
-  .lens-summary-grid {
-    grid-template-columns: 1fr;
-    gap: 8px;
-  }
-
-  .lens-summary-item {
-    text-align: left;
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    padding: 8px 0;
-  }
-
   .lens-complete-actions {
     flex-direction: column;
+  }
+
+  .lens-coverage-bar__legend {
+    gap: 4px;
   }
 }
 
 
-/* Error Groups (Bulk Completion) */
+/* =========================================================================
+   Error Groups (Bulk Completion)
+   ========================================================================= */
+
 .lens-error-groups {
   margin-top: 16px;
 }

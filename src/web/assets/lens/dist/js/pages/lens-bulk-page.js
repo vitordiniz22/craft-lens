@@ -22,13 +22,22 @@
 
         _shouldInit: function() {
             return document.querySelector('[data-lens-control="bulk-volume-select"]') !== null ||
-                   document.querySelector('[data-lens-action="toggle-error-group"]') !== null;
+                   document.querySelector('[data-lens-action="toggle-error-group"]') !== null ||
+                   document.querySelector('[data-lens-action="bulk-submit"]') !== null ||
+                   document.querySelector('[data-lens-action="bulk-cancel"]') !== null;
         },
 
         _bindEvents: function() {
             DOM.delegate('[data-lens-control="bulk-volume-select"]', 'change', function(e, select) {
                 var params = select.value ? { volumeId: select.value } : {};
-                window.location.href = Craft.getCpUrl('lens/bulk', params);
+
+                // On complete state, dismiss the session first so the user
+                // lands on the ready state for the new volume scope.
+                if (select.dataset.lensState === 'complete') {
+                    window.location.href = Craft.getCpUrl('lens/bulk/dismiss', params);
+                } else {
+                    window.location.href = Craft.getCpUrl('lens/bulk', params);
+                }
             });
 
             DOM.delegate('[data-lens-action="toggle-error-group"]', 'click', function(e, btn) {
@@ -39,6 +48,26 @@
                 var isExpanded = !detail.hidden;
                 DOM.toggle(detail, !isExpanded);
                 group.classList.toggle('lens-error-group--expanded', !isExpanded);
+                btn.setAttribute('aria-expanded', String(!isExpanded));
+            });
+
+            // Cancel processing — confirm before submitting
+            DOM.delegate('[data-lens-action="bulk-cancel"]', 'click', function(e, btn) {
+                e.preventDefault();
+                if (!confirm(Craft.t('lens', 'Cancel processing? Already-analyzed images will be kept, but remaining queued work will be removed.'))) {
+                    return;
+                }
+                var form = btn.closest('[data-lens-target="cancel-form"]');
+                if (form) {
+                    form.submit();
+                }
+            });
+
+            DOM.delegate('[data-lens-action="bulk-submit"]', 'click', function(e, btn) {
+                setTimeout(function() {
+                    btn.classList.add('loading');
+                    btn.disabled = true;
+                }, 0);
             });
         }
     };

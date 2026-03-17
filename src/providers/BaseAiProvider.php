@@ -651,16 +651,40 @@ abstract class BaseAiProvider implements AiProviderInterface
         } catch (RequestException $e) {
             $statusCode = $e->hasResponse() ? $e->getResponse()->getStatusCode() : null;
 
-            if ($statusCode === 401 || $statusCode === 403) {
-                throw ConfigurationException::invalidApiKey($this->getDisplayName());
+            // Parse the API response body for a clean error message
+            $apiMessage = $e->hasResponse() ? $this->extractErrorMessage($e) : null;
+
+            if ($apiMessage) {
+                Logger::warning(
+                    LogCategory::Configuration,
+                    sprintf('%s API test failed (HTTP %s): %s', $this->getDisplayName(), $statusCode ?? 'N/A', $apiMessage),
+                );
+            }
+
+            if ($statusCode === 400 || $statusCode === 401 || $statusCode === 403) {
+                throw new ConfigurationException(
+                    "Your {$this->getDisplayName()} API key is invalid. Please check your credentials in the plugin settings."
+                );
+            }
+
+            if ($statusCode === 429) {
+                throw new ConfigurationException(
+                    "{$this->getDisplayName()} rate limit exceeded. Please wait a moment and try again."
+                );
+            }
+
+            if ($statusCode !== null && $statusCode >= 500) {
+                throw new ConfigurationException(
+                    "{$this->getDisplayName()} is experiencing issues (HTTP {$statusCode}). Please try again later."
+                );
             }
 
             throw new ConfigurationException(
-                "Could not connect to {$this->getDisplayName()} API: " . $this->sanitizeErrorMessage($e->getMessage())
+                "Could not connect to {$this->getDisplayName()}. Please check your internet connection and plugin settings."
             );
         } catch (GuzzleException $e) {
             throw new ConfigurationException(
-                "Could not connect to {$this->getDisplayName()} API: " . $this->sanitizeErrorMessage($e->getMessage())
+                "Could not connect to {$this->getDisplayName()}. Please check your internet connection and try again."
             );
         }
     }

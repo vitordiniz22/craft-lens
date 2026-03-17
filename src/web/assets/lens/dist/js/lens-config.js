@@ -132,9 +132,9 @@
             HINT_FADE_MS: 300,
 
             /**
-             * Bulk processing progress poll interval
+             * Bulk processing progress poll interval (ms).
              */
-            BULK_PROGRESS_POLL_MS: 5000
+            BULK_PROGRESS_POLL_MS: 2000
         },
 
         /**

@@ -7,6 +7,7 @@ namespace vitordiniz22\craftlens\console\controllers;
 use Craft;
 use craft\console\Controller;
 use craft\helpers\Console;
+use craft\helpers\Queue;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\jobs\BulkAnalyzeAssetsJob;
@@ -40,7 +41,7 @@ class ProcessController extends Controller
     {
         $this->stdout("Queuing all unprocessed assets for analysis...\n");
 
-        Craft::$app->getQueue()->push(new BulkAnalyzeAssetsJob([
+        Queue::push(new BulkAnalyzeAssetsJob([
             'reprocess' => $this->reprocess,
         ]));
 
@@ -71,7 +72,7 @@ class ProcessController extends Controller
         $this->stdout("Queuing assets in volume: ", Console::FG_YELLOW);
         $this->stdout("{$volume->name}\n");
 
-        Craft::$app->getQueue()->push(new BulkAnalyzeAssetsJob([
+        Queue::push(new BulkAnalyzeAssetsJob([
             'volumeId' => $volume->id,
             'reprocess' => $this->reprocess,
         ]));

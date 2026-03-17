@@ -14,23 +14,62 @@
         </a>
     </div>
 
-    <div class="lens-results-grid">
-        {% for asset in assets %}
-            {% set analysis = analysisMap[asset.id] ?? null %}
+    {% set isDuplicateView = (clusterMap is defined and clusterMap|length) %}
 
-            {% include 'lens/_components/asset-card' with {
-                asset: asset,
-                analysis: analysis,
-                tags: tagsMap[analysis.id ?? 0] ?? [],
-                colors: colorsMap[analysis.id ?? 0] ?? [],
-                dupCount: (similarityMap is defined and similarityMap|length) ? 0 : (dupCountsMap[asset.id] ?? 0),
-                similarity: (similarityMap is defined) ? (similarityMap[asset.id] ?? null) : null,
-                linkUrl: asset.cpEditUrl,
-                showTags: true,
-                showColors: true,
-            } only %}
+    {% if isDuplicateView %}
+        {# Group assets by duplicate cluster for visual grouping #}
+        {% set clusters = {} %}
+        {% for asset in assets %}
+            {% set key = 'c' ~ (clusterMap[asset.id] ?? 0) %}
+            {% set existing = clusters[key] ?? [] %}
+            {% set clusters = clusters|merge({ (key): existing|merge([asset]) }) %}
         {% endfor %}
-    </div>
+
+        {% for groupKey, clusterAssets in clusters %}
+            <div class="lens-duplicate-cluster">
+                <div class="lens-duplicate-cluster__header">
+                    {{ iconSvg('copy')|attr({width: 14, height: 14, class: 'lens-duplicate-cluster__icon'}) }}
+                    <span class="lens-duplicate-cluster__label">
+                        {{ '{count} similar assets'|t('lens', {count: clusterAssets|length}) }}
+                    </span>
+                </div>
+                <div class="lens-results-grid">
+                    {% for asset in clusterAssets %}
+                        {% set analysis = analysisMap[asset.id] ?? null %}
+
+                        {% include 'lens/_components/asset-card' with {
+                            asset: asset,
+                            analysis: analysis,
+                            tags: tagsMap[analysis.id ?? 0] ?? [],
+                            colors: colorsMap[analysis.id ?? 0] ?? [],
+                            dupCount: dupCountsMap[asset.id] ?? 0,
+                            linkUrl: asset.cpEditUrl,
+                            showTags: true,
+                            showColors: true,
+                        } only %}
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="lens-results-grid">
+            {% for asset in assets %}
+                {% set analysis = analysisMap[asset.id] ?? null %}
+
+                {% include 'lens/_components/asset-card' with {
+                    asset: asset,
+                    analysis: analysis,
+                    tags: tagsMap[analysis.id ?? 0] ?? [],
+                    colors: colorsMap[analysis.id ?? 0] ?? [],
+                    dupCount: (similarityMap is defined and similarityMap|length) ? 0 : (dupCountsMap[asset.id] ?? 0),
+                    similarity: (similarityMap is defined) ? (similarityMap[asset.id] ?? null) : null,
+                    linkUrl: asset.cpEditUrl,
+                    showTags: true,
+                    showColors: true,
+                } only %}
+            {% endfor %}
+        </div>
+    {% endif %}
 
     {% include 'lens/_components/pagination' with {
         total: total,

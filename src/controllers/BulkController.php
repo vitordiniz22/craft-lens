@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace vitordiniz22\craftlens\controllers;
 
 use Craft;
+use craft\helpers\Queue;
 use craft\web\Controller;
 use vitordiniz22\craftlens\controllers\traits\RequiresAiProviderTrait;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
@@ -63,7 +64,15 @@ class BulkController extends Controller
         ];
 
         if ($state === 'ready') {
-            $templateVars['estimatedCost'] = $statusService->getEstimatedCost($stats['unprocessed']);
+            $actionableCount = $stats['unprocessed'] + $stats['failed'];
+            $templateVars['estimatedCost'] = $statusService->getEstimatedCost($actionableCount);
+            $templateVars['costPerImage'] = $actionableCount > 0 ? $templateVars['estimatedCost'] / $actionableCount : 0;
+
+            try {
+                $templateVars['modelName'] = $this->getProviderModelName();
+            } catch (\Throwable $e) {
+                $templateVars['modelName'] = null;
+            }
         }
 
         if ($state === 'processing') {
@@ -77,6 +86,8 @@ class BulkController extends Controller
             if (($stats['failed'] ?? 0) > 0) {
                 $templateVars['failureReasons'] = $statusService->getFailureReasons();
             }
+
+            $templateVars['modelName'] = $this->getProviderModelName();
         }
 
         return $this->renderTemplate('lens/_bulk/index', $templateVars);
@@ -105,7 +116,6 @@ class BulkController extends Controller
 
         $response = Craft::$app->getResponse();
         $response->getHeaders()->set('X-Lens-State', $state);
-        $response->getHeaders()->set('X-Lens-Stats', json_encode($stats));
         $response->format = Response::FORMAT_HTML;
         $response->data = $html;
 
@@ -123,7 +133,10 @@ class BulkController extends Controller
 
         Plugin::getInstance()->bulkProcessingStatus->clearSession();
 
-        return $this->redirect('lens/bulk');
+        $volumeId = $this->request->getQueryParam('volumeId');
+        $url = $volumeId ? 'lens/bulk?volumeId=' . $volumeId : 'lens/bulk';
+
+        return $this->redirect($url);
     }
 
     /**
@@ -169,14 +182,13 @@ class BulkController extends Controller
         $statusService = Plugin::getInstance()->bulkProcessingStatus;
         $statusService->startSession($volumeId);
 
-        Craft::$app->getQueue()->push(new BulkAnalyzeAssetsJob([
+        Queue::push(new BulkAnalyzeAssetsJob([
             'volumeId' => $volumeId,
             'reprocess' => false,
         ]));
 
         Logger::info(LogCategory::JobStarted, 'Bulk processing started from CP', context: ['volumeId' => $volumeId]);
 
-        Craft::$app->getSession()->setNotice(Craft::t('lens', 'Bulk processing started.'));
         return $this->redirect('lens/bulk');
     }
 
@@ -216,13 +228,13 @@ class BulkController extends Controller
                 ['status' => AnalysisStatus::Failed->value]
             );
 
-            // Start session tracking
+            // Start session tracking — pass retry count so progress tracks Pending assets
             $statusService = Plugin::getInstance()->bulkProcessingStatus;
-            $statusService->startSession();
+            $statusService->startSession(null, count($failedAssetIds));
 
             // Queue for reprocessing — assets were already reset to Pending above,
             // so loadData() will pick them up automatically
-            Craft::$app->getQueue()->push(new BulkAnalyzeAssetsJob());
+            Queue::push(new BulkAnalyzeAssetsJob());
 
             $transaction->commit();
         } catch (\Throwable $e) {
@@ -236,5 +248,13 @@ class BulkController extends Controller
             Craft::t('lens', '{count} failed analyses queued for retry.', ['count' => count($failedAssetIds)])
         );
         return $this->redirect('lens/bulk');
+    }
+
+    /**
+     * Get a display string combining provider name and model.
+     */
+    private function getProviderModelName(): string
+    {
+        return Plugin::getInstance()->getSettings()->getCurrentModel();
     }
 }

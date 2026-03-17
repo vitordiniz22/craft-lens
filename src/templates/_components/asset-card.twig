@@ -65,19 +65,19 @@
                     </span>
                 </span>
             {% elseif dupCount > 0 %}
-                <span class="lens-duplicate-badge">
-                    <span class="lens-badge lens-badge--small lens-badge--duplicate" title="{{ '{count} duplicate(s)'|t('lens', {count: dupCount}) }}">
+                <a href="{{ cpUrl('lens/search', {similarTo: asset.id}) }}" class="lens-duplicate-badge" title="{{ '{count} duplicate(s) — click to compare'|t('lens', {count: dupCount}) }}">
+                    <span class="lens-badge lens-badge--small lens-badge--duplicate">
                         {{ iconSvg('copy')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
                         {{ dupCount }} {{ dupCount == 1 ? 'duplicate'|t('lens') : 'duplicates'|t('lens') }}
                     </span>
-                </span>
+                </a>
             {% endif %}
             <div class="lens-result-overlay">
                 {% if analysis.status == lens.status.pendingReview %}
-                    <span class="lens-badge lens-badge--small lens-badge--info" title="{{ 'Pending Review'|t('lens') }}">
+                    <a href="{{ cpUrl('lens/review/' ~ analysis.id) }}" class="lens-badge lens-badge--small lens-badge--info lens-badge--link" title="{{ 'Pending Review'|t('lens') }}">
                         {{ iconSvg('eye')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
                         {{ 'Review'|t('lens') }}
-                    </span>
+                    </a>
                 {% endif %}
                 {% if analysis.status == lens.status.failed %}
                     <span class="lens-badge lens-badge--small lens-badge--error">

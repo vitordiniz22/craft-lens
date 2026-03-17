@@ -1,16 +1,61 @@
 <div class="lens-progress-section">
-    <div class="lens-progress lens-progress--animated">
+    <div class="lens-progress lens-progress--animated" role="progressbar" aria-valuenow="{{ progress.percentComplete ?? 0 }}" aria-valuemin="0" aria-valuemax="100" aria-label="{{ 'Bulk processing progress'|t('lens') }}">
         <div class="lens-progress__fill" style="width: {{ progress.percentComplete ?? 0 }}%"></div>
-    </div>
-    <div class="lens-progress-text">
-        {{ progress.completed ?? 0 }} / {{ progress.total ?? 0 }}
-        ({{ progress.percentComplete ?? 0 }}%)
     </div>
 </div>
 
-<div class="lens-progress-details light">
-    <p>{{ queueInfo.jobDescription ?? 'Analyzing assets'|t('lens') }}</p>
+{# Large percentage as focal point #}
+<div class="lens-progress-hero">
+    <span class="lens-progress-hero__percent">{{ progress.percentComplete ?? 0 }}%</span>
+    <span class="lens-progress-hero__count">
+        {{ '{completed} of {total} images'|t('lens', {
+            completed: progress.completed ?? 0,
+            total: progress.total ?? 0,
+        }) }}
+    </span>
+</div>
+
+{# Live failure warning — surface errors immediately so user can cancel early #}
+{% if (progress.failed ?? 0) > 0 %}
+    <div class="lens-progress-warning">
+        {{ iconSvg('triangle-exclamation')|attr({width: 14, height: 14}) }}
+        <span>{{ '{count} failed so far'|t('lens', {count: progress.failed}) }}</span>
+    </div>
+{% endif %}
+
+{# Stats row: ETA, rate, cost as structured items #}
+<div class="lens-stat-strip">
+    <div class="lens-stat-strip__cell">
+        <div class="lens-stat-strip__icon">{{ iconSvg('clock')|attr({width: 16, height: 16, fill: 'currentColor'}) }}</div>
+        <div class="lens-stat-strip__value">
+            {% if progress.etaFormatted is defined and progress.etaFormatted %}
+                ~{{ progress.etaFormatted }}
+            {% else %}
+                —
+            {% endif %}
+        </div>
+        <div class="lens-stat-strip__label">{{ 'remaining'|t('lens') }}</div>
+    </div>
+    <div class="lens-stat-strip__cell">
+        <div class="lens-stat-strip__icon">{{ iconSvg('gauge-high')|attr({width: 16, height: 16, fill: 'currentColor'}) }}</div>
+        <div class="lens-stat-strip__value">
+            {% if progress.rate is defined and progress.rate %}
+                {% if progress.rate >= 1 %}
+                    {{ progress.rate }}/{{ 'sec'|t('lens') }}
+                {% else %}
+                    {{ '1 every {seconds}s'|t('lens', {seconds: (1 / progress.rate)|round}) }}
+                {% endif %}
+            {% else %}
+                …
+            {% endif %}
+        </div>
+        <div class="lens-stat-strip__label">{{ 'speed'|t('lens') }}</div>
+    </div>
     {% if session and session.actualCost is defined %}
-        <p>{{ 'Cost so far:'|t('lens') }} <strong>${{ session.actualCost|number_format(4) }}</strong></p>
+        <div class="lens-stat-strip__cell">
+            <div class="lens-stat-strip__icon">{{ iconSvg('coins')|attr({width: 16, height: 16, fill: 'currentColor'}) }}</div>
+            <div class="lens-stat-strip__value">${{ session.actualCost|number_format(4) }}</div>
+            <div class="lens-stat-strip__label">{{ 'cost'|t('lens') }}</div>
+        </div>
     {% endif %}
 </div>

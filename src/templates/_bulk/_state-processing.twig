@@ -1,7 +1,15 @@
-<div class="pane">
+<div class="pane lens-bulk-pane--processing">
     <div class="lens-processing-header">
         <span class="lens-processing-pulse"></span>
-        <h2>{{ 'Processing in Progress'|t('lens') }}</h2>
+        <div>
+            <h2>{{ 'Processing in Progress'|t('lens') }}</h2>
+            {% if selectedVolumeId is defined and selectedVolumeId %}
+                {% set selectedVolume = volumes|filter(v => v.id == selectedVolumeId)|first %}
+                {% if selectedVolume %}
+                    <span class="lens-processing-scope">{{ selectedVolume.name }}</span>
+                {% endif %}
+            {% endif %}
+        </div>
     </div>
 
     <div data-lens-target="progress-container">
@@ -9,12 +17,15 @@
     </div>
 
     <div class="lens-bulk-center">
-        <form method="post" class="lens-bulk-inline-form">
+        <form method="post" class="lens-bulk-inline-form" data-lens-target="cancel-form">
             {{ csrfInput() }}
             {{ actionInput('lens/bulk/cancel') }}
-            <button type="submit" class="btn">
+            <button type="submit" class="btn" data-lens-action="bulk-cancel">
                 {{ 'Cancel Processing'|t('lens') }}
             </button>
         </form>
+        <p class="lens-processing-hint">
+            {{ 'Processing continues in the background. You can safely navigate away.'|t('lens') }}
+        </p>
     </div>
 </div>

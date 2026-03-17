@@ -32,6 +32,7 @@ class LensAsset extends AssetBundle
             'css/components/progress-bar.css',
             'css/components/setup-banner.css',
             'css/components/metric-card.css',
+            'css/components/stat-strip.css',
             'css/components/stats-grid.css',
             'css/components/swatch.css',
 

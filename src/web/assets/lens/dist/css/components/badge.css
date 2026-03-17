@@ -38,6 +38,14 @@
   color: var(--blue-700);
 }
 
+.lens-badge--link {
+  text-decoration: none;
+}
+
+.lens-badge--link:hover {
+  filter: brightness(0.9);
+}
+
 .lens-badge--duplicate {
   background: color-mix(in srgb, var(--orange-700) 85%, transparent);
   color: var(--white);

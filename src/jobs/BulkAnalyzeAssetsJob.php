@@ -10,7 +10,6 @@ use craft\db\QueryBatcher;
 use craft\elements\Asset;
 use craft\queue\BaseBatchedJob;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
-use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\models\Settings;
 use vitordiniz22\craftlens\Plugin;
@@ -24,30 +23,20 @@ class BulkAnalyzeAssetsJob extends BaseBatchedJob
     public ?int $volumeId = null;
     public bool $reprocess = false;
 
-    /** @var int[] Asset IDs that failed during this batch execution */
-    private array $failedAssetIds = [];
-
-    public function __construct($config = [])
+    public function init(): void
     {
-        parent::__construct($config);
-
+        parent::init();
         $this->batchSize = Settings::BATCH_SIZE;
     }
 
     protected function loadData(): Batchable
     {
         $query = Asset::find()
-            ->kind(Asset::KIND_IMAGE);
+            ->kind(Asset::KIND_IMAGE)
+            ->orderBy(['elements.id' => SORT_ASC]);
 
         if ($this->volumeId !== null) {
             $query->volumeId($this->volumeId);
-        }
-
-        if (!$this->reprocess) {
-            $processedAssetIds = $this->getProcessedAssetIds();
-            if (!empty($processedAssetIds)) {
-                $query->andWhere(['not in', 'elements.id', $processedAssetIds]);
-            }
         }
 
         return new QueryBatcher($query);
@@ -56,10 +45,24 @@ class BulkAnalyzeAssetsJob extends BaseBatchedJob
     protected function processItem(mixed $item): void
     {
         /** @var Asset $item */
+
+        // Stop processing if the session was cleared (user cancelled)
+        if (Plugin::getInstance()->bulkProcessingStatus->getSessionData() === null) {
+            return;
+        }
+
+        // Skip already-processed assets unless reprocessing
+        if (!$this->reprocess && AssetAnalysisRecord::find()
+            ->where(['assetId' => $item->id])
+            ->andWhere(['in', 'status', AnalysisStatus::shouldNotReprocessValues()])
+            ->exists()
+        ) {
+            return;
+        }
+
         try {
             Plugin::getInstance()->assetAnalysis->processAsset($item);
         } catch (\Throwable $e) {
-            $this->failedAssetIds[] = $item->id;
             Logger::jobFailure(
                 jobType: 'BulkAnalyzeAssetsJob',
                 message: sprintf('Failed to process asset %d in bulk job: %s', $item->id, $e->getMessage()),
@@ -69,24 +72,6 @@ class BulkAnalyzeAssetsJob extends BaseBatchedJob
                     'params' => ['assetId' => $item->id],
                 ],
                 exception: $e,
-            );
-        }
-    }
-
-    public function execute($queue): void
-    {
-        $this->failedAssetIds = [];
-
-        parent::execute($queue);
-
-        if ($this->failedAssetIds !== []) {
-            Logger::warning(
-                LogCategory::JobCompleted,
-                sprintf(
-                    'Bulk analysis batch completed with %d failures. Failed asset IDs: %s',
-                    count($this->failedAssetIds),
-                    implode(', ', $this->failedAssetIds)
-                ),
             );
         }
     }
@@ -103,14 +88,4 @@ class BulkAnalyzeAssetsJob extends BaseBatchedJob
         return Craft::t('lens', 'Analyzing all assets');
     }
 
-    /**
-     * @return int[]
-     */
-    private function getProcessedAssetIds(): array
-    {
-        return AssetAnalysisRecord::find()
-            ->select('assetId')
-            ->where(['in', 'status', AnalysisStatus::shouldNotReprocessValues()])
-            ->column();
-    }
 }

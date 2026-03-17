@@ -175,6 +175,38 @@
     top: 8px;
     left: 8px;
     z-index: var(--lens-z-badge);
+    text-decoration: none;
+    color: inherit;
+}
+
+.lens-duplicate-badge:hover .lens-badge--duplicate {
+    filter: brightness(0.92);
+}
+
+/* Duplicate cluster groups */
+.lens-duplicate-cluster {
+    border: 1px solid var(--hairline-color);
+    border-radius: var(--large-border-radius, 5px);
+    padding: 16px;
+    background: color-mix(in srgb, var(--gray-050) 50%, transparent);
+}
+
+.lens-duplicate-cluster__header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 12px;
+    font-size: 13px;
+    color: var(--medium-text-color);
+}
+
+.lens-duplicate-cluster__icon {
+    flex-shrink: 0;
+    color: var(--medium-text-color);
+}
+
+.lens-duplicate-cluster__label {
+    font-weight: 500;
 }
 
 /* Card info section */

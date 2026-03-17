@@ -9,10 +9,12 @@ use craft\helpers\DateTimeHelper;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\helpers\PerceptualHashHelper;
+use vitordiniz22\craftlens\migrations\Install;
 use vitordiniz22\craftlens\Plugin;
 use vitordiniz22\craftlens\records\AssetAnalysisRecord;
 use vitordiniz22\craftlens\records\DuplicateGroupRecord;
 use yii\base\Component;
+use yii\db\Expression;
 use yii\db\Query;
 
 /**
@@ -245,6 +247,55 @@ class DuplicateDetectionService extends Component
                 ['duplicateAssetId' => $assetId],
             ])
             ->count();
+    }
+
+    /**
+     * Get duplicate cluster keys for a set of assets.
+     *
+     * Each asset is assigned a "group key" — the smallest canonicalAssetId it's
+     * connected to in unresolved pairs. Assets sharing the same group key belong
+     * to the same duplicate cluster.
+     *
+     * @param int[] $assetIds
+     * @return array<int, int> Map of assetId => groupKey
+     */
+    public function getClusterKeysForAssets(array $assetIds): array
+    {
+        if (empty($assetIds)) {
+            return [];
+        }
+
+        $rows = (new Query())
+            ->select(['dup_asset_id', new Expression('MIN(group_key) AS dup_group')])
+            ->from([
+                'dup_pairs' => (new Query())
+                    ->select([
+                        new Expression('canonicalAssetId AS dup_asset_id'),
+                        new Expression('canonicalAssetId AS group_key'),
+                    ])
+                    ->from(Install::TABLE_DUPLICATE_GROUPS)
+                    ->where(['resolution' => null, 'canonicalAssetId' => $assetIds])
+                    ->union(
+                        (new Query())
+                            ->select([
+                                new Expression('duplicateAssetId AS dup_asset_id'),
+                                new Expression('canonicalAssetId AS group_key'),
+                            ])
+                            ->from(Install::TABLE_DUPLICATE_GROUPS)
+                            ->where(['resolution' => null, 'duplicateAssetId' => $assetIds]),
+                        true,
+                    ),
+            ])
+            ->groupBy(['dup_asset_id'])
+            ->all();
+
+        $map = [];
+
+        foreach ($rows as $row) {
+            $map[(int) $row['dup_asset_id']] = (int) $row['dup_group'];
+        }
+
+        return $map;
     }
 
     /**

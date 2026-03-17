@@ -351,45 +351,9 @@
     padding: 20px;
 }
 
-/* Zone 1: Stat strip */
-.lens-usage__strip {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    background: var(--gray-050);
-    border-radius: var(--medium-border-radius);
-    overflow: hidden;
+/* Zone 1: Stat strip (uses shared .lens-stat-strip component) */
+.lens-usage .lens-stat-strip {
     margin-bottom: 20px;
-}
-
-.lens-usage__strip-cell {
-    padding: 14px 12px;
-    text-align: center;
-    border-right: 1px solid var(--hairline-color);
-}
-
-.lens-usage__strip-cell:last-child {
-    border-right: none;
-}
-
-.lens-usage__strip-icon {
-    color: var(--light-text-color);
-    font-size: 20px;
-    margin-bottom: 6px;
-}
-
-.lens-usage__strip-value {
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--text-color);
-    line-height: 1.2;
-}
-
-.lens-usage__strip-label {
-    font-size: 11px;
-    color: var(--light-text-color);
-    margin-top: 2px;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
 }
 
 /* Zone 2: Provider breakdown */
@@ -420,65 +384,7 @@
     white-space: nowrap;
 }
 
-.lens-usage__provider-count {
-    font-weight: 400;
-    color: var(--light-text-color);
-    font-size: 12px;
-}
-
-/* Zone 3: Token breakdown bar */
-.lens-usage__tokens {
-    margin-bottom: 20px;
-}
-
-.lens-usage__token-bar {
-    display: flex;
-    height: 10px;
-    border-radius: 12px;
-    overflow: hidden;
-    background: var(--gray-100);
-    margin-top: 8px;
-}
-
-.lens-usage__token-segment {
-    height: 100%;
-    transition: width 0.3s ease;
-}
-
-.lens-usage__token-segment--input {
-    background: var(--link-color);
-}
-
-.lens-usage__token-segment--output {
-    background: var(--green-500);
-}
-
-.lens-usage__token-legend {
-    display: flex;
-    gap: 16px;
-    margin-top: 6px;
-    font-size: 12px;
-    color: var(--medium-text-color);
-}
-
-.lens-usage__token-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    display: inline-block;
-    margin-right: 4px;
-    vertical-align: middle;
-}
-
-.lens-usage__token-dot--input {
-    background: var(--link-color);
-}
-
-.lens-usage__token-dot--output {
-    background: var(--green-500);
-}
-
-/* Zone 4: Monthly trend bars */
+/* Zone 3: Monthly trend bars */
 .lens-usage__trend {
     margin-bottom: 20px;
 }
@@ -498,7 +404,7 @@
 }
 
 .lens-usage__trend-bar--secondary {
-    background-color: var(--gray-300);
+    opacity: 0.5;
 }
 
 .lens-usage__trend-value {
@@ -514,25 +420,32 @@
     font-size: 12px;
 }
 
-/* Zone 5: Cost projection */
+/* Zone 4: Cost projection */
 .lens-usage__projection {
-    font-size: 12px;
-    color: var(--light-text-color);
-    text-align: center;
-    padding-top: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 13px;
+    color: var(--medium-text-color);
+    border-top: 1px solid var(--hairline-color);
+    padding-top: 16px;
 }
 
 .lens-usage__projection strong {
-    color: var(--medium-text-color);
+    color: var(--text-color);
 }
 
 .lens-usage__projection--complete {
+    justify-content: center;
     color: var(--success-color);
+    font-weight: 500;
 }
 
 .lens-usage__projection--complete [data-icon] {
-    margin-right: 2px;
+    margin-right: 4px;
 }
+
 
 /* ==========================================================================
    Responsive
@@ -579,19 +492,6 @@
 
     .lens-actions__grid .lens-actions__form .btn {
         width: 100%;
-    }
-
-    .lens-usage__strip {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    .lens-usage__strip-cell:nth-child(2) {
-        border-right: none;
-    }
-
-    .lens-usage__strip-cell:nth-child(1),
-    .lens-usage__strip-cell:nth-child(2) {
-        border-bottom: 1px solid var(--hairline-color);
     }
 
     .lens-usage__trend-row {
