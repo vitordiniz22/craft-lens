@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace vitordiniz22\craftlens\services;
 
 use Craft;
-use craft\helpers\DateTimeHelper;
 use vitordiniz22\craftlens\dto\AnalysisResult;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\Logger;
@@ -215,16 +214,15 @@ class SiteContentService extends Component
     /**
      * Update a single editable field on a site content record.
      *
-     * @return array{value: mixed, aiValue: mixed, editedBy: string|null, editedAt: string|null}
+     * @return array{value: mixed, aiValue: mixed}
      */
     public function updateSiteField(
         int $analysisId,
         int $siteId,
         string $field,
         mixed $value,
-        ?int $userId = null,
     ): array {
-        if (!isset(AnalysisSiteContentRecord::EDITABLE_FIELDS[$field])) {
+        if (!in_array($field, AnalysisSiteContentRecord::EDITABLE_FIELDS, true)) {
             throw new InvalidArgumentException("Field '{$field}' is not editable on site content");
         }
 
@@ -236,16 +234,9 @@ class SiteContentService extends Component
             );
         }
 
-        $userId = $userId ?? Craft::$app->getUser()->getId();
-        $now = DateTimeHelper::now();
-
         $value = $this->validateAndSanitize($field, $value);
 
         $siteRecord->$field = $value;
-
-        $prefix = AnalysisSiteContentRecord::EDITABLE_FIELDS[$field];
-        $siteRecord->{$prefix . 'EditedBy'} = $userId;
-        $siteRecord->{$prefix . 'EditedAt'} = $now;
 
         if (!$siteRecord->save()) {
             $errors = implode(', ', $siteRecord->getErrorSummary(true));
@@ -255,7 +246,6 @@ class SiteContentService extends Component
         }
 
         $aiColumn = $field . 'Ai';
-        $editor = $userId ? Craft::$app->getUsers()->getUserById($userId) : null;
 
         Logger::info(
             LogCategory::Review,
@@ -266,10 +256,6 @@ class SiteContentService extends Component
         return [
             'value' => $siteRecord->$field,
             'aiValue' => $siteRecord->$aiColumn ?? null,
-            'editedBy' => $editor?->friendlyName ?? 'Unknown',
-            'editedByUrl' => $editor?->getCpEditUrl(),
-            'editedAt' => $now->format('c'),
-            'editedAtFormatted' => Craft::$app->getFormatter()->asDate($now, 'short'),
         ];
     }
 
@@ -280,9 +266,7 @@ class SiteContentService extends Component
      */
     public function revertSiteField(int $analysisId, int $siteId, string $field): array
     {
-        $prefix = AnalysisSiteContentRecord::EDITABLE_FIELDS[$field] ?? null;
-
-        if ($prefix === null) {
+        if (!in_array($field, AnalysisSiteContentRecord::EDITABLE_FIELDS, true)) {
             throw new InvalidArgumentException("Field '{$field}' is not editable on site content");
         }
 
@@ -297,8 +281,6 @@ class SiteContentService extends Component
         $aiColumn = $field . 'Ai';
 
         $siteRecord->$field = $siteRecord->$aiColumn;
-        $siteRecord->{$prefix . 'EditedBy'} = null;
-        $siteRecord->{$prefix . 'EditedAt'} = null;
 
         if (!$siteRecord->save()) {
             $errors = implode(', ', $siteRecord->getErrorSummary(true));

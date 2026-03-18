@@ -57,22 +57,16 @@ class Install extends Migration
             'altText' => $this->text()->null(),
             'altTextAi' => $this->text()->null(),
             'altTextConfidence' => $this->decimal(3, 2)->null(),
-            'altTextEditedBy' => $this->integer()->null(),
-            'altTextEditedAt' => $this->dateTime()->null(),
 
             // Suggested title (editable)
             'suggestedTitle' => $this->text()->null(),
             'suggestedTitleAi' => $this->text()->null(),
             'titleConfidence' => $this->decimal(3, 2)->null(),
-            'suggestedTitleEditedBy' => $this->integer()->null(),
-            'suggestedTitleEditedAt' => $this->dateTime()->null(),
 
             // Long description (moved from analysis_content, editable)
             'longDescription' => $this->text()->null(),
             'longDescriptionAi' => $this->text()->null(),
             'longDescriptionConfidence' => $this->decimal(3, 2)->null(),
-            'longDescriptionEditedBy' => $this->integer()->null(),
-            'longDescriptionEditedAt' => $this->dateTime()->null(),
 
             // Face detection (editable)
             'faceCount' => $this->integer()->notNull()->defaultValue(0),
@@ -80,10 +74,6 @@ class Install extends Migration
             'containsPeople' => $this->boolean()->notNull()->defaultValue(false),
             'containsPeopleAi' => $this->boolean()->null(),
             'containsPeopleConfidence' => $this->decimal(3, 2)->null(),
-            'faceCountEditedBy' => $this->integer()->null(),
-            'faceCountEditedAt' => $this->dateTime()->null(),
-            'containsPeopleEditedBy' => $this->integer()->null(),
-            'containsPeopleEditedAt' => $this->dateTime()->null(),
 
             // NSFW detection (editable)
             'nsfwScore' => $this->decimal(5, 4)->null(),
@@ -91,8 +81,6 @@ class Install extends Migration
             'nsfwConfidence' => $this->decimal(5, 4)->null(),
             'nsfwCategories' => $this->json()->null(),
             'isFlaggedNsfw' => $this->boolean()->notNull()->defaultValue(false),
-            'nsfwScoreEditedBy' => $this->integer()->null(),
-            'nsfwScoreEditedAt' => $this->dateTime()->null(),
 
             // Watermark detection (editable)
             'hasWatermark' => $this->boolean()->notNull()->defaultValue(false),
@@ -100,16 +88,12 @@ class Install extends Migration
             'watermarkConfidence' => $this->decimal(5, 4)->null(),
             'watermarkType' => $this->string(30)->null(),
             'watermarkDetails' => $this->json()->null(),
-            'hasWatermarkEditedBy' => $this->integer()->null(),
-            'hasWatermarkEditedAt' => $this->dateTime()->null(),
 
             // Brand detection (editable)
             'containsBrandLogo' => $this->boolean()->notNull()->defaultValue(false),
             'containsBrandLogoAi' => $this->boolean()->null(),
             'containsBrandLogoConfidence' => $this->decimal(3, 2)->null(),
             'detectedBrands' => $this->json()->null(),
-            'containsBrandLogoEditedBy' => $this->integer()->null(),
-            'containsBrandLogoEditedAt' => $this->dateTime()->null(),
 
             // Image quality scores (sharpness/exposure/noise computed locally via Imagick)
             'sharpnessScore' => $this->decimal(5, 4)->null(),
@@ -118,14 +102,12 @@ class Install extends Migration
             'overallQualityScore' => $this->decimal(5, 4)->null(),
             'jpegQuality' => $this->tinyInteger()->unsigned()->null(),
             'colorProfile' => $this->string(20)->null(),
-            // Focal point detection (editable, shared edit tracking for X+Y)
+            // Focal point detection (editable)
             'focalPointX' => $this->decimal(5, 4)->null(),
             'focalPointXAi' => $this->decimal(5, 4)->null(),
             'focalPointY' => $this->decimal(5, 4)->null(),
             'focalPointYAi' => $this->decimal(5, 4)->null(),
             'focalPointConfidence' => $this->decimal(5, 4)->null(),
-            'focalPointEditedBy' => $this->integer()->null(),
-            'focalPointEditedAt' => $this->dateTime()->null(),
 
             // Hashes for duplicate detection
             'perceptualHash' => $this->string(64)->null(),
@@ -134,8 +116,6 @@ class Install extends Migration
             // Extracted text from image (editable)
             'extractedText' => $this->text()->null(),
             'extractedTextAi' => $this->text()->null(),
-            'extractedTextEditedBy' => $this->integer()->null(),
-            'extractedTextEditedAt' => $this->dateTime()->null(),
 
             // Content table flags
             'hasAnalysisContent' => $this->boolean()->notNull()->defaultValue(false),
@@ -217,15 +197,11 @@ class Install extends Migration
             'altText' => $this->text()->null(),
             'altTextAi' => $this->text()->null(),
             'altTextConfidence' => $this->decimal(3, 2)->null(),
-            'altTextEditedBy' => $this->integer()->null(),
-            'altTextEditedAt' => $this->dateTime()->null(),
 
             // Suggested title (editable, per-site)
             'suggestedTitle' => $this->text()->null(),
             'suggestedTitleAi' => $this->text()->null(),
             'titleConfidence' => $this->decimal(3, 2)->null(),
-            'suggestedTitleEditedBy' => $this->integer()->null(),
-            'suggestedTitleEditedAt' => $this->dateTime()->null(),
 
             'dateCreated' => $this->dateTime()->notNull(),
             'dateUpdated' => $this->dateTime()->notNull(),
@@ -344,32 +320,6 @@ class Install extends Migration
             'CASCADE'
         );
 
-        // EditedBy foreign keys for editable fields
-        $editedByColumns = [
-            'altTextEditedBy',
-            'suggestedTitleEditedBy',
-            'longDescriptionEditedBy',
-            'faceCountEditedBy',
-            'containsPeopleEditedBy',
-            'nsfwScoreEditedBy',
-            'hasWatermarkEditedBy',
-            'containsBrandLogoEditedBy',
-            'focalPointEditedBy',
-            'extractedTextEditedBy',
-        ];
-
-        foreach ($editedByColumns as $column) {
-            $this->addForeignKey(
-                null,
-                self::TABLE_ASSET_ANALYSES,
-                [$column],
-                Table::USERS,
-                ['id'],
-                'SET NULL',
-                'CASCADE'
-            );
-        }
-
         // Analysis content foreign keys
         $this->addForeignKey(
             null,
@@ -443,18 +393,6 @@ class Install extends Migration
             'CASCADE',
             'CASCADE'
         );
-
-        foreach (['altTextEditedBy', 'suggestedTitleEditedBy'] as $column) {
-            $this->addForeignKey(
-                null,
-                self::TABLE_ANALYSIS_SITE_CONTENT,
-                [$column],
-                Table::USERS,
-                ['id'],
-                'SET NULL',
-                'CASCADE'
-            );
-        }
 
         // Duplicate groups foreign keys
         $this->addForeignKey(

@@ -47,7 +47,9 @@
         {% set currentFp = asset.getFocalPoint() %}
         {% set fpAlreadyApplied = currentFp and (currentFp.x|round(4) == analysis.focalPointX|round(4)) and (currentFp.y|round(4) == analysis.focalPointY|round(4)) %}
     {% endif %}
-    {% set fpEdited = analysis.focalPointEditedBy is not null %}
+    {% set fpEdited = analysis.focalPointXAi is not null
+        and (analysis.focalPointX|round(4) != analysis.focalPointXAi|round(4)
+        or analysis.focalPointY|round(4) != analysis.focalPointYAi|round(4)) %}
 
     <div class="lens-accent-bar">
         <div class="lens-field-header" data-lens-target="field-header">
@@ -116,9 +118,8 @@
 
         {# AI suggestion + revert (review editing mode only) #}
         {% if fieldState == 'editing' and analysis.focalPointXAi is not null %}
-            {% set fpAiDiffers = analysis.focalPointEditedBy is not null
-                and (analysis.focalPointXAi|round(4) != analysis.focalPointX|round(4)
-                or analysis.focalPointYAi|round(4) != analysis.focalPointY|round(4)) %}
+            {% set fpAiDiffers = analysis.focalPointXAi|round(4) != analysis.focalPointX|round(4)
+                or analysis.focalPointYAi|round(4) != analysis.focalPointY|round(4) %}
 
             <div class="lens-ai-suggestion-inline" data-lens-target="focal-ai-suggestion"
                  {% if not fpAiDiffers %}hidden{% endif %}>

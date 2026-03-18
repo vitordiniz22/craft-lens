@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace vitordiniz22\craftlens\services;
 
 use Craft;
-use craft\helpers\DateTimeHelper;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\Plugin;
@@ -19,7 +18,7 @@ use yii\base\InvalidArgumentException;
  * Service for inline editing of analysis fields from the asset panel.
  *
  * Provides atomic, single-field update and revert operations that follow
- * the dual-column edit tracking pattern (field + fieldAi + fieldEditedBy + fieldEditedAt).
+ * the dual-column pattern (field + fieldAi). Editing is detected by comparing values.
  */
 class AnalysisEditService extends Component
 {
@@ -46,11 +45,11 @@ class AnalysisEditService extends Component
     /**
      * Update a single editable field on an analysis record.
      *
-     * @return array{value: mixed, aiValue: mixed, editedBy: string|null, editedAt: string|null}
+     * @return array{value: mixed, aiValue: mixed}
      * @throws InvalidArgumentException If record not found or field not editable
      * @throws \RuntimeException If save fails
      */
-    public function updateSingleField(int $analysisId, string $field, mixed $value, ?int $userId = null, ?AssetAnalysisRecord $record = null): array
+    public function updateSingleField(int $analysisId, string $field, mixed $value, ?AssetAnalysisRecord $record = null): array
     {
         if ($record === null) {
             $record = AssetAnalysisRecord::findOne($analysisId);
@@ -60,20 +59,13 @@ class AnalysisEditService extends Component
             throw new InvalidArgumentException("Analysis record {$analysisId} not found");
         }
 
-        if (!isset(AssetAnalysisRecord::EDITABLE_FIELDS[$field])) {
+        if (!in_array($field, AssetAnalysisRecord::EDITABLE_FIELDS, true)) {
             throw new InvalidArgumentException("Field '{$field}' is not editable");
         }
-
-        $userId = $userId ?? Craft::$app->getUser()->getId();
-        $now = DateTimeHelper::now();
 
         $value = $this->validateAndSanitize($field, $value);
 
         $record->$field = $value;
-
-        $prefix = AssetAnalysisRecord::EDITABLE_FIELDS[$field];
-        $record->{$prefix . 'EditedBy'} = $userId;
-        $record->{$prefix . 'EditedAt'} = $now;
 
         if (!$record->save()) {
             $errors = implode(', ', $record->getErrorSummary(true));
@@ -81,7 +73,6 @@ class AnalysisEditService extends Component
         }
 
         $aiColumn = $field . 'Ai';
-        $editor = $userId ? Craft::$app->getUsers()->getUserById($userId) : null;
 
         Logger::info(LogCategory::Review, "Field '{$field}' updated via panel", assetId: $record->assetId);
 
@@ -94,10 +85,6 @@ class AnalysisEditService extends Component
         return [
             'value' => $record->$field,
             'aiValue' => $record->$aiColumn ?? null,
-            'editedBy' => $editor?->friendlyName ?? 'Unknown',
-            'editedByUrl' => $editor?->getCpEditUrl(),
-            'editedAt' => $now->format('c'),
-            'editedAtFormatted' => Craft::$app->getFormatter()->asDate($now, 'short'),
         ];
     }
 
@@ -116,17 +103,13 @@ class AnalysisEditService extends Component
             throw new InvalidArgumentException("Analysis record {$analysisId} not found");
         }
 
-        $prefix = AssetAnalysisRecord::EDITABLE_FIELDS[$field] ?? null;
-
-        if ($prefix === null) {
+        if (!in_array($field, AssetAnalysisRecord::EDITABLE_FIELDS, true)) {
             throw new InvalidArgumentException("Field '{$field}' is not editable");
         }
 
         $aiColumn = $field . 'Ai';
 
         $record->$field = $record->$aiColumn;
-        $record->{$prefix . 'EditedBy'} = null;
-        $record->{$prefix . 'EditedAt'} = null;
 
         if (!$record->save()) {
             $errors = implode(', ', $record->getErrorSummary(true));

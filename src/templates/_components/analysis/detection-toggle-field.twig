@@ -8,8 +8,6 @@
  #   label          - string
  #   detected       - bool, current detection value
  #   detectedAi     - bool, AI detection value
- #   editedBy       - int|null
- #   editedAt       - DateTime|null
  #   analysisId     - int
  #   fieldState     - 'readonly'|'unlocked'|'editing'
  #   detectedLabel  - string (e.g., 'NSFW content present')
@@ -22,7 +20,7 @@
 
 {% set fieldState = fieldState ?? 'readonly' %}
 {% set icon = icon ?? 'circle-question' %}
-{% set isEdited = editedBy is not null %}
+{% set isEdited = (detectedAi is defined) and detected != detectedAi %}
 
 {# ============================================================
    READONLY — Icon + label + badge. No interactions.
@@ -145,7 +143,7 @@
     </div>
 
     {# AI suggestion — purple bar, shown when value differs from AI #}
-    {% set aiDiffers = isReview ? (detectedAi != detected) : (isEdited and (detectedAi != detected)) %}
+    {% set aiDiffers = detectedAi != detected %}
     <div class="lens-ai-suggestion-inline" data-lens-target="detection-ai-suggestion"{% if not aiDiffers %} hidden{% endif %}>
         {% include 'lens/_components/analysis/_tooltip-ai' only %}
         <span data-lens-target="detection-ai-text">
@@ -157,16 +155,6 @@
             </button>
         {% endif %}
     </div>
-
-    {% if not isReview %}
-        {# Provenance meta (always rendered, hidden when not edited) #}
-        {% include 'lens/_components/analysis/edit-meta' with {
-            editedBy: editedBy,
-            editedAt: editedAt,
-            target: 'detection-edit-meta',
-            isEdited: isEdited,
-        } only %}
-    {% endif %}
 
     {% if (details ?? [])|length %}
         <div class="lens-detection-detail">

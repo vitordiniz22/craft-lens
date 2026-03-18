@@ -64,9 +64,8 @@
 {% endmacro %}
 
 {% set fieldState = fieldState ?? 'readonly' %}
-{% set isPeopleEdited = analysis.containsPeopleEditedBy is not null %}
-{% set isFaceCountEdited = analysis.faceCountEditedBy is not null %}
-{% set isEdited = isPeopleEdited or isFaceCountEdited %}
+{% set isEdited = (analysis.containsPeopleAi is defined and analysis.containsPeople != analysis.containsPeopleAi)
+    or (analysis.faceCountAi is defined and analysis.faceCount != analysis.faceCountAi) %}
 {% set hasPeople = analysis.containsPeople %}
 
 {# ============================================================
@@ -188,10 +187,7 @@
     </div>
 
     {# AI suggestion — purple bar, shown when value differs from AI #}
-    {% set aiDiffers = isReview
-        ? ((analysis.containsPeopleAi != analysis.containsPeople) or (analysis.faceCountAi != analysis.faceCount))
-        : (isEdited and ((analysis.containsPeopleAi != analysis.containsPeople) or (analysis.faceCountAi != analysis.faceCount)))
-    %}
+    {% set aiDiffers = (analysis.containsPeopleAi != analysis.containsPeople) or (analysis.faceCountAi != analysis.faceCount) %}
     <div class="lens-ai-suggestion-inline" data-lens-target="people-ai-suggestion"{% if not aiDiffers %} hidden{% endif %}>
         {% include 'lens/_components/analysis/_tooltip-ai' only %}
         <span data-lens-target="people-ai-text">
@@ -206,31 +202,6 @@
         {% endif %}
     </div>
 
-    {% if not isReview %}
-        {# Provenance meta (always rendered, hidden when not edited) #}
-        {% if isFaceCountEdited %}
-            {% include 'lens/_components/analysis/edit-meta' with {
-                editedBy: analysis.faceCountEditedBy,
-                editedAt: analysis.faceCountEditedAt,
-                target: 'people-edit-meta',
-                isEdited: true,
-            } only %}
-        {% elseif isPeopleEdited %}
-            {% include 'lens/_components/analysis/edit-meta' with {
-                editedBy: analysis.containsPeopleEditedBy,
-                editedAt: analysis.containsPeopleEditedAt,
-                target: 'people-edit-meta',
-                isEdited: true,
-            } only %}
-        {% else %}
-            {% include 'lens/_components/analysis/edit-meta' with {
-                editedBy: null,
-                editedAt: null,
-                target: 'people-edit-meta',
-                isEdited: false,
-            } only %}
-        {% endif %}
-    {% endif %}
 </div>
 
 {% endif %}

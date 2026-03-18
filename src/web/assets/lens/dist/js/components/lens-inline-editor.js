@@ -109,7 +109,7 @@
                         if (response.data.success) {
                             this._updateFieldDisplay(fieldEl, response.data);
                             this._showLockIcon(fieldEl);
-                            this._updateEditMeta(fieldEl, response.data);
+                            this._updateAISuggestion(fieldEl, response.data);
                             window.Lens.core.DOM.exitEditMode(fieldEl, 'field-display', 'field-edit');
                             this._resetFormBaseline(fieldEl);
                             Craft.cp.displayNotice(Craft.t('lens', 'Field updated.'));
@@ -135,9 +135,8 @@
                     if (displayP) displayP.textContent = response.data.value;
                     if (input) input.value = response.data.value;
 
-                    // Remove lock icon and meta
+                    // Remove lock icon and AI suggestion (values now match AI)
                     this._removeLockIcon(fieldEl);
-                    this._removeEditMeta(fieldEl);
                     this._removeAISuggestion(fieldEl);
                     this._resetFormBaseline(fieldEl);
 
@@ -203,7 +202,6 @@
             this._savePeopleFields(analysisId, fields).then((responses) => {
                 this._updatePeopleDisplay(fieldEl, fields);
                 this._showLockIcon(fieldEl);
-                this._updatePeopleEditMeta(fieldEl, responses[0].data);
                 this._showPeopleAISuggestion(fieldEl, fields);
                 this._updatePeopleBadge(fieldEl, fields);
                 this._updatePeopleRowAccent(fieldEl, fields);
@@ -240,7 +238,6 @@
                     this._updatePeopleBadge(fieldEl, fields);
                     this._updatePeopleRowAccent(fieldEl, fields);
                     this._removeLockIcon(fieldEl);
-                    this._removeEditMeta(fieldEl);
 
                     // Hide AI suggestion (values now match AI)
                     var suggestion = fieldEl.querySelector('[data-lens-target="people-ai-suggestion"]');
@@ -338,17 +335,6 @@
                         // Show AI suggestion (always after editing)
                         this._showDetectionAISuggestion(fieldEl, isNowDetected);
 
-                        // Show edit meta
-                        var meta = fieldEl.querySelector('[data-lens-target="detection-edit-meta"]');
-                        if (meta) {
-                            if (response.data.editedBy) {
-                                meta.innerHTML = Lens.utils.formatEditMeta(response.data);
-                            } else {
-                                meta.textContent = Craft.t('lens', 'Manually edited');
-                            }
-                            window.Lens.core.DOM.show(meta);
-                        }
-
                         // Close edit panel
                         var editPanel = fieldEl.querySelector('[data-lens-target="detection-edit-panel"]');
                         if (editPanel) window.Lens.core.DOM.hide(editPanel);
@@ -396,13 +382,8 @@
                         var hiddenInput = fieldEl.querySelector('[data-lens-target="detection-value"]');
                         if (hiddenInput) hiddenInput.value = revertedValue;
 
-                        // Remove lock, meta, AI suggestion (values now match AI)
+                        // Remove lock and AI suggestion (values now match AI)
                         this._removeLockIcon(fieldEl);
-                        var meta = fieldEl.querySelector('[data-lens-target="detection-edit-meta"]');
-                        if (meta) {
-                            meta.textContent = '';
-                            window.Lens.core.DOM.hide(meta);
-                        }
                         var suggestion = fieldEl.querySelector('[data-lens-target="detection-ai-suggestion"]');
                         if (suggestion) window.Lens.core.DOM.hide(suggestion);
 
@@ -588,19 +569,8 @@
             }
         },
 
-        _updateEditMeta: function(fieldEl, data) {
+        _updateAISuggestion: function(fieldEl, data) {
             var DOM = window.Lens.core.DOM;
-
-            var meta = fieldEl.querySelector('[data-lens-target="field-edit-meta"]');
-            if (meta) {
-                if (data.editedBy) {
-                    meta.innerHTML = Lens.utils.formatEditMeta(data);
-                    DOM.show(meta);
-                } else {
-                    meta.innerHTML = '';
-                    DOM.hide(meta);
-                }
-            }
 
             var aiSuggestion = fieldEl.querySelector('[data-lens-target="field-ai-suggestion"]');
             if (aiSuggestion) {
@@ -617,18 +587,6 @@
                 } else {
                     DOM.hide(aiSuggestion);
                 }
-            }
-        },
-
-        _updatePeopleEditMeta: function(fieldEl, data) {
-            var meta = fieldEl.querySelector('[data-lens-target="people-edit-meta"]');
-            if (meta) {
-                if (data && data.editedBy) {
-                    meta.innerHTML = Lens.utils.formatEditMeta(data);
-                } else {
-                    meta.textContent = Craft.t('lens', 'Manually edited');
-                }
-                window.Lens.core.DOM.show(meta);
             }
         },
 
@@ -653,15 +611,6 @@
                 DOM.show(suggestion);
             } else {
                 DOM.hide(suggestion);
-            }
-        },
-
-        _removeEditMeta: function(fieldEl) {
-            var meta = fieldEl.querySelector('[data-lens-target="field-edit-meta"]') ||
-                       fieldEl.querySelector('[data-lens-target="people-edit-meta"]');
-            if (meta) {
-                meta.innerHTML = '';
-                window.Lens.core.DOM.hide(meta);
             }
         },
 

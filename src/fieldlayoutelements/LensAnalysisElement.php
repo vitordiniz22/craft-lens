@@ -104,11 +104,9 @@ class LensAnalysisElement extends BaseUiElement
                             'altText' => $record->altText ?? null,
                             'altTextAi' => $record->altTextAi ?? null,
                             'altTextConfidence' => $record->altTextConfidence ?? null,
-                            'altTextEditedBy' => $record->altTextEditedBy ?? null,
                             'suggestedTitle' => $record->suggestedTitle ?? null,
                             'suggestedTitleAi' => $record->suggestedTitleAi ?? null,
                             'titleConfidence' => $record->titleConfidence ?? null,
-                            'suggestedTitleEditedBy' => $record->suggestedTitleEditedBy ?? null,
                         ];
                     }
                 }

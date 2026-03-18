@@ -7,15 +7,13 @@
  #   value        - string|null, current value
  #   aiValue      - string|null, original AI value
  #   confidence   - float|null, AI confidence (0-1)
- #   editedBy     - int|null, user ID who edited
- #   editedAt     - DateTime|null, when edited
  #   inputType    - string, 'text' or 'textarea' (default: 'text')
  #   featured     - bool, use featured styling (default: false)
  #   analysisId   - int, the analysis record ID
  #   fieldState   - 'readonly'|'unlocked'|'editing'
  #}
 
-{% set isEdited = editedBy is not null %}
+{% set isEdited = aiValue is not null and value != aiValue %}
 {% set inputType = inputType ?? 'text' %}
 {% set featured = featured ?? false %}
 {% set fieldState = fieldState ?? 'readonly' %}
@@ -126,13 +124,6 @@
             </div>
         </div>
 
-        {# Provenance meta (always rendered, hidden when not edited) #}
-        {% include 'lens/_components/analysis/edit-meta' with {
-            editedBy: editedBy,
-            editedAt: editedAt,
-            target: 'field-edit-meta',
-            isEdited: isEdited,
-        } only %}
     {% endif %}
 
     {# AI suggestion #}
@@ -144,7 +135,7 @@
             </div>
         {% endif %}
     {% else %}
-        {% set showAiSuggestion = isEdited and aiValue and aiValue != value %}
+        {% set showAiSuggestion = aiValue is not null and aiValue != value %}
         <div class="lens-ai-suggestion-inline" data-lens-target="field-ai-suggestion"{% if not showAiSuggestion %} hidden{% endif %}>
             {% include 'lens/_components/analysis/_tooltip-ai' only %}
             <span data-lens-target="ai-suggestion-text">

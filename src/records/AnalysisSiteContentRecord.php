@@ -18,7 +18,8 @@ use yii\db\ActiveQueryInterface;
  * Each editable field follows the dual-column pattern:
  * - The main column (e.g. `altText`) holds the effective/user-facing value
  * - The `*Ai` column (e.g. `altTextAi`) holds the raw AI-generated value
- * - `*EditedBy` and `*EditedAt` track user edits (null = not edited)
+ *
+ * Editing is detected by comparing the main column to its `*Ai` counterpart.
  *
  * @property int $id
  * @property int $analysisId
@@ -29,15 +30,11 @@ use yii\db\ActiveQueryInterface;
  * @property string|null $altText
  * @property string|null $altTextAi
  * @property float|null $altTextConfidence
- * @property int|null $altTextEditedBy
- * @property \DateTime|null $altTextEditedAt
  *
  * Suggested title (editable, per-site):
  * @property string|null $suggestedTitle
  * @property string|null $suggestedTitleAi
  * @property float|null $titleConfidence
- * @property int|null $suggestedTitleEditedBy
- * @property \DateTime|null $suggestedTitleEditedAt
  *
  * Timestamps:
  * @property \DateTime $dateCreated
@@ -50,11 +47,11 @@ use yii\db\ActiveQueryInterface;
 class AnalysisSiteContentRecord extends ActiveRecord
 {
     /**
-     * Editable field names and their EditedBy/EditedAt column prefixes.
+     * List of editable field names (fields with a corresponding *Ai column).
      */
     public const EDITABLE_FIELDS = [
-        'altText' => 'altText',
-        'suggestedTitle' => 'suggestedTitle',
+        'altText',
+        'suggestedTitle',
     ];
 
     public static function tableName(): string
@@ -63,14 +60,17 @@ class AnalysisSiteContentRecord extends ActiveRecord
     }
 
     /**
-     * Check if a given field has been edited by a user.
+     * Check if a given field has been edited by a user (value differs from AI).
      */
     public function isFieldEdited(string $fieldName): bool
     {
-        $prefix = self::EDITABLE_FIELDS[$fieldName] ?? $fieldName;
-        $editedByColumn = $prefix . 'EditedBy';
+        $aiColumn = $fieldName . 'Ai';
 
-        return $this->$editedByColumn !== null;
+        if (!$this->hasAttribute($aiColumn) || $this->{$aiColumn} === null) {
+            return false;
+        }
+
+        return $this->$fieldName != $this->{$aiColumn};
     }
 
     public function getAnalysis(): ActiveQueryInterface
@@ -86,7 +86,6 @@ class AnalysisSiteContentRecord extends ActiveRecord
             [['altText', 'altTextAi'], 'string', 'max' => AssetAnalysisRecord::ALT_TEXT_MAX_LENGTH],
             [['suggestedTitle', 'suggestedTitleAi'], 'string', 'max' => AssetAnalysisRecord::SUGGESTED_TITLE_MAX_LENGTH],
             [['altTextConfidence', 'titleConfidence'], 'number', 'min' => 0, 'max' => 1],
-            [['altTextEditedBy', 'suggestedTitleEditedBy'], 'integer'],
         ];
     }
 }

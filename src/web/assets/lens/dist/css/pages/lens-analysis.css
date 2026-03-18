@@ -285,22 +285,6 @@
     pointer-events: none;
 }
 
-
-.lens-edit-meta {
-    font-size: 12px;
-    color: var(--medium-text-color);
-    margin-top: 10px;
-}
-
-.lens-edit-meta a {
-    color: var(--link-color);
-    text-decoration: none;
-}
-
-.lens-edit-meta a:hover {
-    text-decoration: underline;
-}
-
 .lens-revert-trigger {
     color: var(--violet-700);
     cursor: pointer;
@@ -837,6 +821,22 @@
 
 .lens-segmented-control__option:has(input:checked) .lens-segmented-control__icon {
     color: var(--blue-600);
+}
+
+.lens-segmented-control__option:has([data-lens-target="detection-icon-flagged"]):has(input:checked) {
+    background: var(--red-100);
+    color: var(--red-700);
+}
+.lens-segmented-control__option:has([data-lens-target="detection-icon-flagged"]):has(input:checked) .lens-segmented-control__icon {
+    color: var(--red-500);
+}
+
+.lens-segmented-control__option:has([data-lens-target="detection-icon-clear"]):has(input:checked) {
+    background: var(--green-100);
+    color: var(--green-700);
+}
+.lens-segmented-control__option:has([data-lens-target="detection-icon-clear"]):has(input:checked) .lens-segmented-control__icon {
+    color: var(--green-500);
 }
 
 /* Native radio options (people detection, replaces bordered cards) */

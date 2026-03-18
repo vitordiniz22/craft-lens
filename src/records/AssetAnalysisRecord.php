@@ -17,9 +17,8 @@ use yii\db\ActiveQueryInterface;
  * Stores analysis metadata for assets. Each editable field has a dual-column pattern:
  * - The main column (e.g. `altText`) holds the effective/user-facing value
  * - The `*Ai` column (e.g. `altTextAi`) holds the raw AI-generated value
- * - `*EditedBy` and `*EditedAt` track user edits (null = not edited)
  *
- * Golden rule: never override fields where `*EditedBy` is set.
+ * Editing is detected by comparing the main column to its `*Ai` counterpart.
  *
  * @property int $id
  * @property int $assetId
@@ -31,22 +30,16 @@ use yii\db\ActiveQueryInterface;
  * @property string|null $altText
  * @property string|null $altTextAi
  * @property float|null $altTextConfidence
- * @property int|null $altTextEditedBy
- * @property \DateTime|null $altTextEditedAt
  *
  * Suggested title (editable):
  * @property string|null $suggestedTitle
  * @property string|null $suggestedTitleAi
  * @property float|null $titleConfidence
- * @property int|null $suggestedTitleEditedBy
- * @property \DateTime|null $suggestedTitleEditedAt
  *
  * Long description (editable, moved from analysis_content):
  * @property string|null $longDescription
  * @property string|null $longDescriptionAi
  * @property float|null $longDescriptionConfidence
- * @property int|null $longDescriptionEditedBy
- * @property \DateTime|null $longDescriptionEditedAt
  *
  * Face detection (editable):
  * @property int $faceCount
@@ -54,10 +47,6 @@ use yii\db\ActiveQueryInterface;
  * @property bool $containsPeople
  * @property bool|null $containsPeopleAi
  * @property float|null $containsPeopleConfidence
- * @property int|null $faceCountEditedBy
- * @property \DateTime|null $faceCountEditedAt
- * @property int|null $containsPeopleEditedBy
- * @property \DateTime|null $containsPeopleEditedAt
  *
  * NSFW detection (editable):
  * @property float|null $nsfwScore
@@ -65,8 +54,6 @@ use yii\db\ActiveQueryInterface;
  * @property float|null $nsfwConfidence
  * @property array|null $nsfwCategories
  * @property bool $isFlaggedNsfw
- * @property int|null $nsfwScoreEditedBy
- * @property \DateTime|null $nsfwScoreEditedAt
  *
  * Watermark detection (editable):
  * @property bool $hasWatermark
@@ -74,16 +61,12 @@ use yii\db\ActiveQueryInterface;
  * @property float|null $watermarkConfidence
  * @property string|null $watermarkType
  * @property array|null $watermarkDetails
- * @property int|null $hasWatermarkEditedBy
- * @property \DateTime|null $hasWatermarkEditedAt
  *
  * Brand detection (editable):
  * @property bool $containsBrandLogo
  * @property bool|null $containsBrandLogoAi
  * @property float|null $containsBrandLogoConfidence
  * @property array|null $detectedBrands
- * @property int|null $containsBrandLogoEditedBy
- * @property \DateTime|null $containsBrandLogoEditedAt
  *
  * Image quality scores (sharpness/exposure/noise computed locally via Imagick):
  * @property float|null $sharpnessScore
@@ -99,14 +82,10 @@ use yii\db\ActiveQueryInterface;
  * @property float|null $focalPointY
  * @property float|null $focalPointYAi
  * @property float|null $focalPointConfidence
- * @property int|null $focalPointEditedBy
- * @property \DateTime|null $focalPointEditedAt
  *
  * Extracted text from image (editable):
  * @property string|null $extractedText
  * @property string|null $extractedTextAi
- * @property int|null $extractedTextEditedBy
- * @property \DateTime|null $extractedTextEditedAt
  *
  * Hashes for duplicate detection:
  * @property string|null $perceptualHash
@@ -138,21 +117,20 @@ class AssetAnalysisRecord extends ActiveRecord
     public const EXTRACTED_TEXT_MAX_LENGTH = 50000;
 
     /**
-     * List of editable field names and their corresponding EditedBy/EditedAt column prefixes.
-     * Fields sharing edit tracking (e.g. focalPointX/Y) map to the same prefix.
+     * List of editable field names (fields with a corresponding *Ai column).
      */
     public const EDITABLE_FIELDS = [
-        'altText' => 'altText',
-        'suggestedTitle' => 'suggestedTitle',
-        'longDescription' => 'longDescription',
-        'faceCount' => 'faceCount',
-        'containsPeople' => 'containsPeople',
-        'nsfwScore' => 'nsfwScore',
-        'hasWatermark' => 'hasWatermark',
-        'containsBrandLogo' => 'containsBrandLogo',
-        'focalPointX' => 'focalPoint',
-        'focalPointY' => 'focalPoint',
-        'extractedText' => 'extractedText',
+        'altText',
+        'suggestedTitle',
+        'longDescription',
+        'faceCount',
+        'containsPeople',
+        'nsfwScore',
+        'hasWatermark',
+        'containsBrandLogo',
+        'focalPointX',
+        'focalPointY',
+        'extractedText',
     ];
 
     public static function tableName(): string
@@ -161,14 +139,23 @@ class AssetAnalysisRecord extends ActiveRecord
     }
 
     /**
-     * Check if a given field has been edited by a user.
+     * Check if a given field has been edited by a user (value differs from AI).
      */
     public function isFieldEdited(string $fieldName): bool
     {
-        $prefix = self::EDITABLE_FIELDS[$fieldName] ?? $fieldName;
-        $editedByColumn = $prefix . 'EditedBy';
+        // Focal point: both X and Y share one logical edit state
+        if ($fieldName === 'focalPointX' || $fieldName === 'focalPointY') {
+            return $this->focalPointX != $this->focalPointXAi
+                || $this->focalPointY != $this->focalPointYAi;
+        }
 
-        return $this->$editedByColumn !== null;
+        $aiColumn = $fieldName . 'Ai';
+
+        if (!$this->hasAttribute($aiColumn) || $this->{$aiColumn} === null) {
+            return false;
+        }
+
+        return $this->$fieldName != $this->{$aiColumn};
     }
 
     public function getAsset(): ActiveQueryInterface
@@ -204,7 +191,6 @@ class AssetAnalysisRecord extends ActiveRecord
             [['perceptualHash', 'fileContentHash'], 'string', 'max' => 64],
             [['inputTokens', 'outputTokens'], 'integer', 'min' => 0],
             [['actualCost'], 'number', 'min' => 0],
-            [['altTextEditedBy', 'suggestedTitleEditedBy', 'longDescriptionEditedBy', 'faceCountEditedBy', 'containsPeopleEditedBy', 'nsfwScoreEditedBy', 'hasWatermarkEditedBy', 'containsBrandLogoEditedBy', 'focalPointEditedBy', 'extractedTextEditedBy'], 'integer'],
             [['nsfwCategories', 'watermarkDetails', 'detectedBrands'], function(string $attribute): void {
                 if ($this->$attribute !== null && !is_array($this->$attribute)) {
                     $this->addError($attribute, "{$attribute} must be an array or null.");

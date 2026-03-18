@@ -16,7 +16,6 @@
  #   suggestionValue - string|null, AI suggestion (possibly user-edited)
  #   aiValue         - string|null, original AI value (before user edits)
  #   confidence      - float|null, AI confidence (0-1)
- #   editedBy        - int|null, user ID who edited the suggestion (optional)
  #   inputType       - string, 'text' or 'textarea' (default: 'text')
  #   analysisId      - int, the analysis record ID
  #   assetId         - int|null, the asset ID
@@ -28,7 +27,7 @@
 {% set inputType = inputType ?? 'text' %}
 {% set siteId = siteId ?? null %}
 {% set fieldState = fieldState ?? 'readonly' %}
-{% set isEdited = (editedBy ?? null) is not null %}
+{% set isEdited = (aiValue ?? null) is not null and suggestionValue != aiValue %}
 {% set fieldMaxLengths = { altText: 500, suggestedTitle: 255 } %}
 {% set maxlength = fieldMaxLengths[fieldName] ?? null %}
 

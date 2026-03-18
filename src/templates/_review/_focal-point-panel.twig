@@ -59,7 +59,10 @@
         {% endif %}
     </span>
     {% if analysis.focalPointX and not fpMatchesAsset %}
-        {% if analysis.focalPointEditedBy is null %}
+        {% set fpMatchesAi = analysis.focalPointXAi is not null
+            and (analysis.focalPointX|round(4) == analysis.focalPointXAi|round(4))
+            and (analysis.focalPointY|round(4) == analysis.focalPointYAi|round(4)) %}
+        {% if fpMatchesAi %}
             <span data-lens-target="focal-status-badge" class="lens-review-focal-badge">
                 {{ 'AI'|t('lens') }}
             </span>

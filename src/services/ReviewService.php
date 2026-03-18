@@ -130,7 +130,7 @@ class ReviewService extends Component
     /**
      * Edit analysis fields and approve.
      *
-     * Writes user edits to the main columns and sets *EditedBy/*EditedAt.
+     * Writes user edits to the main columns.
      * The *Ai columns remain untouched (they hold the original AI values).
      *
      * @param array{altText?: string, suggestedTitle?: string, longDescription?: string, tags?: array, dominantColors?: array, faceCount?: int, containsPeople?: bool, nsfwScore?: float, hasWatermark?: bool, containsBrandLogo?: bool, focalPointX?: float, focalPointY?: float} $modifications
@@ -148,20 +148,18 @@ class ReviewService extends Component
         $editService = Plugin::getInstance()->analysisEdit;
 
         // Update individual fields via the shared edit service
-        $fieldKeys = array_intersect_key(
-            $modifications,
-            AssetAnalysisRecord::EDITABLE_FIELDS
-        );
+        $editableSet = array_flip(AssetAnalysisRecord::EDITABLE_FIELDS);
+        $fieldKeys = array_intersect_key($modifications, $editableSet);
 
         // Handle focal point as a pair — pass $record to avoid redundant queries
         if (isset($modifications['focalPointX']) && isset($modifications['focalPointY'])) {
-            $editService->updateSingleField($analysisId, 'focalPointX', $modifications['focalPointX'], $userId, $record);
-            $editService->updateSingleField($analysisId, 'focalPointY', $modifications['focalPointY'], $userId, $record);
+            $editService->updateSingleField($analysisId, 'focalPointX', $modifications['focalPointX'], $record);
+            $editService->updateSingleField($analysisId, 'focalPointY', $modifications['focalPointY'], $record);
             unset($fieldKeys['focalPointX'], $fieldKeys['focalPointY']);
         }
 
         foreach ($fieldKeys as $field => $value) {
-            $editService->updateSingleField($analysisId, $field, $value, $userId, $record);
+            $editService->updateSingleField($analysisId, $field, $value, $record);
         }
 
         // Handle tags modifications
@@ -197,9 +195,9 @@ class ReviewService extends Component
 
                 foreach ($fields as $field => $value) {
                     if ($field === 'altText' && $altTranslatable) {
-                        $siteContentService->updateSiteField($analysisId, $siteId, $field, $value, $userId);
+                        $siteContentService->updateSiteField($analysisId, $siteId, $field, $value);
                     } elseif ($field === 'suggestedTitle' && $titleTranslatable) {
-                        $siteContentService->updateSiteField($analysisId, $siteId, $field, $value, $userId);
+                        $siteContentService->updateSiteField($analysisId, $siteId, $field, $value);
                     }
                 }
             }
@@ -335,19 +333,14 @@ class ReviewService extends Component
             'suggestedTitle' => $record->suggestedTitle,
             'suggestedTitleAi' => $record->suggestedTitleAi,
             'titleConfidence' => $record->titleConfidence,
-            'suggestedTitleEditedBy' => $record->suggestedTitleEditedBy,
             'altText' => $record->altText,
             'altTextAi' => $record->altTextAi,
             'altTextConfidence' => $record->altTextConfidence,
-            'altTextEditedBy' => $record->altTextEditedBy,
             'longDescription' => $record->longDescription,
             'longDescriptionAi' => $record->longDescriptionAi,
             'longDescriptionConfidence' => $record->longDescriptionConfidence,
-            'longDescriptionEditedBy' => $record->longDescriptionEditedBy,
             'extractedText' => $record->extractedText,
             'extractedTextAi' => $record->extractedTextAi,
-            'extractedTextEditedBy' => $record->extractedTextEditedBy,
-            'extractedTextEditedAt' => $record->extractedTextEditedAt,
         ];
     }
 
@@ -381,7 +374,6 @@ class ReviewService extends Component
             'focalPointXAi' => $record->focalPointXAi,
             'focalPointYAi' => $record->focalPointYAi,
             'focalPointConfidence' => $record->focalPointConfidence,
-            'focalPointEditedBy' => $record->focalPointEditedBy,
         ];
     }
 
@@ -393,36 +385,22 @@ class ReviewService extends Component
         return [
             'faceCount' => $record->faceCount,
             'faceCountAi' => $record->faceCountAi,
-            'faceCountEditedBy' => $record->faceCountEditedBy,
-            'faceCountEditedAt' => $record->faceCountEditedAt,
-            'faceCountEditedByName' => $record->faceCountEditedBy ? Craft::$app->getUsers()->getUserById($record->faceCountEditedBy)?->friendlyName : null,
-            'faceCountEditedAtFormatted' => $record->faceCountEditedAt ? (DateTimeHelper::toDateTime($record->faceCountEditedAt) ?: null)?->format('M j, Y') : null,
             'containsPeople' => (bool)$record->containsPeople,
             'containsPeopleAi' => (bool)$record->containsPeopleAi,
-            'containsPeopleEditedBy' => $record->containsPeopleEditedBy,
-            'containsPeopleEditedAt' => $record->containsPeopleEditedAt,
-            'containsPeopleEditedByName' => $record->containsPeopleEditedBy ? Craft::$app->getUsers()->getUserById($record->containsPeopleEditedBy)?->friendlyName : null,
-            'containsPeopleEditedAtFormatted' => $record->containsPeopleEditedAt ? (DateTimeHelper::toDateTime($record->containsPeopleEditedAt) ?: null)?->format('M j, Y') : null,
+            'containsPeopleConfidence' => $record->containsPeopleConfidence,
             'nsfwScore' => $record->nsfwScore,
             'nsfwScoreAi' => $record->nsfwScoreAi,
             'nsfwConfidence' => $record->nsfwConfidence,
-            'nsfwScoreEditedBy' => $record->nsfwScoreEditedBy,
-            'nsfwScoreEditedAt' => $record->nsfwScoreEditedAt,
             'nsfwCategories' => $record->nsfwCategories,
             'isFlaggedNsfw' => (bool)$record->isFlaggedNsfw,
-            'containsPeopleConfidence' => $record->containsPeopleConfidence,
             'hasWatermark' => (bool)$record->hasWatermark,
             'hasWatermarkAi' => (bool)($record->hasWatermarkAi ?? false),
-            'hasWatermarkEditedBy' => $record->hasWatermarkEditedBy,
-            'hasWatermarkEditedAt' => $record->hasWatermarkEditedAt,
             'watermarkType' => $record->watermarkType,
             'watermarkConfidence' => $record->watermarkConfidence,
             'watermarkDetails' => $record->watermarkDetails,
             'containsBrandLogo' => (bool)$record->containsBrandLogo,
             'containsBrandLogoAi' => (bool)($record->containsBrandLogoAi ?? false),
             'containsBrandLogoConfidence' => $record->containsBrandLogoConfidence,
-            'containsBrandLogoEditedBy' => $record->containsBrandLogoEditedBy,
-            'containsBrandLogoEditedAt' => $record->containsBrandLogoEditedAt,
             'detectedBrands' => $record->detectedBrands,
         ];
     }
@@ -452,7 +430,7 @@ class ReviewService extends Component
     /**
      * Load per-site content data for an analysis, structured for templates/JS.
      *
-     * @return array<int, array{siteId: int, language: string, siteName: string, altText: string|null, altTextAi: string|null, altTextConfidence: float|null, altTextEditedBy: int|null, suggestedTitle: string|null, suggestedTitleAi: string|null, titleConfidence: float|null, suggestedTitleEditedBy: int|null}>
+     * @return array<int, array{siteId: int, language: string, siteName: string, altText: string|null, altTextAi: string|null, altTextConfidence: float|null, suggestedTitle: string|null, suggestedTitleAi: string|null, titleConfidence: float|null}>
      */
     private function loadSiteContentData(int $analysisId, Asset $asset): array
     {
@@ -485,11 +463,9 @@ class ReviewService extends Component
                 'altText' => $record->altText ?? null,
                 'altTextAi' => $record->altTextAi ?? null,
                 'altTextConfidence' => $record->altTextConfidence ?? null,
-                'altTextEditedBy' => $record->altTextEditedBy ?? null,
                 'suggestedTitle' => $record->suggestedTitle ?? null,
                 'suggestedTitleAi' => $record->suggestedTitleAi ?? null,
                 'titleConfidence' => $record->titleConfidence ?? null,
-                'suggestedTitleEditedBy' => $record->suggestedTitleEditedBy ?? null,
             ];
         }
 

@@ -561,7 +561,7 @@ class AssetAnalysisService extends Component
      *
      * Title: only applied if the current title is auto-generated from filename.
      * Focal point: applied if no focal point is currently set, OR if a reviewer
-     *   explicitly edited it during review (focalPointEditedBy is set).
+     *   explicitly edited it during review (focal point differs from AI).
      * Alt text: only applied if the asset's native alt field is empty.
      */
     public function autoApplyFromRecord(Asset $asset, AssetAnalysisRecord $record): void
@@ -573,7 +573,7 @@ class AssetAnalysisService extends Component
             $needsSave = true;
         }
 
-        $reviewerEditedFocalPoint = $record->focalPointEditedBy !== null;
+        $reviewerEditedFocalPoint = $record->isFieldEdited('focalPointX');
 
         if ($record->focalPointX !== null && $record->focalPointY !== null
             && (!$asset->getHasFocalPoint() || $reviewerEditedFocalPoint)) {
@@ -678,73 +678,89 @@ class AssetAnalysisService extends Component
      * Apply AI analysis result to the record using the dual-write pattern.
      *
      * Always writes to *Ai columns. Only writes to main columns if the field
-     * has not been edited by a user (*EditedBy is null).
+     * has not been edited by a user (value matches AI value).
+     *
+     * Important: isFieldEdited() must be called BEFORE writing to *Ai columns,
+     * since it compares the main column to the *Ai column.
      */
     private function applyAiResultToRecord(AssetAnalysisRecord $record, AnalysisResult $result): void
     {
         if ($result->altText !== '') {
+            $wasEdited = $record->isFieldEdited('altText');
             $record->altTextAi = $result->altText;
             $record->altTextConfidence = $result->altTextConfidence;
 
-            if (!$record->isFieldEdited('altText')) {
+            if (!$wasEdited) {
                 $record->altText = $result->altText;
             }
         }
 
         if ($result->suggestedTitle !== '') {
+            $wasEdited = $record->isFieldEdited('suggestedTitle');
             $record->suggestedTitleAi = $result->suggestedTitle;
             $record->titleConfidence = $result->titleConfidence;
 
-            if (!$record->isFieldEdited('suggestedTitle')) {
+            if (!$wasEdited) {
                 $record->suggestedTitle = $result->suggestedTitle;
             }
         }
+
+        $faceCountEdited = $record->isFieldEdited('faceCount');
+        $containsPeopleEdited = $record->isFieldEdited('containsPeople');
 
         $record->faceCountAi = $result->faceCount;
         $record->containsPeopleAi = $result->containsPeople;
         $record->containsPeopleConfidence = $result->containsPeopleConfidence;
 
-        if (!$record->isFieldEdited('faceCount')) {
+        if (!$faceCountEdited) {
             $record->faceCount = $result->faceCount;
         }
 
-        if (!$record->isFieldEdited('containsPeople')) {
+        if (!$containsPeopleEdited) {
             $record->containsPeople = $result->containsPeople;
         }
+
+        $nsfwEdited = $record->isFieldEdited('nsfwScore');
 
         $record->nsfwScoreAi = $result->nsfwScore;
         $record->nsfwConfidence = $result->nsfwConfidence;
         $record->nsfwCategories = $result->nsfwCategories;
         $record->isFlaggedNsfw = $result->isFlaggedNsfw;
 
-        if (!$record->isFieldEdited('nsfwScore')) {
+        if (!$nsfwEdited) {
             $record->nsfwScore = $result->nsfwScore;
         }
+
+        $watermarkEdited = $record->isFieldEdited('hasWatermark');
 
         $record->hasWatermarkAi = $result->hasWatermark;
         $record->watermarkConfidence = $result->watermarkConfidence;
         $record->watermarkType = $result->watermarkType;
         $record->watermarkDetails = $result->watermarkDetails;
 
-        if (!$record->isFieldEdited('hasWatermark')) {
+        if (!$watermarkEdited) {
             $record->hasWatermark = $result->hasWatermark;
         }
+
+        $brandEdited = $record->isFieldEdited('containsBrandLogo');
 
         $record->containsBrandLogoAi = $result->containsBrandLogo;
         $record->containsBrandLogoConfidence = $result->containsBrandLogoConfidence;
         $record->detectedBrands = $result->detectedBrands;
 
-        if (!$record->isFieldEdited('containsBrandLogo')) {
+        if (!$brandEdited) {
             $record->containsBrandLogo = $result->containsBrandLogo;
         }
 
         $record->overallQualityScore = $result->overallQualityScore;
 
+        $focalPointEdited = $record->isFieldEdited('focalPointX');
+
         $record->focalPointXAi = $result->focalPointX;
         $record->focalPointYAi = $result->focalPointY;
         $record->focalPointConfidence = $result->focalPointConfidence;
 
-        if (!$record->isFieldEdited('focalPointX')) {
+        if (!$focalPointEdited) {
             $record->focalPointX = $result->focalPointX;
             $record->focalPointY = $result->focalPointY;
         }
@@ -755,9 +771,10 @@ class AssetAnalysisService extends Component
      */
     private function applyAiLongDescription(AssetAnalysisRecord $record, AnalysisResult $result): void
     {
+        $wasEdited = $record->isFieldEdited('longDescription');
         $record->longDescriptionAi = $result->longDescription;
         $record->longDescriptionConfidence = $result->longDescriptionConfidence;
-        if (!$record->isFieldEdited('longDescription')) {
+        if (!$wasEdited) {
             $record->longDescription = $result->longDescription;
         }
         $record->save(false, ['longDescription', 'longDescriptionAi', 'longDescriptionConfidence', 'dateUpdated']);
@@ -772,8 +789,9 @@ class AssetAnalysisService extends Component
             return;
         }
 
+        $wasEdited = $record->isFieldEdited('extractedText');
         $record->extractedTextAi = $result->extractedText;
-        if (!$record->isFieldEdited('extractedText')) {
+        if (!$wasEdited) {
             $record->extractedText = $result->extractedText;
         }
         $record->save(false, ['extractedText', 'extractedTextAi', 'dateUpdated']);
