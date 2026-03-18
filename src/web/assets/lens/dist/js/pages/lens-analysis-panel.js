@@ -160,9 +160,7 @@
                                 Craft.t('lens', 'Title applied to asset.'),
                             );
                             this._updateBridgeAfterApply(btn, response.data.title);
-                            if (!siteId) {
-                                this._syncNativeField('title', response.data.title);
-                            }
+                            this._syncNativeField('title', response.data.title);
                         }
                     });
                 },
@@ -193,9 +191,7 @@
                             // self-selects via .closest() and no-ops if not found
                             this._updateBridgeAfterApply(btn, response.data.alt);
                             this._updateProxyDisplayAfterApply(btn, response.data.alt);
-                            if (!siteId) {
-                                this._syncNativeField('alt', response.data.alt);
-                            }
+                            this._syncNativeField('alt', response.data.alt);
                         }
                     });
                 },

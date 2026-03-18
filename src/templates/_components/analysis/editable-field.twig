@@ -116,7 +116,7 @@
         {# Edit mode (hidden by default) #}
         <div class="lens-field-edit" data-lens-target="field-edit" hidden>
             {% if inputType == 'textarea' %}
-                <textarea class="text fullwidth" rows="3"{% if maxlength %} maxlength="{{ maxlength }}"{% endif %}>{{ value }}</textarea>
+                <textarea class="text fullwidth" rows="6"{% if maxlength %} maxlength="{{ maxlength }}"{% endif %}>{{ value }}</textarea>
             {% else %}
                 <input type="text" class="text fullwidth" value="{{ value }}"{% if maxlength %} maxlength="{{ maxlength }}"{% endif %}>
             {% endif %}

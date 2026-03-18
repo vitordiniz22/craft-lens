@@ -13,7 +13,7 @@
     {% embed 'lens/_components/inline-notice' with {
         type: 'info',
         icon: 'clone',
-        title: totalCount ~ ' ' ~ (totalCount == 1 ? 'Similar Asset Found'|t('lens') : 'Similar Assets Found'|t('lens')),
+        title: totalCount ~ ' ' ~ (totalCount == 1 ? 'Similar Asset'|t('lens') : 'Similar Assets'|t('lens')),
         attr: {'data-lens-target': 'similar-assets-notice'}
     } %}
         {% block body %}

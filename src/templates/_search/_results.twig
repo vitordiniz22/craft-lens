@@ -82,7 +82,7 @@
 {% elseif hasFilters is defined and hasFilters %}
     {% if similarToAsset ?? null %}
         {% include 'lens/_components/empty-state' with {
-            heading: 'No Similar Assets Found'|t('lens'),
+            heading: 'No Similar Assets'|t('lens'),
             description: 'No duplicate or similar assets were detected for this image.'|t('lens'),
             cta: {label: 'Back to Asset'|t('lens'), url: similarToAsset.cpEditUrl, style: ''},
             secondaryCta: {label: 'Browse All Assets'|t('lens'), url: 'lens/search'},
