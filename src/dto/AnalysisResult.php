@@ -41,7 +41,6 @@ readonly class AnalysisResult
      * @param array<array{brand: string, confidence: float, position: string}> $detectedBrands Detected brands with confidence
      * @param int $inputTokens Number of input tokens used (OpenAI)
      * @param int $outputTokens Number of output tokens used (OpenAI)
-     * @param float $overallQualityScore Combined technical quality (0.0 - 1.0)
      * @param float|null $focalPointX Focal point X coordinate (0.0-1.0, left to right)
      * @param float|null $focalPointY Focal point Y coordinate (0.0-1.0, top to bottom)
      * @param float|null $focalPointConfidence Confidence in focal point detection (0.0-1.0)
@@ -74,7 +73,6 @@ readonly class AnalysisResult
         public array $detectedBrands = [],
         public int $inputTokens = 0,
         public int $outputTokens = 0,
-        public float $overallQualityScore = 0.0,
         public ?float $focalPointX = null,
         public ?float $focalPointY = null,
         public ?float $focalPointConfidence = null,
@@ -117,7 +115,6 @@ readonly class AnalysisResult
             'detectedBrands' => $this->detectedBrands,
             'inputTokens' => $this->inputTokens,
             'outputTokens' => $this->outputTokens,
-            'overallQualityScore' => $this->overallQualityScore,
             'focalPointX' => $this->focalPointX,
             'focalPointY' => $this->focalPointY,
             'focalPointConfidence' => $this->focalPointConfidence,
@@ -161,7 +158,6 @@ readonly class AnalysisResult
             containsBrandLogo: false,
             containsBrandLogoConfidence: 0.0,
             detectedBrands: [],
-            overallQualityScore: 0.0,
         );
     }
 }

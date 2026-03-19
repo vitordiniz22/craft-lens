@@ -34,8 +34,6 @@
         </span>
         {% if isEdited %}
             {% include 'lens/_components/analysis/_tooltip-lock' only %}
-        {% else %}
-            {% include 'lens/_components/analysis/_tooltip-ai' with {hasTarget: true} only %}
         {% endif %}
         <span class="lens-field-label">{{ label }}</span>
         {% if not isEdited and (confidence ?? null) and not (hideConfidence ?? false) %}
@@ -85,8 +83,6 @@
         </span>
         {% if not isReview and isEdited %}
             {% include 'lens/_components/analysis/_tooltip-lock' only %}
-        {% elseif not isReview and not isEdited %}
-            {% include 'lens/_components/analysis/_tooltip-ai' with {hasTarget: true} only %}
         {% endif %}
         <span class="lens-field-label">{{ label }}</span>
         {% if (isReview or not isEdited) and (confidence ?? null) and not (hideConfidence ?? false) %}

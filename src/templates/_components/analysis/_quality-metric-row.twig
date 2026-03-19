@@ -2,23 +2,31 @@
  # Quality Metric Row — Single row in a quality/readiness metrics list.
  #
  # Expected variables:
- #   item - {status, icon, label, value (optional), verdict}
+ #   item - {status, icon, label, value (optional), verdict, recommendation (optional)}
  #}
-<div class="lens-quality-metric">
-    <span class="lens-readiness-icon lens-readiness-icon--{{ item.status }}">
-        {{ iconSvg(item.icon)|attr({width: 14, height: 14, fill: 'currentColor'}) }}
-    </span>
-    <span class="lens-metric-label">{{ item.label }}</span>
-    {% if item.value is defined and item.value is not null %}
-        <span class="lens-metric-value">{{ item.value }}</span>
-    {% endif %}
-    {% set badgeVariant = item.status == 'pass' ? 'clear' : (item.status == 'error' ? 'flagged' : 'warning') %}
-    <span class="lens-detection-badge lens-detection-badge--{{ badgeVariant }}">
-        {% if item.status == 'pass' %}
-            {{ iconSvg('check')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
-        {% else %}
-            {{ iconSvg('triangle-exclamation')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
+<div class="lens-quality-metric-wrapper">
+    <div class="lens-quality-metric">
+        <span class="lens-readiness-icon lens-readiness-icon--{{ item.status }}">
+            {{ iconSvg(item.icon)|attr({width: 14, height: 14, fill: 'currentColor'}) }}
+        </span>
+        <span class="lens-metric-label">{{ item.label }}</span>
+        {% if item.value is defined and item.value is not null %}
+            <span class="lens-metric-value">{{ item.value }}</span>
         {% endif %}
-        {{ item.verdict }}
-    </span>
+        {% set badgeVariant = item.status == 'pass' ? 'clear' : (item.status == 'error' ? 'flagged' : 'warning') %}
+        <span class="lens-detection-badge lens-detection-badge--{{ badgeVariant }}">
+            {% if item.status == 'pass' %}
+                {{ iconSvg('check')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
+            {% else %}
+                {{ iconSvg('triangle-exclamation')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
+            {% endif %}
+            {{ item.verdict }}
+        </span>
+    </div>
+    {% if item.recommendation is defined and item.recommendation and item.status != 'pass' %}
+        <p class="lens-metric-recommendation">
+            <span class="lens-metric-recommendation__icon">{{ iconSvg('lightbulb')|attr({width: 12, height: 12, fill: 'currentColor'}) }}</span>
+            {{ item.recommendation }}
+        </p>
+    {% endif %}
 </div>

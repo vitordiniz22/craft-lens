@@ -436,7 +436,7 @@ class Plugin extends BasePlugin
             Asset::class,
             Element::EVENT_REGISTER_SOURCES,
             function(RegisterElementSourcesEvent $event) {
-                if ($event->context !== 'index' || $this->getIsPro()) {
+                if ($event->context !== 'index') {
                     return;
                 }
 
@@ -448,7 +448,7 @@ class Plugin extends BasePlugin
                     'missing-alt-text' => ['Missing Alt Text', ['hasAlt' => false, 'kind' => 'image']],
                     'nsfw-flagged' => ['NSFW Flagged', ['lensNsfwFlagged' => true, 'kind' => 'image']],
                     'low-quality' => ['Low Quality', ['lensLowQuality' => true, 'kind' => 'image']],
-                    'web-readiness-issues' => ['Web Readiness Issues', ['lensWebReadinessIssues' => ['fileTooLarge', 'resolutionTooSmall', 'unsupportedFormat'], 'kind' => 'image']],
+                    'web-readiness-issues' => ['Web Readiness Issues', ['lensWebReadinessIssues' => ['fileTooLarge', 'resolutionTooSmall', 'resolutionOversized', 'unsupportedFormat'], 'kind' => 'image']],
                     'missing-focal-point' => ['Missing Focal Point', ['lensHasFocalPoint' => false, 'kind' => 'image']],
                     'contains-people' => ['Contains People', ['lensContainsPeople' => true, 'kind' => 'image']],
                     'has-watermark' => ['Has Watermark', ['lensHasWatermark' => true, 'kind' => 'image']],

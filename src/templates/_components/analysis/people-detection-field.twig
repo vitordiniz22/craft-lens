@@ -80,8 +80,6 @@
         </span>
         {% if isEdited %}
             {% include 'lens/_components/analysis/_tooltip-lock' only %}
-        {% else %}
-            {% include 'lens/_components/analysis/_tooltip-ai' with {hasTarget: true} only %}
         {% endif %}
         <span class="lens-field-label">{{ 'People Detection'|t('lens') }}</span>
         {% if not isEdited and analysis.containsPeopleConfidence is defined and analysis.containsPeopleConfidence and not (hideConfidence ?? false) %}
@@ -136,8 +134,6 @@
         </span>
         {% if not isReview and isEdited %}
             {% include 'lens/_components/analysis/_tooltip-lock' only %}
-        {% elseif not isReview and not isEdited %}
-            {% include 'lens/_components/analysis/_tooltip-ai' with {hasTarget: true} only %}
         {% endif %}
         <span class="lens-field-label">{{ 'People Detection'|t('lens') }}</span>
         {% if (isReview or not isEdited) and analysis.containsPeopleConfidence is defined and analysis.containsPeopleConfidence and not (hideConfidence ?? false) %}

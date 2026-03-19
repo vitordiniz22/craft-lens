@@ -96,6 +96,7 @@
                 {% set webReadinessOptions = [
                     {value: 'fileTooLarge', label: 'File Too Large (>1MB)'|t('lens')},
                     {value: 'resolutionTooSmall', label: 'Resolution Too Small'|t('lens')},
+                    {value: 'resolutionOversized', label: 'Resolution Oversized (>4096px)'|t('lens')},
                     {value: 'unsupportedFormat', label: 'Unsupported Format'|t('lens')},
                 ] %}
                 {% set activeWebIssues = filters.webReadinessIssues ?? [] %}

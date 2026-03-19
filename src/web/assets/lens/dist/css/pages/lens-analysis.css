@@ -627,12 +627,34 @@
     width: 100%;
 }
 
+.lens-quality-metric-wrapper {
+    border: 1px dashed var(--hairline-color);
+}
+
 .lens-quality-metric {
     display: flex;
     align-items: center;
     gap: 8px;
     padding: 4px 8px;
-    border: 1px dashed var(--hairline-color);
+}
+
+.lens-metric-recommendation {
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--light-text-color);
+    line-height: 1.3;
+    padding: 0 8px 4px;
+    margin: 0;
+}
+
+.lens-metric-recommendation__icon {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+    color: var(--amber-500);
 }
 
 @container (min-width: 500px) {

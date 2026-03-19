@@ -93,7 +93,7 @@
 
                 <div class="lens-section">
                     <div class="lens-section-header">
-                        <span class="lens-section-header__title">{{ 'Quality & Focal Point'|t('lens') }}</span>
+                        <span class="lens-section-header__title">{{ 'Image Assessment'|t('lens') }}</span>
                     </div>
                     <div class="lens-section-body">
                         {% include 'lens/_components/analysis/quality-section' with {
@@ -126,7 +126,8 @@
                             inputType: 'textarea',
                             featured: false,
                             analysisId: analysis.analysisId,
-                            fieldState: 'editing'
+                            fieldState: 'editing',
+                            nullAiIsValid: true
                         } %}
                     </div>
                 </div>

@@ -157,18 +157,6 @@ abstract class BaseAiProvider implements AiProviderInterface
         $instructions[] = '- "nsfwCategories": Array of objects with "category" (one of: adult, violence, hate, self-harm, sexual-minors, drugs) and "confidence" (0.0-1.0). Only include categories with confidence > 0.1';
         $instructions[] = '  Violence category should include: fighting, weapons (guns, knives, swords), blood, injuries, physical assault, warfare, dead bodies, torture';
         $instructions[] = '  Adult category should include: nudity, sexual content, suggestive poses, intimate acts, revealing clothing, shirtless individuals';
-        $instructions[] = '- "overallQualityScore": Combined technical quality assessment (0.0-1.0) for professional DAM use';
-        $instructions[] = '  CRITICAL: This score must reflect production-readiness and usability. Quality detracting factors that MUST reduce the score:';
-        $instructions[] = '  • Watermarks (visible overlays, stock photo watermarks, distracting logos): Reduce score significantly (by 30-50%) depending on obtrusiveness. Obtrusive watermarks should score ≤0.4';
-        $instructions[] = '  • Low resolution/pixelation: Images below 1024x768 or with visible pixelation/compression artifacts should score ≤0.5. Thumbnail-sized images (<512px) should score ≤0.3';
-        $instructions[] = '  • Heavy compression artifacts: JPEG artifacts, color banding, posterization, blocky compression should reduce score proportionally to severity';
-        $instructions[] = '  • Multiple issues compound: An image with watermark + low resolution + noise should score ≤0.3. Multiple major issues should result in scores below 0.2';
-        $instructions[] = '  Example scoring for context:';
-        $instructions[] = '    - Pristine high-resolution, professional photo = 0.9-1.0';
-        $instructions[] = '    - Good quality with minor issues (slight noise, small size) = 0.6-0.8';
-        $instructions[] = '    - Watermarked stock photo (obtrusive) = 0.2-0.4';
-        $instructions[] = '    - Low-resolution (800x600) with watermark = 0.1-0.3';
-        $instructions[] = '    - Thumbnail with multiple issues = 0.0-0.2';
         $instructions[] = '- "hasWatermark": Whether the image contains any visible watermark (boolean)';
         $instructions[] = '- "watermarkConfidence": How confident you are in your hasWatermark assessment (0.0-1.0). Should be HIGH (0.8-1.0) when the image clearly has a watermark OR clearly has no watermark. Should be LOW (0.3-0.6) only when the image is genuinely ambiguous (e.g., faint overlays, decorative text that might be a watermark)';
         $instructions[] = '- "watermarkType": Type of watermark detected. Must be one of: stock, logo, text, copyright, unknown, or null if no watermark';
@@ -270,7 +258,6 @@ abstract class BaseAiProvider implements AiProviderInterface
             detectedBrands: $detectedBrands,
             inputTokens: $usage['inputTokens'],
             outputTokens: $usage['outputTokens'],
-            overallQualityScore: ResponseNormalizer::clampConfidence($data['overallQualityScore'] ?? 0.0),
             focalPointX: isset($data['focalPointX']) ? ResponseNormalizer::clampConfidence((float) $data['focalPointX']) : null,
             focalPointY: isset($data['focalPointY']) ? ResponseNormalizer::clampConfidence((float) $data['focalPointY']) : null,
             focalPointConfidence: isset($data['focalPointConfidence']) ? ResponseNormalizer::clampConfidence((float) $data['focalPointConfidence']) : null,

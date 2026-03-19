@@ -746,7 +746,7 @@ class SearchService extends Component
                 ],
                 'lowOverall' => $conditions[] = [
                     'and',
-                    ['<', 'lens.overallQualityScore', ImageMetricsAnalyzer::OVERALL_QUALITY_AI_THRESHOLD],
+                    ['<', 'lens.overallQualityScore', ImageMetricsAnalyzer::LOW_QUALITY_THRESHOLD],
                     ['not', ['lens.overallQualityScore' => null]],
                 ],
                 default => null,

@@ -2,18 +2,22 @@
  # Reusable Inline Editable Field — 3-State Pattern
  #
  # Expected variables:
- #   fieldName    - string, the field key (e.g. 'suggestedTitle')
- #   label        - string|null (optional), display label
- #   value        - string|null, current value
- #   aiValue      - string|null, original AI value
- #   confidence   - float|null, AI confidence (0-1)
- #   inputType    - string, 'text' or 'textarea' (default: 'text')
- #   featured     - bool, use featured styling (default: false)
- #   analysisId   - int, the analysis record ID
- #   fieldState   - 'readonly'|'unlocked'|'editing'
+ #   fieldName      - string, the field key (e.g. 'suggestedTitle')
+ #   label          - string|null (optional), display label
+ #   value          - string|null, current value
+ #   aiValue        - string|null, original AI value
+ #   confidence     - float|null, AI confidence (0-1)
+ #   inputType      - string, 'text' or 'textarea' (default: 'text')
+ #   featured       - bool, use featured styling (default: false)
+ #   analysisId     - int, the analysis record ID
+ #   fieldState     - 'readonly'|'unlocked'|'editing'
+ #   nullAiIsValid  - bool, treat null AI value as valid suggestion (default: false)
+ #                    When true, a null aiValue means "AI found nothing" and the user
+ #                    can revert to that empty state after manually adding content.
  #}
 
-{% set isEdited = aiValue is not null and value != aiValue %}
+{% set nullAiIsValid = nullAiIsValid ?? false %}
+{% set isEdited = (aiValue is not null and value != aiValue) or (nullAiIsValid and aiValue is null and value is not null and value != '') %}
 {% set inputType = inputType ?? 'text' %}
 {% set featured = featured ?? false %}
 {% set fieldState = fieldState ?? 'readonly' %}
@@ -67,6 +71,7 @@
      data-lens-field="{{ fieldName }}"
      data-lens-analysis-id="{{ analysisId }}"
      {% if siteId %}data-lens-site-id="{{ siteId }}"{% endif %}
+     {% if nullAiIsValid %}data-lens-null-ai-valid="1"{% endif %}
      {% endif %}>
 
     <div class="lens-field-header" data-lens-target="field-header">
@@ -131,19 +136,27 @@
 
     {# AI suggestion #}
     {% if isReview %}
-        {% if aiValue and aiValue != value %}
+        {% if isEdited %}
             <div class="lens-ai-suggestion-inline">
                 {% include 'lens/_components/analysis/_tooltip-ai' only %}
-                {{ 'AI: "{value}"'|t('lens', {value: aiValue|truncate(60)}) }}
+                {% if aiValue %}
+                    {{ 'AI: "{value}"'|t('lens', {value: aiValue|truncate(60)}) }}
+                {% else %}
+                    {{ 'AI: No text detected'|t('lens') }}
+                {% endif %}
             </div>
         {% endif %}
     {% else %}
-        {% set showAiSuggestion = aiValue is not null and aiValue != value %}
+        {% set showAiSuggestion = isEdited %}
         <div class="lens-ai-suggestion-inline" data-lens-target="field-ai-suggestion"{% if not showAiSuggestion %} hidden{% endif %}>
             {% include 'lens/_components/analysis/_tooltip-ai' only %}
             <span data-lens-target="ai-suggestion-text">
                 {% if showAiSuggestion %}
-                    {{ 'AI suggested: "{value}"'|t('lens', {value: aiValue|truncate(100)}) }}
+                    {% if aiValue %}
+                        {{ 'AI suggested: "{value}"'|t('lens', {value: aiValue|truncate(100)}) }}
+                    {% else %}
+                        {{ 'AI suggested: No text detected'|t('lens') }}
+                    {% endif %}
                 {% endif %}
             </span>
             <button type="button" class="lens-revert-trigger" data-lens-action="field-revert" data-lens-field="{{ fieldName }}" data-lens-analysis-id="{{ analysisId }}"{% if siteId %} data-lens-site-id="{{ siteId }}"{% endif %}{% if not showAiSuggestion %} hidden{% endif %}>

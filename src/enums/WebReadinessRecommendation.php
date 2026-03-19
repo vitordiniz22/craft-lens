@@ -32,11 +32,11 @@ enum WebReadinessRecommendation: string
     public function recommendation(): string
     {
         return match ($this) {
-            self::FileLarge => Craft::t('lens', 'For best web performance, keep images under 1MB or use Craft transforms for delivery.'),
-            self::FileVeryLarge => Craft::t('lens', 'May cause slow loading, especially on mobile. Optimize the source or configure Craft transforms.'),
-            self::ResolutionTooSmall => Craft::t('lens', 'Image may be too small for full-width layouts (1200px+ recommended).'),
-            self::ResolutionOversized => Craft::t('lens', 'Source exceeds 4096px. Use Craft image transforms to serve appropriately sized images.'),
-            self::BrowserUnsupportedFormat => Craft::t('lens', 'TIFF format is not supported by most web browsers. Ensure Craft transforms convert this asset for delivery.'),
+            self::FileLarge => Craft::t('lens', 'Consider using Craft image transforms in templates to serve an optimized version to visitors.'),
+            self::FileVeryLarge => Craft::t('lens', 'Very large source file. Ensure Craft image transforms are used in templates to avoid slow page loads.'),
+            self::ResolutionTooSmall => Craft::t('lens', 'May be too small for full-width layouts. 1200px or wider is recommended.'),
+            self::ResolutionOversized => Craft::t('lens', 'Larger than needed for web. Use Craft image transforms to serve appropriately sized images.'),
+            self::BrowserUnsupportedFormat => Craft::t('lens', 'Convert to JPEG, PNG, or WebP for broad browser support.'),
         };
     }
 

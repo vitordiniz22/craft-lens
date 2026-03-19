@@ -50,7 +50,7 @@ class LowQualityConditionRule extends BaseLightswitchConditionRule implements El
             return !$this->value;
         }
 
-        $isLowQuality = (float) $analysis->overallQualityScore < ImageMetricsAnalyzer::OVERALL_QUALITY_AI_THRESHOLD;
+        $isLowQuality = (float) $analysis->overallQualityScore < ImageMetricsAnalyzer::LOW_QUALITY_THRESHOLD;
 
         return $this->matchValue($isLowQuality);
     }

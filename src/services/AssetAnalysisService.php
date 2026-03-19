@@ -382,6 +382,14 @@ class AssetAnalysisService extends Component
                 $record->noiseScore = $localMetrics['raw']['contrastScore'];
                 $record->jpegQuality = $localMetrics['raw']['jpegQuality'];
                 $record->colorProfile = $localMetrics['raw']['colorProfile'];
+
+                $record->overallQualityScore = ImageMetricsAnalyzer::computeOverallQuality(
+                    $localMetrics['raw']['sharpnessScore'],
+                    $localMetrics['raw']['exposureScore'],
+                    $localMetrics['raw']['contrastScore'],
+                    $localMetrics['raw']['jpegQuality'],
+                    $localMetrics['raw']['colorProfile'],
+                );
             }
 
             $record->processedAt = DateTimeHelper::now();
@@ -751,8 +759,6 @@ class AssetAnalysisService extends Component
         if (!$brandEdited) {
             $record->containsBrandLogo = $result->containsBrandLogo;
         }
-
-        $record->overallQualityScore = $result->overallQualityScore;
 
         $focalPointEdited = $record->isFieldEdited('focalPointX');
 

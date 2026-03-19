@@ -129,11 +129,20 @@
             window.Lens.core.API.revertField(analysisId, fieldName, siteId ? { siteId: siteId } : undefined).then((response) => {
                 if (response.data.success) {
                     // Update display and input
+                    var revertedValue = response.data.value || '';
                     var displayP = fieldEl.querySelector('[data-lens-target="field-display"] p');
                     var input = fieldEl.querySelector('[data-lens-target="field-edit"] input, [data-lens-target="field-edit"] textarea');
 
-                    if (displayP) displayP.textContent = response.data.value;
-                    if (input) input.value = response.data.value;
+                    if (displayP) {
+                        if (revertedValue) {
+                            displayP.textContent = revertedValue;
+                            displayP.classList.remove('light');
+                        } else {
+                            displayP.textContent = Craft.t('lens', 'Not available');
+                            displayP.classList.add('light');
+                        }
+                    }
+                    if (input) input.value = revertedValue;
 
                     // Remove lock icon and AI suggestion (values now match AI)
                     this._removeLockIcon(fieldEl);
@@ -404,7 +413,13 @@
         _updateFieldDisplay: function(fieldEl, data) {
             var displayP = fieldEl.querySelector('[data-lens-target="field-display"] p');
             if (displayP) {
-                displayP.textContent = data.value;
+                if (data.value) {
+                    displayP.textContent = data.value;
+                    displayP.classList.remove('light');
+                } else {
+                    displayP.textContent = Craft.t('lens', 'Not available');
+                    displayP.classList.add('light');
+                }
             }
 
             // Remove confidence badge (field is now user-edited)
@@ -571,15 +586,21 @@
 
         _updateAISuggestion: function(fieldEl, data) {
             var DOM = window.Lens.core.DOM;
+            var nullAiIsValid = fieldEl.dataset.lensNullAiValid === '1';
 
             var aiSuggestion = fieldEl.querySelector('[data-lens-target="field-ai-suggestion"]');
             if (aiSuggestion) {
-                if (data.aiValue && data.aiValue !== data.value) {
-                    var maxLen = window.Lens.config.THRESHOLDS.AI_SUGGESTION_PREVIEW_LENGTH;
-                    var truncated = data.aiValue.length > maxLen ? data.aiValue.substring(0, maxLen) + '...' : data.aiValue;
+                var aiDiffers = data.aiValue ? (data.aiValue !== data.value) : (nullAiIsValid && data.value);
+                if (aiDiffers) {
                     var textSpan = aiSuggestion.querySelector('[data-lens-target="ai-suggestion-text"]');
                     if (textSpan) {
-                        textSpan.textContent = Craft.t('lens', 'AI suggested: "{value}"', { value: truncated });
+                        if (data.aiValue) {
+                            var maxLen = window.Lens.config.THRESHOLDS.AI_SUGGESTION_PREVIEW_LENGTH;
+                            var truncated = data.aiValue.length > maxLen ? data.aiValue.substring(0, maxLen) + '...' : data.aiValue;
+                            textSpan.textContent = Craft.t('lens', 'AI suggested: "{value}"', { value: truncated });
+                        } else {
+                            textSpan.textContent = Craft.t('lens', 'AI suggested: No text detected');
+                        }
                     }
                     var revertBtn = aiSuggestion.querySelector('[data-lens-action="field-revert"]');
                     if (revertBtn) DOM.show(revertBtn);

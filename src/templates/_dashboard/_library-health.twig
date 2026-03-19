@@ -46,7 +46,7 @@
             linkText: 'View missing'|t('lens'),
         } only %}
 
-        {# Tag Coverage (Pro only) #}
+        {# Tag Coverage #}
         {% if lens.isPro %}
             {% set tagMissing = taggedPercentage.total - taggedPercentage.withTags %}
             {% include 'lens/_dashboard/_coverage-metric' with {

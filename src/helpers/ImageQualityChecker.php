@@ -43,7 +43,7 @@ class ImageQualityChecker
                 'label' => Craft::t('lens', 'File Size'),
                 'value' => $formattedSize,
                 'verdict' => Craft::t('lens', 'Too large'),
-                'recommendation' => Craft::t('lens', 'Compress or resize to improve page load times'),
+                'recommendation' => Craft::t('lens', 'Very large source file. Ensure Craft image transforms are used in templates to avoid slow page loads.'),
             ];
         } elseif ($fileSize >= self::FILE_SIZE_WARNING) {
             $issues[] = WebReadinessRecommendation::FileLarge;
@@ -53,7 +53,7 @@ class ImageQualityChecker
                 'label' => Craft::t('lens', 'File Size'),
                 'value' => $formattedSize,
                 'verdict' => Craft::t('lens', 'Large'),
-                'recommendation' => Craft::t('lens', 'Compress or resize to improve page load times'),
+                'recommendation' => Craft::t('lens', 'Consider using Craft image transforms in templates to serve an optimized version to visitors.'),
             ];
         } else {
             $checks['fileSize'] = [
@@ -81,7 +81,7 @@ class ImageQualityChecker
                     'label' => Craft::t('lens', 'Resolution'),
                     'value' => $dimensions,
                     'verdict' => Craft::t('lens', 'Too small'),
-                    'recommendation' => Craft::t('lens', 'May appear pixelated when displayed at larger sizes'),
+                    'recommendation' => Craft::t('lens', 'May be too small for full-width layouts. 1200px or wider is recommended.'),
                 ];
             } elseif ($width > self::MAX_WIDTH_RECOMMENDED) {
                 $issues[] = WebReadinessRecommendation::ResolutionOversized;
@@ -91,7 +91,7 @@ class ImageQualityChecker
                     'label' => Craft::t('lens', 'Resolution'),
                     'value' => $dimensions,
                     'verdict' => Craft::t('lens', 'Oversized'),
-                    'recommendation' => Craft::t('lens', 'Exceeds recommended web resolution'),
+                    'recommendation' => Craft::t('lens', 'Larger than needed for web. Use Craft image transforms to serve appropriately sized images.'),
                 ];
             } else {
                 $checks['resolution'] = [
@@ -118,6 +118,19 @@ class ImageQualityChecker
                 'value' => $formatDisplay,
                 'verdict' => Craft::t('lens', 'Unsupported'),
                 'recommendation' => Craft::t('lens', 'Convert to JPEG, PNG, or WebP for broad browser support'),
+            ];
+        }
+
+        // Standard web formats — shown as passing (broad support)
+        $standardFormats = ['jpg', 'jpeg', 'png', 'gif', 'svg'];
+        if (in_array($extension, $standardFormats, true) && !isset($checks['format'])) {
+            $checks['format'] = [
+                'status' => 'pass',
+                'icon' => 'image',
+                'label' => Craft::t('lens', 'Format'),
+                'value' => $formatDisplay,
+                'verdict' => Craft::t('lens', 'Widely supported'),
+                'recommendation' => null,
             ];
         }
 

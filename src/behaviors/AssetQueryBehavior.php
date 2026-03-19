@@ -724,14 +724,14 @@ class AssetQueryBehavior extends Behavior
     {
         if ($this->lensLowQuality) {
             $this->ensureJoined();
-            $this->owner->subQuery->andWhere(['<', 'lens.overallQualityScore', ImageMetricsAnalyzer::OVERALL_QUALITY_AI_THRESHOLD]);
+            $this->owner->subQuery->andWhere(['<', 'lens.overallQualityScore', ImageMetricsAnalyzer::LOW_QUALITY_THRESHOLD]);
             $this->owner->subQuery->andWhere(['not', ['lens.overallQualityScore' => null]]);
         } else {
             $this->ensureLeftJoined();
             $this->owner->subQuery->andWhere([
                 'or',
                 ['lens.overallQualityScore' => null],
-                ['>=', 'lens.overallQualityScore', ImageMetricsAnalyzer::OVERALL_QUALITY_AI_THRESHOLD],
+                ['>=', 'lens.overallQualityScore', ImageMetricsAnalyzer::LOW_QUALITY_THRESHOLD],
             ]);
         }
     }
@@ -748,6 +748,11 @@ class AssetQueryBehavior extends Behavior
                     'and',
                     ['>', 'assets.width', 0],
                     ['<', 'assets.width', ImageQualityChecker::MIN_WIDTH_RECOMMENDED],
+                ],
+                'resolutionOversized' => $conditions[] = [
+                    'and',
+                    ['>', 'assets.width', 0],
+                    ['>', 'assets.width', ImageQualityChecker::MAX_WIDTH_RECOMMENDED],
                 ],
                 'unsupportedFormat' => $conditions[] = [
                     'or',
