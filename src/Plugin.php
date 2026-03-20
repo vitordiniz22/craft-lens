@@ -436,7 +436,7 @@ class Plugin extends BasePlugin
             Asset::class,
             Element::EVENT_REGISTER_SOURCES,
             function(RegisterElementSourcesEvent $event) {
-                if ($event->context !== 'index') {
+                if ($event->context !== 'index' || $this->getIsPro()) {
                     return;
                 }
 

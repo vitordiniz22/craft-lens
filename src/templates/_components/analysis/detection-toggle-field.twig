@@ -51,7 +51,7 @@
     </div>
 
     {% if (details ?? [])|length %}
-        <div class="lens-detection-detail">
+        <div class="lens-detection-detail" data-lens-chips-active="{{ detected ? '1' : '0' }}">
             {% for detail in details %}
                 <span class="lens-detection-chip">{{ detail }}</span>
             {% endfor %}
@@ -102,6 +102,14 @@
         </span>
     </div>
 
+    {% if (details ?? [])|length %}
+        <div class="lens-detection-detail" data-lens-target="detection-detail" data-lens-chips-active="{{ detected ? '1' : '0' }}">
+            {% for detail in details %}
+                <span class="lens-detection-chip">{{ detail }}</span>
+            {% endfor %}
+        </div>
+    {% endif %}
+
     {# Segmented control — hidden by default in unlocked, always visible in review #}
     <div{% if not isReview %} class="lens-field-edit" data-lens-target="detection-edit-panel" hidden{% endif %}>
         <div class="lens-segmented-control">
@@ -131,9 +139,9 @@
             {# Hidden input to hold selected value #}
             <input type="hidden" data-lens-target="detection-value" value="{{ detected ? trueValue : falseValue }}">
 
-            {# Cancel link to close without saving #}
+            {# Close link to dismiss edit panel #}
             <div class="lens-field-actions">
-                <button type="button" class="btn small" data-lens-action="detection-cancel">{{ 'Cancel'|t('lens') }}</button>
+                <button type="button" class="btn small" data-lens-action="detection-cancel">{{ 'Close'|t('lens') }}</button>
             </div>
         {% endif %}
     </div>
@@ -143,7 +151,8 @@
     <div class="lens-ai-suggestion-inline" data-lens-target="detection-ai-suggestion"{% if not aiDiffers %} hidden{% endif %}>
         {% include 'lens/_components/analysis/_tooltip-ai' only %}
         <span data-lens-target="detection-ai-text">
-            {{ 'AI suggested: "{value}"'|t('lens', {value: detectedAi ? detectedLabel : clearedLabel}) }}
+            {% set aiText = (detectedAi ? detectedLabel : clearedLabel) ~ ((detectedAi and (details ?? [])|length) ? ' (' ~ details|join(', ') ~ ')' : '') %}
+            {{ 'AI suggested: "{value}"'|t('lens', {value: aiText}) }}
         </span>
         {% if not isReview %}
             <button type="button" class="lens-revert-trigger" data-lens-action="detection-revert" data-lens-field="{{ fieldName }}" data-lens-analysis-id="{{ analysisId }}"{% if not aiDiffers %} hidden{% endif %}>
@@ -151,14 +160,6 @@
             </button>
         {% endif %}
     </div>
-
-    {% if (details ?? [])|length %}
-        <div class="lens-detection-detail">
-            {% for detail in details %}
-                <span class="lens-detection-chip">{{ detail }}</span>
-            {% endfor %}
-        </div>
-    {% endif %}
 </div>
 
 {% endif %}

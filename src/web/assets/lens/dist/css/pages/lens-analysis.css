@@ -341,66 +341,57 @@
 }
 
 
-/* Current asset value context row (review page only) */
-.lens-native-current--context {
+/* Bridge apply row (review page — apply checkbox + current value context) */
+.lens-bridge-apply-row {
     display: flex;
+    align-items: center;
     flex-wrap: wrap;
-    align-items: baseline;
     gap: 6px;
-    padding: 6px 10px;
-    margin-bottom: 8px;
-    background: var(--gray-050);
-    border-radius: var(--small-border-radius);
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--medium-text-color);
 }
 
-.lens-native-current-label {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--medium-text-color);
+.lens-bridge-apply-row .status {
     flex-shrink: 0;
 }
 
-/* Status chip (review page context row) */
-.lens-native-chip {
+.lens-apply-checkbox {
     display: inline-flex;
     align-items: center;
-    padding: 1px 8px;
-    border-radius: 10px;
-    font-size: 11px;
+    gap: 4px;
     font-weight: 600;
-    line-height: 1.6;
+    cursor: pointer;
+}
+
+.lens-apply-checkbox input[type="checkbox"] {
+    margin: 0;
+}
+
+.lens-context-separator {
+    color: var(--hairline-color);
+}
+
+.lens-bridge-apply-row__label {
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.lens-bridge-apply-row__value {
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.lens-native-chip--auto {
-    background: var(--gray-200);
-    color: var(--medium-text-color);
-}
-
-/* AI suggestion section */
-.lens-native-suggestion {
-    margin-top: 6px;
-    margin-bottom: 6px;
-}
-
-.lens-native-suggestion p {
-    margin: 0;
-    font-size: 14px;
-    color: var(--text-color);
-    line-height: 1.5;
-}
-
-.lens-native-suggestion-label {
-    font-size: 12px;
+.lens-native-context-chip {
+    display: inline-block;
+    font-size: 11px;
     font-weight: 600;
     color: var(--medium-text-color);
-}
-
-/* Status line (review page) */
-.lens-native-status {
-    margin-top: 4px;
-    font-size: 12px;
-    font-style: italic;
+    background: var(--gray-200);
+    padding: 0 6px;
+    border-radius: 8px;
+    margin-left: 2px;
 }
 
 /* ==========================================================================
@@ -470,37 +461,28 @@
     color: var(--error-color);
 }
 
-/* Inline input that flows with chips */
-.lens-tag-inline-input-wrapper {
-    position: relative;
-    display: inline-flex;
+/* Taxonomy add field — shared container for tag input / color picker + action buttons */
+.lens-taxonomy-add-field {
+    margin-top: 15px;
+    max-width: 360px;
+    display: flex;
+    gap: 8px;
     align-items: center;
-    width: 200px;
-    flex: 0 0 200px;
 }
 
-.lens-tag-inline-input {
-    border: 1px dashed var(--gray-300);
-    border-radius: var(--small-border-radius);
-    padding: 4px 8px;
-    font-size: 13px;
-    background: transparent;
-    width: 100%;
-    outline: none;
-    color: var(--text-color);
-    height: auto;
-    line-height: 1.4;
+.lens-taxonomy-input-wrapper {
+    position: relative;
 }
 
-.lens-tag-inline-input:focus {
-    border-color: var(--link-color);
-    border-style: solid;
-    background: var(--white);
+.lens-taxonomy-add-field .lens-field-actions {
+    margin-top: 0px;
 }
 
-.lens-tag-inline-input::placeholder {
-    color: var(--light-text-color);
-    font-style: italic;
+/* Color picker row inside taxonomy add field */
+.lens-color-picker-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 /* Autocomplete suggestions dropdown */
@@ -569,51 +551,40 @@
     font-size: 12px;
 }
 
-/* Inline color picker button — flows with chips */
-.lens-color-add-btn {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    border: 1px dashed var(--gray-300);
+.lens-color-preview {
+    width: 32px;
+    height: 32px;
+    padding: 1px;
+    border: 1px solid var(--hairline-color);
     border-radius: var(--small-border-radius);
-    background: transparent;
     cursor: pointer;
-    flex: 0 0 28px;
-    padding: 0;
+    flex-shrink: 0;
 }
 
-.lens-color-add-btn:hover {
-    border-color: var(--link-color);
-    border-style: solid;
+.lens-color-hex-input {
+    width: 90px;
+    flex: 0 0 90px;
+    font-family: var(--mono-font-family);
+    font-size: 13px;
 }
 
-.lens-color-add-icon {
-    font-size: 16px;
-    line-height: 1;
-    color: var(--medium-text-color);
-    pointer-events: none;
-    margin-bottom: 2px;
+/* ==========================================================================
+   Taxonomy Edit Mode Toggle
+   ========================================================================== */
+
+/* Hide editing controls when toggle present but NOT in edit mode */
+[data-lens-edit-mode="toggle"]:not(.lens-is-editing) .lens-tag-remove,
+[data-lens-edit-mode="toggle"]:not(.lens-is-editing) [data-lens-target="tag-input-wrapper"],
+[data-lens-edit-mode="toggle"]:not(.lens-is-editing) [data-lens-target="color-add-row"] {
+    display: none;
 }
 
-.lens-color-add-btn:hover .lens-color-add-icon {
-    color: var(--link-color);
+/* Hide pencil when in edit mode */
+[data-lens-edit-mode="toggle"].lens-is-editing .lens-edit-trigger {
+    display: none;
 }
 
-.lens-color-picker-hidden {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    opacity: 0;
-    cursor: pointer;
-    border: none;
-    padding: 0;
-}
-
+/* "Done" button — hidden by default, shown in edit mode */
 /* Swatch component defined in components/swatch.css */
 
 /* ==========================================================================
@@ -898,16 +869,16 @@
     pointer-events: none;
 }
 
-/* Detail chips inside detection row — hidden unless flagged */
+/* Detail chips inside detection row — hidden when cleared */
 .lens-detection-detail {
     display: none;
-}
-
-.lens-editable-field--detection.lens-accent-bar--red .lens-detection-detail {
-    display: flex;
     flex-wrap: wrap;
     gap: 6px;
     margin-top: 6px;
+}
+
+.lens-detection-detail[data-lens-chips-active="1"] {
+    display: flex;
 }
 
 /* Detection detail chips (NSFW categories, brand names, etc.) */

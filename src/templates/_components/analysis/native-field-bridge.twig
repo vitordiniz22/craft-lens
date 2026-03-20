@@ -5,8 +5,8 @@
  # (when AltField is in layout). The current asset value is NOT shown here —
  # the user can see it in Craft's native field above.
  #
- # On the review page (editing state), the current asset value IS shown as
- # context since the reviewer doesn't have the asset editor open.
+ # On the review page (editing state), an "Apply to asset" checkbox and
+ # compact current-value context replace the heavy "Current asset value" block.
  #
  # Expected variables:
  #   fieldName       - string, the analysis field key (e.g. 'suggestedTitle', 'altText')
@@ -72,7 +72,7 @@
 {# ============================================================
    UNLOCKED / EDITING — Same component, different interaction mode.
    unlocked: asset edit page (suggestion display + apply button)
-   editing:  review page (current value context + editable input)
+   editing:  review page (editable input + apply checkbox + compact context)
    ============================================================ #}
 {% elseif fieldState == 'unlocked' or fieldState == 'editing' %}
 
@@ -107,32 +107,37 @@
     </div>
 
     {% if isReview %}
-        {# Current asset value (static context — reviewer needs this) #}
-        <div class="lens-native-current lens-native-current--context">
-            <span class="lens-native-current-label">{{ 'Current asset value'|t('lens') }}:</span>
-            {% if isNativeDefault %}
-                <span class="light"><em>{{ nativeValue ?: 'Empty'|t('lens') }}</em></span>
-                <span class="lens-native-chip lens-native-chip--auto">{{ nativeValue ? 'Auto-generated'|t('lens') : 'Empty'|t('lens') }}</span>
-            {% elseif nativeValue %}
-                <span>{{ nativeValue }}</span>
-            {% else %}
-                <span class="light"><em>{{ 'Empty'|t('lens') }}</em></span>
-            {% endif %}
-        </div>
-
-        {# Editable suggestion input #}
+        {# Editable suggestion input (primary — what the reviewer evaluates) #}
         {% if inputType == 'textarea' %}
             <textarea class="text fullwidth" name="{{ fieldName }}" rows="2"{% if maxlength %} maxlength="{{ maxlength }}"{% endif %} data-lens-target="bridge-review-input"{% if aiValue ?? null %} data-lens-ai-value="{{ aiValue }}"{% endif %}>{{ suggestionValue }}</textarea>
         {% else %}
             <input type="text" class="text fullwidth" name="{{ fieldName }}" value="{{ suggestionValue }}"{% if maxlength %} maxlength="{{ maxlength }}"{% endif %} data-lens-target="bridge-review-input"{% if aiValue ?? null %} data-lens-ai-value="{{ aiValue }}"{% endif %}>
         {% endif %}
 
-        {# Status line #}
-        <div class="lens-native-status">
+        {# Apply control + current asset value context #}
+        {% set applyParamName = fieldName == 'suggestedTitle' ? 'applyTitle' : 'applyAlt' %}
+        <div class="lens-bridge-apply-row">
             {% if valuesMatch %}
-                <span class="light">{{ 'Already applied to asset'|t('lens') }}</span>
-            {% elseif hasSuggestion %}
-                <span class="light">{{ 'Will be applied to the asset on approval'|t('lens') }}</span>
+                <span class="status on"></span>
+                <span>{{ 'Matches current asset value'|t('lens') }}</span>
+            {% else %}
+                <label class="lens-apply-checkbox">
+                    <input type="hidden" name="{{ applyParamName }}" value="0">
+                    <input type="checkbox" name="{{ applyParamName }}" value="1" checked>
+                    <span>{{ 'Apply to asset'|t('lens') }}</span>
+                </label>
+                <span class="lens-context-separator">&middot;</span>
+                <span class="lens-bridge-apply-row__label">{{ 'Current:'|t('lens') }}</span>
+                <span class="lens-bridge-apply-row__value">
+                    {% if isNativeDefault %}
+                        <em>{{ nativeValue ?: ('Empty'|t('lens')) }}</em>
+                        <span class="lens-native-context-chip">{{ nativeValue ? ('Auto-generated'|t('lens')) : ('Empty'|t('lens')) }}</span>
+                    {% elseif nativeValue %}
+                        {{ nativeValue|length > 80 ? nativeValue|slice(0, 80) ~ '…' : nativeValue }}
+                    {% else %}
+                        <em>{{ 'Empty'|t('lens') }}</em>
+                    {% endif %}
+                </span>
             {% endif %}
         </div>
     {% else %}

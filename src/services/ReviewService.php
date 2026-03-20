@@ -31,7 +31,7 @@ class ReviewService extends Component
      * @throws InvalidArgumentException If analysis record not found
      * @throws \RuntimeException If save fails
      */
-    public function approve(int $analysisId, ?int $userId = null): void
+    public function approve(int $analysisId, ?int $userId = null, array $applyOverrides = []): void
     {
         $record = AssetAnalysisRecord::findOne($analysisId);
 
@@ -44,7 +44,7 @@ class ReviewService extends Component
 
         Logger::info(LogCategory::Review, 'Analysis approved', assetId: $record->assetId);
 
-        $this->autoApplyAfterApproval($record);
+        $this->autoApplyAfterApproval($record, $applyOverrides);
 
         try {
             Plugin::getInstance()->searchIndex->reindexField($record, 'title');
@@ -137,7 +137,7 @@ class ReviewService extends Component
      * @throws InvalidArgumentException If analysis record not found
      * @throws \RuntimeException If save fails
      */
-    public function editAndApprove(int $analysisId, array $modifications, ?int $userId = null): void
+    public function editAndApprove(int $analysisId, array $modifications, ?int $userId = null, array $applyOverrides = []): void
     {
         $record = AssetAnalysisRecord::findOne($analysisId);
 
@@ -207,7 +207,7 @@ class ReviewService extends Component
             'editedFields' => array_keys($modifications),
         ]);
 
-        $this->approve($analysisId, $userId);
+        $this->approve($analysisId, $userId, $applyOverrides);
     }
 
     /**
@@ -477,7 +477,7 @@ class ReviewService extends Component
      *
      * Only applies fields that haven't been manually set on the asset.
      */
-    private function autoApplyAfterApproval(AssetAnalysisRecord $record): void
+    private function autoApplyAfterApproval(AssetAnalysisRecord $record, array $applyOverrides = []): void
     {
         $asset = Asset::find()->id($record->assetId)->one();
 
@@ -485,7 +485,7 @@ class ReviewService extends Component
             return;
         }
 
-        Plugin::getInstance()->assetAnalysis->autoApplyFromRecord($asset, $record);
+        Plugin::getInstance()->assetAnalysis->autoApplyFromRecord($asset, $record, $applyOverrides);
     }
 
     /**

@@ -86,7 +86,7 @@
             <span class="badge">{{ (analysis.containsPeopleConfidence * 100)|round }}%</span>
         {% endif %}
         {% if hasPeople %}
-            <span class="lens-detection-badge lens-detection-badge--clear">
+            <span class="lens-detection-badge lens-detection-badge--info">
                 {{ iconSvg('user')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
                 {{ _self.peopleDetectionText(analysis.containsPeople, analysis.faceCount) }}
             </span>
@@ -142,7 +142,7 @@
         {% if not isReview %}
             {% include 'lens/_components/analysis/_tooltip-edit' with {editAction: 'people-edit'} only %}
         {% endif %}
-        <span class="lens-detection-badge lens-detection-badge--clear" data-lens-target="people-badge">
+        <span class="lens-detection-badge {{ hasPeople ? 'lens-detection-badge--info' : 'lens-detection-badge--clear' }}" data-lens-target="people-badge">
             {% if hasPeople %}
                 {{ iconSvg('user')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
                 <span data-lens-target="people-display-text">{{ _self.peopleDetectionText(analysis.containsPeople, analysis.faceCount) }}</span>
@@ -177,7 +177,7 @@
         </div>
         {% if not isReview %}
             <div class="lens-field-actions">
-                <button type="button" class="btn small" data-lens-action="people-cancel">{{ 'Cancel'|t('lens') }}</button>
+                <button type="button" class="btn small" data-lens-action="people-cancel">{{ 'Close'|t('lens') }}</button>
             </div>
         {% endif %}
     </div>

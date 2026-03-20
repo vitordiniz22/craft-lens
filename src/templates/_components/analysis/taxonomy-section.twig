@@ -13,9 +13,12 @@
 
 {% if showTaxonomy %}
     {# Tags #}
-    <div class="lens-editable-field" data-lens-target="tag-editor" data-lens-analysis-id="{{ analysis.id }}"{{ autoSave ? ' data-lens-auto-save="1"' }}>
+    <div class="lens-editable-field{{ fieldState == 'editing' ? ' lens-is-editing' }}" data-lens-target="tag-editor" data-lens-analysis-id="{{ analysis.id }}"{{ autoSave ? ' data-lens-auto-save="1"' }}{{ isInteractive ? ' data-lens-edit-mode="toggle"' }}>
         <div class="lens-field-header" data-lens-target="field-header">
             <span class="lens-field-label" data-lens-target="field-label">{{ 'Tags'|t('lens') }} ({{ analysisTags|length }})</span>
+            {% if isInteractive %}
+                {% include 'lens/_components/analysis/_tooltip-edit' with {editAction: 'taxonomy-edit'} only %}
+            {% endif %}
         </div>
 
         <div class="lens-tag-chips" data-lens-target="tag-chips">
@@ -32,14 +35,20 @@
                     </div>
                 </a>
             {% endfor %}
+        </div>
 
-            {% if isInteractive %}
-                <div class="lens-tag-inline-input-wrapper" data-lens-target="tag-input-wrapper">
-                    <input type="text" class="text small lens-tag-inline-input" data-lens-control="tag-input" placeholder="{{ 'Add tag'|t('lens') }}" maxlength="255">
+        {% if isInteractive %}
+            <div class="lens-taxonomy-add-field" data-lens-target="tag-input-wrapper">
+                <div class="lens-taxonomy-input-wrapper">
+                    <input type="text" class="text small fullwidth" data-lens-control="tag-input" placeholder="{{ 'Add tag...'|t('lens') }}" maxlength="255">
                     <div class="lens-tag-suggestions" data-lens-target="tag-suggestions"></div>
                 </div>
-            {% endif %}
-        </div>
+                <div class="lens-field-actions">
+                    <button type="button" class="btn small submit" data-lens-action="tag-add">{{ 'Add'|t('lens') }}</button>
+                    <button type="button" class="btn small" data-lens-action="taxonomy-done">{{ 'Done'|t('lens') }}</button>
+                </div>
+            </div>
+        {% endif %}
 
         {% if isInteractive %}
             <template data-lens-target="tag-chip-template">
@@ -54,9 +63,12 @@
     </div>
 
     {# Colors #}
-    <div class="lens-editable-field" data-lens-target="color-editor" data-lens-analysis-id="{{ analysis.id }}"{{ autoSave ? ' data-lens-auto-save="1"' }}>
+    <div class="lens-editable-field{{ fieldState == 'editing' ? ' lens-is-editing' }}" data-lens-target="color-editor" data-lens-analysis-id="{{ analysis.id }}"{{ autoSave ? ' data-lens-auto-save="1"' }}{{ isInteractive ? ' data-lens-edit-mode="toggle"' }}>
         <div class="lens-field-header" data-lens-target="field-header">
             <span class="lens-field-label" data-lens-target="field-label">{{ 'Colors'|t('lens') }} ({{ analysisColors|length }})</span>
+            {% if isInteractive %}
+                {% include 'lens/_components/analysis/_tooltip-edit' with {editAction: 'taxonomy-edit'} only %}
+            {% endif %}
         </div>
 
         <div class="lens-tag-chips" data-lens-target="color-swatches">
@@ -74,14 +86,20 @@
                     </div>
                 </a>
             {% endfor %}
-
-            {% if isInteractive %}
-                <button type="button" class="lens-color-add-btn" data-lens-action="color-add" title="{{ 'Add color'|t('lens') }}">
-                    <input type="color" class="lens-color-picker-hidden" data-lens-control="color-picker" value="#000000" tabindex="-1">
-                    <span class="lens-color-add-icon">+</span>
-                </button>
-            {% endif %}
         </div>
+
+        {% if isInteractive %}
+            <div class="lens-taxonomy-add-field" data-lens-target="color-add-row">
+                <div class="lens-color-picker-row">
+                    <input type="color" class="lens-color-preview" data-lens-control="color-picker" value="#000000">
+                    <input type="text" class="text small lens-color-hex-input" data-lens-control="color-hex-input" placeholder="#000000" maxlength="7" value="#000000">
+                </div>
+                <div class="lens-field-actions">
+                    <button type="button" class="btn small submit" data-lens-action="color-add">{{ 'Add'|t('lens') }}</button>
+                    <button type="button" class="btn small" data-lens-action="taxonomy-done">{{ 'Done'|t('lens') }}</button>
+                </div>
+            </div>
+        {% endif %}
 
         {% if isInteractive %}
             <template data-lens-target="color-item-template">

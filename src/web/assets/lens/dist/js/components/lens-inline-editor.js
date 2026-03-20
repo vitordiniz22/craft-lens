@@ -33,7 +33,8 @@
         _shouldInit: function() {
             return document.querySelector('[data-lens-target="editable-field"]') !== null ||
                    document.querySelector('[data-lens-target="people-detection"]') !== null ||
-                   document.querySelector('[data-lens-target="detection-toggle"]') !== null;
+                   document.querySelector('[data-lens-target="detection-toggle"]') !== null ||
+                   document.querySelector('[data-lens-edit-mode="toggle"]') !== null;
         },
 
         /**
@@ -64,6 +65,10 @@
 
             // Detection toggle auto-save on segmented control change
             DOM.delegate('[data-lens-control="detection-radio"]', 'change', this._handleDetectionAutoSave.bind(this));
+
+            // Taxonomy edit mode toggle
+            DOM.delegate('[data-lens-action="taxonomy-edit"]', 'click', this._handleTaxonomyEdit.bind(this));
+            DOM.delegate('[data-lens-action="taxonomy-done"]', 'click', this._handleTaxonomyDone.bind(this));
         },
 
         // ================================================================
@@ -407,6 +412,24 @@
         },
 
         // ================================================================
+        // Taxonomy Edit Mode Toggle
+        // ================================================================
+
+        _handleTaxonomyEdit: function(e, trigger) {
+            var container = trigger.closest('[data-lens-edit-mode="toggle"]');
+            if (!container) return;
+            container.classList.add('lens-is-editing');
+            var tagInput = container.querySelector('[data-lens-control="tag-input"]');
+            if (tagInput) tagInput.focus();
+        },
+
+        _handleTaxonomyDone: function(e, trigger) {
+            var container = trigger.closest('[data-lens-edit-mode="toggle"]');
+            if (!container) return;
+            container.classList.remove('lens-is-editing');
+        },
+
+        // ================================================================
         // Helper Methods
         // ================================================================
 
@@ -469,7 +492,7 @@
 
             var displayText = badge.querySelector('[data-lens-target="people-display-text"]');
 
-            badge.className = 'lens-detection-badge lens-detection-badge--clear';
+            badge.className = 'lens-detection-badge ' + (fields.containsPeople ? 'lens-detection-badge--info' : 'lens-detection-badge--clear');
             if (displayText) {
                 displayText.textContent = fields.containsPeople
                     ? window.Lens.services.PeopleDetection.formatText(fields.containsPeople, fields.faceCount)
@@ -536,6 +559,11 @@
         _updateDetectionRowAccent: function(fieldEl, isDetected) {
             fieldEl.classList.toggle('lens-accent-bar', isDetected);
             fieldEl.classList.toggle('lens-accent-bar--red', isDetected);
+
+            var detailEl = fieldEl.querySelector('[data-lens-target="detection-detail"]');
+            if (detailEl) {
+                detailEl.dataset.lensChipsActive = isDetected ? '1' : '0';
+            }
         },
 
         _showLockIcon: function(fieldEl) {

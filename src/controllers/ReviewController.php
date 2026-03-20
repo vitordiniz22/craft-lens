@@ -108,11 +108,23 @@ class ReviewController extends Controller
         $userId = Craft::$app->getUser()->getId();
         $reviewService = Plugin::getInstance()->review;
 
+        $applyOverrides = [];
+
+        if (isset($modifications['applyTitle'])) {
+            $applyOverrides['applyTitle'] = $modifications['applyTitle'];
+            unset($modifications['applyTitle']);
+        }
+
+        if (isset($modifications['applyAlt'])) {
+            $applyOverrides['applyAlt'] = $modifications['applyAlt'];
+            unset($modifications['applyAlt']);
+        }
+
         try {
             if (!empty($modifications)) {
-                $reviewService->editAndApprove($analysisId, $modifications, $userId);
+                $reviewService->editAndApprove($analysisId, $modifications, $userId, $applyOverrides);
             } else {
-                $reviewService->approve($analysisId, $userId);
+                $reviewService->approve($analysisId, $userId, $applyOverrides);
             }
         } catch (\InvalidArgumentException $e) {
             throw new BadRequestHttpException($e->getMessage());
@@ -402,6 +414,7 @@ class ReviewController extends Controller
 
         foreach (['containsPeople', 'hasWatermark', 'containsBrandLogo'] as $field) {
             $value = $this->request->getBodyParam($field);
+
             if ($value !== null) {
                 $modifications[$field] = (bool) $value;
             }
@@ -419,9 +432,22 @@ class ReviewController extends Controller
 
         if ($siteContentJson !== null) {
             $siteContent = is_string($siteContentJson) ? json_decode($siteContentJson, true) : $siteContentJson;
+
             if (is_array($siteContent) && !empty($siteContent)) {
                 $modifications['siteContent'] = $siteContent;
             }
+        }
+
+        $applyTitle = $this->request->getBodyParam('applyTitle');
+
+        if ($applyTitle !== null) {
+            $modifications['applyTitle'] = (bool) (int) $applyTitle;
+        }
+
+        $applyAlt = $this->request->getBodyParam('applyAlt');
+
+        if ($applyAlt !== null) {
+            $modifications['applyAlt'] = (bool) (int) $applyAlt;
         }
 
         return $modifications;

@@ -57,6 +57,9 @@
 
             // Hide suggestions on blur
             DOM.delegate('[data-lens-control="tag-input"]', 'focusout', this._handleInputBlur.bind(this));
+
+            // Add button
+            DOM.delegate('[data-lens-action="tag-add"]', 'click', this._handleTagAddClick.bind(this));
         },
 
         // ================================================================
@@ -112,6 +115,11 @@
             }
 
             this._loadSuggestions(editor, query);
+        },
+
+        _handleTagAddClick: function(e, btn) {
+            var editor = btn.closest('[data-lens-target="tag-editor"]');
+            if (editor) this._addTagFromInput(editor);
         },
 
         _handleTagRemove: function(e, removeBtn) {
@@ -212,13 +220,7 @@
             chip.dataset.lensConfidence = isAi ? '' : '1';
             chip.querySelector('[data-lens-target="chip-label"]').textContent = tagName;
 
-            var inputWrapper = chips.querySelector('[data-lens-target="tag-input-wrapper"]');
-
-            if (inputWrapper) {
-                chips.insertBefore(chip, inputWrapper);
-            } else {
-                chips.appendChild(chip);
-            }
+            chips.appendChild(chip);
 
             chip.classList.add('lens-is-new');
             chip.addEventListener('animationend', function() {

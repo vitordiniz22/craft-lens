@@ -46,11 +46,10 @@
     falseValue: 0,
     confidence: analysis.watermarkConfidence ?? null,
     hideConfidence: hideConfidence ?? false,
-    details: (analysis.hasWatermark and analysis.watermarkType) ? [
+    details: (analysis.watermarkType) ? [
         ({ 'stock': 'Stock Photo'|t('lens'), 'logo': 'Logo'|t('lens'), 'text': 'Text'|t('lens'), 'copyright': 'Copyright'|t('lens'), 'unknown': 'Unknown'|t('lens') }[analysis.watermarkType] ?? analysis.watermarkType|capitalize)
-    ]|merge(
-        (analysis.watermarkType == 'stock' and analysis.watermarkDetails.stockProvider is defined) ? [analysis.watermarkDetails.stockProvider] : []
-    ) : []
+        ~ ((analysis.watermarkType == 'stock' and analysis.watermarkDetails.stockProvider is defined) ? ' · ' ~ analysis.watermarkDetails.stockProvider : '')
+    ] : []
 } only %}
 
 {# Brand Detection Toggle #}

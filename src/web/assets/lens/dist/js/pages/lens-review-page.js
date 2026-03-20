@@ -113,11 +113,13 @@
 
                 var currentDetected = parseFloat(radio.value) > 0;
 
-                // Update accent bar and icon styling
+                // Update accent bar, icon styling, and detail chips
                 container.classList.toggle('lens-accent-bar', currentDetected);
                 container.classList.toggle('lens-accent-bar--red', currentDetected);
                 var icon = container.querySelector('[data-lens-target="detection-icon"]');
                 if (icon) icon.classList.toggle('lens-detection-icon--flagged', currentDetected);
+                var detailEl = container.querySelector('[data-lens-target="detection-detail"]');
+                if (detailEl) detailEl.dataset.lensChipsActive = currentDetected ? '1' : '0';
 
                 // Update status badge
                 var badge = container.querySelector('[data-lens-target="detection-badge"]');
