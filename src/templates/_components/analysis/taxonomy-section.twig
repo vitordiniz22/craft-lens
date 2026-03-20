@@ -27,7 +27,7 @@
                     <div class="chip-content">
                         <span class="chip-label" data-lens-target="chip-label">{{ tag.tag }}</span>
                         {% if tag.confidence and not (hideConfidence ?? false) %}
-                            <span class="badge">{{ (tag.confidence * 100)|round }}%</span>
+                            <craft-tooltip text="{{ 'AI confidence for this tag'|t('lens') }}"><button type="button" class="badge">{{ (tag.confidence * 100)|round }}%</button></craft-tooltip>
                         {% endif %}
                         {% if isInteractive %}
                             <button type="button" class="lens-tag-remove" data-lens-action="tag-remove" title="{{ 'Remove'|t('lens') }}">&times;</button>
@@ -78,7 +78,7 @@
                         <span class="lens-swatch lens-swatch--sm" data-lens-target="color-swatch" style="background-color: {{ color.hex }}"></span>
                         <span class="chip-label lens-color-hex" data-lens-target="chip-label">{{ color.hex }}</span>
                         {% if color.percentage and not isInteractive %}
-                            <span class="badge">{{ (color.percentage * 100)|round }}%</span>
+                            <craft-tooltip text="{{ 'Color coverage in image'|t('lens') }}"><button type="button" class="badge">{{ (color.percentage * 100)|round }}%</button></craft-tooltip>
                         {% endif %}
                         {% if isInteractive %}
                             <button type="button" class="lens-tag-remove" data-lens-action="color-remove" title="{{ 'Remove'|t('lens') }}">&times;</button>

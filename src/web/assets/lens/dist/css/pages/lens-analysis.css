@@ -944,7 +944,7 @@
 }
 
 .lens-translations-body {
-    padding: 12px 14px 4px;
+    border-top: 1px solid var(--gray-100);
 }
 
 .lens-translations-body.hidden {
@@ -1020,14 +1020,7 @@
 }
 
 .lens-translation-summary__confidence {
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--medium-text-color);
     flex-shrink: 0;
-}
-
-.lens-translation-summary__confidence--low {
-    color: var(--amber-700);
 }
 
 .lens-translation-summary__hint {

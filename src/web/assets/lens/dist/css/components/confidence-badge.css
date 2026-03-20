@@ -4,6 +4,15 @@
  * Follows strict BEM naming convention.
  */
 
+/* Button reset for craft-tooltip trigger */
+craft-tooltip .lens-confidence-badge,
+craft-tooltip .badge {
+  appearance: none;
+  border: none;
+  margin: 0;
+  cursor: inherit;
+}
+
 .lens-confidence-badge {
   display: inline-block;
   padding: 2px 6px;
@@ -14,8 +23,8 @@
 }
 
 .lens-confidence-badge--high {
-  background: var(--emerald-100);
-  color: var(--emerald-900);
+  background: var(--gray-100);
+  color: var(--medium-text-color);
 }
 
 .lens-confidence-badge--medium {

@@ -386,8 +386,16 @@
 }
 
 .lens-ai-suggestion-inline .lens-revert-trigger,
-.lens-ai-suggestion-inline .lens-applied-indicator {
+.lens-ai-suggestion-inline .lens-applied-indicator,
+.lens-ai-suggestion-actions {
   margin-left: auto;
+}
+
+.lens-ai-suggestion-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .lens-ai-suggestion-inline[hidden] {

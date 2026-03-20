@@ -86,7 +86,7 @@
         {% endif %}
         <span class="lens-field-label">{{ label }}</span>
         {% if (isReview or not isEdited) and (confidence ?? null) and not (hideConfidence ?? false) %}
-            <span class="badge"{% if not isReview %} data-lens-target="confidence-badge"{% endif %}>{{ (confidence * 100)|round }}%</span>
+            <craft-tooltip text="{{ 'AI confidence for this field'|t('lens') }}"><button type="button" class="badge"{% if not isReview %} data-lens-target="confidence-badge"{% endif %}>{{ (confidence * 100)|round }}%</button></craft-tooltip>
         {% endif %}
         {% if not isReview %}
             {% include 'lens/_components/analysis/_tooltip-edit' with {editAction: 'detection-edit'} only %}

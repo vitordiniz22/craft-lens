@@ -85,19 +85,19 @@
         <span data-lens-target="fp-actions-text">
             {{ 'Different focal point suggested'|t('lens') }}
         </span>
-        &middot;
-        <button type="button" class="lens-revert-trigger"
-                data-lens-action="focal-accept">
-            {{ 'Accept'|t('lens') }}
-        </button>
-        <span class="lens-focal-undo-group">
-            &middot;
+        <span class="lens-ai-suggestion-actions">
             <button type="button" class="lens-revert-trigger"
-                    data-lens-action="focal-use-current"
-                    data-lens-asset-focal-x="{{ analysis.assetFocalPoint.x }}"
-                    data-lens-asset-focal-y="{{ analysis.assetFocalPoint.y }}">
-                {{ 'Undo'|t('lens') }}
+                    data-lens-action="focal-accept">
+                {{ 'Accept'|t('lens') }}
             </button>
+            <span class="lens-focal-undo-group">
+                <button type="button" class="lens-revert-trigger"
+                        data-lens-action="focal-use-current"
+                        data-lens-asset-focal-x="{{ analysis.assetFocalPoint.x }}"
+                        data-lens-asset-focal-y="{{ analysis.assetFocalPoint.y }}">
+                    {{ 'Undo'|t('lens') }}
+                </button>
+            </span>
         </span>
     </div>
 {% endif %}
@@ -117,13 +117,14 @@
                 y: (analysis.focalPointYAi * 100)|round ~ '%'
             }) }}
         </span>
-        &middot;
-        <button type="button" class="lens-revert-trigger"
-                data-lens-action="focal-revert"
-                data-lens-focal-x-ai="{{ analysis.focalPointXAi }}"
-                data-lens-focal-y-ai="{{ analysis.focalPointYAi }}">
-            {{ 'Revert to AI'|t('lens') }}
-        </button>
+        <span class="lens-ai-suggestion-actions">
+            <button type="button" class="lens-revert-trigger"
+                    data-lens-action="focal-revert"
+                    data-lens-focal-x-ai="{{ analysis.focalPointXAi }}"
+                    data-lens-focal-y-ai="{{ analysis.focalPointYAi }}">
+                {{ 'Revert to AI'|t('lens') }}
+            </button>
+        </span>
     </div>
 {% endif %}
 

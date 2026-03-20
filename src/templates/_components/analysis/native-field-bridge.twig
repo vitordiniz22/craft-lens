@@ -47,7 +47,7 @@
         {% endif %}
         <span class="lens-field-label">{{ label }}</span>
         {% if not isEdited and confidence and not (hideConfidence ?? false) %}
-            <span class="badge" data-lens-target="confidence-badge">{{ (confidence * 100)|round }}%</span>
+            <craft-tooltip text="{{ 'AI confidence for this field'|t('lens') }}"><button type="button" class="badge" data-lens-target="confidence-badge">{{ (confidence * 100)|round }}%</button></craft-tooltip>
         {% endif %}
     </div>
 
@@ -95,13 +95,13 @@
         <span class="lens-field-label">{{ label }}</span>
         {% if isReview %}
             {% if confidence and confidence < 0.8 %}
-                <span class="lens-confidence-badge lens-confidence-{{ (confidence * 100)|round >= 50 ? 'medium' : 'low' }}">
+                <craft-tooltip text="{{ 'AI confidence for this field'|t('lens') }}"><button type="button" class="lens-confidence-badge lens-confidence-{{ (confidence * 100)|round >= 50 ? 'medium' : 'low' }}">
                     {{ (confidence * 100)|round }}%
-                </span>
+                </button></craft-tooltip>
             {% endif %}
         {% else %}
             {% if not isEdited and confidence and not (hideConfidence ?? false) %}
-                <span class="badge" data-lens-target="confidence-badge">{{ (confidence * 100)|round }}%</span>
+                <craft-tooltip text="{{ 'AI confidence for this field'|t('lens') }}"><button type="button" class="badge" data-lens-target="confidence-badge">{{ (confidence * 100)|round }}%</button></craft-tooltip>
             {% endif %}
         {% endif %}
     </div>

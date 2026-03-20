@@ -29,7 +29,7 @@
     <div class="lens-field-header" data-lens-target="field-header">
         <span class="lens-field-label">{{ 'Alt Text'|t('lens') }}</span>
         {% if confidence and not (hideConfidence ?? false) %}
-            <span class="badge" data-lens-target="confidence-badge">{{ (confidence * 100)|round }}%</span>
+            <craft-tooltip text="{{ 'AI confidence for this field'|t('lens') }}"><button type="button" class="badge" data-lens-target="confidence-badge">{{ (confidence * 100)|round }}%</button></craft-tooltip>
         {% endif %}
     </div>
 
@@ -71,13 +71,13 @@
         <span class="lens-field-label">{{ 'Alt Text'|t('lens') }}</span>
         {% if isReview %}
             {% if confidence and confidence < 0.8 %}
-                <span class="lens-confidence-badge lens-confidence-{{ (confidence * 100)|round >= 50 ? 'medium' : 'low' }}">
+                <craft-tooltip text="{{ 'AI confidence for this field'|t('lens') }}"><button type="button" class="lens-confidence-badge lens-confidence-{{ (confidence * 100)|round >= 50 ? 'medium' : 'low' }}">
                     {{ (confidence * 100)|round }}%
-                </span>
+                </button></craft-tooltip>
             {% endif %}
         {% else %}
             {% if confidence and not (hideConfidence ?? false) %}
-                <span class="badge" data-lens-target="confidence-badge">{{ (confidence * 100)|round }}%</span>
+                <craft-tooltip text="{{ 'AI confidence for this field'|t('lens') }}"><button type="button" class="badge" data-lens-target="confidence-badge">{{ (confidence * 100)|round }}%</button></craft-tooltip>
             {% endif %}
             {% include 'lens/_components/analysis/_tooltip-edit' with {editAction: 'alt-proxy-edit'} only %}
         {% endif %}

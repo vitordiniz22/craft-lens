@@ -42,9 +42,11 @@
                     <span class="lens-translation-lang-chip">{{ site.language }}</span>
                     <span class="lens-translation-summary__preview">{{ preview|length > 40 ? preview|slice(0, 40) ~ '…' : preview }}</span>
                     {% if minConf %}
-                        <span class="lens-translation-summary__confidence{{ isLowConf ? ' lens-translation-summary__confidence--low' : '' }}">
-                            {{ (minConf * 100)|round }}%{% if isLowConf %} &#9888;{% endif %}
-                        </span>
+                        {% set confPct = (minConf * 100)|round %}
+                        {% set confTier = confPct >= 80 ? 'high' : (confPct >= 50 ? 'medium' : 'low') %}
+                        <craft-tooltip text="{{ 'AI confidence for this translation'|t('lens') }}"><button type="button" class="lens-confidence-badge lens-confidence-badge--{{ confTier }} lens-translation-summary__confidence">
+                            {{ confPct }}%{% if isLowConf %} &#9888;{% endif %}
+                        </button></craft-tooltip>
                     {% endif %}
                 </div>
             {% endfor %}

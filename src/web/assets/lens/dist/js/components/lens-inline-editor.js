@@ -445,10 +445,12 @@
                 }
             }
 
-            // Remove confidence badge (field is now user-edited)
             var header = fieldEl.querySelector('[data-lens-target="field-header"]');
             var badge = header ? header.querySelector('[data-lens-target="confidence-badge"]') : null;
-            if (badge) badge.remove();
+            if (badge) {
+                var badgeTooltip = badge.closest('craft-tooltip');
+                (badgeTooltip || badge).remove();
+            }
         },
 
         _savePeopleFields: function(analysisId, fields) {
@@ -577,9 +579,11 @@
                 window.Lens.core.DOM.hide(aiBadgeTooltip || aiBadge);
             }
 
-            // Remove confidence badge (field is now user-edited)
             var confidenceBadge = header.querySelector('[data-lens-target="confidence-badge"]');
-            if (confidenceBadge) confidenceBadge.remove();
+            if (confidenceBadge) {
+                var badgeTooltip = confidenceBadge.closest('craft-tooltip');
+                (badgeTooltip || confidenceBadge).remove();
+            }
 
             if (!header.querySelector('[data-lens-target="lock-icon"]')) {
                 var tpl = document.querySelector('[data-lens-target="lock-template"]');
