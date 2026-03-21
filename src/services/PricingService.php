@@ -115,20 +115,6 @@ class PricingService extends Component
     }
 
     /**
-     * Get supported model names for a provider.
-     *
-     * @return string[]
-     */
-    public function getSupportedModels(AiProvider $provider): array
-    {
-        return match ($provider) {
-            AiProvider::OpenAi => array_keys(self::OPENAI_PRICING),
-            AiProvider::Gemini => array_keys(self::GEMINI_PRICING),
-            AiProvider::Claude => array_keys(self::CLAUDE_PRICING),
-        };
-    }
-
-    /**
      * Extract token usage from OpenAI response.
      *
      * @return array{inputTokens: int, outputTokens: int}
