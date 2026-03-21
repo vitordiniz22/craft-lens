@@ -139,13 +139,33 @@
             return this._getOrCreateContainer(editor, 'tag-chips', 'lens-tag-chips');
         },
 
+        // --------------------------------------------------------------------
+        // Auto-save shared by TagEditor and ColorEditor.
+        // --------------------------------------------------------------------
+
         /**
-         * Create or get swatches container for colors
-         * @param {HTMLElement} editor - Color editor element
-         * @returns {HTMLElement|null} Swatches container
+         * Auto-save taxonomy items (tags or colors) via AJAX.
+         * Guards on data-lens-auto-save="1" and data-lens-analysis-id.
+         * @param {HTMLElement} editor - Editor container
+         * @param {string} action - Craft action path (e.g., 'lens/analysis/update-tags')
+         * @param {string} payloadKey - Key for the JSON payload (e.g., 'tags' or 'colors')
+         * @param {Array} items - Collected items to save
+         * @param {string} successMessage - Notice on success
+         * @param {string} errorMessage - Notice on failure
          */
-        getOrCreateSwatchesContainer: function(editor) {
-            return this._getOrCreateContainer(editor, 'color-swatches', 'lens-tag-chips');
+        autoSave: function(editor, action, payloadKey, items, successMessage, errorMessage) {
+            if (!editor || editor.dataset.lensAutoSave !== '1') return;
+            var analysisId = editor.dataset.lensAnalysisId;
+            if (!analysisId) return;
+
+            var data = { analysisId: analysisId };
+            data[payloadKey] = JSON.stringify(items);
+
+            window.Lens.core.API.post(action, data).then(function() {
+                Craft.cp.displayNotice(successMessage);
+            }).catch(function() {
+                Craft.cp.displayError(errorMessage);
+            });
         },
 
         // --------------------------------------------------------------------

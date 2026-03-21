@@ -116,7 +116,7 @@
                             this._showLockIcon(fieldEl);
                             this._updateAISuggestion(fieldEl, response.data);
                             window.Lens.core.DOM.exitEditMode(fieldEl, 'field-display', 'field-edit');
-                            this._resetFormBaseline(fieldEl);
+                            window.Lens.core.DOM.resetFormBaseline(fieldEl);
                             Craft.cp.displayNotice(Craft.t('lens', 'Field updated.'));
                         }
                     });
@@ -144,7 +144,7 @@
                     // Remove lock icon and AI suggestion (values now match AI)
                     this._removeLockIcon(fieldEl);
                     this._removeAISuggestion(fieldEl);
-                    this._resetFormBaseline(fieldEl);
+                    window.Lens.core.DOM.resetFormBaseline(fieldEl);
 
                     Craft.cp.displayNotice(Craft.t('lens', 'Reverted to AI value.'));
                 }
@@ -220,7 +220,7 @@
                 this._updatePeopleBadge(fieldEl, fields);
                 window.Lens.core.DOM.exitEditMode(fieldEl, 'field-display', 'people-edit-panel');
                 this._dispatchPeopleUpdateEvent(analysisId, fields);
-                this._resetFormBaseline(fieldEl);
+                window.Lens.core.DOM.resetFormBaseline(fieldEl);
                 Craft.cp.displayNotice(Craft.t('lens', 'People detection updated.'));
             });
         },
@@ -261,7 +261,7 @@
                 if (fieldEl) {
                     this._revertPeopleUI(fieldEl, fields);
                     this._dispatchPeopleUpdateEvent(analysisId, fields);
-                    this._resetFormBaseline(fieldEl);
+                    window.Lens.core.DOM.resetFormBaseline(fieldEl);
                 }
 
                 Craft.cp.displayNotice(Craft.t('lens', 'Reverted to AI values.'));
@@ -332,7 +332,7 @@
                     var editPanel = fieldEl.querySelector('[data-lens-target="detection-edit-panel"]');
                     if (editPanel) window.Lens.core.DOM.hide(editPanel);
 
-                    this._resetFormBaseline(fieldEl);
+                    window.Lens.core.DOM.resetFormBaseline(fieldEl);
                     Craft.cp.displayNotice(Craft.t('lens', 'Detection updated.'));
                 }
             });
@@ -342,41 +342,44 @@
             var fieldEl = window.Lens.core.DOM.findTarget(revertBtn, 'detection-toggle');
             var analysisId = revertBtn.dataset.lensAnalysisId;
             var fieldName = revertBtn.dataset.lensField;
+            var isDetectedAi = fieldEl.dataset.lensDetectedAi === '1';
 
             // Review context: client-side revert (no AJAX)
             if (this._isReviewContext(fieldEl)) {
-                var isDetectedAi = fieldEl.dataset.lensDetectedAi === '1';
-                var revertedValue = this._restoreDetectionRadios(fieldEl, isDetectedAi);
+                var revertedValue = this._applyDetectionRevert(fieldEl, isDetectedAi);
                 this._syncHiddenInput(fieldName, revertedValue);
-                this._updateDetectionUI(fieldEl, isDetectedAi);
-                this._removeLockIcon(fieldEl);
-                var suggestion = fieldEl.querySelector('[data-lens-target="detection-ai-suggestion"]');
-                if (suggestion) window.Lens.core.DOM.hide(suggestion);
                 return;
             }
 
             window.Lens.core.API.revertField(analysisId, fieldName).then((response) => {
                 if (response.data.success) {
                     if (fieldEl) {
-                        var isDetectedAi = fieldEl.dataset.lensDetectedAi === '1';
-                        this._updateDetectionUI(fieldEl, isDetectedAi);
-
-                        var revertedValue = this._restoreDetectionRadios(fieldEl, isDetectedAi);
-                        var hiddenInput = fieldEl.querySelector('[data-lens-target="detection-value"]');
-                        if (hiddenInput) hiddenInput.value = revertedValue;
-
-                        this._removeLockIcon(fieldEl);
-                        var suggestion = fieldEl.querySelector('[data-lens-target="detection-ai-suggestion"]');
-                        if (suggestion) window.Lens.core.DOM.hide(suggestion);
-
-                        this._resetFormBaseline(fieldEl);
+                        this._applyDetectionRevert(fieldEl, isDetectedAi);
+                        window.Lens.core.DOM.resetFormBaseline(fieldEl);
                     }
-
                     Craft.cp.displayNotice(Craft.t('lens', 'Reverted to AI value.'));
                 }
             }).catch(() => {
                 Craft.cp.displayError(Craft.t('lens', 'Failed to revert.'));
             });
+        },
+
+        /**
+         * Shared UI update for detection revert (both review and non-review paths).
+         * @returns {string} The reverted radio value
+         */
+        _applyDetectionRevert: function(fieldEl, isDetectedAi) {
+            var revertedValue = this._restoreDetectionRadios(fieldEl, isDetectedAi);
+            this._updateDetectionUI(fieldEl, isDetectedAi);
+
+            var hiddenInput = fieldEl.querySelector('[data-lens-target="detection-value"]');
+            if (hiddenInput) hiddenInput.value = revertedValue;
+
+            this._removeLockIcon(fieldEl);
+            var suggestion = fieldEl.querySelector('[data-lens-target="detection-ai-suggestion"]');
+            if (suggestion) window.Lens.core.DOM.hide(suggestion);
+
+            return revertedValue;
         },
 
         // ================================================================
@@ -679,18 +682,6 @@
                              fieldEl.querySelector('[data-lens-target="people-ai-suggestion"]');
             if (suggestion) {
                 window.Lens.core.DOM.hide(suggestion);
-            }
-        },
-
-        /**
-         * Reset Craft's form change tracker after AJAX save.
-         * Prevents "Changes you made may not be saved" warning on page unload.
-         */
-        _resetFormBaseline: function(el) {
-            var $form = $(el).closest('form[data-confirm-unload]');
-            if ($form.length) {
-                var serializer = $form.data('serializer');
-                $form.data('initialSerializedValue', typeof serializer === 'function' ? serializer() : $form.serialize());
             }
         },
 

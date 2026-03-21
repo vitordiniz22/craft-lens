@@ -166,23 +166,11 @@
         // ================================================================
 
         _autoSave: function(editor, successMessage) {
-            if (!editor) return;
-
-            if (editor.dataset.lensAutoSave !== '1') return;
-
-            var analysisId = editor.dataset.lensAnalysisId;
-            if (!analysisId) return;
-
             var colors = window.Lens.services.Taxonomy.collectColors(editor);
-
-            window.Lens.core.API.post('lens/analysis/update-colors', {
-                analysisId: analysisId,
-                colors: JSON.stringify(colors)
-            }).then(function() {
-                Craft.cp.displayNotice(successMessage);
-            }).catch(function() {
-                Craft.cp.displayError(Craft.t('lens', 'Failed to save colors.'));
-            });
+            window.Lens.services.Taxonomy.autoSave(
+                editor, 'lens/analysis/update-colors', 'colors', colors,
+                successMessage, Craft.t('lens', 'Failed to save colors.')
+            );
         },
 
         // ================================================================

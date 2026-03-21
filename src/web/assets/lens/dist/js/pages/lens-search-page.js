@@ -86,40 +86,25 @@
             if (!form) return;
 
             form.addEventListener('submit', function () {
-                var selects = form.querySelectorAll('select');
-                var hiddenInputs = form.querySelectorAll(
-                    'input[type="hidden"]'
-                );
-                var inputs = form.querySelectorAll(
-                    'input[type="text"], input[type="number"], input[type="date"]'
+                var fields = form.querySelectorAll(
+                    'input[type="text"], input[type="number"], input[type="date"], input[type="hidden"], select'
                 );
 
-                inputs.forEach(function (input) {
-                    if (!input.value) input.disabled = true;
-                });
-
-                hiddenInputs.forEach(function (input) {
-                    if (!input.value) input.disabled = true;
-                });
-
-                selects.forEach(function (select) {
-                    if (select.multiple) {
-                        var hasSelection = Array.from(select.options).some(
-                            function (opt) {
-                                return opt.selected;
-                            }
-                        );
-
-                        if (!hasSelection) select.disabled = true;
-                    } else if (!select.value) {
-                        select.disabled = true;
+                fields.forEach(function (field) {
+                    if (field.tagName === 'SELECT') {
+                        if (field.multiple) {
+                            var hasSelection = Array.from(field.options).some(function (opt) { return opt.selected; });
+                            if (!hasSelection) field.disabled = true;
+                        } else if (!field.value) {
+                            field.disabled = true;
+                        }
+                    } else if (!field.value) {
+                        field.disabled = true;
                     }
                 });
 
                 setTimeout(function () {
-                    inputs.forEach(function (input) { input.disabled = false; });
-                    hiddenInputs.forEach(function (input) { input.disabled = false; });
-                    selects.forEach(function (select) { select.disabled = false; });
+                    fields.forEach(function (field) { field.disabled = false; });
                 }, window.Lens.config.ANIMATION.FORM_FIELD_DEBOUNCE_MS);
             });
         },

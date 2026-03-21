@@ -145,6 +145,19 @@
         },
 
         /**
+         * Reset Craft's form change tracker after AJAX save.
+         * Prevents "Changes you made may not be saved" warning on page unload.
+         * @param {HTMLElement} el - Element inside the form
+         */
+        resetFormBaseline: function(el) {
+            var $form = $(el).closest('form[data-confirm-unload]');
+            if ($form.length) {
+                var serializer = $form.data('serializer');
+                $form.data('initialSerializedValue', typeof serializer === 'function' ? serializer() : $form.serialize());
+            }
+        },
+
+        /**
          * Exit edit mode pattern - show display, hide edit
          * @param {HTMLElement} container - Container element
          * @param {string} displayTargetName - data-lens-target for display element

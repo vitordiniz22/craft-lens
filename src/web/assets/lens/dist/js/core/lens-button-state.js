@@ -45,24 +45,6 @@
         },
 
         /**
-         * Disable a button
-         * @param {HTMLElement} button - Button element
-         */
-        disable: function(button) {
-            if (!button) return;
-            button.disabled = true;
-        },
-
-        /**
-         * Enable a button
-         * @param {HTMLElement} button - Button element
-         */
-        enable: function(button) {
-            if (!button) return;
-            button.disabled = false;
-        },
-
-        /**
          * Wrap an operation with loading state
          * Automatically handles loading state, errors, and restoration
          * @param {HTMLElement} button - Button element

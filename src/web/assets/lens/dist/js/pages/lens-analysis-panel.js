@@ -244,7 +244,7 @@
             // Hide suggestion section
             var suggestion = proxy.querySelector('[data-lens-target="alt-proxy-suggestion"]');
             if (suggestion) {
-                suggestion.hidden = true;
+                window.Lens.core.DOM.hide(suggestion);
             }
         },
 
@@ -254,24 +254,16 @@
 
         _handleAltProxyEdit: function (e, btn) {
             var proxy = btn.closest('[data-lens-target="alt-proxy-field"]');
-            if (!proxy) return;
-
-            var display = proxy.querySelector('[data-lens-target="alt-proxy-display"]');
-            var editArea = proxy.querySelector('[data-lens-target="alt-proxy-edit-area"]');
-
-            if (display) display.hidden = true;
-            if (editArea) editArea.hidden = false;
+            if (proxy) {
+                window.Lens.core.DOM.enterEditMode(proxy, 'alt-proxy-display', 'alt-proxy-edit-area');
+            }
         },
 
         _handleAltProxyCancel: function (e, btn) {
             var proxy = btn.closest('[data-lens-target="alt-proxy-field"]');
-            if (!proxy) return;
-
-            var display = proxy.querySelector('[data-lens-target="alt-proxy-display"]');
-            var editArea = proxy.querySelector('[data-lens-target="alt-proxy-edit-area"]');
-
-            if (display) display.hidden = false;
-            if (editArea) editArea.hidden = true;
+            if (proxy) {
+                window.Lens.core.DOM.exitEditMode(proxy, 'alt-proxy-display', 'alt-proxy-edit-area');
+            }
         },
 
         _handleAltProxySave: function (e, btn) {
@@ -307,12 +299,12 @@
                                 } else {
                                     display.innerHTML = '<p class="light">' + Craft.t('lens', 'Empty') + '</p>';
                                 }
-                                display.hidden = false;
+                                window.Lens.core.DOM.show(display);
                             }
 
                             // Hide edit area
                             var editArea = proxy.querySelector('[data-lens-target="alt-proxy-edit-area"]');
-                            if (editArea) editArea.hidden = true;
+                            if (editArea) window.Lens.core.DOM.hide(editArea);
 
                             // Sync Craft's native alt input (if AltField happens to be in layout elsewhere)
                             this._syncNativeField('alt', value);
@@ -336,15 +328,9 @@
                         );
 
             if (input) {
-                let $form = $(input).closest('form[data-confirm-unload]');
-
                 input.value = value;
                 input.dispatchEvent(new Event('input', { bubbles: true }));
-
-                if ($form.length) {
-                    let serializer = $form.data('serializer');
-                    $form.data('initialSerializedValue', typeof serializer === 'function' ? serializer() : $form.serialize());
-                }
+                window.Lens.core.DOM.resetFormBaseline(input);
             }
 
             if (fieldName === 'title') {

@@ -65,11 +65,11 @@
                 if (!aiDiv || !aiValue) return;
 
                 var differs = (input.value !== aiValue);
-                aiDiv.hidden = !differs;
+                DOM.toggle(aiDiv, differs);
 
                 // Also show/hide the revert button
                 var revertBtn = aiDiv.querySelector('[data-lens-action="bridge-review-revert"]');
-                if (revertBtn) revertBtn.hidden = !differs;
+                if (revertBtn) DOM.toggle(revertBtn, differs);
 
                 // Update AI text if showing
                 if (differs) {

@@ -80,97 +80,98 @@
             });
         },
 
+        /**
+         * Orchestrator — delegates to focused helpers.
+         */
         _updateFocalPoint: function(x, y) {
-            // Update hidden inputs
+            this._updateFocalInputs(x, y);
+            this._updateFocalMarker(x, y);
+            this._updateFocalStatusText(x, y);
+
+            var container = document.querySelector('[data-lens-target="image-container"]');
+            var matches = this._updateFocalBadgeAndSuggestions(container, x, y);
+
+            this._updateFocalPointState(container, matches.isAiMatch, matches.isAssetMatch);
+            this._dismissHint();
+        },
+
+        _updateFocalInputs: function(x, y) {
             var focalXInput = window.Lens.core.DOM.findControl('focal-x');
             var focalYInput = window.Lens.core.DOM.findControl('focal-y');
-
             if (focalXInput) focalXInput.value = x.toFixed(4);
             if (focalYInput) focalYInput.value = y.toFixed(4);
+        },
 
-            // Update marker position with pulse
+        _updateFocalMarker: function(x, y) {
             var marker = document.querySelector('[data-lens-target="focal-marker"]');
-            if (marker) {
-                marker.style.left = (x * 100) + '%';
-                marker.style.top = (y * 100) + '%';
-                window.Lens.core.DOM.show(marker);
+            if (!marker) return;
+            marker.style.left = (x * 100) + '%';
+            marker.style.top = (y * 100) + '%';
+            window.Lens.core.DOM.show(marker);
 
-                // Trigger pulse animation
-                marker.classList.remove('lens-review-focal-marker--pulse');
-                void marker.offsetWidth;
-                marker.classList.add('lens-review-focal-marker--pulse');
-            }
+            marker.classList.remove('lens-review-focal-marker--pulse');
+            void marker.offsetWidth;
+            marker.classList.add('lens-review-focal-marker--pulse');
+        },
 
+        _updateFocalStatusText: function(x, y) {
             var xPct = Math.round(x * 100);
             var yPct = Math.round(y * 100);
 
-            // Update left-panel focal status text
             var statusText = document.querySelector('[data-lens-target="focal-status-text"]');
             if (statusText) {
-                statusText.textContent = Craft.t('lens', 'Focal: {x}, {y}', {
-                    x: xPct + '%',
-                    y: yPct + '%'
-                });
+                statusText.textContent = Craft.t('lens', 'Focal: {x}, {y}', { x: xPct + '%', y: yPct + '%' });
             }
 
-            // Update right-panel quality section text
             var qualityFpText = document.querySelector('[data-lens-target="focal-display-text"]');
             if (qualityFpText) {
-                qualityFpText.textContent = Craft.t('lens', 'X: {x}, Y: {y}', {
-                    x: xPct + '%',
-                    y: yPct + '%'
-                });
+                qualityFpText.textContent = Craft.t('lens', 'X: {x}, Y: {y}', { x: xPct + '%', y: yPct + '%' });
             }
+        },
 
-            // Parse reference coordinates once
-            var container = document.querySelector('[data-lens-target="image-container"]');
-            var aiX, aiY, hasAi, isAiMatch, assetX, assetY, hasAsset, isAssetMatch;
+        /**
+         * Update source badge and AI suggestion rows based on coordinate matches.
+         * @returns {{isAiMatch: boolean, isAssetMatch: boolean}}
+         */
+        _updateFocalBadgeAndSuggestions: function(container, x, y) {
+            if (!container) return { isAiMatch: false, isAssetMatch: false };
 
-            if (container) {
-                aiX = parseFloat(container.dataset.lensFocalXAi);
-                aiY = parseFloat(container.dataset.lensFocalYAi);
-                hasAi = !isNaN(aiX) && !isNaN(aiY);
-                isAiMatch = hasAi && isFocalPointMatch(x, y, aiX, aiY);
+            var DOM = window.Lens.core.DOM;
 
-                assetX = parseFloat(container.dataset.lensAssetFocalX);
-                assetY = parseFloat(container.dataset.lensAssetFocalY);
-                hasAsset = container.dataset.lensAssetHasFocalPoint === '1'
-                    && !isNaN(assetX) && !isNaN(assetY);
-                isAssetMatch = hasAsset && isFocalPointMatch(x, y, assetX, assetY);
+            var aiX = parseFloat(container.dataset.lensFocalXAi);
+            var aiY = parseFloat(container.dataset.lensFocalYAi);
+            var hasAi = !isNaN(aiX) && !isNaN(aiY);
+            var isAiMatch = hasAi && isFocalPointMatch(x, y, aiX, aiY);
 
-                // Source badge: AI (violet), Edited (amber), hidden when matches asset
-                var badge = document.querySelector('[data-lens-target="focal-status-badge"]');
-                var DOM = window.Lens.core.DOM;
-                if (badge) {
-                    if (isAssetMatch) {
-                        DOM.hide(badge);
-                    } else if (isAiMatch) {
-                        badge.textContent = Craft.t('lens', 'AI');
-                        badge.className = 'lens-review-focal-badge';
-                        DOM.show(badge);
-                    } else {
-                        badge.textContent = Craft.t('lens', 'Edited');
-                        badge.className = 'lens-review-focal-badge lens-review-focal-badge--edited';
-                        DOM.show(badge);
-                    }
-                }
+            var assetX = parseFloat(container.dataset.lensAssetFocalX);
+            var assetY = parseFloat(container.dataset.lensAssetFocalY);
+            var hasAsset = container.dataset.lensAssetHasFocalPoint === '1'
+                && !isNaN(assetX) && !isNaN(assetY);
+            var isAssetMatch = hasAsset && isFocalPointMatch(x, y, assetX, assetY);
 
-                // Show AI suggestion revert rows when value differs from AI
-                var aiSuggestion = document.querySelector('[data-lens-target="focal-ai-suggestion"]');
-                if (aiSuggestion) {
-                    DOM.toggle(aiSuggestion, !isAiMatch && hasAi);
-                }
-                var fpAiRevert = document.querySelector('[data-lens-target="fp-ai-revert"]');
-                if (fpAiRevert) {
-                    DOM.toggle(fpAiRevert, !isAiMatch && hasAi);
+            // Source badge: AI (violet), Edited (amber), hidden when matches asset
+            var badge = document.querySelector('[data-lens-target="focal-status-badge"]');
+            if (badge) {
+                if (isAssetMatch) {
+                    DOM.hide(badge);
+                } else if (isAiMatch) {
+                    badge.textContent = Craft.t('lens', 'AI');
+                    badge.className = 'lens-review-focal-badge';
+                    DOM.show(badge);
+                } else {
+                    badge.textContent = Craft.t('lens', 'Edited');
+                    badge.className = 'lens-review-focal-badge lens-review-focal-badge--edited';
+                    DOM.show(badge);
                 }
             }
 
-            // Update focal point state (marker color, reference, action bars)
-            this._updateFocalPointState(container, isAiMatch, isAssetMatch);
+            // AI suggestion revert rows
+            var aiSuggestion = document.querySelector('[data-lens-target="focal-ai-suggestion"]');
+            if (aiSuggestion) DOM.toggle(aiSuggestion, !isAiMatch && hasAi);
+            var fpAiRevert = document.querySelector('[data-lens-target="fp-ai-revert"]');
+            if (fpAiRevert) DOM.toggle(fpAiRevert, !isAiMatch && hasAi);
 
-            // Dismiss hint on first interaction
-            this._dismissHint();
+            return { isAiMatch: isAiMatch, isAssetMatch: isAssetMatch };
         },
 
         /**

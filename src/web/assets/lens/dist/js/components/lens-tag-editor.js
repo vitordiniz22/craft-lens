@@ -161,46 +161,41 @@
         // ================================================================
 
         _addTagFromInput: function(editor) {
-            const input = editor.querySelector('[data-lens-control="tag-input"]');
+            var input = editor.querySelector('[data-lens-control="tag-input"]');
             if (!input) return;
-
-            const tagName = input.value.trim();
+            var tagName = input.value.trim();
             if (!tagName) return;
-
-            // Use service to check for duplicates
-            if (window.Lens.services.Taxonomy.isDuplicateTag(editor, tagName)) {
-                input.value = '';
-                this._flashDuplicateChip(editor, tagName);
-                Craft.cp.displayNotice(Craft.t('lens', 'Tag already exists.'));
-                return;
-            }
-
-            this._addTag(editor, tagName, false);
-            input.value = '';
-            this._hideSuggestions(editor);
-            this._clearLengthIndicator(input);
-            this._updateTagCount(editor);
-            this._autoSave(editor, Craft.t('lens', 'Tag added.'));
+            this._commitTag(editor, tagName);
         },
 
         _selectSuggestion: function(editor, suggestion) {
-            const tagName = suggestion.dataset.lensSuggestionTag;
-            const input = editor.querySelector('[data-lens-control="tag-input"]');
-            if (input) input.value = '';
+            var tagName = suggestion.dataset.lensSuggestionTag;
+            this._commitTag(editor, tagName);
+        },
 
-            // Use service to check for duplicates
+        /**
+         * Shared commit flow for adding a tag (from input or suggestion).
+         * Handles duplicate check, chip creation, cleanup, and auto-save.
+         * @returns {boolean} false if duplicate
+         */
+        _commitTag: function(editor, tagName) {
+            var input = editor.querySelector('[data-lens-control="tag-input"]');
+            if (input) {
+                input.value = '';
+                this._clearLengthIndicator(input);
+            }
+            this._hideSuggestions(editor);
+
             if (window.Lens.services.Taxonomy.isDuplicateTag(editor, tagName)) {
-                this._hideSuggestions(editor);
                 this._flashDuplicateChip(editor, tagName);
                 Craft.cp.displayNotice(Craft.t('lens', 'Tag already exists.'));
-                return;
+                return false;
             }
 
             this._addTag(editor, tagName, false);
-            this._hideSuggestions(editor);
-            if (input) this._clearLengthIndicator(input);
             this._updateTagCount(editor);
             this._autoSave(editor, Craft.t('lens', 'Tag added.'));
+            return true;
         },
 
         _addTag: function(editor, tagName, isAi) {
@@ -291,24 +286,11 @@
         // ================================================================
 
         _autoSave: function(editor, successMessage) {
-            if (!editor) return;
-
-            // Only auto-save when data-lens-auto-save="1" (asset edit page, not review)
-            if (editor.dataset.lensAutoSave !== '1') return;
-
-            var analysisId = editor.dataset.lensAnalysisId;
-            if (!analysisId) return;
-
             var tags = window.Lens.services.Taxonomy.collectTags(editor);
-
-            window.Lens.core.API.post('lens/analysis/update-tags', {
-                analysisId: analysisId,
-                tags: JSON.stringify(tags)
-            }).then(function() {
-                Craft.cp.displayNotice(successMessage);
-            }).catch(function() {
-                Craft.cp.displayError(Craft.t('lens', 'Failed to save tags.'));
-            });
+            window.Lens.services.Taxonomy.autoSave(
+                editor, 'lens/analysis/update-tags', 'tags', tags,
+                successMessage, Craft.t('lens', 'Failed to save tags.')
+            );
         },
 
         // ================================================================
