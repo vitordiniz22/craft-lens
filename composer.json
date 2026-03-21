@@ -1,13 +1,34 @@
 {
   "name": "vitordiniz22/craft-lens",
   "description": "AI-powered image analysis, tagging, and search for Craft CMS assets. Automatically generate alt text, extract colors, detect faces and content issues, find duplicates, and organize your media library with 20+ smart filters.",
+  "keywords": [
+    "craftcms",
+    "craft-plugin",
+    "image-analysis",
+    "alt-text",
+    "accessibility",
+    "ai",
+    "tagging",
+    "asset-management",
+    "seo",
+    "duplicate-detection",
+    "ocr"
+  ],
   "type": "craft-plugin",
   "license": "proprietary",
+  "authors": [
+    {
+      "name": "Vitor Diniz",
+      "email": "vitordiniz22@gmail.com",
+      "homepage": "https://github.com/vitordiniz22"
+    }
+  ],
+  "homepage": "https://github.com/vitordiniz22/craft-lens/wiki",
   "support": {
     "email": "vitordiniz22@gmail.com",
     "issues": "https://github.com/vitordiniz22/craft-lens/issues",
     "source": "https://github.com/vitordiniz22/craft-lens",
-    "docs": "https://github.com/vitordiniz22/craft-lens",
+    "docs": "https://github.com/vitordiniz22/craft-lens/wiki",
     "rss": "https://github.com/vitordiniz22/craft-lens/releases.atom"
   },
   "require": {

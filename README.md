@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./resources/icon.svg" width="100" height="100" alt="Lens">
+  <img src="./src/icon.svg" width="100" height="100" alt="Lens">
 </p>
 
 <h1 align="center">Lens</h1>
@@ -9,8 +9,8 @@
 </p>
 
 <p align="center">
-  <a href="https://craftcms.com"><img src="https://img.shields.io/badge/Craft_CMS-5.8+-red.svg" alt="Craft CMS 5.8+"></a>
-  <a href="https://php.net"><img src="https://img.shields.io/badge/PHP-8.3+-blue.svg" alt="PHP 8.3+"></a>
+  <a href="https://craftcms.com"><img src="https://img.shields.io/badge/Craft_CMS-5.0+-red.svg" alt="Craft CMS 5.0+"></a>
+  <a href="https://php.net"><img src="https://img.shields.io/badge/PHP-8.2+-blue.svg" alt="PHP 8.2+"></a>
   <a href="#license"><img src="https://img.shields.io/badge/License-Proprietary-green.svg" alt="License"></a>
 </p>
 
@@ -93,8 +93,8 @@ Available on the [Craft Plugin Store](https://plugins.craftcms.com/lens).
 
 ## Requirements
 
-- **Craft CMS** 5.8.0 or later
-- **PHP** 8.3 or later
+- **Craft CMS** 5.0.0 or later
+- **PHP** 8.2 or later
 - **MySQL** 8.0+
 - An API key from one of: [OpenAI](https://platform.openai.com/), [Google AI](https://ai.google.dev/), or [Anthropic](https://www.anthropic.com/)
 - **Imagick PHP extension** (recommended) enables local quality analysis (sharpness, brightness, contrast, JPEG quality, color profile detection). Without it, the Quality section is hidden and only Web Readiness checks are shown.
