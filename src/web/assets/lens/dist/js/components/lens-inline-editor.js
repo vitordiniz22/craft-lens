@@ -138,15 +138,7 @@
                     var displayP = fieldEl.querySelector('[data-lens-target="field-display"] p');
                     var input = fieldEl.querySelector('[data-lens-target="field-edit"] input, [data-lens-target="field-edit"] textarea');
 
-                    if (displayP) {
-                        if (revertedValue) {
-                            displayP.textContent = revertedValue;
-                            displayP.classList.remove('light');
-                        } else {
-                            displayP.textContent = Craft.t('lens', 'Not available');
-                            displayP.classList.add('light');
-                        }
-                    }
+                    this._setDisplayText(displayP, revertedValue);
                     if (input) input.value = revertedValue;
 
                     // Remove lock icon and AI suggestion (values now match AI)
@@ -248,13 +240,7 @@
                 radios.forEach(function(radio) { radio.checked = (radio.value === aiMode); });
                 this._syncHiddenInput('containsPeople', containsPeopleAi ? '1' : '0');
                 this._syncHiddenInput('faceCount', faceCountAi.toString());
-                this._updatePeopleDisplay(fieldEl, aiFields);
-                this._updatePeopleBadge(fieldEl, aiFields);
-                this._removeLockIcon(fieldEl);
-                var suggestion = fieldEl.querySelector('[data-lens-target="people-ai-suggestion"]');
-                if (suggestion) window.Lens.core.DOM.hide(suggestion);
-                fieldEl.dataset.lensContainsPeople = containsPeopleAi ? '1' : '0';
-                fieldEl.dataset.lensFaceCount = faceCountAi;
+                this._revertPeopleUI(fieldEl, aiFields);
                 return;
             }
 
@@ -273,18 +259,7 @@
                 };
 
                 if (fieldEl) {
-                    this._updatePeopleDisplay(fieldEl, fields);
-                    this._updatePeopleBadge(fieldEl, fields);
-                    this._removeLockIcon(fieldEl);
-
-                    // Hide AI suggestion (values now match AI)
-                    var suggestion = fieldEl.querySelector('[data-lens-target="people-ai-suggestion"]');
-                    if (suggestion) window.Lens.core.DOM.hide(suggestion);
-
-                    // Update data attributes to AI values
-                    fieldEl.dataset.lensContainsPeople = fields.containsPeople ? '1' : '0';
-                    fieldEl.dataset.lensFaceCount = fields.faceCount;
-
+                    this._revertPeopleUI(fieldEl, fields);
                     this._dispatchPeopleUpdateEvent(analysisId, fields);
                     this._resetFormBaseline(fieldEl);
                 }
@@ -311,18 +286,9 @@
             var fieldEl = window.Lens.core.DOM.findTarget(trigger, 'detection-toggle');
             if (!fieldEl) return;
 
-            // Restore radio to current state
             var isDetected = fieldEl.dataset.lensDetected === '1';
-            var trueValue = fieldEl.dataset.lensTrueValue;
-            var falseValue = fieldEl.dataset.lensFalseValue;
-            var currentValue = isDetected ? trueValue : falseValue;
+            var currentValue = this._restoreDetectionRadios(fieldEl, isDetected);
 
-            var radios = fieldEl.querySelectorAll('[data-lens-control="detection-radio"]');
-            radios.forEach(function(radio) {
-                radio.checked = (radio.value === currentValue);
-            });
-
-            // Restore hidden input
             var hiddenInput = fieldEl.querySelector('[data-lens-target="detection-value"]');
             if (hiddenInput) hiddenInput.value = currentValue;
 
@@ -345,16 +311,13 @@
             var hiddenInput = fieldEl.querySelector('[data-lens-target="detection-value"]');
             if (hiddenInput) hiddenInput.value = value;
 
+            var trueValue = fieldEl.dataset.lensTrueValue;
+            var isNowDetected = (value === trueValue);
+
             // Review context: skip AJAX, update form hidden inputs + UI only
             if (this._isReviewContext(fieldEl)) {
                 this._syncHiddenInput(fieldName, value);
-                var trueVal = fieldEl.dataset.lensTrueValue;
-                var isNowDetected = (value === trueVal);
-                fieldEl.dataset.lensDetected = isNowDetected ? '1' : '0';
-                this._updateDetectionBadge(fieldEl, isNowDetected);
-                this._updateDetectionRowAccent(fieldEl, isNowDetected);
-                var iconEl = fieldEl.querySelector('[data-lens-target="detection-icon"]');
-                if (iconEl) iconEl.classList.toggle('lens-detection-icon--flagged', isNowDetected);
+                this._updateDetectionUI(fieldEl, isNowDetected);
                 this._showLockIcon(fieldEl);
                 this._showDetectionAISuggestion(fieldEl, isNowDetected);
                 return;
@@ -362,18 +325,7 @@
 
             this._withSavingState(fieldEl, window.Lens.core.API.updateField(analysisId, fieldName, value), (response) => {
                 if (response.data.success) {
-                    var trueValue = fieldEl.dataset.lensTrueValue;
-                    var isNowDetected = (value === trueValue);
-                    fieldEl.dataset.lensDetected = isNowDetected ? '1' : '0';
-
-                    this._updateDetectionBadge(fieldEl, isNowDetected);
-                    this._updateDetectionRowAccent(fieldEl, isNowDetected);
-
-                    var icon = fieldEl.querySelector('[data-lens-target="detection-icon"]');
-                    if (icon) {
-                        icon.classList.toggle('lens-detection-icon--flagged', isNowDetected);
-                    }
-
+                    this._updateDetectionUI(fieldEl, isNowDetected);
                     this._showLockIcon(fieldEl);
                     this._showDetectionAISuggestion(fieldEl, isNowDetected);
 
@@ -394,18 +346,9 @@
             // Review context: client-side revert (no AJAX)
             if (this._isReviewContext(fieldEl)) {
                 var isDetectedAi = fieldEl.dataset.lensDetectedAi === '1';
-                var trueValue = fieldEl.dataset.lensTrueValue;
-                var falseValue = fieldEl.dataset.lensFalseValue;
-                var revertedValue = isDetectedAi ? trueValue : falseValue;
-
-                fieldEl.dataset.lensDetected = isDetectedAi ? '1' : '0';
-                var radios = fieldEl.querySelectorAll('[data-lens-control="detection-radio"]');
-                radios.forEach(function(radio) { radio.checked = (radio.value === revertedValue); });
+                var revertedValue = this._restoreDetectionRadios(fieldEl, isDetectedAi);
                 this._syncHiddenInput(fieldName, revertedValue);
-                this._updateDetectionBadge(fieldEl, isDetectedAi);
-                this._updateDetectionRowAccent(fieldEl, isDetectedAi);
-                var icon = fieldEl.querySelector('[data-lens-target="detection-icon"]');
-                if (icon) icon.classList.toggle('lens-detection-icon--flagged', isDetectedAi);
+                this._updateDetectionUI(fieldEl, isDetectedAi);
                 this._removeLockIcon(fieldEl);
                 var suggestion = fieldEl.querySelector('[data-lens-target="detection-ai-suggestion"]');
                 if (suggestion) window.Lens.core.DOM.hide(suggestion);
@@ -415,30 +358,13 @@
             window.Lens.core.API.revertField(analysisId, fieldName).then((response) => {
                 if (response.data.success) {
                     if (fieldEl) {
-                        // Determine reverted detection state from AI value
                         var isDetectedAi = fieldEl.dataset.lensDetectedAi === '1';
-                        fieldEl.dataset.lensDetected = isDetectedAi ? '1' : '0';
+                        this._updateDetectionUI(fieldEl, isDetectedAi);
 
-                        // Update badge, row accent, icon
-                        this._updateDetectionBadge(fieldEl, isDetectedAi);
-                        this._updateDetectionRowAccent(fieldEl, isDetectedAi);
-                        var icon = fieldEl.querySelector('[data-lens-target="detection-icon"]');
-                        if (icon) {
-                            icon.classList.toggle('lens-detection-icon--flagged', isDetectedAi);
-                        }
-
-                        // Update segmented control radios to match
-                        var trueValue = fieldEl.dataset.lensTrueValue;
-                        var falseValue = fieldEl.dataset.lensFalseValue;
-                        var revertedValue = isDetectedAi ? trueValue : falseValue;
-                        var radios = fieldEl.querySelectorAll('[data-lens-control="detection-radio"]');
-                        radios.forEach(function(radio) {
-                            radio.checked = (radio.value === revertedValue);
-                        });
+                        var revertedValue = this._restoreDetectionRadios(fieldEl, isDetectedAi);
                         var hiddenInput = fieldEl.querySelector('[data-lens-target="detection-value"]');
                         if (hiddenInput) hiddenInput.value = revertedValue;
 
-                        // Remove lock and AI suggestion (values now match AI)
                         this._removeLockIcon(fieldEl);
                         var suggestion = fieldEl.querySelector('[data-lens-target="detection-ai-suggestion"]');
                         if (suggestion) window.Lens.core.DOM.hide(suggestion);
@@ -475,17 +401,20 @@
         // Helper Methods
         // ================================================================
 
+        _setDisplayText: function(displayP, value) {
+            if (!displayP) return;
+            if (value) {
+                displayP.textContent = value;
+                displayP.classList.remove('light');
+            } else {
+                displayP.textContent = Craft.t('lens', 'Not available');
+                displayP.classList.add('light');
+            }
+        },
+
         _updateFieldDisplay: function(fieldEl, data) {
             var displayP = fieldEl.querySelector('[data-lens-target="field-display"] p');
-            if (displayP) {
-                if (data.value) {
-                    displayP.textContent = data.value;
-                    displayP.classList.remove('light');
-                } else {
-                    displayP.textContent = Craft.t('lens', 'Not available');
-                    displayP.classList.add('light');
-                }
-            }
+            this._setDisplayText(displayP, data.value);
 
             var header = fieldEl.querySelector('[data-lens-target="field-header"]');
             var badge = header ? header.querySelector('[data-lens-target="confidence-badge"]') : null;
@@ -493,6 +422,17 @@
                 var badgeTooltip = badge.closest('craft-tooltip');
                 (badgeTooltip || badge).remove();
             }
+        },
+
+        /**
+         * Common UI cleanup after people detection revert (both review and normal paths).
+         */
+        _revertPeopleUI: function(fieldEl, fields) {
+            this._updatePeopleDisplay(fieldEl, fields);
+            this._updatePeopleBadge(fieldEl, fields);
+            this._removeLockIcon(fieldEl);
+            var suggestion = fieldEl.querySelector('[data-lens-target="people-ai-suggestion"]');
+            if (suggestion) window.Lens.core.DOM.hide(suggestion);
         },
 
         _savePeopleFields: function(analysisId, fields) {
@@ -608,6 +548,30 @@
             var aiDiffers = (isDetectedAi !== isNowDetected);
             var suggestion = fieldEl.querySelector('[data-lens-target="detection-ai-suggestion"]');
             this._toggleAISuggestion(suggestion, aiDiffers, 'detection-revert');
+        },
+
+        /**
+         * Update all detection UI elements after a state change:
+         * data attribute, badge, row accent, and icon class.
+         */
+        _updateDetectionUI: function(fieldEl, isDetected) {
+            fieldEl.dataset.lensDetected = isDetected ? '1' : '0';
+            this._updateDetectionBadge(fieldEl, isDetected);
+            this._updateDetectionRowAccent(fieldEl, isDetected);
+            var icon = fieldEl.querySelector('[data-lens-target="detection-icon"]');
+            if (icon) icon.classList.toggle('lens-detection-icon--flagged', isDetected);
+        },
+
+        /**
+         * Restore detection radios to match a given state and return the resolved value string.
+         */
+        _restoreDetectionRadios: function(fieldEl, isDetected) {
+            var trueValue = fieldEl.dataset.lensTrueValue;
+            var falseValue = fieldEl.dataset.lensFalseValue;
+            var value = isDetected ? trueValue : falseValue;
+            var radios = fieldEl.querySelectorAll('[data-lens-control="detection-radio"]');
+            radios.forEach(function(radio) { radio.checked = (radio.value === value); });
+            return value;
         },
 
         /**
