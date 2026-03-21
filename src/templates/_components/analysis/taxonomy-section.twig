@@ -30,7 +30,7 @@
                             <craft-tooltip text="{{ 'AI confidence for this tag'|t('lens') }}"><button type="button" class="badge">{{ (tag.confidence * 100)|round }}%</button></craft-tooltip>
                         {% endif %}
                         {% if isInteractive %}
-                            <button type="button" class="lens-tag-remove" data-lens-action="tag-remove" title="{{ 'Remove'|t('lens') }}">&times;</button>
+                            <craft-tooltip text="{{ 'Remove'|t('lens') }}"><button type="button" class="lens-tag-remove" data-lens-action="tag-remove">&times;</button></craft-tooltip>
                         {% endif %}
                     </div>
                 </a>
@@ -55,7 +55,7 @@
                 <a href="" class="chip" data-lens-tag="" data-lens-is-ai="0" data-lens-confidence="">
                     <div class="chip-content">
                         <span class="chip-label" data-lens-target="chip-label"></span>
-                        <button type="button" class="lens-tag-remove" data-lens-action="tag-remove" title="{{ 'Remove'|t('lens') }}">&times;</button>
+                        <craft-tooltip text="{{ 'Remove'|t('lens') }}"><button type="button" class="lens-tag-remove" data-lens-action="tag-remove">&times;</button></craft-tooltip>
                     </div>
                 </a>
             </template>
@@ -81,7 +81,7 @@
                             <craft-tooltip text="{{ 'Color coverage in image'|t('lens') }}"><button type="button" class="badge">{{ (color.percentage * 100)|round }}%</button></craft-tooltip>
                         {% endif %}
                         {% if isInteractive %}
-                            <button type="button" class="lens-tag-remove" data-lens-action="color-remove" title="{{ 'Remove'|t('lens') }}">&times;</button>
+                            <craft-tooltip text="{{ 'Remove'|t('lens') }}"><button type="button" class="lens-tag-remove" data-lens-action="color-remove">&times;</button></craft-tooltip>
                         {% endif %}
                     </div>
                 </a>
@@ -107,7 +107,7 @@
                     <div class="chip-content">
                         <span class="lens-swatch lens-swatch--sm" data-lens-target="color-swatch"></span>
                         <span class="chip-label lens-color-hex" data-lens-target="chip-label"></span>
-                        <button type="button" class="lens-tag-remove" data-lens-action="color-remove" title="{{ 'Remove'|t('lens') }}">&times;</button>
+                        <craft-tooltip text="{{ 'Remove'|t('lens') }}"><button type="button" class="lens-tag-remove" data-lens-action="color-remove">&times;</button></craft-tooltip>
                     </div>
                 </a>
             </template>
