@@ -93,7 +93,7 @@ class ColorAggregationService extends Component
     }
 
     /**
-     * Group similar colors by rounding RGB values.
+     * Group similar colors by rounding RGB channels to the nearest step.
      */
     private function groupSimilarColor(string $hex): string
     {
@@ -103,19 +103,12 @@ class ColorAggregationService extends Component
             return '#000000';
         }
 
-        $r = hexdec(substr($hex, 0, 2));
-        $g = hexdec(substr($hex, 2, 2));
-        $b = hexdec(substr($hex, 4, 2));
-
         $step = 32;
-        $r = (int)(round($r / $step) * $step);
-        $g = (int)(round($g / $step) * $step);
-        $b = (int)(round($b / $step) * $step);
+        $channels = array_map(
+            fn(int $offset) => min(255, max(0, (int)(round(hexdec(substr($hex, $offset, 2)) / $step) * $step))),
+            [0, 2, 4]
+        );
 
-        $r = min(255, max(0, $r));
-        $g = min(255, max(0, $g));
-        $b = min(255, max(0, $b));
-
-        return sprintf('#%02X%02X%02X', $r, $g, $b);
+        return sprintf('#%02X%02X%02X', ...$channels);
     }
 }

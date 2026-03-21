@@ -31,7 +31,7 @@ class ReviewService extends Component
      * @throws InvalidArgumentException If analysis record not found
      * @throws \RuntimeException If save fails
      */
-    public function approve(int $analysisId, ?int $userId = null, array $applyOverrides = []): void
+    public function approve(int $analysisId, array $applyOverrides = []): void
     {
         $record = AssetAnalysisRecord::findOne($analysisId);
 
@@ -60,7 +60,7 @@ class ReviewService extends Component
      * @throws InvalidArgumentException If analysis record not found
      * @throws \RuntimeException If save fails
      */
-    public function reject(int $analysisId, ?int $userId = null): void
+    public function reject(int $analysisId): void
     {
         $record = AssetAnalysisRecord::findOne($analysisId);
 
@@ -80,9 +80,9 @@ class ReviewService extends Component
      * @param int[] $analysisIds
      * @throws \Throwable If any approval fails (rolls back all changes)
      */
-    public function bulkApprove(array $analysisIds, ?int $userId = null): int
+    public function bulkApprove(array $analysisIds): int
     {
-        return $this->bulkAction($analysisIds, 'approve', 'approved', $userId);
+        return $this->bulkAction($analysisIds, 'approve', 'approved');
     }
 
     /**
@@ -91,9 +91,9 @@ class ReviewService extends Component
      * @param int[] $analysisIds
      * @throws \Throwable If any rejection fails (rolls back all changes)
      */
-    public function bulkReject(array $analysisIds, ?int $userId = null): int
+    public function bulkReject(array $analysisIds): int
     {
-        return $this->bulkAction($analysisIds, 'reject', 'rejected', $userId);
+        return $this->bulkAction($analysisIds, 'reject', 'rejected');
     }
 
     /**
@@ -101,7 +101,7 @@ class ReviewService extends Component
      *
      * @throws \Throwable If any action fails (rolls back all changes)
      */
-    private function bulkAction(array $analysisIds, string $method, string $label, ?int $userId): int
+    private function bulkAction(array $analysisIds, string $method, string $label): int
     {
         if (empty($analysisIds)) {
             return 0;
@@ -112,7 +112,7 @@ class ReviewService extends Component
 
         try {
             foreach ($analysisIds as $id) {
-                $this->$method((int) $id, $userId);
+                $this->$method((int) $id);
                 $count++;
             }
             $transaction->commit();
@@ -137,7 +137,7 @@ class ReviewService extends Component
      * @throws InvalidArgumentException If analysis record not found
      * @throws \RuntimeException If save fails
      */
-    public function editAndApprove(int $analysisId, array $modifications, ?int $userId = null, array $applyOverrides = []): void
+    public function editAndApprove(int $analysisId, array $modifications, array $applyOverrides = []): void
     {
         $record = AssetAnalysisRecord::findOne($analysisId);
 
@@ -207,7 +207,7 @@ class ReviewService extends Component
             'editedFields' => array_keys($modifications),
         ]);
 
-        $this->approve($analysisId, $userId, $applyOverrides);
+        $this->approve($analysisId, $applyOverrides);
     }
 
     /**

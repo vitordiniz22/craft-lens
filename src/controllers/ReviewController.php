@@ -9,6 +9,7 @@ use craft\elements\Asset;
 use craft\helpers\UrlHelper;
 use craft\web\Controller;
 use vitordiniz22\craftlens\controllers\traits\RequiresAiProviderTrait;
+use vitordiniz22\craftlens\controllers\traits\ValidatesIdsTrait;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\Logger;
@@ -24,6 +25,7 @@ use yii\web\Response;
 class ReviewController extends Controller
 {
     use RequiresAiProviderTrait;
+    use ValidatesIdsTrait;
 
     protected array|int|bool $allowAnonymous = false;
 
@@ -83,14 +85,6 @@ class ReviewController extends Controller
         ]);
     }
 
-    /**
-     * Focus view - alias for index, kept for backward compatibility.
-     */
-    public function actionFocus(): Response
-    {
-        return $this->redirect(UrlHelper::cpUrl('lens/review'));
-    }
-
     public function actionApprove(): Response
     {
         $this->requireCpRequest();
@@ -98,14 +92,9 @@ class ReviewController extends Controller
         $this->requirePermission('accessPlugin-lens');
         Plugin::getInstance()->requireProEdition();
 
-        $analysisId = (int) $this->request->getRequiredBodyParam('analysisId');
-
-        if ($analysisId < 1) {
-            throw new BadRequestHttpException('Invalid analysis ID');
-        }
+        $analysisId = $this->requireValidId('analysisId', 'analysis ID');
 
         $modifications = $this->parseApprovalModifications();
-        $userId = Craft::$app->getUser()->getId();
         $reviewService = Plugin::getInstance()->review;
 
         $applyOverrides = [];
@@ -122,9 +111,9 @@ class ReviewController extends Controller
 
         try {
             if (!empty($modifications)) {
-                $reviewService->editAndApprove($analysisId, $modifications, $userId, $applyOverrides);
+                $reviewService->editAndApprove($analysisId, $modifications, $applyOverrides);
             } else {
-                $reviewService->approve($analysisId, $userId, $applyOverrides);
+                $reviewService->approve($analysisId, $applyOverrides);
             }
         } catch (\InvalidArgumentException $e) {
             throw new BadRequestHttpException($e->getMessage());
@@ -147,18 +136,12 @@ class ReviewController extends Controller
         $this->requirePermission('accessPlugin-lens');
         Plugin::getInstance()->requireProEdition();
 
-        $analysisId = (int) $this->request->getRequiredBodyParam('analysisId');
-
-        if ($analysisId < 1) {
-            throw new BadRequestHttpException('Invalid analysis ID');
-        }
-
-        $userId = Craft::$app->getUser()->getId();
+        $analysisId = $this->requireValidId('analysisId', 'analysis ID');
 
         $reviewService = Plugin::getInstance()->review;
 
         try {
-            $reviewService->reject($analysisId, $userId);
+            $reviewService->reject($analysisId);
         } catch (\Throwable $e) {
             Logger::error(LogCategory::Review, "Reject failed for analysis {$analysisId}", exception: $e);
             throw $e;
@@ -194,8 +177,7 @@ class ReviewController extends Controller
             throw new BadRequestHttpException('No valid IDs provided');
         }
 
-        $userId = Craft::$app->getUser()->getId();
-        $count = Plugin::getInstance()->review->{$serviceMethod}($ids, $userId);
+        $count = Plugin::getInstance()->review->{$serviceMethod}($ids);
 
         Logger::info(LogCategory::Review, $logMessage, context: ['count' => $count]);
 
@@ -217,11 +199,7 @@ class ReviewController extends Controller
         $this->requirePermission('accessPlugin-lens');
         Plugin::getInstance()->requireProEdition();
 
-        $analysisId = (int) $this->request->getRequiredBodyParam('analysisId');
-
-        if ($analysisId < 1) {
-            throw new BadRequestHttpException('Invalid analysis ID');
-        }
+        $analysisId = $this->requireValidId('analysisId', 'analysis ID');
 
         Plugin::getInstance()->review->skip($analysisId);
 
@@ -366,82 +344,68 @@ class ReviewController extends Controller
             }
         }
 
-        // Tags (JSON-encoded array from hidden input)
-        $tagsJson = $this->request->getBodyParam('tags');
-        if ($tagsJson !== null) {
-            $tags = is_string($tagsJson) ? json_decode($tagsJson, true) : $tagsJson;
-            if (is_array($tags)) {
-                $modifications['tags'] = $tags;
+        // JSON-encoded arrays from hidden inputs
+        foreach (['tags' => 'tags', 'dominantColors' => 'dominantColors', 'siteContent' => 'siteContent'] as $param => $key) {
+            $decoded = $this->decodeJsonBodyParam($param);
+            if ($decoded !== null) {
+                $modifications[$key] = $decoded;
             }
         }
 
-        // Colors (JSON-encoded array from hidden input)
-        $colorsJson = $this->request->getBodyParam('dominantColors');
-        if ($colorsJson !== null) {
-            $colors = is_string($colorsJson) ? json_decode($colorsJson, true) : $colorsJson;
-            if (is_array($colors)) {
-                $modifications['dominantColors'] = $colors;
-            }
-        }
-
+        // Face count with range validation
         $faceCount = $this->request->getBodyParam('faceCount');
-
         if ($faceCount !== null) {
             $faceCountInt = (int) $faceCount;
-
             if ($faceCountInt < 0 || $faceCountInt > 10000) {
                 throw new BadRequestHttpException('Invalid face count');
             }
-
             $modifications['faceCount'] = $faceCountInt;
         }
 
+        // NSFW score clamped to [0, 1]
         $nsfwScore = $this->request->getBodyParam('nsfwScore');
-
         if ($nsfwScore !== null) {
-            $nsfwScoreFloat = (float) $nsfwScore;
-            $modifications['nsfwScore'] = min(1.0, max(0.0, $nsfwScoreFloat));
+            $modifications['nsfwScore'] = min(1.0, max(0.0, (float) $nsfwScore));
         }
 
+        // Boolean fields
         foreach (['containsPeople', 'hasWatermark', 'containsBrandLogo'] as $field) {
             $value = $this->request->getBodyParam($field);
-
             if ($value !== null) {
                 $modifications[$field] = (bool) $value;
             }
         }
 
+        // Focal point pair
         $focalX = $this->request->getBodyParam('focalPointX');
         $focalY = $this->request->getBodyParam('focalPointY');
-
         if ($focalX !== null && $focalY !== null) {
             $modifications['focalPointX'] = (float) $focalX;
             $modifications['focalPointY'] = (float) $focalY;
         }
 
-        $siteContentJson = $this->request->getBodyParam('siteContent');
-
-        if ($siteContentJson !== null) {
-            $siteContent = is_string($siteContentJson) ? json_decode($siteContentJson, true) : $siteContentJson;
-
-            if (is_array($siteContent) && !empty($siteContent)) {
-                $modifications['siteContent'] = $siteContent;
+        // Apply flags
+        foreach (['applyTitle', 'applyAlt'] as $flag) {
+            $value = $this->request->getBodyParam($flag);
+            if ($value !== null) {
+                $modifications[$flag] = (bool) (int) $value;
             }
         }
 
-        $applyTitle = $this->request->getBodyParam('applyTitle');
-
-        if ($applyTitle !== null) {
-            $modifications['applyTitle'] = (bool) (int) $applyTitle;
-        }
-
-        $applyAlt = $this->request->getBodyParam('applyAlt');
-
-        if ($applyAlt !== null) {
-            $modifications['applyAlt'] = (bool) (int) $applyAlt;
-        }
-
         return $modifications;
+    }
+
+    /**
+     * Decode a JSON-encoded body parameter to an array, or return null if absent/invalid.
+     */
+    private function decodeJsonBodyParam(string $param): ?array
+    {
+        $raw = $this->request->getBodyParam($param);
+        if ($raw === null) {
+            return null;
+        }
+        $decoded = is_string($raw) ? json_decode($raw, true) : $raw;
+        return is_array($decoded) && !empty($decoded) ? $decoded : null;
     }
 
     private function redirectToNextOrBrowse(string $successMessage): Response

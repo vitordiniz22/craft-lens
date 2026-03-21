@@ -107,10 +107,10 @@
         {# Section 1: Description #}
         {% if analysis.status not in [lens.status.failed] and (not isProcessing or isReprocessing) %}
             <div class="lens-section">
-                <div class="lens-section-header">
-                    <span class="lens-section-header__title">{{ 'Description'|t('lens') }}</span>
-                    <p class="lens-section-header__intro">{{ 'Ready-to-use metadata for accessibility and search.'|t('lens') }}</p>
-                </div>
+                {% include 'lens/_components/analysis/_section-header' with {
+                    title: 'Description'|t('lens'),
+                    intro: 'Ready-to-use metadata for accessibility and search.'|t('lens')
+                } only %}
                 <div class="lens-section-body">
                     {% include 'lens/_components/analysis/content-section' with {
                         analysis: analysis,
@@ -133,18 +133,12 @@
         {# Section 2: Taxonomy #}
         {% if lens.isPro and analysis.status not in [lens.status.pending, lens.status.failed] and (not isProcessing or isReprocessing) %}
             <div class="lens-section" data-lens-target="taxonomy-section">
-                <div class="lens-section-header">
-                    <span class="lens-section-header__title">
-                        {{ 'Taxonomy'|t('lens') }}
-                    </span>
-                    <p class="lens-section-header__intro">
-                        {% if readOnly or isProcessing %}
-                            {{ 'AI-generated tags and colors for categorization.'|t('lens') }}
-                        {% else %}
-                            {{ 'AI-generated tags and colors. Use the edit button to add or remove.'|t('lens') }}
-                        {% endif %}
-                    </p>
-                </div>
+                {% include 'lens/_components/analysis/_section-header' with {
+                    title: 'Taxonomy'|t('lens'),
+                    intro: (readOnly or isProcessing)
+                        ? 'AI-generated tags and colors for categorization.'|t('lens')
+                        : 'AI-generated tags and colors. Use the edit button to add or remove.'|t('lens')
+                } only %}
                 <div class="lens-section-body">
                     {% include 'lens/_components/analysis/taxonomy-section' with {
                         analysis: analysis, analysisTags: analysisTags,
@@ -157,27 +151,21 @@
 
         {# Section 3: Image Assessment #}
         {% if analysis.status not in [lens.status.failed] and (not isProcessing or isReprocessing) %}
+            {% set wrStatus = (webReadiness ?? {}).overallStatus ?? 'pass' %}
+            {% set hasQualityWarning = false %}
+            {% set hasQualityError = false %}
+            {% for metric in (qualityMetrics ?? []) %}
+                {% if metric.status == 'error' %}{% set hasQualityError = true %}{% endif %}
+                {% if metric.status == 'warning' %}{% set hasQualityWarning = true %}{% endif %}
+            {% endfor %}
+            {% set qualityBadge = (wrStatus == 'error' or hasQualityError) ? 'error'
+                : ((wrStatus == 'warning' or hasQualityWarning) ? 'warning' : null) %}
             <div class="lens-section">
-                <div class="lens-section-header">
-                    <span class="lens-section-header__title">
-                        {{ 'Image Assessment'|t('lens') }}
-                        {% set wrStatus = (webReadiness ?? {}).overallStatus ?? 'pass' %}
-                        {% set hasQualityWarning = false %}
-                        {% set hasQualityError = false %}
-                        {% for metric in (qualityMetrics ?? []) %}
-                            {% if metric.status == 'error' %}{% set hasQualityError = true %}{% endif %}
-                            {% if metric.status == 'warning' %}{% set hasQualityWarning = true %}{% endif %}
-                        {% endfor %}
-                        {% if wrStatus == 'error' or hasQualityError %}
-                            <span class="lens-badge lens-badge--circle lens-badge--error">!</span>
-                        {% elseif wrStatus == 'warning' or hasQualityWarning %}
-                            <span class="lens-badge lens-badge--circle lens-badge--warning">!</span>
-                        {% endif %}
-                    </span>
-                    <p class="lens-section-header__intro">
-                        {{ 'Technical checks to ensure your image is web-ready.'|t('lens') }}
-                    </p>
-                </div>
+                {% include 'lens/_components/analysis/_section-header' with {
+                    title: 'Image Assessment'|t('lens'),
+                    intro: 'Technical checks to ensure your image is web-ready.'|t('lens'),
+                    badge: qualityBadge
+                } only %}
                 <div class="lens-section-body">
                     {% include 'lens/_components/analysis/quality-section' with {
                         analysis: analysis, asset: asset,
@@ -191,20 +179,14 @@
 
         {# Section 4: Content Safety #}
         {% if analysis.status not in [lens.status.failed] and (not isProcessing or isReprocessing) %}
+            {% set safetyBadge = analysis.isFlaggedNsfw ? 'error'
+                : ((analysis.nsfwScore is defined and analysis.nsfwScore >= 0.2) ? 'warning' : null) %}
             <div class="lens-section">
-                <div class="lens-section-header">
-                    <span class="lens-section-header__title">
-                        {{ 'Flags & Detection'|t('lens') }}
-                        {% if analysis.isFlaggedNsfw %}
-                            <span class="lens-badge lens-badge--circle lens-badge--error">!</span>
-                        {% elseif analysis.nsfwScore is defined and analysis.nsfwScore >= 0.2 %}
-                            <span class="lens-badge lens-badge--circle lens-badge--warning">!</span>
-                        {% endif %}
-                    </span>
-                    <p class="lens-section-header__intro">
-                        {{ 'Safety signals to help guide editorial decisions.'|t('lens') }}
-                    </p>
-                </div>
+                {% include 'lens/_components/analysis/_section-header' with {
+                    title: 'Flags & Detection'|t('lens'),
+                    intro: 'Safety signals to help guide editorial decisions.'|t('lens'),
+                    badge: safetyBadge
+                } only %}
                 <div class="lens-section-body">
                     {% include 'lens/_components/analysis/safety-section' with {
                         analysis: analysis,
@@ -217,16 +199,12 @@
         {# Section 5: Extracted Text #}
         {% if lens.isPro and analysis.status not in [lens.status.failed] and (not isProcessing or isReprocessing) %}
             <div class="lens-section">
-                <div class="lens-section-header">
-                    <span class="lens-section-header__title">{{ 'Extracted Text'|t('lens') }}</span>
-                    <p class="lens-section-header__intro">
-                        {% if readOnly or isProcessing %}
-                            {{ 'Text detected within the image via OCR.'|t('lens') }}
-                        {% else %}
-                            {{ 'Text detected within the image via OCR. Click the pencil to edit.'|t('lens') }}
-                        {% endif %}
-                    </p>
-                </div>
+                {% include 'lens/_components/analysis/_section-header' with {
+                    title: 'Extracted Text'|t('lens'),
+                    intro: (readOnly or isProcessing)
+                        ? 'Text detected within the image via OCR.'|t('lens')
+                        : 'Text detected within the image via OCR. Click the pencil to edit.'|t('lens')
+                } only %}
                 <div class="lens-section-body">
                     {% include 'lens/_components/analysis/editable-field' with {
                         fieldName: 'extractedText',

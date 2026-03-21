@@ -8,6 +8,7 @@ use Craft;
 use craft\elements\Asset;
 use craft\web\Controller;
 use vitordiniz22\craftlens\controllers\traits\RequiresAiProviderTrait;
+use vitordiniz22\craftlens\controllers\traits\ValidatesIdsTrait;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\enums\QuickFilter;
 use vitordiniz22\craftlens\enums\LogCategory;
@@ -26,6 +27,7 @@ use yii\web\Response;
 class SearchController extends Controller
 {
     use RequiresAiProviderTrait;
+    use ValidatesIdsTrait;
 
     private const EXPORT_ROW_LIMIT = 10000;
 
@@ -288,12 +290,8 @@ class SearchController extends Controller
         $this->requirePermission('accessPlugin-lens');
         Plugin::getInstance()->requireProEdition();
 
-        $groupId = (int) $this->request->getRequiredBodyParam('groupId');
+        $groupId = $this->requireValidId('groupId', 'group ID');
         $resolution = $this->request->getRequiredBodyParam('resolution');
-
-        if ($groupId < 1) {
-            throw new BadRequestHttpException('Invalid group ID');
-        }
 
         $allowedResolutions = ['kept', 'deleted', 'ignored'];
 

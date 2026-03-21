@@ -1,0 +1,13 @@
+{# Section header with optional badge indicator.
+   Expected: title (string), intro (string), badge (optional: 'error'|'warning'|null) #}
+<div class="lens-section-header">
+    <span class="lens-section-header__title">
+        {{ title }}
+        {% if (badge ?? null) == 'error' %}
+            <span class="lens-badge lens-badge--circle lens-badge--error">!</span>
+        {% elseif (badge ?? null) == 'warning' %}
+            <span class="lens-badge lens-badge--circle lens-badge--warning">!</span>
+        {% endif %}
+    </span>
+    <p class="lens-section-header__intro">{{ intro }}</p>
+</div>

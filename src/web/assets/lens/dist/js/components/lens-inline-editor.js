@@ -221,23 +221,15 @@
                 return;
             }
 
-            // Show saving state
-            fieldEl.classList.add('lens-is-saving');
-
-            this._savePeopleFields(analysisId, fields).then((responses) => {
+            this._withSavingState(fieldEl, this._savePeopleFields(analysisId, fields), (responses) => {
                 this._updatePeopleDisplay(fieldEl, fields);
                 this._showLockIcon(fieldEl);
                 this._showPeopleAISuggestion(fieldEl, fields);
                 this._updatePeopleBadge(fieldEl, fields);
-                this._updatePeopleRowAccent(fieldEl, fields);
                 window.Lens.core.DOM.exitEditMode(fieldEl, 'field-display', 'people-edit-panel');
                 this._dispatchPeopleUpdateEvent(analysisId, fields);
                 this._resetFormBaseline(fieldEl);
                 Craft.cp.displayNotice(Craft.t('lens', 'People detection updated.'));
-            }).catch(() => {
-                Craft.cp.displayError(Craft.t('lens', 'Failed to save.'));
-            }).finally(() => {
-                fieldEl.classList.remove('lens-is-saving');
             });
         },
 
@@ -283,7 +275,6 @@
                 if (fieldEl) {
                     this._updatePeopleDisplay(fieldEl, fields);
                     this._updatePeopleBadge(fieldEl, fields);
-                    this._updatePeopleRowAccent(fieldEl, fields);
                     this._removeLockIcon(fieldEl);
 
                     // Hide AI suggestion (values now match AI)
@@ -369,48 +360,30 @@
                 return;
             }
 
-            // Show saving state
-            fieldEl.classList.add('lens-is-saving');
+            this._withSavingState(fieldEl, window.Lens.core.API.updateField(analysisId, fieldName, value), (response) => {
+                if (response.data.success) {
+                    var trueValue = fieldEl.dataset.lensTrueValue;
+                    var isNowDetected = (value === trueValue);
+                    fieldEl.dataset.lensDetected = isNowDetected ? '1' : '0';
 
-            window.Lens.core.API.updateField(analysisId, fieldName, value)
-                .then((response) => {
-                    if (response.data.success) {
-                        // Update data attribute
-                        var trueValue = fieldEl.dataset.lensTrueValue;
-                        var isNowDetected = (value === trueValue);
-                        fieldEl.dataset.lensDetected = isNowDetected ? '1' : '0';
+                    this._updateDetectionBadge(fieldEl, isNowDetected);
+                    this._updateDetectionRowAccent(fieldEl, isNowDetected);
 
-                        // Update badge
-                        this._updateDetectionBadge(fieldEl, isNowDetected);
-
-                        // Update row accent
-                        this._updateDetectionRowAccent(fieldEl, isNowDetected);
-
-                        // Update icon color
-                        var icon = fieldEl.querySelector('[data-lens-target="detection-icon"]');
-                        if (icon) {
-                            icon.classList.toggle('lens-detection-icon--flagged', isNowDetected);
-                        }
-
-                        this._showLockIcon(fieldEl);
-
-                        // Show AI suggestion (always after editing)
-                        this._showDetectionAISuggestion(fieldEl, isNowDetected);
-
-                        // Close edit panel
-                        var editPanel = fieldEl.querySelector('[data-lens-target="detection-edit-panel"]');
-                        if (editPanel) window.Lens.core.DOM.hide(editPanel);
-
-                        this._resetFormBaseline(fieldEl);
-                        Craft.cp.displayNotice(Craft.t('lens', 'Detection updated.'));
+                    var icon = fieldEl.querySelector('[data-lens-target="detection-icon"]');
+                    if (icon) {
+                        icon.classList.toggle('lens-detection-icon--flagged', isNowDetected);
                     }
-                })
-                .catch(() => {
-                    Craft.cp.displayError(Craft.t('lens', 'Failed to save.'));
-                })
-                .finally(() => {
-                    fieldEl.classList.remove('lens-is-saving');
-                });
+
+                    this._showLockIcon(fieldEl);
+                    this._showDetectionAISuggestion(fieldEl, isNowDetected);
+
+                    var editPanel = fieldEl.querySelector('[data-lens-target="detection-edit-panel"]');
+                    if (editPanel) window.Lens.core.DOM.hide(editPanel);
+
+                    this._resetFormBaseline(fieldEl);
+                    Craft.cp.displayNotice(Craft.t('lens', 'Detection updated.'));
+                }
+            });
         },
 
         _handleDetectionRevert: function(e, revertBtn) {
@@ -574,11 +547,6 @@
         },
 
         /**
-         * Update people detection row accent (no-op, people detection has no accent)
-         */
-        _updatePeopleRowAccent: function() {},
-
-        /**
          * Update the detection toggle badge after auto-save.
          * Preserves the inline SVG icon rendered by Craft's iconSvg().
          */
@@ -604,26 +572,42 @@
         },
 
         /**
-         * Show detection toggle AI suggestion after auto-save.
-         * Always shown for provenance; revert button only when AI differs.
-         * The AI suggestion text is pre-rendered by Twig — we only toggle visibility.
+         * Wrap an AJAX save promise with saving-state class and error handling.
          */
-        _showDetectionAISuggestion: function(fieldEl, isNowDetected) {
-            var DOM = window.Lens.core.DOM;
-            var isDetectedAi = fieldEl.dataset.lensDetectedAi === '1';
-            var aiDiffers = (isDetectedAi !== isNowDetected);
+        _withSavingState: function(fieldEl, promise, onSuccess) {
+            fieldEl.classList.add('lens-is-saving');
+            promise
+                .then(onSuccess)
+                .catch(function() {
+                    Craft.cp.displayError(Craft.t('lens', 'Failed to save.'));
+                })
+                .finally(function() {
+                    fieldEl.classList.remove('lens-is-saving');
+                });
+        },
 
-            var suggestion = fieldEl.querySelector('[data-lens-target="detection-ai-suggestion"]');
+        /**
+         * Toggle an AI suggestion container's visibility based on whether
+         * the current value differs from the AI value. Shows the revert
+         * button only when values differ.
+         */
+        _toggleAISuggestion: function(suggestion, aiDiffers, revertAction) {
             if (!suggestion) return;
-
-            // Only show when AI value differs from current
+            var DOM = window.Lens.core.DOM;
             if (aiDiffers) {
-                DOM.show(suggestion);
-                var revertBtn = suggestion.querySelector('[data-lens-action="detection-revert"]');
+                var revertBtn = suggestion.querySelector('[data-lens-action="' + revertAction + '"]');
                 if (revertBtn) DOM.show(revertBtn);
+                DOM.show(suggestion);
             } else {
                 DOM.hide(suggestion);
             }
+        },
+
+        _showDetectionAISuggestion: function(fieldEl, isNowDetected) {
+            var isDetectedAi = fieldEl.dataset.lensDetectedAi === '1';
+            var aiDiffers = (isDetectedAi !== isNowDetected);
+            var suggestion = fieldEl.querySelector('[data-lens-target="detection-ai-suggestion"]');
+            this._toggleAISuggestion(suggestion, aiDiffers, 'detection-revert');
         },
 
         /**
@@ -688,34 +672,27 @@
         },
 
         _updateAISuggestion: function(fieldEl, data) {
-            var DOM = window.Lens.core.DOM;
             var nullAiIsValid = fieldEl.dataset.lensNullAiValid === '1';
-
             var aiSuggestion = fieldEl.querySelector('[data-lens-target="field-ai-suggestion"]');
-            if (aiSuggestion) {
-                var aiDiffers = data.aiValue ? (data.aiValue !== data.value) : (nullAiIsValid && data.value);
-                if (aiDiffers) {
-                    var textSpan = aiSuggestion.querySelector('[data-lens-target="ai-suggestion-text"]');
-                    if (textSpan) {
-                        if (data.aiValue) {
-                            var maxLen = window.Lens.config.THRESHOLDS.AI_SUGGESTION_PREVIEW_LENGTH;
-                            var truncated = data.aiValue.length > maxLen ? data.aiValue.substring(0, maxLen) + '...' : data.aiValue;
-                            textSpan.textContent = Craft.t('lens', 'AI suggested: "{value}"', { value: truncated });
-                        } else {
-                            textSpan.textContent = Craft.t('lens', 'AI suggested: No text detected');
-                        }
+            if (!aiSuggestion) return;
+
+            var aiDiffers = data.aiValue ? (data.aiValue !== data.value) : (nullAiIsValid && data.value);
+            if (aiDiffers) {
+                var textSpan = aiSuggestion.querySelector('[data-lens-target="ai-suggestion-text"]');
+                if (textSpan) {
+                    if (data.aiValue) {
+                        var maxLen = window.Lens.config.THRESHOLDS.AI_SUGGESTION_PREVIEW_LENGTH;
+                        var truncated = data.aiValue.length > maxLen ? data.aiValue.substring(0, maxLen) + '...' : data.aiValue;
+                        textSpan.textContent = Craft.t('lens', 'AI suggested: "{value}"', { value: truncated });
+                    } else {
+                        textSpan.textContent = Craft.t('lens', 'AI suggested: No text detected');
                     }
-                    var revertBtn = aiSuggestion.querySelector('[data-lens-action="field-revert"]');
-                    if (revertBtn) DOM.show(revertBtn);
-                    DOM.show(aiSuggestion);
-                } else {
-                    DOM.hide(aiSuggestion);
                 }
             }
+            this._toggleAISuggestion(aiSuggestion, aiDiffers, 'field-revert');
         },
 
         _showPeopleAISuggestion: function(fieldEl, fields) {
-            var DOM = window.Lens.core.DOM;
             var containsPeopleAi = fieldEl.dataset.lensContainsPeopleAi === '1';
             var faceCountAi = parseInt(fieldEl.dataset.lensFaceCountAi) || 0;
             var aiDiffers = (containsPeopleAi !== fields.containsPeople) || (faceCountAi !== fields.faceCount);
@@ -723,19 +700,14 @@
             var suggestion = fieldEl.querySelector('[data-lens-target="people-ai-suggestion"]');
             if (!suggestion) return;
 
-            // Only show when AI value differs from current
             if (aiDiffers) {
                 var aiText = window.Lens.services.PeopleDetection.formatText(containsPeopleAi, faceCountAi);
                 var textSpan = suggestion.querySelector('[data-lens-target="people-ai-text"]');
                 if (textSpan) {
                     textSpan.textContent = Craft.t('lens', 'AI suggested: "{text}"', { text: aiText });
                 }
-                var revertBtn = suggestion.querySelector('[data-lens-action="people-revert"]');
-                if (revertBtn) DOM.show(revertBtn);
-                DOM.show(suggestion);
-            } else {
-                DOM.hide(suggestion);
             }
+            this._toggleAISuggestion(suggestion, aiDiffers, 'people-revert');
         },
 
         _removeAISuggestion: function(fieldEl) {

@@ -548,7 +548,6 @@ class Plugin extends BasePlugin
                 $event->rules['lens'] = 'lens/dashboard/index';
                 $event->rules['lens/dashboard'] = 'lens/dashboard/index';
                 $event->rules['lens/review'] = 'lens/review/index';
-                $event->rules['lens/review/focus'] = 'lens/review/focus';
                 $event->rules['lens/review/bulk'] = 'lens/review/bulk';
                 $event->rules['lens/review/<analysisId:\d+>'] = 'lens/review/view';
                 $event->rules['lens/review/approve'] = 'lens/review/approve';

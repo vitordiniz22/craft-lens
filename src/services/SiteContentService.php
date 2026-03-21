@@ -11,6 +11,7 @@ use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\helpers\MultisiteHelper;
 use vitordiniz22\craftlens\records\AnalysisSiteContentRecord;
 use vitordiniz22\craftlens\records\AssetAnalysisRecord;
+use vitordiniz22\craftlens\services\traits\ValidatesFieldInput;
 use yii\base\Component;
 use yii\base\InvalidArgumentException;
 
@@ -22,13 +23,17 @@ use yii\base\InvalidArgumentException;
  */
 class SiteContentService extends Component
 {
-    /**
-     * Field-specific validation rules.
-     */
+    use ValidatesFieldInput;
+
     private const FIELD_VALIDATION = [
         'altText' => ['max' => AssetAnalysisRecord::ALT_TEXT_MAX_LENGTH, 'type' => 'string'],
         'suggestedTitle' => ['max' => AssetAnalysisRecord::SUGGESTED_TITLE_MAX_LENGTH, 'type' => 'string'],
     ];
+
+    protected function getFieldValidationRules(): array
+    {
+        return self::FIELD_VALIDATION;
+    }
 
     /**
      * Save per-site content rows from an AI analysis result.
@@ -175,40 +180,34 @@ class SiteContentService extends Component
 
     /**
      * Resolve the effective alt text for a given site.
-     *
-     * Returns site-specific alt text for non-primary sites,
-     * or the main record's alt text for the primary site.
      */
     public function resolveAltText(AssetAnalysisRecord $record, int $siteId): ?string
     {
-        $primarySiteId = Craft::$app->getSites()->getPrimarySite()->id;
-
-        if ($siteId === $primarySiteId) {
-            return $record->altText;
-        }
-
-        $siteContent = $this->getSiteContent($record->id, $siteId);
-
-        return $siteContent?->altText ?? $record->altText;
+        return $this->resolveField($record, $siteId, 'altText');
     }
 
     /**
      * Resolve the effective suggested title for a given site.
-     *
-     * Returns site-specific title for non-primary sites,
-     * or the main record's title for the primary site.
      */
     public function resolveSuggestedTitle(AssetAnalysisRecord $record, int $siteId): ?string
+    {
+        return $this->resolveField($record, $siteId, 'suggestedTitle');
+    }
+
+    /**
+     * Resolve a field value for a given site, falling back to the primary record.
+     */
+    private function resolveField(AssetAnalysisRecord $record, int $siteId, string $field): ?string
     {
         $primarySiteId = Craft::$app->getSites()->getPrimarySite()->id;
 
         if ($siteId === $primarySiteId) {
-            return $record->suggestedTitle;
+            return $record->$field;
         }
 
         $siteContent = $this->getSiteContent($record->id, $siteId);
 
-        return $siteContent?->suggestedTitle ?? $record->suggestedTitle;
+        return $siteContent?->$field ?? $record->$field;
     }
 
     /**
@@ -309,22 +308,4 @@ class SiteContentService extends Component
         AnalysisSiteContentRecord::deleteAll(['analysisId' => $analysisId]);
     }
 
-    private function validateAndSanitize(string $field, mixed $value): mixed
-    {
-        $rules = self::FIELD_VALIDATION[$field] ?? null;
-
-        if ($rules === null) {
-            return $value;
-        }
-
-        $value = trim((string) $value);
-
-        if (isset($rules['max']) && mb_strlen($value) > $rules['max']) {
-            throw new InvalidArgumentException(
-                Craft::t('lens', 'Value exceeds maximum length of {max} characters.', ['max' => $rules['max']])
-            );
-        }
-
-        return $value;
-    }
 }

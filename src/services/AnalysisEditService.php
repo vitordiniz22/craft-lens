@@ -11,6 +11,7 @@ use vitordiniz22\craftlens\Plugin;
 use vitordiniz22\craftlens\records\AssetAnalysisRecord;
 use vitordiniz22\craftlens\records\AssetColorRecord;
 use vitordiniz22\craftlens\records\AssetTagRecord;
+use vitordiniz22\craftlens\services\traits\ValidatesFieldInput;
 use yii\base\Component;
 use yii\base\InvalidArgumentException;
 
@@ -22,12 +23,11 @@ use yii\base\InvalidArgumentException;
  */
 class AnalysisEditService extends Component
 {
+    use ValidatesFieldInput;
+
     private const MAX_TAGS = 50;
     private const MAX_COLORS = 20;
 
-    /**
-     * Field-specific validation rules: [maxLength, type].
-     */
     private const FIELD_VALIDATION = [
         'suggestedTitle' => ['max' => AssetAnalysisRecord::SUGGESTED_TITLE_MAX_LENGTH, 'type' => 'string'],
         'altText' => ['max' => AssetAnalysisRecord::ALT_TEXT_MAX_LENGTH, 'type' => 'string'],
@@ -41,6 +41,11 @@ class AnalysisEditService extends Component
         'focalPointY' => ['min' => 0.0, 'max' => 1.0, 'type' => 'float'],
         'extractedText' => ['max' => AssetAnalysisRecord::EXTRACTED_TEXT_MAX_LENGTH, 'type' => 'string'],
     ];
+
+    protected function getFieldValidationRules(): array
+    {
+        return self::FIELD_VALIDATION;
+    }
 
     /**
      * Update a single editable field on an analysis record.
@@ -284,35 +289,4 @@ class AnalysisEditService extends Component
         return $result;
     }
 
-    /**
-     * Validate and sanitize a field value according to its type and constraints.
-     */
-    private function validateAndSanitize(string $field, mixed $value): mixed
-    {
-        $rules = self::FIELD_VALIDATION[$field] ?? null;
-
-        if ($rules === null) {
-            return $value;
-        }
-
-        return match ($rules['type']) {
-            'string' => $this->sanitizeString($value, $rules['max'] ?? null),
-            'int' => max($rules['min'] ?? 0, (int)$value),
-            'float' => min($rules['max'] ?? 1.0, max($rules['min'] ?? 0.0, (float)$value)),
-            'bool' => (bool)$value,
-        };
-    }
-
-    private function sanitizeString(mixed $value, ?int $maxLength): string
-    {
-        $value = trim((string)$value);
-
-        if ($maxLength !== null && mb_strlen($value) > $maxLength) {
-            throw new InvalidArgumentException(
-                Craft::t('lens', 'Value exceeds maximum length of {max} characters.', ['max' => $maxLength])
-            );
-        }
-
-        return $value;
-    }
 }

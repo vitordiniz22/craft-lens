@@ -55,13 +55,13 @@
         <div class="lens-ai-suggestion-inline">
             {% include 'lens/_components/analysis/_tooltip-ai' only %}
             <span>{{ suggestionValue }}</span>
+            {% if valuesMatch %}
+                <span class="lens-applied-indicator">
+                    <span class="status on"></span>
+                    <span class="smalltext">{{ 'Applied'|t('lens') }}</span>
+                </span>
+            {% endif %}
         </div>
-        {% if valuesMatch %}
-            <div class="lens-applied-indicator">
-                <span class="status on"></span>
-                <span class="smalltext">{{ 'Applied'|t('lens') }}</span>
-            </div>
-        {% endif %}
     {% else %}
         <div class="lens-field-display">
             <p class="light">{{ 'No suggestion available'|t('lens') }}</p>

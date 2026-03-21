@@ -10,6 +10,7 @@ use craft\web\Controller;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\helpers\MultisiteHelper;
+use vitordiniz22\craftlens\controllers\traits\ValidatesIdsTrait;
 use vitordiniz22\craftlens\Plugin;
 use yii\web\BadRequestHttpException;
 use yii\web\NotFoundHttpException;
@@ -20,6 +21,8 @@ use yii\web\Response;
  */
 class AnalysisController extends Controller
 {
+    use ValidatesIdsTrait;
+
     protected array|int|bool $allowAnonymous = false;
 
     public function actionReprocess(): Response
@@ -286,14 +289,10 @@ class AnalysisController extends Controller
         $this->requirePostRequest();
         $this->requirePermission('accessPlugin-lens');
 
-        $analysisId = (int) $this->request->getRequiredBodyParam('analysisId');
+        $analysisId = $this->requireValidId('analysisId', 'analysis ID');
         $field = $this->request->getRequiredBodyParam('field');
         $value = $this->request->getRequiredBodyParam('value');
         $siteId = $this->request->getBodyParam('siteId');
-
-        if ($analysisId < 1) {
-            throw new BadRequestHttpException('Invalid analysis ID');
-        }
 
         try {
             if ($siteId !== null && in_array($field, ['altText', 'suggestedTitle'], true)) {
@@ -318,13 +317,9 @@ class AnalysisController extends Controller
         $this->requirePostRequest();
         $this->requirePermission('accessPlugin-lens');
 
-        $analysisId = (int) $this->request->getRequiredBodyParam('analysisId');
+        $analysisId = $this->requireValidId('analysisId', 'analysis ID');
         $field = $this->request->getRequiredBodyParam('field');
         $siteId = $this->request->getBodyParam('siteId');
-
-        if ($analysisId < 1) {
-            throw new BadRequestHttpException('Invalid analysis ID');
-        }
 
         try {
             if ($siteId !== null && in_array($field, ['altText', 'suggestedTitle'], true)) {
@@ -349,14 +344,9 @@ class AnalysisController extends Controller
         $this->requirePostRequest();
         $this->requirePermission('accessPlugin-lens');
 
-        $analysisId = (int) $this->request->getRequiredBodyParam('analysisId');
+        $analysisId = $this->requireValidId('analysisId', 'analysis ID');
         $tags = $this->request->getRequiredBodyParam('tags');
-
-        if ($analysisId < 1) {
-            throw new BadRequestHttpException('Invalid analysis ID');
-        }
-
-        $tags = $this->decodeJsonParam($tags);
+        $tags = is_string($tags) ? (json_decode($tags, true) ?? []) : (array) $tags;
 
         try {
             $result = Plugin::getInstance()->analysisEdit->updateTags($analysisId, $tags);
@@ -375,14 +365,9 @@ class AnalysisController extends Controller
         $this->requirePostRequest();
         $this->requirePermission('accessPlugin-lens');
 
-        $analysisId = (int) $this->request->getRequiredBodyParam('analysisId');
+        $analysisId = $this->requireValidId('analysisId', 'analysis ID');
         $colors = $this->request->getRequiredBodyParam('colors');
-
-        if ($analysisId < 1) {
-            throw new BadRequestHttpException('Invalid analysis ID');
-        }
-
-        $colors = $this->decodeJsonParam($colors);
+        $colors = is_string($colors) ? (json_decode($colors, true) ?? []) : (array) $colors;
 
         try {
             $result = Plugin::getInstance()->analysisEdit->updateColors($analysisId, $colors);
@@ -412,11 +397,7 @@ class AnalysisController extends Controller
      */
     private function getRequiredAsset(): Asset
     {
-        $assetId = (int) $this->request->getRequiredBodyParam('assetId');
-
-        if ($assetId < 1) {
-            throw new BadRequestHttpException('Invalid asset ID');
-        }
+        $assetId = $this->requireValidId('assetId', 'asset ID');
 
         $asset = Asset::find()->id($assetId)->one();
 
@@ -427,13 +408,4 @@ class AnalysisController extends Controller
         return $asset;
     }
 
-    /**
-     * Decode JSON parameter to array.
-     */
-    private function decodeJsonParam(string|array $value): array
-    {
-        return is_string($value)
-            ? (json_decode($value, true) ?? [])
-            : (array) $value;
-    }
 }
