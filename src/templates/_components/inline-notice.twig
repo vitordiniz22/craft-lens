@@ -10,7 +10,7 @@
  #   {% endembed %}
  #
  # Parameters:
- #   - type: 'error', 'warning', 'info', 'tip', or 'neutral' (required)
+ #   - type: 'error', 'warning', or 'info' (required)
  #   - title: (optional) Notice title/heading
  #   - message: Notice message text (required for include, optional for embed with body override)
  #   - icon: (optional) Override icon name, or false to hide icon entirely
@@ -25,15 +25,13 @@
 {% set iconMap = {
     'error': 'circle-exclamation',
     'warning': 'triangle-exclamation',
-    'info': 'circle-info',
-    'tip': 'circle-check'
+    'info': 'circle-info'
 } %}
 
 {% set titleMap = {
     'error': 'Configuration required'|t('lens'),
     'warning': 'Attention needed'|t('lens'),
-    'info': 'Information'|t('lens'),
-    'tip': 'Tip'|t('lens')
+    'info': 'Information'|t('lens')
 } %}
 
 {% set resolvedIcon = icon is defined ? icon : (iconMap[type] ?? false) %}

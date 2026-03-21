@@ -733,11 +733,6 @@
     color: var(--red-700);
 }
 
-.lens-detection-badge--warning {
-    background: var(--amber-050, #fffbeb);
-    color: var(--amber-700, #92400e);
-}
-
 .lens-detection-badge--info {
     background: var(--blue-050, #eff6ff);
     color: var(--blue-700, #1d4ed8);

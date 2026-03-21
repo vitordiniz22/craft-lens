@@ -32,15 +32,7 @@
   border: 1px solid var(--blue-200);
 }
 
-.lens-inline-notice--tip {
-  background: var(--bg-success);
-  border: 1px solid var(--border-success);
-}
 
-.lens-inline-notice--neutral {
-  background: var(--gray-050);
-  border: 1px solid var(--hairline-color);
-}
 
 .lens-inline-notice__header {
   display: flex;
@@ -75,13 +67,7 @@
   color: var(--fg-notice, var(--blue-600));
 }
 
-.lens-inline-notice--tip .lens-inline-notice__icon {
-  color: var(--fg-success);
-}
 
-.lens-inline-notice--neutral .lens-inline-notice__icon {
-  color: var(--medium-text-color);
-}
 
 .lens-inline-notice__title {
   font-size: 13px;

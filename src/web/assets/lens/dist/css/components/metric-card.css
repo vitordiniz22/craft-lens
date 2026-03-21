@@ -1,8 +1,6 @@
 /**
  * Metric Card Component
- * Displays a numeric value + label. Two layout variants:
- *   --stacked  (vertical, centered, large text) for dashboards/bulk stats
- *   --inline   (horizontal, compact, interactive) for attention items
+ * Displays a numeric value + label with --inline layout (horizontal, compact, interactive).
  */
 
 /* ==========================================================================
@@ -34,27 +32,6 @@
 }
 
 /* ==========================================================================
-   Layout modifier: --stacked (vertical, centered, large)
-   ========================================================================== */
-
-.lens-metric-card--stacked {
-    padding: 20px;
-    text-align: center;
-}
-
-.lens-metric-card--stacked .lens-metric-card__value {
-    font-size: 32px;
-}
-
-.lens-metric-card--stacked .lens-metric-card__icon {
-    margin-bottom: 8px;
-}
-
-.lens-metric-card--stacked .lens-metric-card__label {
-    margin-top: 4px;
-}
-
-/* ==========================================================================
    Layout modifier: --inline (horizontal, compact, interactive)
    ========================================================================== */
 
@@ -73,19 +50,6 @@
 /* ==========================================================================
    Status modifiers
    ========================================================================== */
-
-.lens-metric-card--neutral {
-    border-left-color: var(--hairline-color);
-}
-
-.lens-metric-card--success {
-    border-left-color: var(--success-color);
-    background: var(--bg-success);
-}
-
-.lens-metric-card--success .lens-metric-card__value {
-    color: var(--success-color);
-}
 
 .lens-metric-card--warning {
     border-left-color: var(--warning-color);
@@ -115,7 +79,6 @@
 }
 
 /* Status-colored icons */
-.lens-metric-card--success .lens-metric-card__icon { color: var(--success-color); }
 .lens-metric-card--warning .lens-metric-card__icon { color: var(--warning-color); }
 .lens-metric-card--error .lens-metric-card__icon { color: var(--error-color); }
 .lens-metric-card--info .lens-metric-card__icon { color: var(--link-color); }
@@ -135,16 +98,4 @@
     transform: translateY(-2px);
     box-shadow: var(--lens-shadow-sm);
     text-decoration: none;
-}
-
-/* ==========================================================================
-   Zero-value dimming
-   ========================================================================== */
-
-.lens-metric-card--empty {
-    opacity: 0.5;
-}
-
-.lens-metric-card--empty .lens-metric-card__value {
-    color: var(--medium-text-color);
 }
