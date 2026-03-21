@@ -1,6 +1,42 @@
 {# Filter Panel — included within the search form context in index.twig #}
 {% import '_includes/forms.twig' as forms %}
 
+{% macro presetButtonGroup(label, presetName, presets, currentValue) %}
+    <div class="field">
+        <div class="heading"><label>{{ label }}</label></div>
+        <div class="input">
+            <div class="btngroup" data-lens-preset="{{ presetName }}">
+                {% for preset in presets %}
+                    <button type="button"
+                            class="btn{% if currentValue == preset.value %} active{% endif %}"
+                            data-lens-value="{{ preset.value }}"
+                            aria-pressed="{{ currentValue == preset.value ? 'true' : 'false' }}">
+                        {{ preset.label }}
+                    </button>
+                {% endfor %}
+            </div>
+            <input type="hidden" name="{{ presetName }}" value="{{ currentValue }}">
+        </div>
+    </div>
+{% endmacro %}
+
+{% macro checkboxGroup(label, inputName, options, activeValues) %}
+    <div class="field">
+        <div class="heading"><label>{{ label }}</label></div>
+        <div class="input">
+            {% for option in options %}
+                <div>
+                    <label>
+                        <input type="checkbox" name="{{ inputName }}" value="{{ option.value }}"
+                               {% if option.value in activeValues %}checked{% endif %}>
+                        {{ option.label }}
+                    </label>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endmacro %}
+
 <div class="pane{% if not showFilterPanel %} hidden{% endif %}" data-lens-target="filters-panel">
     <div class="lens-filter-grid">
 
@@ -19,98 +55,36 @@
         }) }}
 
         {# Face Count - Preset Buttons #}
-        <div class="field">
-            <div class="heading"><label>{{ 'Face Count'|t('lens') }}</label></div>
-            <div class="input">
-                <div class="btngroup" data-lens-preset="faceCountPreset">
-                    {% set facePresets = [
-                        {value: '0', label: '0'},
-                        {value: '1', label: '1'},
-                        {value: '2-5', label: '2-5'},
-                        {value: '6+', label: '6+'},
-                    ] %}
-                    {% for preset in facePresets %}
-                        <button type="button"
-                                class="btn{% if (filters.faceCountPreset ?? '') == preset.value %} active{% endif %}"
-                                data-lens-value="{{ preset.value }}"
-                                aria-pressed="{{ (filters.faceCountPreset ?? '') == preset.value ? 'true' : 'false' }}">
-                            {{ preset.label }}
-                        </button>
-                    {% endfor %}
-                </div>
-                <input type="hidden" name="faceCountPreset" value="{{ filters.faceCountPreset ?? '' }}">
-            </div>
-        </div>
+        {{ _self.presetButtonGroup('Face Count'|t('lens'), 'faceCountPreset', [
+            {value: '0', label: '0'},
+            {value: '1', label: '1'},
+            {value: '2-5', label: '2-5'},
+            {value: '6+', label: '6+'},
+        ], filters.faceCountPreset ?? '') }}
 
         {# Quality Preset #}
-        <div class="field">
-            <div class="heading"><label>{{ 'Quality'|t('lens') }}</label></div>
-            <div class="input">
-                <div class="btngroup" data-lens-preset="qualityPreset">
-                    {% set qualityPresets = [
-                        {value: 'high', label: 'High'|t('lens')},
-                        {value: 'medium', label: 'Medium'|t('lens')},
-                        {value: 'low', label: 'Low'|t('lens')},
-                    ] %}
-                    {% for preset in qualityPresets %}
-                        <button type="button"
-                                class="btn{% if (filters.qualityPreset ?? '') == preset.value %} active{% endif %}"
-                                data-lens-value="{{ preset.value }}"
-                                aria-pressed="{{ (filters.qualityPreset ?? '') == preset.value ? 'true' : 'false' }}">
-                            {{ preset.label }}
-                        </button>
-                    {% endfor %}
-                </div>
-                <input type="hidden" name="qualityPreset" value="{{ filters.qualityPreset ?? '' }}">
-            </div>
-        </div>
+        {{ _self.presetButtonGroup('Quality'|t('lens'), 'qualityPreset', [
+            {value: 'high', label: 'High'|t('lens')},
+            {value: 'medium', label: 'Medium'|t('lens')},
+            {value: 'low', label: 'Low'|t('lens')},
+        ], filters.qualityPreset ?? '') }}
 
-        {# Quality Issues — checkbox group #}
-        <div class="field">
-            <div class="heading"><label>{{ 'Quality Issues'|t('lens') }}</label></div>
-            <div class="input">
-                {% set qualityIssueOptions = [
-                    {value: 'blurry', label: 'Blurry'|t('lens')},
-                    {value: 'tooDark', label: 'Too Dark'|t('lens')},
-                    {value: 'tooBright', label: 'Too Bright'|t('lens')},
-                    {value: 'lowContrast', label: 'Low Contrast'|t('lens')},
-                    {value: 'lowOverall', label: 'Low Overall Quality'|t('lens')},
-                ] %}
-                {% set activeQualityIssues = filters.qualityIssues ?? [] %}
-                {% for option in qualityIssueOptions %}
-                    <div>
-                        <label>
-                            <input type="checkbox" name="qualityIssues[]" value="{{ option.value }}"
-                                   {% if option.value in activeQualityIssues %}checked{% endif %}>
-                            {{ option.label }}
-                        </label>
-                    </div>
-                {% endfor %}
-            </div>
-        </div>
+        {# Quality Issues #}
+        {{ _self.checkboxGroup('Quality Issues'|t('lens'), 'qualityIssues[]', [
+            {value: 'blurry', label: 'Blurry'|t('lens')},
+            {value: 'tooDark', label: 'Too Dark'|t('lens')},
+            {value: 'tooBright', label: 'Too Bright'|t('lens')},
+            {value: 'lowContrast', label: 'Low Contrast'|t('lens')},
+            {value: 'lowOverall', label: 'Low Overall Quality'|t('lens')},
+        ], filters.qualityIssues ?? []) }}
 
-        {# Web Readiness Issues — checkbox group #}
-        <div class="field">
-            <div class="heading"><label>{{ 'Web Readiness'|t('lens') }}</label></div>
-            <div class="input">
-                {% set webReadinessOptions = [
-                    {value: 'fileTooLarge', label: 'File Too Large (>1MB)'|t('lens')},
-                    {value: 'resolutionTooSmall', label: 'Resolution Too Small'|t('lens')},
-                    {value: 'resolutionOversized', label: 'Resolution Oversized (>4096px)'|t('lens')},
-                    {value: 'unsupportedFormat', label: 'Unsupported Format'|t('lens')},
-                ] %}
-                {% set activeWebIssues = filters.webReadinessIssues ?? [] %}
-                {% for option in webReadinessOptions %}
-                    <div>
-                        <label>
-                            <input type="checkbox" name="webReadinessIssues[]" value="{{ option.value }}"
-                                   {% if option.value in activeWebIssues %}checked{% endif %}>
-                            {{ option.label }}
-                        </label>
-                    </div>
-                {% endfor %}
-            </div>
-        </div>
+        {# Web Readiness Issues #}
+        {{ _self.checkboxGroup('Web Readiness'|t('lens'), 'webReadinessIssues[]', [
+            {value: 'fileTooLarge', label: 'File Too Large (>1MB)'|t('lens')},
+            {value: 'resolutionTooSmall', label: 'Resolution Too Small'|t('lens')},
+            {value: 'resolutionOversized', label: 'Resolution Oversized (>4096px)'|t('lens')},
+            {value: 'unsupportedFormat', label: 'Unsupported Format'|t('lens')},
+        ], filters.webReadinessIssues ?? []) }}
 
         {# Has Text in Image #}
         {{ forms.selectField({

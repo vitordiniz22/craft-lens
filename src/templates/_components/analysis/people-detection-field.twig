@@ -72,6 +72,8 @@
     </label>
 {% endmacro %}
 
+{% from 'lens/_components/analysis/_confidence-badge' import confidenceBadge %}
+
 {% set fieldState = fieldState ?? 'readonly' %}
 {% set isEdited = (analysis.containsPeopleAi is defined and analysis.containsPeople != analysis.containsPeopleAi)
     or (analysis.faceCountAi is defined and analysis.faceCount != analysis.faceCountAi) %}
@@ -92,7 +94,7 @@
         {% endif %}
         <span class="lens-field-label">{{ 'People Detection'|t('lens') }}</span>
         {% if not isEdited and analysis.containsPeopleConfidence is defined and analysis.containsPeopleConfidence and not (hideConfidence ?? false) %}
-            <span class="badge">{{ (analysis.containsPeopleConfidence * 100)|round }}%</span>
+            {{ confidenceBadge(analysis.containsPeopleConfidence, 'simple') }}
         {% endif %}
         {% if hasPeople %}
             <span class="lens-detection-badge lens-detection-badge--info">
@@ -142,7 +144,7 @@
         {% endif %}
         <span class="lens-field-label">{{ 'People Detection'|t('lens') }}</span>
         {% if (isReview or not isEdited) and analysis.containsPeopleConfidence is defined and analysis.containsPeopleConfidence and not (hideConfidence ?? false) %}
-            <craft-tooltip text="{{ 'AI confidence for this field'|t('lens') }}"><button type="button" class="badge" data-lens-target="confidence-badge">{{ (analysis.containsPeopleConfidence * 100)|round }}%</button></craft-tooltip>
+            {{ confidenceBadge(analysis.containsPeopleConfidence) }}
         {% endif %}
         {% if not isReview %}
             {% include 'lens/_components/analysis/_tooltip-edit' with {editAction: 'people-edit'} only %}

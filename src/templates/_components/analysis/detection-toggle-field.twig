@@ -18,6 +18,9 @@
  #   details        - string[] (optional, contextual labels shown inside accent bar when flagged)
  #}
 
+{% from 'lens/_components/analysis/_detection-status-badge' import detectionStatusBadge %}
+{% from 'lens/_components/analysis/_confidence-badge' import confidenceBadge %}
+
 {% set fieldState = fieldState ?? 'readonly' %}
 {% set icon = icon ?? 'circle-question' %}
 {% set isEdited = (detectedAi is defined) and detected != detectedAi %}
@@ -37,17 +40,9 @@
         {% endif %}
         <span class="lens-field-label">{{ label }}</span>
         {% if not isEdited and (confidence ?? null) and not (hideConfidence ?? false) %}
-            <span class="badge">{{ (confidence * 100)|round }}%</span>
+            {{ confidenceBadge(confidence, 'simple') }}
         {% endif %}
-        <span class="lens-detection-badge {{ detected ? 'lens-detection-badge--flagged' : 'lens-detection-badge--clear' }}">
-            {% if detected %}
-                {{ iconSvg('triangle-exclamation')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
-                {{ 'Flagged'|t('lens') }}
-            {% else %}
-                {{ iconSvg('check')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
-                {{ 'Clear'|t('lens') }}
-            {% endif %}
-        </span>
+        {{ detectionStatusBadge(detected) }}
     </div>
 
     {% if (details ?? [])|length %}
@@ -87,20 +82,12 @@
         {% endif %}
         <span class="lens-field-label">{{ label }}</span>
         {% if (isReview or not isEdited) and (confidence ?? null) and not (hideConfidence ?? false) %}
-            <craft-tooltip text="{{ 'AI confidence for this field'|t('lens') }}"><button type="button" class="badge" data-lens-target="confidence-badge">{{ (confidence * 100)|round }}%</button></craft-tooltip>
+            {{ confidenceBadge(confidence) }}
         {% endif %}
         {% if not isReview %}
             {% include 'lens/_components/analysis/_tooltip-edit' with {editAction: 'detection-edit'} only %}
         {% endif %}
-        <span class="lens-detection-badge {{ detected ? 'lens-detection-badge--flagged' : 'lens-detection-badge--clear' }}" data-lens-target="detection-badge">
-            {% if detected %}
-                {{ iconSvg('triangle-exclamation')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
-                {{ 'Flagged'|t('lens') }}
-            {% else %}
-                {{ iconSvg('check')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
-                {{ 'Clear'|t('lens') }}
-            {% endif %}
-        </span>
+        {{ detectionStatusBadge(detected, true) }}
     </div>
 
     {% if (details ?? [])|length %}

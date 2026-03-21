@@ -16,6 +16,8 @@
  #                    can revert to that empty state after manually adding content.
  #}
 
+{% from 'lens/_components/analysis/_confidence-badge' import confidenceBadge %}
+
 {% set nullAiIsValid = nullAiIsValid ?? false %}
 {% set isEdited = (aiValue is not null and value != aiValue) or (nullAiIsValid and aiValue is null and value is not null and value != '') %}
 {% set inputType = inputType ?? 'text' %}
@@ -39,7 +41,7 @@
             <span class="lens-field-label">{{ label }}</span>
         {% endif %}
         {% if not isEdited and confidence and not (hideConfidence ?? false) %}
-            <craft-tooltip text="{{ 'AI confidence for this field'|t('lens') }}"><button type="button" class="badge" data-lens-target="confidence-badge">{{ (confidence * 100)|round }}%</button></craft-tooltip>
+            {{ confidenceBadge(confidence) }}
         {% endif %}
     </div>
 
@@ -83,13 +85,11 @@
         {% endif %}
         {% if isReview %}
             {% if confidence and confidence < 0.8 %}
-                <craft-tooltip text="{{ 'AI confidence for this field'|t('lens') }}"><button type="button" class="lens-confidence-badge lens-confidence-{{ (confidence * 100)|round >= 50 ? 'medium' : 'low' }}">
-                    {{ (confidence * 100)|round }}%
-                </button></craft-tooltip>
+                {{ confidenceBadge(confidence, 'review') }}
             {% endif %}
         {% else %}
             {% if not isEdited and confidence and not (hideConfidence ?? false) %}
-                <craft-tooltip text="{{ 'AI confidence for this field'|t('lens') }}"><button type="button" class="badge" data-lens-target="confidence-badge">{{ (confidence * 100)|round }}%</button></craft-tooltip>
+                {{ confidenceBadge(confidence) }}
             {% endif %}
             {% include 'lens/_components/analysis/_tooltip-edit' with {editAction: 'field-edit'} only %}
         {% endif %}

@@ -24,6 +24,8 @@
  #   siteId          - int|null, optional site ID for per-site content (omit for primary site)
  #}
 
+{% from 'lens/_components/analysis/_confidence-badge' import confidenceBadge %}
+
 {% set inputType = inputType ?? 'text' %}
 {% set siteId = siteId ?? null %}
 {% set fieldState = fieldState ?? 'readonly' %}
@@ -47,7 +49,7 @@
         {% endif %}
         <span class="lens-field-label">{{ label }}</span>
         {% if not isEdited and confidence and not (hideConfidence ?? false) %}
-            <craft-tooltip text="{{ 'AI confidence for this field'|t('lens') }}"><button type="button" class="badge" data-lens-target="confidence-badge">{{ (confidence * 100)|round }}%</button></craft-tooltip>
+            {{ confidenceBadge(confidence) }}
         {% endif %}
     </div>
 
@@ -95,13 +97,11 @@
         <span class="lens-field-label">{{ label }}</span>
         {% if isReview %}
             {% if confidence and confidence < 0.8 %}
-                <craft-tooltip text="{{ 'AI confidence for this field'|t('lens') }}"><button type="button" class="lens-confidence-badge lens-confidence-{{ (confidence * 100)|round >= 50 ? 'medium' : 'low' }}">
-                    {{ (confidence * 100)|round }}%
-                </button></craft-tooltip>
+                {{ confidenceBadge(confidence, 'review') }}
             {% endif %}
         {% else %}
             {% if not isEdited and confidence and not (hideConfidence ?? false) %}
-                <craft-tooltip text="{{ 'AI confidence for this field'|t('lens') }}"><button type="button" class="badge" data-lens-target="confidence-badge">{{ (confidence * 100)|round }}%</button></craft-tooltip>
+                {{ confidenceBadge(confidence) }}
             {% endif %}
         {% endif %}
     </div>

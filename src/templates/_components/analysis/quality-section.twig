@@ -6,6 +6,8 @@
  #
  # Expected variables: analysis, asset (optional), fieldState, webReadiness, qualityMetrics
  #}
+{% from 'lens/_components/analysis/_confidence-badge' import confidenceBadge %}
+
 {% set fieldState = fieldState ?? 'readonly' %}
 {% set webReadiness = webReadiness ?? {issues: [], checks: {}} %}
 {% set qualityMetrics = qualityMetrics ?? {} %}
@@ -56,7 +58,7 @@
             {% endif %}
             <span class="lens-field-label">{{ 'Focal Point'|t('lens') }}</span>
             {% if not fpEdited and analysis.focalPointConfidence and not (hideConfidence ?? false) %}
-                <craft-tooltip text="{{ 'AI confidence for this field'|t('lens') }}"><button type="button" class="badge" data-lens-target="confidence-badge">{{ (analysis.focalPointConfidence * 100)|round }}%</button></craft-tooltip>
+                {{ confidenceBadge(analysis.focalPointConfidence) }}
             {% endif %}
         </div>
 
