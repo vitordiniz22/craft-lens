@@ -190,7 +190,6 @@ class Plugin extends BasePlugin
         Craft::$app->onInit(function() {
             $this->registerCpRoutes();
             $this->registerTwigExtensions();
-            $this->searchIndex->maybeQueueRebuild();
         });
     }
 

@@ -90,7 +90,7 @@ class SearchService extends Component
             } elseif (!empty($craftNativeIds)) {
                 $rankedAssetIds = $craftNativeIds;
                 $hasRankedOrder = true;
-            } elseif (Plugin::getInstance()->searchIndex->isIndexPopulated()) {
+            } else {
                 // Both BM25 and Craft native returned zero — genuine zero results.
                 Logger::info(LogCategory::AssetProcessing, 'Asset search executed (zero results)', context: [
                     'query' => $rawQuery,
@@ -99,8 +99,6 @@ class SearchService extends Component
 
                 return $this->emptyResult($offset, $limit);
             }
-            // else: BM25 index empty and Craft native found nothing —
-            // fall through to legacy LIKE search below.
         }
 
         // Similarity path: resolve ranked IDs when similarTo is set.
@@ -258,15 +256,6 @@ class SearchService extends Component
         if ($rankedAssetIds !== null && $similarAssetIds === null) {
             // Ranked path (BM25 + Craft native): filter to pre-ranked IDs.
             $query->andWhere(['assets.id' => $rankedAssetIds]);
-        } elseif ($rankedAssetIds === null) {
-            // Legacy LIKE path: join tables needed for text search.
-            if (!empty($filters['query'])) {
-                $query->leftJoin('{{%elements_sites}} elements_sites', '[[assets.id]] = [[elements_sites.elementId]]');
-                $query->leftJoin(Install::TABLE_ASSET_TAGS . ' tags', '[[lens.id]] = [[tags.analysisId]]');
-                $query->leftJoin(Install::TABLE_ANALYSIS_SITE_CONTENT . ' site_content', '[[lens.id]] = [[site_content.analysisId]]');
-            }
-
-            $this->applyTextSearchLegacy($query, $filters['query'] ?? null);
         }
 
         $this->applyTagFilters($query, $filters['tags'] ?? [], $filters['tagOperator'] ?? 'or');
@@ -290,45 +279,6 @@ class SearchService extends Component
         $this->applyVolumeFilter($query);
 
         return $query;
-    }
-
-    /**
-     * Legacy LIKE-based full-text search. Used as fallback when the BM25 index is empty.
-     *
-     * Searches: asset title, Lens alt text, long description, tags, extracted text,
-     * and per-site translated alt text / suggested title.
-     */
-    private function applyTextSearchLegacy(Query $query, ?string $searchQuery): void
-    {
-        if ($searchQuery === null || trim($searchQuery) === '') {
-            return;
-        }
-
-        $searchTerms = $this->parseSearchTerms($searchQuery);
-
-        if (empty($searchTerms)) {
-            return;
-        }
-
-        $conditions = ['or'];
-
-        foreach ($searchTerms as $term) {
-            $escapedTerm = '%' . $term . '%';
-
-            $conditions[] = ['like', 'elements_sites.title', $escapedTerm, false];
-
-            $conditions[] = ['like', 'lens.altText', $escapedTerm, false];
-            $conditions[] = ['like', 'lens.suggestedTitle', $escapedTerm, false];
-            $conditions[] = ['like', 'lens.longDescription', $escapedTerm, false];
-
-            $conditions[] = ['like', 'tags.tag', $escapedTerm, false];
-            $conditions[] = ['like', 'lens.extractedText', $escapedTerm, false];
-
-            $conditions[] = ['like', 'site_content.altText', $escapedTerm, false];
-            $conditions[] = ['like', 'site_content.suggestedTitle', $escapedTerm, false];
-        }
-
-        $query->andWhere($conditions);
     }
 
     /**
