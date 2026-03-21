@@ -11,8 +11,8 @@
     "rss": "https://github.com/vitordiniz22/craft-lens/releases.atom"
   },
   "require": {
-    "php": ">=8.3",
-    "craftcms/cms": "^5.8.0",
+    "php": ">=8.2",
+    "craftcms/cms": "^5.0.0",
     "wamania/php-stemmer": "4.0"
   },
   "require-dev": {
@@ -38,7 +38,7 @@
   "config": {
     "sort-packages": true,
     "platform": {
-      "php": "8.3"
+      "php": "8.2"
     },
     "allow-plugins": {
       "yiisoft/yii2-composer": true,
