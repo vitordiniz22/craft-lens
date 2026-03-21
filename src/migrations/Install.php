@@ -6,6 +6,7 @@ namespace vitordiniz22\craftlens\migrations;
 
 use craft\db\Migration;
 use craft\db\Table;
+use vitordiniz22\craftlens\Plugin;
 
 /**
  * Install migration for the Lens plugin.
@@ -117,9 +118,6 @@ class Install extends Migration
             'extractedText' => $this->text()->null(),
             'extractedTextAi' => $this->text()->null(),
 
-            // Content table flags
-            'hasAnalysisContent' => $this->boolean()->notNull()->defaultValue(false),
-
             // Token usage and cost
             'inputTokens' => $this->integer()->null(),
             'outputTokens' => $this->integer()->null(),
@@ -136,8 +134,6 @@ class Install extends Migration
         $this->createTable(self::TABLE_ANALYSIS_CONTENT, [
             'id' => $this->primaryKey(),
             'analysisId' => $this->integer()->notNull(),
-            'rawResponse' => $this->json()->null(),
-            'customPromptResult' => $this->text()->null(),
             'errorMessage' => $this->text()->null(),
             'dateCreated' => $this->dateTime()->notNull(),
             'dateUpdated' => $this->dateTime()->notNull(),
@@ -208,28 +204,30 @@ class Install extends Migration
             'uid' => $this->uid(),
         ]);
 
-        $this->createTable(self::TABLE_LOGS, [
-            'id' => $this->primaryKey(),
-            'level' => $this->string(10)->notNull(),
-            'category' => $this->string(40)->notNull(),
-            'message' => $this->text()->notNull(),
-            'assetId' => $this->integer()->null(),
-            'provider' => $this->string(50)->null(),
-            'jobType' => $this->string(100)->null(),
-            'isRetryable' => $this->boolean()->notNull()->defaultValue(false),
-            'retryJobData' => $this->json()->null(),
-            'httpStatusCode' => $this->smallInteger()->null(),
-            'responseTimeMs' => $this->integer()->null(),
-            'inputTokens' => $this->integer()->null(),
-            'outputTokens' => $this->integer()->null(),
-            'requestPayload' => $this->json()->null(),
-            'responsePayload' => $this->json()->null(),
-            'stackTrace' => $this->text()->null(),
-            'context' => $this->json()->null(),
-            'dateCreated' => $this->dateTime()->notNull(),
-            'dateUpdated' => $this->dateTime()->notNull(),
-            'uid' => $this->uid(),
-        ]);
+        if (Plugin::isDevInstall()) {
+            $this->createTable(self::TABLE_LOGS, [
+                'id' => $this->primaryKey(),
+                'level' => $this->string(10)->notNull(),
+                'category' => $this->string(40)->notNull(),
+                'message' => $this->text()->notNull(),
+                'assetId' => $this->integer()->null(),
+                'provider' => $this->string(50)->null(),
+                'jobType' => $this->string(100)->null(),
+                'isRetryable' => $this->boolean()->notNull()->defaultValue(false),
+                'retryJobData' => $this->json()->null(),
+                'httpStatusCode' => $this->smallInteger()->null(),
+                'responseTimeMs' => $this->integer()->null(),
+                'inputTokens' => $this->integer()->null(),
+                'outputTokens' => $this->integer()->null(),
+                'requestPayload' => $this->json()->null(),
+                'responsePayload' => $this->json()->null(),
+                'stackTrace' => $this->text()->null(),
+                'context' => $this->json()->null(),
+                'dateCreated' => $this->dateTime()->notNull(),
+                'dateUpdated' => $this->dateTime()->notNull(),
+                'uid' => $this->uid(),
+            ]);
+        }
 
         // Full-text search index (pre-stemmed tokens with BM25 scoring data)
         $this->createTable(self::TABLE_SEARCH_INDEX, [
@@ -264,8 +262,6 @@ class Install extends Migration
 
         $this->createIndex(null, self::TABLE_ASSET_ANALYSES, ['perceptualHash']);
         $this->createIndex(null, self::TABLE_ASSET_ANALYSES, ['fileContentHash']);
-        // Content table flags indexes
-        $this->createIndex(null, self::TABLE_ASSET_ANALYSES, ['hasAnalysisContent']);
         // Analysis content indexes
         $this->createIndex(null, self::TABLE_ANALYSIS_CONTENT, ['analysisId'], true);
 
@@ -293,12 +289,14 @@ class Install extends Migration
         $this->createIndex(null, self::TABLE_DUPLICATE_GROUPS, ['hammingDistance']);
         $this->createIndex(null, self::TABLE_DUPLICATE_GROUPS, ['resolution']);
 
-        // Logs indexes
-        $this->createIndex(null, self::TABLE_LOGS, ['level']);
-        $this->createIndex(null, self::TABLE_LOGS, ['category']);
-        $this->createIndex(null, self::TABLE_LOGS, ['assetId']);
-        $this->createIndex(null, self::TABLE_LOGS, ['dateCreated']);
-        $this->createIndex(null, self::TABLE_LOGS, ['level', 'category', 'dateCreated']);
+        // Logs indexes — only in development environments
+        if (Plugin::isDevInstall()) {
+            $this->createIndex(null, self::TABLE_LOGS, ['level']);
+            $this->createIndex(null, self::TABLE_LOGS, ['category']);
+            $this->createIndex(null, self::TABLE_LOGS, ['assetId']);
+            $this->createIndex(null, self::TABLE_LOGS, ['dateCreated']);
+            $this->createIndex(null, self::TABLE_LOGS, ['level', 'category', 'dateCreated']);
+        }
 
         // Search index indexes — token is the primary lookup column
         $this->createIndex(null, self::TABLE_SEARCH_INDEX, ['token']);
@@ -425,16 +423,18 @@ class Install extends Migration
             'CASCADE'
         );
 
-        // Logs foreign keys
-        $this->addForeignKey(
-            null,
-            self::TABLE_LOGS,
-            ['assetId'],
-            Table::ELEMENTS,
-            ['id'],
-            'SET NULL',
-            'CASCADE'
-        );
+        // Logs foreign keys — only in development environments
+        if (Plugin::isDevInstall()) {
+            $this->addForeignKey(
+                null,
+                self::TABLE_LOGS,
+                ['assetId'],
+                Table::ELEMENTS,
+                ['id'],
+                'SET NULL',
+                'CASCADE'
+            );
+        }
 
         // Search index foreign keys
         $this->addForeignKey(

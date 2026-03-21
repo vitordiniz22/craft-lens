@@ -6,7 +6,6 @@ namespace vitordiniz22\craftlens\services;
 
 use craft\helpers\DateTimeHelper;
 use craft\helpers\StringHelper;
-use vitordiniz22\craftlens\dto\AnalysisResult;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\records\AnalysisContentRecord;
@@ -23,7 +22,7 @@ use yii\base\Component;
 class ContentStorageService extends Component
 {
     // -------------------------------------------------------------------------
-    // Analysis Content (rawResponse, longDescription, customPromptResult, errorMessage)
+    // Analysis Content (errorMessage)
     // -------------------------------------------------------------------------
 
     /**
@@ -39,13 +38,10 @@ class ContentStorageService extends Component
      */
     public function saveAnalysisContent(
         AssetAnalysisRecord $analysisRecord,
-        AnalysisResult $result,
         ?string $errorMessage = null,
     ): AnalysisContentRecord {
         $record = $this->getOrCreateContentRecord($analysisRecord->id);
 
-        $record->rawResponse = $result->rawResponse;
-        $record->customPromptResult = $result->customPromptResult;
         $record->errorMessage = $errorMessage;
         $record->dateUpdated = DateTimeHelper::now();
 
@@ -56,9 +52,6 @@ class ContentStorageService extends Component
 
             return $record;
         }
-
-        $analysisRecord->hasAnalysisContent = true;
-        $analysisRecord->save(false, ['hasAnalysisContent', 'dateUpdated']);
 
         return $record;
     }
@@ -80,9 +73,6 @@ class ContentStorageService extends Component
 
             return $record;
         }
-
-        $analysisRecord->hasAnalysisContent = true;
-        $analysisRecord->save(false, ['hasAnalysisContent', 'dateUpdated']);
 
         Logger::warning(LogCategory::AssetProcessing, 'Error message stored for analysis', assetId: $analysisRecord->assetId, context: ['errorMessage' => $errorMessage]);
 

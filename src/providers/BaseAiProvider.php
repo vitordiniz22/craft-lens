@@ -243,8 +243,6 @@ abstract class BaseAiProvider implements AiProviderInterface
             faceCount: (int) ($data['faceCount'] ?? 0),
             containsPeople: (bool) ($data['containsPeople'] ?? false),
             containsPeopleConfidence: ResponseNormalizer::clampConfidence($data['containsPeopleConfidence'] ?? 0.0),
-            rawResponse: $response,
-            customPromptResult: null,
             nsfwScore: $nsfwScore,
             nsfwConfidence: $nsfwConfidence,
             nsfwCategories: ResponseNormalizer::normalizeNsfwCategories($data['nsfwCategories'] ?? [], $this->getName()),

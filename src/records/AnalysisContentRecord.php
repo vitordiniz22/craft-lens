@@ -16,8 +16,6 @@ use yii\db\ActiveQueryInterface;
  *
  * @property int $id
  * @property int $analysisId
- * @property array|null $rawResponse Full API response from the AI provider
- * @property string|null $customPromptResult Result from custom analysis prompt
  * @property string|null $errorMessage Error message if analysis failed
  * @property \DateTime $dateCreated
  * @property \DateTime $dateUpdated

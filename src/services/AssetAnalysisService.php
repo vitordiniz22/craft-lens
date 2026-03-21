@@ -396,7 +396,7 @@ class AssetAnalysisService extends Component
             $record->fileContentHash = $fileContentHash;
             $record->save();
 
-            $contentStorage->saveAnalysisContent($record, $result);
+            $contentStorage->saveAnalysisContent($record);
 
             // Long description to main record (with dual-write)
             $this->applyAiLongDescription($record, $result);

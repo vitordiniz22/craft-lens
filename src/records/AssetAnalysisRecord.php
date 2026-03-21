@@ -91,9 +91,6 @@ use yii\db\ActiveQueryInterface;
  * @property string|null $perceptualHash
  * @property string|null $fileContentHash
  *
- * Content table flags (for lazy loading):
- * @property bool $hasAnalysisContent
- *
  * Token usage and cost:
  * @property int|null $inputTokens
  * @property int|null $outputTokens
@@ -187,7 +184,6 @@ class AssetAnalysisRecord extends ActiveRecord
             [['watermarkType'], 'string', 'max' => 30],
             [['watermarkType'], 'in', 'range' => array_column(WatermarkType::cases(), 'value')],
             [['extractedText', 'extractedTextAi'], 'string', 'max' => self::EXTRACTED_TEXT_MAX_LENGTH],
-            [['hasAnalysisContent'], 'boolean'],
             [['perceptualHash', 'fileContentHash'], 'string', 'max' => 64],
             [['inputTokens', 'outputTokens'], 'integer', 'min' => 0],
             [['actualCost'], 'number', 'min' => 0],

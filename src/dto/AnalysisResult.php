@@ -26,8 +26,6 @@ readonly class AnalysisResult
      * @param int $faceCount Number of faces/people detected
      * @param bool $containsPeople Whether the image contains people
      * @param float $containsPeopleConfidence Confidence in people/face detection (0.0 - 1.0)
-     * @param array $rawResponse Full API response for debugging
-     * @param string|null $customPromptResult Result from custom analysis prompt
      * @param float $nsfwScore NSFW severity score (0.0 - 1.0)
      * @param float $nsfwConfidence Confidence in NSFW assessment (0.0 - 1.0)
      * @param array<array{category: string, confidence: float}> $nsfwCategories NSFW category breakdown
@@ -58,8 +56,6 @@ readonly class AnalysisResult
         public int $faceCount,
         public bool $containsPeople,
         public float $containsPeopleConfidence,
-        public array $rawResponse,
-        public ?string $customPromptResult = null,
         public float $nsfwScore = 0.0,
         public float $nsfwConfidence = 0.0,
         public array $nsfwCategories = [],
@@ -82,7 +78,7 @@ readonly class AnalysisResult
 
     /**
      * Return a summary of the analysis for logging purposes.
-     * Excludes rawResponse (too large) and truncates long strings.
+     * Truncates long strings.
      *
      * @return array<string, mixed>
      */
@@ -101,7 +97,6 @@ readonly class AnalysisResult
             'faceCount' => $this->faceCount,
             'containsPeople' => $this->containsPeople,
             'containsPeopleConfidence' => $this->containsPeopleConfidence,
-            'customPromptResult' => $this->customPromptResult,
             'nsfwScore' => $this->nsfwScore,
             'nsfwConfidence' => $this->nsfwConfidence,
             'nsfwCategories' => $this->nsfwCategories,
@@ -150,7 +145,6 @@ readonly class AnalysisResult
             faceCount: 0,
             containsPeople: false,
             containsPeopleConfidence: 0.0,
-            rawResponse: [],
             hasWatermark: false,
             watermarkConfidence: 0.0,
             watermarkType: null,
