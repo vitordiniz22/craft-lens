@@ -1,6 +1,6 @@
 /**
  * Lens Plugin - Review Page
- * Handles review interactions (keyboard shortcuts, form submission, people detection, detection toggles)
+ * Handles review interactions (keyboard shortcuts, form submission, bridge inputs)
  */
 (function() {
     'use strict';
@@ -18,8 +18,6 @@
             if (!document.querySelector('[data-lens-target="review-view"]')) return;
 
             this._bindKeyboardShortcuts();
-            this._bindPeopleDetection();
-            this._bindDetectionToggles();
             this._bindBridgeReviewInputs();
             this._bindFormSubmit();
             this._initialized = true;
@@ -48,92 +46,6 @@
                     e.preventDefault();
                     var rejectBtn = document.querySelector('[data-lens-action="review-reject"]');
                     if (rejectBtn && !rejectBtn.disabled) rejectBtn.click();
-                }
-            });
-        },
-
-        // ================================================================
-        // People Detection Editor
-        // ================================================================
-
-        _bindPeopleDetection: function() {
-            DOM.delegate('input[data-lens-control="people-mode-review"]', 'change', function(e, radio) {
-                if (!radio.checked) return;
-
-                // Use PeopleDetectionService for mapping
-                var fields = window.Lens.services.PeopleDetection.modeToFields(radio.value);
-                if (!fields) return;
-
-                // Update hidden inputs
-                var containsPeopleInput = DOM.findControl('field-containsPeople');
-                var faceCountInput = DOM.findControl('field-faceCount');
-
-                if (containsPeopleInput) containsPeopleInput.value = fields.containsPeople ? '1' : '0';
-                if (faceCountInput) faceCountInput.value = fields.faceCount.toString();
-
-                var container = radio.closest('[data-lens-target="people-detection"]');
-                if (!container) return;
-
-                // Update status badge text
-                var displayText = container.querySelector('[data-lens-target="people-display-text"]');
-                if (displayText) {
-                    displayText.textContent = Lens.utils.formatPeopleDetectionText(fields.containsPeople, fields.faceCount);
-                }
-
-                // Toggle AI suggestion visibility based on whether selection matches AI
-                var aiSuggestion = container.querySelector('[data-lens-target="people-ai-suggestion"]');
-                if (aiSuggestion) {
-                    var aiContainsPeople = container.dataset.lensContainsPeopleAi === '1';
-                    var aiFaceCount = parseInt(container.dataset.lensFaceCountAi, 10) || 0;
-                    var matchesAi = (fields.containsPeople === aiContainsPeople) && (fields.faceCount === aiFaceCount);
-                    aiSuggestion.hidden = matchesAi;
-                }
-            });
-        },
-
-        // ================================================================
-        // Detection Toggles (NSFW, Watermark, Brands)
-        // ================================================================
-
-        _bindDetectionToggles: function() {
-            DOM.delegate('input[data-lens-control="detection-radio-review"]', 'change', function(e, radio) {
-                if (!radio.checked) return;
-
-                var fieldName = radio.dataset.lensField;
-                if (!fieldName) return;
-
-                // Update the corresponding hidden input
-                var hiddenInput = DOM.findControl('field-' + fieldName);
-                if (hiddenInput) {
-                    hiddenInput.value = radio.value;
-                }
-
-                var container = radio.closest('[data-lens-target="detection-toggle"]');
-                if (!container) return;
-
-                var currentDetected = parseFloat(radio.value) > 0;
-
-                // Update accent bar, icon styling, and detail chips
-                container.classList.toggle('lens-accent-bar', currentDetected);
-                container.classList.toggle('lens-accent-bar--red', currentDetected);
-                var icon = container.querySelector('[data-lens-target="detection-icon"]');
-                if (icon) icon.classList.toggle('lens-detection-icon--flagged', currentDetected);
-                var detailEl = container.querySelector('[data-lens-target="detection-detail"]');
-                if (detailEl) detailEl.dataset.lensChipsActive = currentDetected ? '1' : '0';
-
-                // Update status badge
-                var badge = container.querySelector('[data-lens-target="detection-badge"]');
-                if (badge) {
-                    badge.className = 'lens-detection-badge ' + (currentDetected ? 'lens-detection-badge--flagged' : 'lens-detection-badge--clear');
-                    var srcIcon = container.querySelector('[data-lens-target="' + (currentDetected ? 'detection-icon-flagged' : 'detection-icon-clear') + '"]');
-                    badge.innerHTML = (srcIcon ? srcIcon.innerHTML : '') + ' ' + Craft.t('lens', currentDetected ? 'Flagged' : 'Clear');
-                }
-
-                // Toggle AI suggestion visibility based on whether selection matches AI
-                var aiSuggestion = container.querySelector('[data-lens-target="detection-ai-suggestion"]');
-                if (aiSuggestion) {
-                    var aiDetected = container.dataset.lensDetectedAi === '1';
-                    aiSuggestion.hidden = (currentDetected === aiDetected);
                 }
             });
         },

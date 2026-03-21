@@ -24,12 +24,17 @@
         <input type="hidden" name="dominantColors" data-lens-control="field-colors">
         <input type="hidden" name="focalPointX" data-lens-control="focal-x" value="{{ analysis.focalPointX ?? '' }}">
         <input type="hidden" name="focalPointY" data-lens-control="focal-y" value="{{ analysis.focalPointY ?? '' }}">
-        <input type="hidden" name="containsPeople" data-lens-control="field-containsPeople">
-        <input type="hidden" name="faceCount" data-lens-control="field-faceCount">
+        <input type="hidden" name="containsPeople" data-lens-control="field-containsPeople" value="{{ analysis.containsPeople ? '1' : '0' }}">
+        <input type="hidden" name="faceCount" data-lens-control="field-faceCount" value="{{ analysis.faceCount }}">
         {# Detection toggle hidden inputs — synced by JS from radio selections #}
         <input type="hidden" name="nsfwScore" data-lens-control="field-nsfwScore" value="{{ analysis.nsfwScore ?? 0 }}">
         <input type="hidden" name="hasWatermark" data-lens-control="field-hasWatermark" value="{{ analysis.hasWatermark ? '1' : '0' }}">
         <input type="hidden" name="containsBrandLogo" data-lens-control="field-containsBrandLogo" value="{{ analysis.containsBrandLogo ? '1' : '0' }}">
+
+        {# Template for dynamically inserted lock icon — cloned by JS #}
+        <template data-lens-target="lock-template">
+            {% include 'lens/_components/analysis/_tooltip-lock' only %}
+        </template>
 
         <div class="lens-review-panels" data-lens-target="review-view">
             {# Left Panel - Image + Focal Point #}

@@ -123,6 +123,7 @@
 <div class="lens-editable-field lens-editable-field--detection"
      data-lens-target="people-detection"
      data-lens-analysis-id="{{ analysis.id }}"
+     {% if isReview %}data-lens-context="review"{% endif %}
      data-lens-contains-people="{{ analysis.containsPeople ? '1' : '0' }}"
      data-lens-face-count="{{ analysis.faceCount }}"
      data-lens-contains-people-ai="{{ analysis.containsPeopleAi ? '1' : '0' }}"
@@ -132,12 +133,12 @@
         <span class="lens-detection-icon" data-lens-target="detection-icon">
             {{ iconSvg('user')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
         </span>
-        {% if not isReview and isEdited %}
+        {% if isEdited %}
             {% include 'lens/_components/analysis/_tooltip-lock' only %}
         {% endif %}
         <span class="lens-field-label">{{ 'People Detection'|t('lens') }}</span>
         {% if (isReview or not isEdited) and analysis.containsPeopleConfidence is defined and analysis.containsPeopleConfidence and not (hideConfidence ?? false) %}
-            <craft-tooltip text="{{ 'AI confidence for this field'|t('lens') }}"><button type="button" class="badge"{% if not isReview %} data-lens-target="confidence-badge"{% endif %}>{{ (analysis.containsPeopleConfidence * 100)|round }}%</button></craft-tooltip>
+            <craft-tooltip text="{{ 'AI confidence for this field'|t('lens') }}"><button type="button" class="badge" data-lens-target="confidence-badge">{{ (analysis.containsPeopleConfidence * 100)|round }}%</button></craft-tooltip>
         {% endif %}
         {% if not isReview %}
             {% include 'lens/_components/analysis/_tooltip-edit' with {editAction: 'people-edit'} only %}
@@ -173,7 +174,7 @@
     {# Radios — hidden by default in unlocked (revealed on edit click), always visible in review #}
     <div{% if not isReview %} class="lens-field-edit" data-lens-target="people-edit-panel" hidden{% endif %}>
         <div class="lens-radio-list">
-            {{ _self.radioOptions(analysis, isReview ? 'people-mode-review' : 'people-mode') }}
+            {{ _self.radioOptions(analysis, 'people-mode') }}
         </div>
         {% if not isReview %}
             <div class="lens-field-actions">
@@ -191,11 +192,9 @@
                 text: _self.peopleDetectionText(analysis.containsPeopleAi, analysis.faceCountAi)
             }) }}
         </span>
-        {% if not isReview %}
-            <button type="button" class="lens-revert-trigger" data-lens-action="people-revert" data-lens-analysis-id="{{ analysis.id }}"{% if not aiDiffers %} hidden{% endif %}>
-                {{ 'Revert to AI'|t('lens') }}
-            </button>
-        {% endif %}
+        <button type="button" class="lens-revert-trigger" data-lens-action="people-revert" data-lens-analysis-id="{{ analysis.id }}"{% if not aiDiffers %} hidden{% endif %}>
+            {{ 'Revert to AI'|t('lens') }}
+        </button>
     </div>
 
 </div>

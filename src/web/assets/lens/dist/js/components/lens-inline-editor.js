@@ -210,6 +210,17 @@
                 return;
             }
 
+            // Review context: skip AJAX, update form hidden inputs + UI only
+            if (this._isReviewContext(fieldEl)) {
+                this._syncHiddenInput('containsPeople', fields.containsPeople ? '1' : '0');
+                this._syncHiddenInput('faceCount', fields.faceCount.toString());
+                this._updatePeopleDisplay(fieldEl, fields);
+                this._showLockIcon(fieldEl);
+                this._showPeopleAISuggestion(fieldEl, fields);
+                this._updatePeopleBadge(fieldEl, fields);
+                return;
+            }
+
             // Show saving state
             fieldEl.classList.add('lens-is-saving');
 
@@ -233,6 +244,28 @@
         _handlePeopleRevert: function(e, revertBtn) {
             var fieldEl = window.Lens.core.DOM.findTarget(revertBtn, 'people-detection');
             var analysisId = revertBtn.dataset.lensAnalysisId;
+
+            // Review context: client-side revert (no AJAX)
+            if (this._isReviewContext(fieldEl)) {
+                var containsPeopleAi = fieldEl.dataset.lensContainsPeopleAi === '1';
+                var faceCountAi = parseInt(fieldEl.dataset.lensFaceCountAi) || 0;
+                var aiFields = { containsPeople: containsPeopleAi, faceCount: faceCountAi };
+                var aiMode = window.Lens.services.PeopleDetection.fieldsToMode(containsPeopleAi, faceCountAi);
+
+                var radios = fieldEl.querySelectorAll('[data-lens-control="people-mode"]');
+                radios.forEach(function(radio) { radio.checked = (radio.value === aiMode); });
+                this._syncHiddenInput('containsPeople', containsPeopleAi ? '1' : '0');
+                this._syncHiddenInput('faceCount', faceCountAi.toString());
+                this._updatePeopleDisplay(fieldEl, aiFields);
+                this._updatePeopleBadge(fieldEl, aiFields);
+                this._removeLockIcon(fieldEl);
+                var suggestion = fieldEl.querySelector('[data-lens-target="people-ai-suggestion"]');
+                if (suggestion) window.Lens.core.DOM.hide(suggestion);
+                fieldEl.dataset.lensContainsPeople = containsPeopleAi ? '1' : '0';
+                fieldEl.dataset.lensFaceCount = faceCountAi;
+                return;
+            }
+
             var promises = [
                 window.Lens.core.API.revertField(analysisId, 'containsPeople'),
                 window.Lens.core.API.revertField(analysisId, 'faceCount')
@@ -321,6 +354,21 @@
             var hiddenInput = fieldEl.querySelector('[data-lens-target="detection-value"]');
             if (hiddenInput) hiddenInput.value = value;
 
+            // Review context: skip AJAX, update form hidden inputs + UI only
+            if (this._isReviewContext(fieldEl)) {
+                this._syncHiddenInput(fieldName, value);
+                var trueVal = fieldEl.dataset.lensTrueValue;
+                var isNowDetected = (value === trueVal);
+                fieldEl.dataset.lensDetected = isNowDetected ? '1' : '0';
+                this._updateDetectionBadge(fieldEl, isNowDetected);
+                this._updateDetectionRowAccent(fieldEl, isNowDetected);
+                var iconEl = fieldEl.querySelector('[data-lens-target="detection-icon"]');
+                if (iconEl) iconEl.classList.toggle('lens-detection-icon--flagged', isNowDetected);
+                this._showLockIcon(fieldEl);
+                this._showDetectionAISuggestion(fieldEl, isNowDetected);
+                return;
+            }
+
             // Show saving state
             fieldEl.classList.add('lens-is-saving');
 
@@ -369,6 +417,27 @@
             var fieldEl = window.Lens.core.DOM.findTarget(revertBtn, 'detection-toggle');
             var analysisId = revertBtn.dataset.lensAnalysisId;
             var fieldName = revertBtn.dataset.lensField;
+
+            // Review context: client-side revert (no AJAX)
+            if (this._isReviewContext(fieldEl)) {
+                var isDetectedAi = fieldEl.dataset.lensDetectedAi === '1';
+                var trueValue = fieldEl.dataset.lensTrueValue;
+                var falseValue = fieldEl.dataset.lensFalseValue;
+                var revertedValue = isDetectedAi ? trueValue : falseValue;
+
+                fieldEl.dataset.lensDetected = isDetectedAi ? '1' : '0';
+                var radios = fieldEl.querySelectorAll('[data-lens-control="detection-radio"]');
+                radios.forEach(function(radio) { radio.checked = (radio.value === revertedValue); });
+                this._syncHiddenInput(fieldName, revertedValue);
+                this._updateDetectionBadge(fieldEl, isDetectedAi);
+                this._updateDetectionRowAccent(fieldEl, isDetectedAi);
+                var icon = fieldEl.querySelector('[data-lens-target="detection-icon"]');
+                if (icon) icon.classList.toggle('lens-detection-icon--flagged', isDetectedAi);
+                this._removeLockIcon(fieldEl);
+                var suggestion = fieldEl.querySelector('[data-lens-target="detection-ai-suggestion"]');
+                if (suggestion) window.Lens.core.DOM.hide(suggestion);
+                return;
+            }
 
             window.Lens.core.API.revertField(analysisId, fieldName).then((response) => {
                 if (response.data.success) {
@@ -466,8 +535,10 @@
             fieldEl.dataset.lensContainsPeople = fields.containsPeople ? '1' : '0';
             fieldEl.dataset.lensFaceCount = fields.faceCount;
 
+            // people-present/absent only exist on asset edit page (not review)
             var present = fieldEl.querySelector('[data-lens-target="people-present"]');
             var absent = fieldEl.querySelector('[data-lens-target="people-absent"]');
+            if (!present && !absent) return;
 
             if (fields.containsPeople) {
                 DOM.show(present);
@@ -685,6 +756,15 @@
                 var serializer = $form.data('serializer');
                 $form.data('initialSerializedValue', typeof serializer === 'function' ? serializer() : $form.serialize());
             }
+        },
+
+        _isReviewContext: function(fieldEl) {
+            return fieldEl && fieldEl.dataset.lensContext === 'review';
+        },
+
+        _syncHiddenInput: function(fieldName, value) {
+            var input = window.Lens.core.DOM.findControl('field-' + fieldName);
+            if (input) input.value = String(value);
         },
 
         _dispatchPeopleUpdateEvent: function(analysisId, fields) {

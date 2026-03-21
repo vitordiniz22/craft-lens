@@ -71,22 +71,23 @@
 <div class="lens-editable-field lens-editable-field--detection{{ detected ? ' lens-accent-bar lens-accent-bar--red' : '' }}"
      data-lens-target="detection-toggle"
      data-lens-field="{{ fieldName }}"
-     {% if not isReview %}data-lens-analysis-id="{{ analysisId }}"{% endif %}
-     {% if not isReview %}data-lens-detected="{{ detected ? '1' : '0' }}"{% endif %}
+     data-lens-analysis-id="{{ analysisId }}"
+     data-lens-detected="{{ detected ? '1' : '0' }}"
      data-lens-detected-ai="{{ detectedAi ? '1' : '0' }}"
-     {% if not isReview %}data-lens-true-value="{{ trueValue }}"{% endif %}
-     {% if not isReview %}data-lens-false-value="{{ falseValue }}"{% endif %}>
+     data-lens-true-value="{{ trueValue }}"
+     data-lens-false-value="{{ falseValue }}"
+     {% if isReview %}data-lens-context="review"{% endif %}>
 
     <div class="lens-field-header" data-lens-target="field-header">
         <span class="lens-detection-icon{{ detected ? ' lens-detection-icon--flagged' : '' }}" data-lens-target="detection-icon">
             {{ iconSvg(icon)|attr({width: 12, height: 12, fill: 'currentColor'}) }}
         </span>
-        {% if not isReview and isEdited %}
+        {% if isEdited %}
             {% include 'lens/_components/analysis/_tooltip-lock' only %}
         {% endif %}
         <span class="lens-field-label">{{ label }}</span>
         {% if (isReview or not isEdited) and (confidence ?? null) and not (hideConfidence ?? false) %}
-            <craft-tooltip text="{{ 'AI confidence for this field'|t('lens') }}"><button type="button" class="badge"{% if not isReview %} data-lens-target="confidence-badge"{% endif %}>{{ (confidence * 100)|round }}%</button></craft-tooltip>
+            <craft-tooltip text="{{ 'AI confidence for this field'|t('lens') }}"><button type="button" class="badge" data-lens-target="confidence-badge">{{ (confidence * 100)|round }}%</button></craft-tooltip>
         {% endif %}
         {% if not isReview %}
             {% include 'lens/_components/analysis/_tooltip-edit' with {editAction: 'detection-edit'} only %}
@@ -115,8 +116,8 @@
         <div class="lens-segmented-control">
             <label class="lens-segmented-control__option">
                 <input type="radio" name="detection-{{ fieldName }}{% if not isReview %}-{{ analysisId }}{% endif %}" value="{{ trueValue }}"
-                       data-lens-control="{{ isReview ? 'detection-radio-review' : 'detection-radio' }}"
-                       {% if isReview %}data-lens-field="{{ fieldName }}"{% endif %}
+                       data-lens-control="detection-radio"
+                       data-lens-field="{{ fieldName }}"
                        {% if detected %}checked{% endif %}>
                 <span class="lens-segmented-control__icon" data-lens-target="detection-icon-flagged">
                     {{ iconSvg('triangle-exclamation')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
@@ -125,8 +126,8 @@
             </label>
             <label class="lens-segmented-control__option">
                 <input type="radio" name="detection-{{ fieldName }}{% if not isReview %}-{{ analysisId }}{% endif %}" value="{{ falseValue }}"
-                       data-lens-control="{{ isReview ? 'detection-radio-review' : 'detection-radio' }}"
-                       {% if isReview %}data-lens-field="{{ fieldName }}"{% endif %}
+                       data-lens-control="detection-radio"
+                       data-lens-field="{{ fieldName }}"
                        {% if not detected %}checked{% endif %}>
                 <span class="lens-segmented-control__icon" data-lens-target="detection-icon-clear">
                     {{ iconSvg('check')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
@@ -154,11 +155,9 @@
             {% set aiText = (detectedAi ? detectedLabel : clearedLabel) ~ ((detectedAi and (details ?? [])|length) ? ' (' ~ details|join(', ') ~ ')' : '') %}
             {{ 'AI suggested: "{value}"'|t('lens', {value: aiText}) }}
         </span>
-        {% if not isReview %}
-            <button type="button" class="lens-revert-trigger" data-lens-action="detection-revert" data-lens-field="{{ fieldName }}" data-lens-analysis-id="{{ analysisId }}"{% if not aiDiffers %} hidden{% endif %}>
-                {{ 'Revert to AI'|t('lens') }}
-            </button>
-        {% endif %}
+        <button type="button" class="lens-revert-trigger" data-lens-action="detection-revert" data-lens-field="{{ fieldName }}" data-lens-analysis-id="{{ analysisId }}"{% if not aiDiffers %} hidden{% endif %}>
+            {{ 'Revert to AI'|t('lens') }}
+        </button>
     </div>
 </div>
 
