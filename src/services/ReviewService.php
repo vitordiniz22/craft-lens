@@ -428,6 +428,15 @@ class ReviewService extends Component
     }
 
     /**
+     * Calculate average confidence from multiple confidence values.
+     */
+    public function calculateAverageConfidence(?float ...$values): float
+    {
+        $filtered = array_filter($values, fn($v) => $v !== null);
+        return empty($filtered) ? 0 : round(array_sum($filtered) / count($filtered), 2);
+    }
+
+    /**
      * Load per-site content data for an analysis, structured for templates/JS.
      *
      * @return array<int, array{siteId: int, language: string, siteName: string, altText: string|null, altTextAi: string|null, altTextConfidence: float|null, suggestedTitle: string|null, suggestedTitleAi: string|null, titleConfidence: float|null}>

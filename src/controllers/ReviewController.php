@@ -322,7 +322,7 @@ class ReviewController extends Controller
                 'assetId' => $analysis->assetId,
                 'asset' => $asset,
                 'analysis' => $analysis,
-                'avgConfidence' => $this->calculateAverageConfidence(
+                'avgConfidence' => Plugin::getInstance()->review->calculateAverageConfidence(
                     $analysis->titleConfidence !== null ? (float) $analysis->titleConfidence : null,
                     $analysis->altTextConfidence !== null ? (float) $analysis->altTextConfidence : null,
                     $analysis->longDescriptionConfidence !== null ? (float) $analysis->longDescriptionConfidence : null
@@ -332,15 +332,6 @@ class ReviewController extends Controller
         }
 
         return $items;
-    }
-
-    /**
-     * Calculate average confidence from multiple confidence values.
-     */
-    private function calculateAverageConfidence(?float ...$values): float
-    {
-        $filtered = array_filter($values, fn($v) => $v !== null);
-        return empty($filtered) ? 0 : round(array_sum($filtered) / count($filtered), 2);
     }
 
     /**

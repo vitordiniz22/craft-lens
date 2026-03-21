@@ -14,12 +14,13 @@
 <div class="lens-review-toolbar">
     <div class="lens-review-toolbar-left">
         <span class="lens-review-counter">
-            {{ '{count} pending'|t('lens', {count: totalCount}) }}
             {% if currentMode == 'focus' and currentIndex is defined %}
-                &bull; {{ 'Reviewing {current} of {total}'|t('lens', {
+                {{ 'Reviewing {current} of {total}'|t('lens', {
                     current: currentIndex,
                     total: totalCount
                 }) }}
+            {% else %}
+                {{ '{count} pending'|t('lens', {count: totalCount}) }}
             {% endif %}
         </span>
         <div class="lens-review-mode-toggle btngroup">
