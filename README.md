@@ -5,7 +5,7 @@
 <h1 align="center">Lens</h1>
 
 <p align="center">
-  AI-powered image analysis, tagging, and search for Craft CMS assets
+  AI Asset Intelligence for Craft CMS
 </p>
 
 <p align="center">
@@ -16,82 +16,88 @@
 
 ---
 
-Your asset library keeps growing, but nobody has the time to tag, describe, and organize thousands of images by hand — let alone check every image for quality issues, accessibility problems, or web readiness. Finding that one photo you need means scrolling endlessly or relying on filenames like `IMG_4382.jpg`.
+Lens uses AI to automatically analyze every image in your asset library, generating alt text, titles, descriptions, semantic tags, color palettes, focal points, and more. It detects faces, flags NSFW content, spots watermarks, identifies brands, extracts text via OCR, and finds duplicate images across your library.
 
-**Lens changes that.** It uses AI to automatically tag, describe, and catalog every asset in your library — so when you need to find something, you actually can. Alt text, color palettes, focal points, detected faces, text extracted via OCR, duplicate detection, content safety flags, and more — all generated automatically, all editable, all queryable from your templates.
+Choose your AI provider (**OpenAI**, **Google Gemini**, or **Anthropic Claude**) and turn your asset library from a pile of `IMG_4382.jpg` files into an organized, accessible, and fully searchable media system. Everything Lens generates is editable, reviewable, and queryable directly from your Twig templates.
 
-Choose your AI provider — **OpenAI GPT**, **Google Gemini**, or **Anthropic Claude** — and let Lens turn your asset library into an organized, accessible, and fully searchable media system.
+[[Image: Lens Dashboard. Show the full dashboard with library health stats, coverage metrics (analyzed vs total), attention items panel highlighting assets that need action, and the analysis status breakdown. Use a library with 50+ analyzed assets so the dashboard looks populated and useful.]]
 
-<p align="center">
-  <img src="./resources/screenshots/dashboard.png" alt="Lens Dashboard" width="800">
-</p>
+## How It Works
+
+1. **Upload.** Drop images into any enabled volume. Lens analyzes them automatically on upload, or trigger analysis manually from the asset editor.
+2. **Analyze.** AI generates alt text, titles, descriptions, tags, colors, focal points, detects faces, flags content issues, extracts text, and more, all in a single request.
+3. **Review & Apply.** Edit any suggestion inline, approve via the Review Queue, or let Lens apply results automatically.
 
 ## Features
 
 ### Search & Discovery
-- **Enhanced Asset Search** — adds a Lens search bar to asset selector modals that searches across AI-generated metadata (alt text, descriptions, tags, OCR text) instead of just filenames
-- **20+ filters** — find assets by tag, color, people, quality, NSFW status, watermarks, brands, GPS location, and more
-- **Smart relevance ranking** — BM25 scoring surfaces the most relevant results first, not just anything that contains your keyword
-- **Multilingual stemming** — search "animals" and find assets tagged "animal", in 14 languages including English, French, Spanish, German, and more
-- **Typo tolerance** — fuzzy matching catches the inevitable misspelling so "photgraphy" still finds "photography"
-- **Duplicate detection** — surface visually similar images via perceptual hashing so you stop re-uploading the same file
-- **Asset Browser** with saved searches and CSV export for audits and reporting
+
+- **Smart search** across all AI-generated metadata with relevance ranking, typo tolerance, and support for 14 languages
+- **20+ filters** to find assets by tag, color, people, quality, NSFW status, watermarks, brands, and more
+- **Duplicate detection** surfaces visually similar images via perceptual hashing so you stop re-uploading the same file
+- **Asset Browser** to explore your entire library through AI metadata with quick filter presets and CSV export
+- **Enhanced Asset Search** replaces native search in asset selector modals with Lens AI search, so you can find assets by their AI-generated metadata instead of just filenames
+
+[[Image: Asset Browser. Show the search page with a query like "outdoor" entered, 2-3 active filter chips (e.g. "Contains People", a color filter), the quick filter buttons visible, and a grid of 8-12 matching asset thumbnails. The filter panel should be expanded to show the variety of available filters.]]
 
 ### Automatic Tagging & Descriptions
-- **Alt text** generated in your site's language with confidence scoring, fix your accessibility gaps without the manual grind
-- **Title suggestions** in your site's language so your assets stop being called `IMG_4382.jpg`
-- **Long descriptions** for rich image context
-- **Semantic tags** that actually describe what's in the image, scored by confidence
-- **Dominant colors** extracted with palette percentages — search your library by color
+
+- **Alt text** generated in each site's language, with translations for multisite installs and confidence scoring
+- **Title suggestions** that replace Craft's auto-generated titles with meaningful, descriptive names
+- **Long descriptions** that give images rich context and feed the search index for better discoverability
+- **Semantic tags** that actually describe what's in the image, 20-25 per asset, each scored by confidence
+- **Dominant colors** extracted as a 6-color palette with hex values and percentages, making your library searchable by color
 
 ### Content Detection
-- **Faces and people** — individual, duo, small group, large group — know what's in every photo
-- **NSFW scoring** with category breakdown — catch unsafe content before it goes live
-- **Watermarks** identified by type (text overlay, logo, stock provider) — flag assets that shouldn't be published
-- **Brand/logo recognition** — instantly find every asset featuring a specific brand
-- **OCR** — text extracted directly from images, fully searchable
+
+- **Faces and people** with 6-tier detection: no people, no faces, individual, duo, small group, large group
+- **NSFW scoring** with category breakdown (adult, violence, hate, self-harm, drugs) to catch unsafe content before it goes live
+- **Watermarks** identified by type (text overlay, logo, stock provider) and position to flag assets that shouldn't be published
+- **Brand/logo recognition** to instantly find every asset featuring a specific brand
+- **Stock photo detection** to identify which assets came from stock providers
+- **OCR** extracts text directly from images, fully searchable
+
+[[Image: Analysis panel in the asset editor. Show a real asset with all sections visible: suggested title and alt text with a confidence badge, semantic tags displayed as chips, the 6-color palette with hex values and percentages, quality metrics with verdicts, people detection showing "Individual", and a web readiness check. Pick a visually interesting photo so the analysis results are compelling.]]
 
 ### Quality & Assessment
-- **Image Assessment** — per-asset audit covering technical quality, web readiness, and accessibility
-- **Quality analysis** — sharpness, brightness, contrast, JPEG compression quality, and color profile detection via Imagick
-- **Web readiness** — file size, resolution, and format compatibility checks
-- **Text-in-image detection** — flags images with embedded text and recommends HTML alternatives for screen readers
-- **Focal point detection** for smart cropping that keeps the subject in frame
-- **Stock photo detection** — identify which assets came from stock providers
+
+- **Image quality analysis** covering sharpness, brightness, contrast, noise, JPEG compression quality, and color profile detection via Imagick
+- **Web readiness** flags oversized files, low resolutions, and unsupported formats so you can fix them before they slow down your site
+- **Text-in-image detection** flags images with embedded text as an accessibility reminder
+- **Focal point detection** automatically sets the focal point on the primary subject so Craft's image transforms crop around what matters
 
 ### Review Workflow
-- **Review Queue** with three modes: Browse, Focus, and Bulk — process your backlog at your own pace
-- **Keyboard shortcuts** — approve, skip, or reject with a single keystroke (A/S/R)
-- **Inline editing** — refine any suggestion before it's applied to your assets
-- **Confidence thresholds** — auto-approve high-confidence results, review the rest
+
+- **Review Queue** lets you review, edit, and approve AI suggestions before they're applied to your assets, in Focus mode for one-at-a-time review or Bulk mode for batch actions
+- **Two-panel Focus View** with a large image preview on the left and all AI-generated metadata on the right, fully editable inline
+- **Focal point editing** lets you click anywhere on the image to set the focal point, accept or override the AI suggestion
+- **Bulk Processing** to analyze entire volumes with real-time progress tracking, cost estimation, and retry for failed assets
+- **Confidence thresholds** flag low-confidence results so you can focus review time where it matters
+
+[[Image: Review Queue Focus View. Show the two-panel layout with a large image preview on the left (focal point crosshair visible if possible), and the right panel displaying editable title, alt text, long description, tag chips, color swatches, and the approve/skip/reject buttons. The keyboard shortcut hints (A/S/R) should be visible in the toolbar area. Pick an asset with rich metadata to showcase the depth of analysis.]]
+
+[[Image: Bulk Processing. Show the processing-in-progress state with the progress bar partially filled (e.g. "Processing 34 of 127"), the cost estimate visible, and the volume selector dropdown. This shows the scale of what Pro can handle.]]
 
 ### Language & Multisite
-- **Language-aware AI** — all generated text respects your primary site's language. English site gets English alt text, add a Spanish site and it gets Spanish too
-- **Per-site alt text & titles** — multisite installs with different languages get native alt text and titles for each site, only for fields marked as translatable on the volume, generated in a single AI request at no extra cost
-- **Zero configuration** — Lens reads your site languages and volume translation settings automatically
 
-## Control Panel
+- **Language-aware AI** generates all text in your site's language. English site gets English alt text. Add a Spanish site and Lens generates Spanish too.
+- **Per-site alt text & titles** for multisite installs with different languages, with native translations for each site generated in a single AI request at no extra cost
+- **Base-language grouping** means `en-US` and `en-GB` share one English translation, `fr-FR` and `fr-CA` share one French translation, so no API calls are wasted
+- **Zero configuration** because Lens reads your site languages and volume translation settings automatically
 
-| Section | Description |
-|---------|-------------|
-| **Dashboard** | Health metrics, usage stats, cost projections, and quick actions |
-| **Asset Browser** | Advanced search with 20+ filters, saved searches, and CSV export |
-| **Review Queue** | Approve, reject, or skip AI suggestions with keyboard shortcuts |
-| **Bulk Processing** | Process entire volumes with real-time progress and cost estimation |
-| **Logs** | Comprehensive logging with retry capability for failed analyses |
-| **Settings** | AI provider configuration, volume selection, and workflow options |
+## Editions
 
-## Enhanced Asset Search
+Lens is available in two editions. **Lite** is free and includes AI analysis for every image (alt text, titles, descriptions, colors, focal points, people and content detection), auto-processing on upload, the analysis panel, multisite translations, 23 asset query methods, and 10 condition rules. **Pro** adds semantic tags, OCR text extraction, the Asset Browser, Review Queue, Bulk Processing, duplicate detection, enhanced asset search, and 2 additional condition rules.
 
-Disabled by default. Enable it in **Lens** → **Settings**.
+Available on the [Craft Plugin Store](https://plugins.craftcms.com/lens).
 
 ## Requirements
 
 - **Craft CMS** 5.8.0 or later
 - **PHP** 8.3 or later
-- **MySQL** 8.0+ or **PostgreSQL** 13+
+- **MySQL** 8.0+
 - An API key from one of: [OpenAI](https://platform.openai.com/), [Google AI](https://ai.google.dev/), or [Anthropic](https://www.anthropic.com/)
-- **Imagick PHP extension** (recommended) — enables local quality analysis (sharpness, brightness, contrast, JPEG quality, color profile detection). Without it, the Quality section is hidden and only Web Readiness checks are shown
+- **Imagick PHP extension** (recommended) enables local quality analysis (sharpness, brightness, contrast, JPEG quality, color profile detection). Without it, the Quality section is hidden and only Web Readiness checks are shown.
 
 ## Installation
 
@@ -104,242 +110,38 @@ Disabled by default. Enable it in **Lens** → **Settings**.
 ### With Composer
 
 ```bash
-# Require the package
 composer require vitordiniz22/craft-lens
-
-# Install the plugin
 php craft plugin/install lens
 ```
 
-### After Installation
+### Getting Started
 
-1. Navigate to **Lens** &rarr; **Settings**
+1. Navigate to **Lens** &rarr; **Settings** in the control panel
 2. Select your AI provider (OpenAI, Gemini, or Claude)
-3. Enter your API key (supports environment variables)
-4. Choose which volumes to enable
-5. Configure your review workflow preferences
+3. Enter your API key (supports environment variables like `$OPENAI_API_KEY`)
+4. Choose which volumes to enable for analysis
+5. Upload an image. Lens analyzes it automatically and displays results in the **Lens Analysis** panel on the asset editor.
 
-## Configuration
+[[Image: Settings page. Show the AI provider configuration with one provider selected (OpenAI recommended for familiarity), the API key field with the environment variable placeholder visible, the model dropdown, auto-process toggle, require review toggle, and the volume checkboxes with at least 2 volumes listed.]]
 
-Store API keys securely using environment variables:
+## Documentation
 
-```php
-// config/lens.php
-return [
-    'aiProvider' => 'openai',
-    'openaiApiKey' => '$OPENAI_API_KEY',
-    'autoProcessOnUpload' => true,
-    'requireReviewBeforeApply' => false,
-    'enabledVolumes' => ['*'], // Or specific volume handles
-];
-```
+Full documentation is available on the [GitHub Wiki](https://github.com/vitordiniz22/craft-lens/wiki), including:
 
-### Settings Reference
-
-| Setting | Default | Description |
-|---------|---------|-------------|
-| `aiProvider` | `openai` | AI provider: `openai`, `gemini`, or `claude` |
-| `openaiApiKey` | — | OpenAI API key (supports `$ENV_VAR` syntax) |
-| `openaiModel` | `gpt-5.2` | Model: `gpt-5.2`, `gpt-5-mini`, `gpt-5-nano` |
-| `geminiApiKey` | — | Google Gemini API key |
-| `geminiModel` | `gemini-2.5-flash` | Model: `gemini-2.5-flash`, `gemini-2.5-flash-lite`, `gemini-2.5-pro` |
-| `claudeApiKey` | — | Anthropic Claude API key |
-| `claudeModel` | `claude-sonnet-4-5-20250929` | Model: `claude-sonnet-4-5-*`, `claude-opus-4-5-*`, `claude-haiku-4-5-*` |
-| `autoProcessOnUpload` | `true` | Analyze assets automatically when uploaded or replaced |
-| `requireReviewBeforeApply` | `false` | Require manual approval before applying AI suggestions |
-| `enabledVolumes` | `['*']` | Volume handles to process, or `['*']` for all |
-| `enableSemanticSearch` | `false` | Replace native search in asset selector modals with Lens AI search |
-| `logRetentionDays` | `30` | Days to retain log entries |
-
-## Console Commands
-
-Manage Lens from the command line:
-
-```bash
-# Display analysis statistics
-php craft lens/stats
-
-# Process all unprocessed assets
-php craft lens/process-all
-
-# Reprocess already-analyzed assets
-php craft lens/process-all --reprocess
-
-# Process a specific volume
-php craft lens/process-volume <handle>
-
-# Validate AI provider credentials
-php craft lens/validate
-
-# Scan for duplicate images
-php craft lens/scan-duplicates
-
-# Retry all failed analyses
-php craft lens/retry-failed
-
-# View tag frequency statistics
-php craft lens/tag-stats
-
-# View color palette statistics
-php craft lens/color-stats
-
-# Rebuild the full-text search index
-php craft lens/search-index/rebuild
-```
-
-## Asset Query Extensions
-
-Lens extends Craft's asset queries with AI-powered filtering capabilities.
-
-### Twig Examples
-
-```twig
-{# Assets with people detected #}
-{% set peoplePhotos = craft.assets()
-    .lensContainsPeople(true)
-    .all() %}
-
-{# Assets flagged as potentially NSFW #}
-{% set flaggedAssets = craft.assets()
-    .lensNsfwFlagged(true)
-    .all() %}
-
-{# High-confidence analyses only #}
-{% set trustedAssets = craft.assets()
-    .lensConfidenceAbove(0.8)
-    .all() %}
-
-{# Assets with watermarks detected #}
-{% set watermarkedAssets = craft.assets()
-    .lensHasWatermark(true)
-    .all() %}
-
-{# Assets containing specific text (OCR) #}
-{% set textAssets = craft.assets()
-    .lensTextSearch('keyword')
-    .all() %}
-```
-
-### Available Condition Rules
-
-Lens registers 10 custom condition rules for use in element sources and queries:
-
-| Condition Rule | Description |
-|----------------|-------------|
-| **Lens - Status** | Filter by analysis status (pending, approved, rejected, failed) |
-| **Lens - AI Confidence** | Filter by confidence score threshold |
-| **Lens - Contains People** | Filter by face/person detection |
-| **Lens - Has AI Tags** | Filter assets with/without AI-generated tags |
-| **Lens - NSFW Flagged** | Filter by content safety scoring |
-| **Lens - Has Watermark** | Filter by watermark presence |
-| **Lens - Watermark Type** | Filter by watermark classification |
-| **Lens - Stock Provider** | Filter by detected stock photo source |
-| **Lens - Contains Brand Logo** | Filter by brand/logo detection |
-
-## Templating
-
-### Accessing Analysis Data
-
-Use the `lens` Twig global to access AI-generated metadata:
-
-```twig
-{% set analysis = lens.getAnalysis(asset.id) %}
-
-{% if analysis %}
-    {# Alt text with fallback #}
-    <img src="{{ asset.url }}"
-         alt="{{ analysis.altText ?? asset.title }}">
-
-    {# Display suggested title #}
-    {% if analysis.suggestedTitle %}
-        <h3>{{ analysis.suggestedTitle }}</h3>
-    {% endif %}
-
-    {# Display AI-generated tags #}
-    {% set tags = lens.getTagsForAnalysis(analysis.id) %}
-    <div class="tags">
-        {% for tag in tags %}
-            <span class="tag" title="Confidence: {{ (tag.confidence * 100)|round }}%">
-                {{ tag.tag }}
-            </span>
-        {% endfor %}
-    </div>
-
-    {# Display dominant colors #}
-    {% set colors = lens.getColorsForAnalysis(analysis.id) %}
-    <div class="color-palette">
-        {% for color in colors %}
-            <span class="color-swatch"
-                  style="background: {{ color.hex }}"
-                  title="{{ color.hex }} ({{ (color.percentage * 100)|round }}%)">
-            </span>
-        {% endfor %}
-    </div>
-
-    {# Check for duplicates #}
-    {% set duplicateCount = lens.getDuplicateCount(asset.id) %}
-    {% if duplicateCount > 0 %}
-        <p class="warning">This asset has {{ duplicateCount }} potential duplicate(s)</p>
-    {% endif %}
-{% endif %}
-```
-
-### Field Layout Element
-
-Add the **Lens Analysis** element to any asset field layout to display AI metadata directly in the asset editor sidebar.
-
-### Template Helpers
-
-```twig
-{# Check if title was auto-generated by Craft #}
-{% if lens.isAutoGeneratedTitle(asset) %}
-    <p>Consider updating this asset's title</p>
-{% endif %}
-
-{# Check plugin setup status #}
-{% if lens.hasCriticalIssues() %}
-    <div class="alert">Lens requires configuration</div>
-{% endif %}
-
-{# Check feature availability #}
-{% if lens.isFeatureAvailable('duplicateDetection') %}
-    {# Show duplicate detection UI #}
-{% endif %}
-```
-
-## Cost Awareness
-
-Lens tracks token usage and provides cost estimates before processing. The Bulk Processing page shows projected costs based on your selected provider.
-
-**Typical costs per image** (estimates vary by image complexity):
-
-| Provider | Model | Approximate Cost |
-|----------|-------|------------------|
-| OpenAI | GPT-5.2 | ~$0.01–0.03 |
-| OpenAI | GPT-5-mini | ~$0.003–0.01 |
-| Google | Gemini 2.5 Flash | ~$0.001–0.005 |
-| Anthropic | Claude Sonnet 4.5 | ~$0.01–0.02 |
-
-Configure `requireReviewBeforeApply` to manually approve analyses before they're applied, giving you control over quality vs. automation.
-
-## Changelog
-
-See [CHANGELOG.md](./CHANGELOG.md) for version history.
+- [Getting Started](https://github.com/vitordiniz22/craft-lens/wiki/Getting-Started)
+- [Configuration](https://github.com/vitordiniz22/craft-lens/wiki/Configuration)
+- [Console Commands](https://github.com/vitordiniz22/craft-lens/wiki/Console-Commands)
+- [Templating](https://github.com/vitordiniz22/craft-lens/wiki/Templating)
+- [Asset Query Extensions](https://github.com/vitordiniz22/craft-lens/wiki/Asset-Query-Extensions)
+- [Condition Rules](https://github.com/vitordiniz22/craft-lens/wiki/Condition-Rules)
+- [Editions](https://github.com/vitordiniz22/craft-lens/wiki/Editions)
+- [Cost & Pricing](https://github.com/vitordiniz22/craft-lens/wiki/Cost-and-Pricing)
+- [Privacy & Data](https://github.com/vitordiniz22/craft-lens/wiki/Privacy-and-Data)
 
 ## Support
 
-- **Documentation**: [https://github.com/vitordiniz22/craft-lens](https://github.com/vitordiniz22/craft-lens)
+- **Documentation**: [GitHub Wiki](https://github.com/vitordiniz22/craft-lens/wiki)
 - **Issues**: [GitHub Issues](https://github.com/vitordiniz22/craft-lens/issues)
-- **Email**: vitordiniz22@gmail.com
-
-### Reporting Issues
-
-When reporting issues, please include:
-1. Craft CMS and PHP versions
-2. Lens plugin version
-3. AI provider and model being used
-4. Steps to reproduce
-5. Relevant log entries from **Lens** &rarr; **Logs**
 
 ## License
 
@@ -348,5 +150,5 @@ This plugin is proprietary software. See [LICENSE.md](./LICENSE.md) for details.
 ---
 
 <p align="center">
-  Brought to you by <a href="https://github.com/vitordiniz22">Vitor Diniz</a>
+  Created by <a href="https://github.com/vitordiniz22">Vitor Diniz</a>
 </p>
