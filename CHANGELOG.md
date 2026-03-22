@@ -1,5 +1,14 @@
 # Release Notes for Lens
 
+## 1.0.0-alpha.2 - 2026-03-23
+
+- Search index now includes AI original values, site translations, and language-specific stemming
+- "Analyze with Lens" element action replaces "Find Duplicates" (supports re-analysis)
+- Mobile-first setup banner, improved onboarding flow
+- Auto-apply AI metadata to all sites after analysis
+- Alt proxy field styled as native field (blue accent)
+- Various UI and stability fixes
+
 ## 1.0.0-alpha.1 - 2026-03-22
 
 ### Added
