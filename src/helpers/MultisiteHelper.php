@@ -130,6 +130,52 @@ class MultisiteHelper
     }
 
     /**
+     * Get all non-primary sites for an asset, with content source flag.
+     *
+     * Returns every site except the primary, each tagged with whether it
+     * shares the primary's base language (uses primary content directly)
+     * or has a different base language (uses translated site content).
+     *
+     * Returns empty array if single-site or no translatable fields.
+     *
+     * @return array<int, array{siteId: int, language: string, usesPrimaryContent: bool}>
+     */
+    public static function getAllNonPrimarySites(Asset $asset): array
+    {
+        $allSites = Craft::$app->getSites()->getAllSites();
+
+        if (count($allSites) <= 1) {
+            return [];
+        }
+
+        $volume = $asset->getVolume();
+        $altTranslatable = $volume->altTranslationMethod !== Field::TRANSLATION_METHOD_NONE;
+        $titleTranslatable = $volume->titleTranslationMethod !== Field::TRANSLATION_METHOD_NONE;
+
+        if (!$altTranslatable && !$titleTranslatable) {
+            return [];
+        }
+
+        $primarySiteId = Craft::$app->getSites()->getPrimarySite()->id;
+        $primaryBase = self::getBaseLanguage(self::getPrimarySiteLanguage());
+        $sites = [];
+
+        foreach ($allSites as $site) {
+            if ($site->id === $primarySiteId) {
+                continue;
+            }
+
+            $sites[] = [
+                'siteId' => $site->id,
+                'language' => $site->language,
+                'usesPrimaryContent' => self::getBaseLanguage($site->language) === $primaryBase,
+            ];
+        }
+
+        return $sites;
+    }
+
+    /**
      * Get unique additional languages (non-primary) from sites that need content.
      *
      * Deduplicates by base language so that fr-FR and fr-CA only produce one

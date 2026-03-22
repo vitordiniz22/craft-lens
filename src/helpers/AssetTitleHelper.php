@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace vitordiniz22\craftlens\helpers;
 
 use craft\elements\Asset;
+use craft\helpers\Assets;
 
 class AssetTitleHelper
 {
@@ -17,18 +18,9 @@ class AssetTitleHelper
         }
 
         $filename = pathinfo($asset->filename, PATHINFO_FILENAME);
-        $normalizedFromFilename = self::normalizeFilename($filename);
+        $craftGenerated = Assets::filename2Title($filename);
 
-        $titlesMatch = strcasecmp($currentTitle, $normalizedFromFilename) === 0;
-        $matchesRawFilename = strcasecmp($currentTitle, $filename) === 0;
-
-        return $titlesMatch || $matchesRawFilename;
-    }
-
-    private static function normalizeFilename(string $filename): string
-    {
-        $withSpaces = str_replace(['-', '_'], ' ', $filename);
-
-        return ucwords(strtolower($withSpaces));
+        return strcasecmp($currentTitle, $craftGenerated) === 0
+            || strcasecmp($currentTitle, $filename) === 0;
     }
 }
