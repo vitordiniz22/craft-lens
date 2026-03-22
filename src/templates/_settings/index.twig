@@ -11,7 +11,7 @@
     {{ redirectInput('lens/settings') }}
 
     <h2>{{ 'AI Provider'|t('lens') }}</h2>
-    <p>{{ 'Choose the AI provider for image analysis. Each provider offers equivalent features, so pick based on your preferred pricing and existing API access.'|t('lens') }}</p>
+    <p>{{ 'Choose the AI provider for image analysis. All providers offer the same features, so pick based on pricing and the API key you already have.'|t('lens') }}</p>
 
     {{ forms.radioGroupField({
         first: true,
@@ -30,7 +30,7 @@
     }) }}
 
     <h3>{{ 'API Configuration'|t('lens') }}</h3>
-    <p>{{ 'Add your API key and select a model. For production use, store keys as environment variables.'|t('lens') }}</p>
+    <p>{{ 'Enter your API key and choose a model. In production, store keys as environment variables.'|t('lens') }}</p>
 
     <div id="aiProvider--openai" class="nested-fields{% if settings.aiProvider != 'openai' %} hidden{% endif %}">
         {{ forms.autosuggestField({
@@ -46,7 +46,7 @@
 
         {{ forms.selectField({
             label: 'OpenAI Model'|t('lens'),
-            instructions: 'Mini is the best starting point for most sites. Upgrade to GPT-5.2 for complex scenes or detailed alt text. Use Nano to minimize costs on high-volume libraries.'|t('lens'),
+            instructions: 'Mini is the best balance of speed and quality for most sites. Use GPT-5.2 for complex scenes or richer alt text. Nano minimizes costs on high-volume libraries.'|t('lens'),
             id: 'openaiModel',
             name: 'settings[openaiModel]',
             value: settings.openaiModel,
@@ -100,7 +100,7 @@
 
         {{ forms.selectField({
             label: 'Claude Model'|t('lens'),
-            instructions: 'Sonnet is the best balance of quality and cost for most sites. Use Opus for the highest accuracy on complex images. Haiku minimizes costs on high-volume libraries.'|t('lens'),
+            instructions: 'Sonnet is the best balance of speed and quality for most sites. Use Opus for the highest accuracy on complex images. Haiku minimizes costs on high-volume libraries.'|t('lens'),
             id: 'claudeModel',
             name: 'settings[claudeModel]',
             value: settings.claudeModel,
@@ -116,12 +116,12 @@
     <hr>
 
     <h2>{{ 'Asset Processing'|t('lens') }}</h2>
-    <p>{{ 'Control when and how Lens analyzes your assets. All processing runs in the background and uploads are never delayed.'|t('lens') }}</p>
+    <p>{{ 'Configure how Lens analyzes your assets. Processing always runs in the background, so uploads are never delayed.'|t('lens') }}</p>
 
     {{ forms.lightswitchField({
         first: true,
         label: 'Auto-Process on Upload'|t('lens'),
-        instructions: 'When a new image is uploaded or replaced, Lens will automatically generate alt text, tags, and other metadata in the background.'|t('lens'),
+        instructions: 'Automatically analyze new or replaced images to generate alt text, tags, and other metadata.'|t('lens'),
         id: 'autoProcessOnUpload',
         name: 'settings[autoProcessOnUpload]',
         on: settings.autoProcessOnUpload,
@@ -139,7 +139,7 @@
 
     {{ forms.checkboxSelectField({
         label: 'Volumes to Process'|t('lens'),
-        instructions: 'Choose which volumes Lens should analyze. If none are selected, all volumes are processed. Exclude volumes with non-photo assets like icons, PDFs, or design files.'|t('lens'),
+        instructions: 'Limit analysis to specific volumes. Leave empty to process all volumes. Exclude volumes that contain non-photo assets like icons, PDFs, or design files.'|t('lens'),
         id: 'enabledVolumes',
         name: 'settings[enabledVolumes]',
         values: settings.enabledVolumes,
@@ -151,7 +151,7 @@
 
     {% if lens.isPro %}
         <h2>{{ 'Semantic Search'|t('lens') }}</h2>
-        <p>{{ 'Enhance the native asset selector with AI-powered search. When enabled, the search bar in every asset selector modal is replaced with Lens semantic search — editors can describe what they\'re looking for instead of remembering filenames.'|t('lens') }}</p>
+        <p>{{ 'Replace the native asset selector search with Lens search. Editors can search using AI-generated descriptions, tags, and alt text instead of remembering exact filenames.'|t('lens') }}</p>
 
         {{ forms.lightswitchField({
             first: true,
