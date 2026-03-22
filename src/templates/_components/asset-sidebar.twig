@@ -5,29 +5,12 @@
  #}
 
 <div class="lens-asset-sidebar">
-    {# Critical configuration issues first (API key, volumes) #}
-    {% if lens.hasCriticalIssues() %}
-        {% set criticalIssues = lens.getCriticalIssues() %}
-        {% for issue in criticalIssues|slice(0, 2) %}
-            {% include 'lens/_components/inline-notice' with {
-                type: 'error',
-                title: issue.category == 'ai_provider' ? 'API Key Required'|t('lens') : 'Setup Required'|t('lens'),
-                message: issue.message,
-                cta: {
-                    label: issue.actionLabel,
-                    url: issue.actionUrl
-                }
-            } %}
-        {% endfor %}
-    {% endif %}
-
-    {# Info: Add Lens Analysis to field layout #}
     {% include 'lens/_components/inline-notice' with {
         type: 'info',
-        title: 'Lens Analysis Not Added'|t('lens'),
-        message: 'Add Lens Analysis to this volume\'s field layout for full AI insights.'|t('lens'),
+        title: 'Lens Analysis Available'|t('lens'),
+        message: 'Add the Lens Analysis panel to this volume to see AI-generated descriptions, tags, and more right here.'|t('lens'),
         cta: {
-            label: 'Edit Volume'|t('lens'),
+            label: 'Add to Volume'|t('lens'),
             url: 'settings/assets/volumes/' ~ asset.volume.id
         }
     } %}

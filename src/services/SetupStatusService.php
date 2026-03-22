@@ -41,6 +41,10 @@ class SetupStatusService extends Component
             $this->checkAnalysisPanelConfigured(),
         ];
 
+        if ($this->isAiProviderConfigured() && $this->hasEnabledVolumes()) {
+            $this->cachedStatus[] = $this->checkFirstAnalysis();
+        }
+
         if (Plugin::getInstance()->getIsPro()) {
             $this->cachedStatus[] = $this->checkSemanticSearchEnabled();
         }
@@ -224,15 +228,12 @@ class SetupStatusService extends Component
     private function checkAiProviderConfigured(): array
     {
         $isResolved = $this->isAiProviderConfigured();
-        $providerName = $this->getAiProviderDisplayName();
 
         return [
             'key' => 'ai_provider_api_key',
             'category' => self::CATEGORY_AI_PROVIDER,
             'severity' => SetupSeverity::Critical->value,
-            'message' => $isResolved
-                ? Craft::t('lens', '{provider} is configured and ready.', ['provider' => $providerName])
-                : Craft::t('lens', 'Configure your AI provider API key to start analyzing images.'),
+            'message' => Craft::t('lens', 'Add your AI provider API key. Lens uses it to analyze images and generate metadata.'),
             'actionLabel' => Craft::t('lens', 'Configure API Key'),
             'actionUrl' => 'lens/settings#provider',
             'isResolved' => $isResolved,
@@ -247,9 +248,7 @@ class SetupStatusService extends Component
             'key' => 'volumes_enabled',
             'category' => self::CATEGORY_VOLUMES,
             'severity' => SetupSeverity::Critical->value,
-            'message' => $isResolved
-                ? Craft::t('lens', 'Asset volumes are configured.')
-                : Craft::t('lens', 'No asset volumes are enabled for processing. Enable at least one volume.'),
+            'message' => Craft::t('lens', 'Enable at least one asset volume so Lens knows which images to process.'),
             'actionLabel' => Craft::t('lens', 'Configure Volumes'),
             'actionUrl' => 'lens/settings#volumes',
             'isResolved' => $isResolved,
@@ -264,9 +263,7 @@ class SetupStatusService extends Component
             'key' => 'analysis_panel_added',
             'category' => self::CATEGORY_FIELD_LAYOUT,
             'severity' => SetupSeverity::Warning->value,
-            'message' => $isResolved
-                ? Craft::t('lens', 'Lens Analysis is configured.')
-                : Craft::t('lens', 'The Lens Analysis UI element has not been added to any asset volume\'s field layout.'),
+            'message' => Craft::t('lens', 'Add the Lens Analysis element to a volume\'s field layout to see AI results directly on asset pages.'),
             'actionLabel' => Craft::t('lens', 'Add to Field Layout'),
             'actionUrl' => 'settings/assets',
             'isResolved' => $isResolved,
@@ -281,11 +278,29 @@ class SetupStatusService extends Component
             'key' => 'semantic_search_enabled',
             'category' => self::CATEGORY_VOLUMES,
             'severity' => SetupSeverity::Info->value,
-            'message' => $isResolved
-                ? Craft::t('lens', 'Enhanced asset search is enabled.')
-                : Craft::t('lens', 'Enhanced asset search is disabled. Asset selector modals are using Craft\'s default search.'),
+            'message' => Craft::t('lens', 'Enhanced search is off. Enable it to find assets by AI-generated descriptions and tags.'),
             'actionLabel' => Craft::t('lens', 'Go to Settings'),
             'actionUrl' => 'lens/settings',
+            'isResolved' => $isResolved,
+        ];
+    }
+
+    private function checkFirstAnalysis(): array
+    {
+        $plugin = Plugin::getInstance();
+        $stats = $plugin->bulkProcessingStatus->getStats();
+        $isResolved = $stats['analyzed'] > 0;
+        $isPro = $plugin->getIsPro();
+
+        return [
+            'key' => 'first_analysis_complete',
+            'category' => self::CATEGORY_VOLUMES,
+            'severity' => SetupSeverity::Info->value,
+            'message' => Craft::t('lens', 'Analyze your first image to see Lens in action.'),
+            'actionLabel' => $isPro
+                ? Craft::t('lens', 'Bulk Process')
+                : Craft::t('lens', 'Go to Assets'),
+            'actionUrl' => $isPro ? 'lens/bulk' : 'assets',
             'isResolved' => $isResolved,
         ];
     }

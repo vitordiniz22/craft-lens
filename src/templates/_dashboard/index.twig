@@ -3,39 +3,50 @@
 {% set title = 'Dashboard'|t('lens') %}
 {% set selectedSubnavItem = 'dashboard' %}
 
+{% set hasAnalyses = processingStats.analyzed > 0 %}
+
 {% block content %}
 <div class="lens-dashboard-page">
+    {# Welcome header: visible during critical issues OR before first analysis #}
+    {% if hasCriticalIssues or (not hasCriticalIssues and not hasAnalyses) %}
+        {% include 'lens/_dashboard/_welcome-header' %}
+    {% endif %}
+
     {% if hasUnresolvedIssues %}
         {% include 'lens/_components/setup-banner' with {
             checks: setupStatus,
-            title: hasCriticalIssues ? 'Setup Required'|t('lens') : 'Configuration Tips'|t('lens'),
+            title: hasCriticalIssues
+                ? 'Let\'s get you set up'|t('lens')
+                : (not hasAnalyses
+                    ? 'You\'re all set'|t('lens')
+                    : 'Configuration Tips'|t('lens')),
             description: hasCriticalIssues
-                ? 'Lens needs configuration before it can analyze your assets. Setup takes about 2 minutes.'|t('lens')
-                : 'Complete these optional steps to get the most out of Lens.'|t('lens')
+                ? 'Complete a few quick steps so Lens can start generating descriptions, tags, and accessibility metadata for your images.'|t('lens')
+                : (not hasAnalyses
+                    ? 'Lens is ready to go. Run your first analysis to see it in action.'|t('lens')
+                    : 'These optional tweaks can improve your workflow.'|t('lens')),
+            showIcon: hasAnalyses
         } %}
     {% endif %}
 
-    {% if not hasCriticalIssues %}
+    {# Dashboard content: only after critical issues resolved AND at least 1 analysis #}
+    {% if not hasCriticalIssues and hasAnalyses %}
         {% if not lens.isPro %}
             {% include 'lens/_components/upgrade-banner' %}
         {% endif %}
 
-        {% if processingStats.totalImages == 0 %}
-            {% include 'lens/_dashboard/_empty-state' %}
+        {% include 'lens/_dashboard/_attention' %}
+
+        {% include 'lens/_dashboard/_library-health' %}
+
+        {% if lens.isPro %}
+            {% include 'lens/_dashboard/_quick-insights' %}
+            {% include 'lens/_dashboard/_usage' %}
+            {% include 'lens/_dashboard/_recent-activity' %}
         {% else %}
-            {% include 'lens/_dashboard/_attention' %}
-
-            {% include 'lens/_dashboard/_library-health' %}
-
-            {% if lens.isPro %}
-                {% include 'lens/_dashboard/_quick-insights' %}
-                {% include 'lens/_dashboard/_usage' %}
-                {% include 'lens/_dashboard/_recent-activity' %}
-            {% else %}
-                {% include 'lens/_dashboard/_recent-activity' with {
-                    recentActivity: recentActivity|slice(0, 5)
-                } %}
-            {% endif %}
+            {% include 'lens/_dashboard/_recent-activity' with {
+                recentActivity: recentActivity|slice(0, 5)
+            } %}
         {% endif %}
     {% endif %}
 </div>

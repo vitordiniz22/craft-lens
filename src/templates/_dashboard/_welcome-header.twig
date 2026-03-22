@@ -1,0 +1,12 @@
+{# Welcome header - shown on first visit before setup is complete #}
+<div class="lens-welcome-header">
+    <div class="lens-welcome-header__icon">
+        {{ svg(craft.app.plugins.getPlugin('lens').basePath ~ '/icon.svg')|attr({width: 36, height: 36}) }}
+    </div>
+    <div class="lens-welcome-header__text">
+        <h2 class="lens-welcome-header__title">{{ 'Get Started with Lens'|t('lens') }}</h2>
+        <p class="lens-welcome-header__description">
+            {{ 'AI-powered image analysis for Craft CMS.'|t('lens') }}
+        </p>
+    </div>
+</div>

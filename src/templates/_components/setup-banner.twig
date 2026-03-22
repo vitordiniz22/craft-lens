@@ -6,6 +6,7 @@
  #   - checks: array of setup check objects from SetupStatusService
  #   - title: (optional) Banner title, defaults to "Setup Required"
  #   - description: (optional) Banner description
+ #   - showIcon: (optional) Whether to show the header icon, defaults to true
  #}
 
 {% set unresolvedChecks = checks|filter(c => not c.isResolved) %}
@@ -16,7 +17,9 @@
 {% if unresolvedChecks|length > 0 %}
 <div class="lens-setup-banner {{ hasCritical ? '' : (hasWarning ? 'lens-setup-banner--warning' : (hasInfo ? 'lens-setup-banner--info' : '')) }}">
     <div class="lens-setup-banner__header">
-        <div class="lens-setup-banner__icon">{{ iconSvg('triangle-exclamation') }}</div>
+        {% if showIcon ?? true %}
+            <div class="lens-setup-banner__icon">{{ iconSvg('triangle-exclamation') }}</div>
+        {% endif %}
         <h3 class="lens-setup-banner__title">{{ title ?? 'Setup Required'|t('lens') }}</h3>
     </div>
 
@@ -24,7 +27,7 @@
         <p class="lens-setup-banner__description">{{ description }}</p>
     {% else %}
         <p class="lens-setup-banner__description">
-            {{ 'Complete the following steps to enable all Lens features.'|t('lens') }}
+            {{ 'A few steps to unlock all Lens features.'|t('lens') }}
         </p>
     {% endif %}
 
