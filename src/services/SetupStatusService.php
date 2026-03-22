@@ -278,7 +278,7 @@ class SetupStatusService extends Component
             'key' => 'semantic_search_enabled',
             'category' => self::CATEGORY_VOLUMES,
             'severity' => SetupSeverity::Info->value,
-            'message' => Craft::t('lens', 'Enhanced search is off. Enable it to find assets by AI-generated descriptions and tags.'),
+            'message' => Craft::t('lens', 'Turn on semantic search to replace the native asset selector search with Lens, so queries match against AI descriptions, tags, and extracted text.'),
             'actionLabel' => Craft::t('lens', 'Go to Settings'),
             'actionUrl' => 'lens/settings',
             'isResolved' => $isResolved,

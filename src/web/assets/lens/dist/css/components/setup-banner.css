@@ -8,7 +8,13 @@
   background: var(--gray-050);
   border: 1px solid var(--hairline-color);
   border-radius: var(--large-border-radius);
-  padding: 20px;
+  padding: 10px;
+}
+
+@media (min-width: 768px) {
+  .lens-setup-banner {
+    padding: 20px;
+  }
 }
 
 .lens-setup-banner--info {
@@ -69,8 +75,7 @@
 
 .lens-setup-banner__item {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
   gap: 12px;
   padding: 10px 12px;
   background: var(--white);
@@ -78,9 +83,17 @@
   border: 1px solid var(--hairline-color);
 }
 
+@media (min-width: 768px) {
+  .lens-setup-banner__item {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
 .lens-setup-banner__item-content {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
   flex: 1;
   min-width: 0;
@@ -110,4 +123,11 @@
 
 .lens-setup-banner__item-action {
   flex-shrink: 0;
+  padding-left: 30px;
+}
+
+@media (min-width: 768px) {
+  .lens-setup-banner__item-action {
+    padding-left: 0;
+  }
 }
