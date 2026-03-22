@@ -402,7 +402,7 @@
     position: relative;
     width: 100%;
     padding: 12px 14px;
-    border-left: 3px solid var(--amber-200);
+    border-left: 3px solid var(--link-color);
     border-radius: 0 var(--small-border-radius) var(--small-border-radius) 0;
     background: var(--gray-050);
 }

@@ -41,12 +41,12 @@ class SetupStatusService extends Component
             $this->checkAnalysisPanelConfigured(),
         ];
 
-        if ($this->isAiProviderConfigured() && $this->hasEnabledVolumes()) {
-            $this->cachedStatus[] = $this->checkFirstAnalysis();
-        }
-
         if (Plugin::getInstance()->getIsPro()) {
             $this->cachedStatus[] = $this->checkSemanticSearchEnabled();
+        }
+
+        if ($this->isAiProviderConfigured() && $this->hasEnabledVolumes()) {
+            $this->cachedStatus[] = $this->checkFirstAnalysis();
         }
 
         return $this->cachedStatus;

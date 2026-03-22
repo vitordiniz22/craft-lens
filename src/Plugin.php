@@ -28,7 +28,7 @@ use craft\services\Gc;
 use craft\web\UrlManager;
 use craft\web\View;
 use Psr\Log\LogLevel;
-use vitordiniz22\craftlens\actions\FindDuplicatesAction;
+use vitordiniz22\craftlens\actions\AnalyzeAssetsAction;
 use vitordiniz22\craftlens\behaviors\AssetQueryBehavior;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\FieldLayoutHelper;
@@ -625,7 +625,7 @@ class Plugin extends BasePlugin
             Element::EVENT_REGISTER_ACTIONS,
             function(RegisterElementActionsEvent $event) {
                 if ($this->getIsPro()) {
-                    $event->actions[] = FindDuplicatesAction::class;
+                    $event->actions[] = AnalyzeAssetsAction::class;
                 }
             }
         );
