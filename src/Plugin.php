@@ -138,6 +138,36 @@ class Plugin extends BasePlugin
         }
     }
 
+    /**
+     * Removes LensAnalysisElement from all asset volume field layouts
+     * so they don't become orphaned ghost entries after the plugin is gone.
+     * Updates both the DB config column (saveLayout) and project config YAML (saveVolume).
+     */
+    protected function beforeUninstall(): void
+    {
+        parent::beforeUninstall();
+
+        foreach (Craft::$app->getVolumes()->getAllVolumes() as $volume) {
+            $fieldLayout = $volume->getFieldLayout();
+            $modified = false;
+
+            foreach ($fieldLayout->getTabs() as $tab) {
+                $elements = $tab->getElements();
+                $filtered = array_filter($elements, fn($el) => !$el instanceof LensAnalysisElement);
+
+                if (count($filtered) !== count($elements)) {
+                    $tab->setElements(array_values($filtered));
+                    $modified = true;
+                }
+            }
+
+            if ($modified) {
+                Craft::$app->getFields()->saveLayout($fieldLayout, false);
+                Craft::$app->getVolumes()->saveVolume($volume, false);
+            }
+        }
+    }
+
     public static function isDevInstall(): bool
     {
         $basePath = self::getInstance()->getBasePath();
