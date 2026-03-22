@@ -10,6 +10,7 @@ use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\helpers\MultisiteHelper;
 use vitordiniz22\craftlens\records\AnalysisSiteContentRecord;
+use vitordiniz22\craftlens\Plugin;
 use vitordiniz22\craftlens\records\AssetAnalysisRecord;
 use vitordiniz22\craftlens\services\traits\ValidatesFieldInput;
 use yii\base\Component;
@@ -246,11 +247,17 @@ class SiteContentService extends Component
 
         $aiColumn = $field . 'Ai';
 
+        $analysis = $siteRecord->analysis;
+
         Logger::info(
             LogCategory::Review,
             "Site content field '{$field}' updated for site {$siteId}",
-            assetId: $siteRecord->analysis->assetId ?? null,
+            assetId: $analysis->assetId ?? null,
         );
+
+        if ($analysis !== null) {
+            Plugin::getInstance()->searchIndex->reindexSiteContent($analysis, $siteId);
+        }
 
         return [
             'value' => $siteRecord->$field,
@@ -288,11 +295,17 @@ class SiteContentService extends Component
             );
         }
 
+        $analysis = $siteRecord->analysis;
+
         Logger::info(
             LogCategory::Review,
             "Site content field '{$field}' reverted for site {$siteId}",
-            assetId: $siteRecord->analysis->assetId ?? null,
+            assetId: $analysis->assetId ?? null,
         );
+
+        if ($analysis !== null) {
+            Plugin::getInstance()->searchIndex->reindexSiteContent($analysis, $siteId);
+        }
 
         return [
             'value' => $siteRecord->$field,

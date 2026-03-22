@@ -7,8 +7,10 @@ namespace vitordiniz22\craftlens\services;
 use Craft;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\Logger;
+use vitordiniz22\craftlens\helpers\MultisiteHelper;
 use vitordiniz22\craftlens\helpers\Stemmer;
 use vitordiniz22\craftlens\migrations\Install;
+use vitordiniz22\craftlens\records\AnalysisSiteContentRecord;
 use vitordiniz22\craftlens\records\AssetAnalysisRecord;
 use yii\base\Component;
 use yii\db\Query;
@@ -21,8 +23,9 @@ use yii\db\Query;
  * primary site's language (via wamania/php-stemmer) so that "animals" and
  * "animal" resolve to the same token.
  *
- * Only primary-site content is indexed. Translated content in
- * `lens_analysis_site_content` is intentionally excluded.
+ * Indexes primary-site content and per-language translations from
+ * `lens_analysis_site_content`. AI original values are indexed when they
+ * differ from the user-edited value (dual-column pattern).
  */
 class SearchIndexService extends Component
 {
@@ -31,16 +34,26 @@ class SearchIndexService extends Component
 
     private const MIN_FUZZY_TERM_LENGTH = 4;
     private const FUZZY_CANDIDATE_LIMIT = 500;
-
-    /** Field weight map: field name → BM25 weight multiplier */
     private const FIELD_WEIGHTS = [
         'tag' => 1.50,
         'title' => 1.30,
         'suggestedTitle' => 1.20,
         'altText' => 1.10,
         'alt' => 1.10,
+        'suggestedTitleAi' => 0.90,
+        'altTextAi' => 0.85,
         'longDescription' => 0.80,
         'extractedText' => 0.70,
+        'longDescriptionAi' => 0.60,
+        'extractedTextAi' => 0.55,
+        'siteTitle' => 1.00,
+        'siteAltText' => 0.90,
+    ];
+    private const AI_FIELD_MAP = [
+        'suggestedTitle' => 'suggestedTitleAi',
+        'altText' => 'altTextAi',
+        'longDescription' => 'longDescriptionAi',
+        'extractedText' => 'extractedTextAi',
     ];
 
     // -------------------------------------------------------------------------
@@ -104,10 +117,20 @@ class SearchIndexService extends Component
         $fieldCounts['alt'] = count($altRows);
         array_push($rows, ...$altRows);
 
+        // --- AI original values (only when edited) ---
+        $aiRows = $this->buildAiFieldRows($record);
+        $fieldCounts['aiFields'] = count($aiRows);
+        array_push($rows, ...$aiRows);
+
         // --- Tags ---
         $tagRows = $this->buildTagRows($record->assetId, $record->id);
         $fieldCounts['tag'] = count($tagRows);
         array_push($rows, ...$tagRows);
+
+        // --- Site content translations ---
+        $siteRows = $this->buildSiteContentRows($record->assetId, $record->id);
+        $fieldCounts['siteContent'] = count($siteRows);
+        array_push($rows, ...$siteRows);
 
         if (!empty($rows)) {
             $this->batchInsert($rows);
@@ -130,6 +153,9 @@ class SearchIndexService extends Component
     /**
      * Re-indexes a single field for an asset. For 'title' and 'alt' fields,
      * fetches the current value from Craft's native tables (not the analysis record).
+     *
+     * When the field has a corresponding AI column (dual-column pattern),
+     * the AI field is also re-indexed (added if edited, removed if reverted).
      */
     public function reindexField(AssetAnalysisRecord $record, string $field): void
     {
@@ -140,11 +166,19 @@ class SearchIndexService extends Component
             context: ['field' => $field, 'analysisId' => $record->id]
         );
 
-        // Remove existing tokens for this field
+        // Determine which fields to delete and rebuild
+        $fieldsToDelete = [$field];
+        $aiField = self::AI_FIELD_MAP[$field] ?? null;
+
+        if ($aiField !== null) {
+            $fieldsToDelete[] = $aiField;
+        }
+
+        // Remove existing tokens for this field (and its AI counterpart)
         $deleted = Craft::$app->getDb()->createCommand()
             ->delete(Install::TABLE_SEARCH_INDEX, [
                 'assetId' => $record->assetId,
-                'field' => $field,
+                'field' => $fieldsToDelete,
             ])
             ->execute();
 
@@ -152,7 +186,7 @@ class SearchIndexService extends Component
             LogCategory::SearchIndex,
             'Deleted field tokens',
             assetId: $record->assetId,
-            context: ['field' => $field, 'deletedRows' => $deleted]
+            context: ['fields' => $fieldsToDelete, 'deletedRows' => $deleted]
         );
 
         if ($field === 'title') {
@@ -172,6 +206,16 @@ class SearchIndexService extends Component
                 context: ['field' => $field]
             );
             return;
+        }
+
+        // Also index AI original value if field has been edited
+        if ($aiField !== null && $record->isFieldEdited($field)) {
+            $aiValue = $record->{$aiField} ?? '';
+
+            if (!empty($aiValue)) {
+                $aiRows = $this->buildTokenRows($record->assetId, $record->id, $aiField, $aiValue);
+                array_push($rows, ...$aiRows);
+            }
         }
 
         if (!empty($rows)) {
@@ -320,6 +364,43 @@ class SearchIndexService extends Component
         } finally {
             $mutex->release($lockName);
         }
+    }
+
+    /**
+     * Re-indexes site content translations for a specific site.
+     * Call after updating or reverting a site content field.
+     */
+    public function reindexSiteContent(AssetAnalysisRecord $record, int $siteId): void
+    {
+        $siteRecord = AnalysisSiteContentRecord::find()
+            ->where(['analysisId' => $record->id, 'siteId' => $siteId])
+            ->one();
+
+        if ($siteRecord === null) {
+            return;
+        }
+
+        $lang = MultisiteHelper::getBaseLanguage($siteRecord->language);
+
+        Craft::$app->getDb()->createCommand()
+            ->delete(Install::TABLE_SEARCH_INDEX, [
+                'assetId' => $record->assetId,
+                'field' => ["siteTitle:{$lang}", "siteAltText:{$lang}"],
+            ])
+            ->execute();
+
+        $rows = $this->buildSingleSiteContentRows($record->assetId, $record->id, $siteRecord);
+
+        if (!empty($rows)) {
+            $this->batchInsert($rows);
+        }
+
+        Logger::info(
+            LogCategory::SearchIndex,
+            'Site content reindex complete',
+            assetId: $record->assetId,
+            context: ['siteId' => $siteId, 'language' => $lang, 'newTokens' => count($rows)]
+        );
     }
 
     // -------------------------------------------------------------------------
@@ -637,6 +718,136 @@ class SearchIndexService extends Component
         foreach ($tags as $tag) {
             $tagRows = $this->buildTokenRows($assetId, $analysisId, 'tag', (string) $tag);
             array_push($rows, ...$tagRows);
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Build token rows for AI original values that differ from the edited value.
+     *
+     * @return array<array<string, mixed>>
+     */
+    private function buildAiFieldRows(AssetAnalysisRecord $record): array
+    {
+        $rows = [];
+
+        foreach (self::AI_FIELD_MAP as $editedField => $aiField) {
+            if (!$record->isFieldEdited($editedField)) {
+                continue;
+            }
+
+            $aiValue = $record->{$aiField} ?? '';
+
+            if (!empty($aiValue)) {
+                $fieldRows = $this->buildTokenRows($record->assetId, $record->id, $aiField, $aiValue);
+                array_push($rows, ...$fieldRows);
+            }
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Build token rows for all site content translations.
+     *
+     * @return array<array<string, mixed>>
+     */
+    private function buildSiteContentRows(int $assetId, int $analysisId): array
+    {
+        $siteRecords = AnalysisSiteContentRecord::find()
+            ->where(['analysisId' => $analysisId])
+            ->all();
+
+        if (empty($siteRecords)) {
+            return [];
+        }
+
+        $rows = [];
+        foreach ($siteRecords as $siteRecord) {
+            $siteRows = $this->buildSingleSiteContentRows($assetId, $analysisId, $siteRecord);
+            array_push($rows, ...$siteRows);
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Build token rows for a single site content record, using language-specific stemming.
+     * Indexes both edited and AI original values (when different).
+     *
+     * @return array<array<string, mixed>>
+     */
+    private function buildSingleSiteContentRows(int $assetId, int $analysisId, AnalysisSiteContentRecord $siteRecord): array
+    {
+        $lang = MultisiteHelper::getBaseLanguage($siteRecord->language);
+        $rows = [];
+
+        $siteFields = [
+            'suggestedTitle' => "siteTitle:{$lang}",
+            'altText' => "siteAltText:{$lang}",
+        ];
+
+        foreach ($siteFields as $sourceField => $indexField) {
+            $value = $siteRecord->{$sourceField} ?? '';
+
+            if (!empty($value)) {
+                $fieldRows = $this->buildTokenRowsForLanguage($assetId, $analysisId, $indexField, $value, $lang);
+                array_push($rows, ...$fieldRows);
+            }
+
+            if ($siteRecord->isFieldEdited($sourceField)) {
+                $aiValue = $siteRecord->{$sourceField . 'Ai'} ?? '';
+
+                if (!empty($aiValue)) {
+                    $aiRows = $this->buildTokenRowsForLanguage($assetId, $analysisId, $indexField, $aiValue, $lang);
+                    array_push($rows, ...$aiRows);
+                }
+            }
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Build token rows using a language-specific stemmer.
+     *
+     * @return array<array<string, mixed>>
+     */
+    private function buildTokenRowsForLanguage(int $assetId, int $analysisId, string $field, string $value, string $language): array
+    {
+        // Use base field name (without language suffix) for weight lookup
+        $baseField = preg_replace('/:.+$/', '', $field);
+        $weight = self::FIELD_WEIGHTS[$baseField] ?? 1.0;
+        $pairs = Stemmer::tokenizeAndStemForLanguage($value, $language);
+
+        if (empty($pairs)) {
+            return [];
+        }
+
+        $tfMap = [];
+
+        foreach ($pairs as [$raw, $stemmed]) {
+            $tfMap[$stemmed] ??= ['raw' => $raw, 'count' => 0];
+            $tfMap[$stemmed]['count']++;
+        }
+
+        $now = (new \DateTime())->format('Y-m-d H:i:s');
+        $rows = [];
+
+        foreach ($tfMap as $stemmed => $entry) {
+            $rows[] = [
+                'assetId' => $assetId,
+                'analysisId' => $analysisId,
+                'token' => $stemmed,
+                'tokenRaw' => $entry['raw'],
+                'field' => $field,
+                'fieldWeight' => $weight,
+                'tf' => $entry['count'],
+                'dateCreated' => $now,
+                'dateUpdated' => $now,
+                'uid' => \craft\helpers\StringHelper::UUID(),
+            ];
         }
 
         return $rows;

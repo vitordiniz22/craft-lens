@@ -33,6 +33,9 @@ class Stemmer
     /** Cached Snowball stemmer instance */
     private static ?SnowballStemmer $stemmerInstance = null;
 
+    /** Per-language stemmer cache: langCode => SnowballStemmer|null */
+    private static array $stemmersByLanguage = [];
+
     /**
      * Resolve and cache the stemmer language from the primary site locale.
      * e.g. "en-US" → "en", "pt-BR" → "pt", "ja" → "" (unsupported)
@@ -144,11 +147,64 @@ class Stemmer
     }
 
     /**
+     * Stem a single pre-lowercased word using a specific language stemmer.
+     */
+    public static function stemForLanguage(string $word, string $language): string
+    {
+        $stemmer = self::getStemmerForLanguage($language);
+        if ($stemmer === null) {
+            return $word;
+        }
+
+        return $stemmer->stem($word) ?: $word;
+    }
+
+    /**
+     * Tokenise and stem a raw text string using a specific language stemmer.
+     *
+     * @return array<array{string, string}>
+     */
+    public static function tokenizeAndStemForLanguage(string $text, string $language): array
+    {
+        $tokens = self::tokenize($text);
+        $pairs = [];
+
+        foreach ($tokens as $raw) {
+            $pairs[] = [$raw, self::stemForLanguage($raw, $language)];
+        }
+
+        return $pairs;
+    }
+
+    /**
+     * Get or create a Snowball stemmer for a specific language code.
+     */
+    private static function getStemmerForLanguage(string $language): ?SnowballStemmer
+    {
+        $lang = strtolower(substr($language, 0, 2));
+
+        if (!in_array($lang, self::SUPPORTED_LANGUAGES, true)) {
+            return null;
+        }
+
+        if (!array_key_exists($lang, self::$stemmersByLanguage)) {
+            try {
+                self::$stemmersByLanguage[$lang] = StemmerFactory::create($lang);
+            } catch (NotFoundException) {
+                self::$stemmersByLanguage[$lang] = null;
+            }
+        }
+
+        return self::$stemmersByLanguage[$lang];
+    }
+
+    /**
      * Reset cached language/stemmer (useful in tests or when switching sites).
      */
     public static function reset(): void
     {
         self::$language = null;
         self::$stemmerInstance = null;
+        self::$stemmersByLanguage = [];
     }
 }
