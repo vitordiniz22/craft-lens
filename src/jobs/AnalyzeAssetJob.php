@@ -48,6 +48,6 @@ class AnalyzeAssetJob extends BaseJob
 
     protected function defaultDescription(): ?string
     {
-        return Craft::t('lens', 'Analyzing asset {id}', ['id' => $this->assetId]);
+        return Craft::t('lens', 'Lens: Analyzing asset {id}', ['id' => $this->assetId]);
     }
 }

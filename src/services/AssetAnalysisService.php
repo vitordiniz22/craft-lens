@@ -199,6 +199,10 @@ class AssetAnalysisService extends Component
             return false;
         }
 
+        if (!Plugin::getInstance()->setupStatus->isAiProviderConfigured()) {
+            return false;
+        }
+
         if (ElementHelper::isDraftOrRevision($asset)) {
             return false;
         }

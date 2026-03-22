@@ -82,10 +82,10 @@ class BulkAnalyzeAssetsJob extends BaseBatchedJob
             $volume = Craft::$app->getVolumes()->getVolumeById($this->volumeId);
             $volumeName = $volume?->name ?? "ID {$this->volumeId}";
 
-            return Craft::t('lens', 'Analyzing assets in {volume}', ['volume' => $volumeName]);
+            return Craft::t('lens', 'Lens: Analyzing assets in {volume}', ['volume' => $volumeName]);
         }
 
-        return Craft::t('lens', 'Analyzing all assets');
+        return Craft::t('lens', 'Lens: Analyzing all assets');
     }
 
 }
