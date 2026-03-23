@@ -42,7 +42,6 @@
             suggestEnvVars: true,
             required: true,
             errors: settings.getErrors('openaiApiKey'),
-            inputAttributes: {type: 'password'},
         }) }}
 
         {{ forms.selectField({
@@ -70,7 +69,6 @@
             suggestEnvVars: true,
             required: true,
             errors: settings.getErrors('geminiApiKey'),
-            inputAttributes: {type: 'password'},
         }) }}
 
         {{ forms.selectField({
@@ -98,7 +96,6 @@
             suggestEnvVars: true,
             required: true,
             errors: settings.getErrors('claudeApiKey'),
-            inputAttributes: {type: 'password'},
         }) }}
 
         {{ forms.selectField({
