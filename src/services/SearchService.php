@@ -892,14 +892,22 @@ class SearchService extends Component
      */
     public function getStatusOptions(): array
     {
-        return [
+        $isReviewActive = Plugin::getInstance()->getIsPro()
+            && Plugin::getInstance()->getSettings()->requireReviewBeforeApply;
+
+        $options = [
             ['value' => AnalysisStatus::Completed->value, 'label' => AnalysisStatus::Completed->label()],
-            ['value' => AnalysisStatus::Approved->value, 'label' => AnalysisStatus::Approved->label()],
             ['value' => AnalysisStatus::Pending->value, 'label' => AnalysisStatus::Pending->label()],
             ['value' => AnalysisStatus::Processing->value, 'label' => AnalysisStatus::Processing->label()],
-            ['value' => AnalysisStatus::PendingReview->value, 'label' => AnalysisStatus::PendingReview->label()],
             ['value' => AnalysisStatus::Failed->value, 'label' => AnalysisStatus::Failed->label()],
         ];
+
+        if ($isReviewActive) {
+            $options[] = ['value' => AnalysisStatus::Approved->value, 'label' => AnalysisStatus::Approved->label()];
+            $options[] = ['value' => AnalysisStatus::PendingReview->value, 'label' => AnalysisStatus::PendingReview->label()];
+        }
+
+        return $options;
     }
 
     /**
@@ -909,9 +917,15 @@ class SearchService extends Component
      */
     public function getQuickFilters(): array
     {
+        $isReviewActive = Plugin::getInstance()->getIsPro()
+            && Plugin::getInstance()->getSettings()->requireReviewBeforeApply;
+
         $filters = [];
 
         foreach (QuickFilter::cases() as $case) {
+            if ($case === QuickFilter::NeedsReview && !$isReviewActive) {
+                continue;
+            }
             $filters[$case->value] = [
                 'key' => $case->value,
                 'label' => Craft::t('lens', $case->label()),

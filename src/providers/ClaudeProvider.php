@@ -53,6 +53,11 @@ class ClaudeProvider extends BaseAiProvider
         return $response['content'][0]['text'] ?? '';
     }
 
+    protected function isResponseTruncated(array $response): bool
+    {
+        return ($response['stop_reason'] ?? null) === 'max_tokens';
+    }
+
     protected function extractTokenUsage(array $response): array
     {
         $usage = $response['usage'] ?? [];

@@ -55,6 +55,11 @@ class OpenAiProvider extends BaseAiProvider
         return $response['choices'][0]['message']['content'] ?? '';
     }
 
+    protected function isResponseTruncated(array $response): bool
+    {
+        return ($response['choices'][0]['finish_reason'] ?? null) === 'length';
+    }
+
     protected function extractTokenUsage(array $response): array
     {
         return Plugin::getInstance()->pricing->extractOpenAiUsage($response);
@@ -82,10 +87,11 @@ class OpenAiProvider extends BaseAiProvider
                     ],
                 ],
             ],
-            'max_completion_tokens' => $this->getMaxCompletionTokens($settings->openaiModel),
         ];
 
-        if ($this->supportsTemperature($settings->openaiModel)) {
+        if ($this->isReasoningModel($settings->openaiModel)) {
+            $payload['max_completion_tokens'] = self::REASONING_MAX_TOKENS;
+        } else {
             $payload['temperature'] = 0.1;
             $payload['reasoning_effort'] = 'none';
         }
@@ -137,21 +143,7 @@ class OpenAiProvider extends BaseAiProvider
         return in_array($model, ['gpt-5-mini', 'gpt-5-nano'], true);
     }
 
-    /**
-     * Temperature is only supported on non-reasoning models.
-     */
-    private function supportsTemperature(string $model): bool
-    {
-        return !$this->isReasoningModel($model);
-    }
-
     private const REASONING_MAX_TOKENS = 16000;
-    private const DEFAULT_MAX_TOKENS = 1000;
-
-    private function getMaxCompletionTokens(string $model): int
-    {
-        return $this->isReasoningModel($model) ? self::REASONING_MAX_TOKENS : self::DEFAULT_MAX_TOKENS;
-    }
 
     /**
      * OpenAI limit: ~20MB total payload

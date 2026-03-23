@@ -198,10 +198,13 @@ final class ResponseNormalizer
             return $data;
         }
 
+        $preview = mb_substr($content, 0, 500);
+
         Logger::error(
             LogCategory::NormalizationError,
             "Failed to parse {$provider} JSON response: " . json_last_error_msg(),
             $assetId,
+            context: ['rawContentPreview' => $preview],
         );
 
         throw AnalysisException::invalidResponse(

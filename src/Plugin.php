@@ -246,10 +246,12 @@ class Plugin extends BasePlugin
                 'label' => Craft::t('lens', 'Asset Browser'),
                 'url' => 'lens/search',
             ];
-            $item['subnav']['review'] = [
-                'label' => Craft::t('lens', 'Review Queue'),
-                'url' => 'lens/review',
-            ];
+            if ($this->getSettings()->requireReviewBeforeApply) {
+                $item['subnav']['review'] = [
+                    'label' => Craft::t('lens', 'Review Queue'),
+                    'url' => 'lens/review',
+                ];
+            }
             $item['subnav']['bulk'] = [
                 'label' => Craft::t('lens', 'Bulk Processing'),
                 'url' => 'lens/bulk',
@@ -273,7 +275,7 @@ class Plugin extends BasePlugin
             }
         }
 
-        if ($this->getIsPro() && $isConfigured) {
+        if ($this->getIsPro() && $isConfigured && $this->getSettings()->requireReviewBeforeApply) {
             $pendingCount = $this->review->getPendingReviewCount();
 
             if ($pendingCount > 0) {

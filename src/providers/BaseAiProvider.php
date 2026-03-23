@@ -43,6 +43,14 @@ abstract class BaseAiProvider implements AiProviderInterface
     abstract protected function extractContentText(array $response): string;
 
     /**
+     * Whether the response was truncated due to token limits.
+     */
+    protected function isResponseTruncated(array $response): bool
+    {
+        return false;
+    }
+
+    /**
      * Extract token usage from the provider's raw response.
      *
      * @return array{inputTokens: int, outputTokens: int}
@@ -212,6 +220,17 @@ abstract class BaseAiProvider implements AiProviderInterface
      */
     protected function parseResponse(array $response): AnalysisResult
     {
+        if ($this->isResponseTruncated($response)) {
+            Logger::error(
+                LogCategory::AssetProcessing,
+                'Response truncated by ' . $this->getName() . ' due to token limit',
+            );
+            throw AnalysisException::invalidResponse(
+                $this->getName(),
+                detail: 'Response was truncated due to token limits. The image may require too many tokens to analyze.'
+            );
+        }
+
         $content = ResponseNormalizer::stripMarkdownCodeBlocks($this->extractContentText($response));
 
         if ($content === '') {

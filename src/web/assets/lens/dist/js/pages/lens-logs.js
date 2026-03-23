@@ -36,7 +36,7 @@
                 var targetId = btn.dataset.lensDetailId;
                 if (!targetId) return;
 
-                var row = document.querySelector('[data-lens-detail-id="' + targetId + '"]');
+                var row = document.querySelector('tr[data-lens-detail-id="' + targetId + '"]');
                 if (row) {
                     var isHidden = row.hidden || window.getComputedStyle(row).display === 'none';
                     if (isHidden) {

@@ -73,7 +73,7 @@
                 </a>
             {% endif %}
             <div class="lens-result-overlay">
-                {% if analysis.status == lens.status.pendingReview %}
+                {% if analysis.status == lens.status.pendingReview and lens.isReviewActive %}
                     <a href="{{ cpUrl('lens/review/' ~ analysis.id) }}" class="lens-badge lens-badge--small lens-badge--info lens-badge--link" title="{{ 'Pending Review'|t('lens') }}">
                         {{ iconSvg('eye')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
                         {{ 'Review'|t('lens') }}

@@ -147,7 +147,7 @@
 
         {# Action buttons #}
         <div class="lens-complete-actions">
-            {% if stats.pendingReview > 0 %}
+            {% if stats.pendingReview > 0 and lens.isReviewActive %}
                 <a href="{{ cpUrl('lens/review') }}" class="btn submit">
                     {{ 'Review Assets'|t('lens') }}
                 </a>
@@ -160,7 +160,7 @@
                     {% if selectedVolumeId is defined and selectedVolumeId %}
                         <input type="hidden" name="volumeId" value="{{ selectedVolumeId }}">
                     {% endif %}
-                    <button type="submit" class="btn{{ stats.pendingReview == 0 ? ' submit' : '' }}" data-lens-action="bulk-submit">
+                    <button type="submit" class="btn{{ (not lens.isReviewActive or stats.pendingReview == 0) ? ' submit' : '' }}" data-lens-action="bulk-submit">
                         {{ 'Process Remaining'|t('lens') }}
                     </button>
                 </form>
@@ -170,13 +170,13 @@
                 <form method="post" class="lens-bulk-inline-form">
                     {{ csrfInput() }}
                     {{ actionInput('lens/bulk/retry-failed') }}
-                    <button type="submit" class="btn{{ stats.pendingReview == 0 and not hasUnprocessed ? ' submit' : '' }}" data-lens-action="bulk-submit">
+                    <button type="submit" class="btn{{ (not lens.isReviewActive or stats.pendingReview == 0) and not hasUnprocessed ? ' submit' : '' }}" data-lens-action="bulk-submit">
                         {{ 'Retry {count} Failed'|t('lens', {count: stats.failed|number_format}) }}
                     </button>
                 </form>
             {% endif %}
 
-            {% if stats.pendingReview == 0 and not hasUnprocessed and not hasFailed %}
+            {% if (not lens.isReviewActive or stats.pendingReview == 0) and not hasUnprocessed and not hasFailed %}
                 <a href="{{ cpUrl('lens') }}" class="btn submit">
                     {{ 'Back to Dashboard'|t('lens') }}
                 </a>

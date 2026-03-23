@@ -92,7 +92,13 @@
     align-items: center;
     width: 100%;
     gap: 8px;
-    margin-bottom: 25px;
+    margin-bottom: 20px;
+}
+
+@media (min-width: 768px) {
+    .lens-section-header {
+        margin-bottom: 30px;
+    }
 }
 
 .lens-section-header__title {

@@ -8,12 +8,12 @@
     max-width: 900px;
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 20px;
 }
 
 @media (min-width: 768px) {
     .lens-dashboard-page {
-        gap: 25px;
+        gap: 30px;
     }
 }
 

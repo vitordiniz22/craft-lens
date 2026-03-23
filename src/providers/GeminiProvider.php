@@ -50,6 +50,11 @@ class GeminiProvider extends BaseAiProvider
         return $response['candidates'][0]['content']['parts'][0]['text'] ?? '';
     }
 
+    protected function isResponseTruncated(array $response): bool
+    {
+        return ($response['candidates'][0]['finishReason'] ?? null) === 'MAX_TOKENS';
+    }
+
     protected function extractTokenUsage(array $response): array
     {
         $usage = $response['usageMetadata'] ?? [];

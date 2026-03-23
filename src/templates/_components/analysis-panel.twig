@@ -11,14 +11,17 @@
 {% set hasSafetyFlags = analysis and (analysis.containsPeople or analysis.isFlaggedNsfw or (analysis.nsfwScore is defined and analysis.nsfwScore >= 0.2) or analysis.hasWatermark or (analysis.containsBrandLogo and analysis.detectedBrands|length)) %}
 
 {# Editing is locked when static (Craft preview) or when asset is pending review #}
-{% set readOnly = (static ?? false) or (analysis and analysis.status == lens.status.pendingReview and lens.isPro) %}
+{% set readOnly = (static ?? false) or (analysis and analysis.status == lens.status.pendingReview and lens.isReviewActive) %}
 
 {# Processing state detection #}
 {% set isProcessing = analysis and analysis.status == lens.status.processing %}
 
 {# Unified field state: readonly (no editing), unlocked (edit pencil + save/cancel), editing (review page) #}
 {% set fieldState = (readOnly or isProcessing) ? 'readonly' : 'unlocked' %}
-{% set hideConfidence = analysis is not null and analysis.status in [lens.status.completed, lens.status.approved] %}
+{% set hideConfidence = analysis is not null and (
+    analysis.status in [lens.status.completed, lens.status.approved]
+    or (not lens.isReviewActive and analysis.status == lens.status.pendingReview)
+) %}
 {% set hasExistingData = analysis and (
     analysis.suggestedTitle or
     analysis.altText or
@@ -28,7 +31,11 @@
 ) %}
 {% set isReprocessing = isProcessing and hasExistingData %}
 
-<div class="lens-analysis-panel" data-lens-target="analysis-panel" data-lens-asset-id="{{ asset.id }}" data-lens-analysis-status="{{ analysis ? analysis.status : 'not_found' }}">
+{% set displayStatus = analysis ? analysis.status : 'not_found' %}
+{% if not lens.isReviewActive and displayStatus in [lens.status.pendingReview, lens.status.approved, lens.status.rejected] %}
+    {% set displayStatus = lens.status.completed %}
+{% endif %}
+<div class="lens-analysis-panel" data-lens-target="analysis-panel" data-lens-asset-id="{{ asset.id }}" data-lens-analysis-status="{{ displayStatus }}">
 
     {# Templates for dynamically inserted elements — cloned by JS #}
     {% if fieldState is defined and fieldState == 'unlocked' %}
@@ -74,12 +81,27 @@
                     </div>
                 {% endblock %}
             {% endembed %}
+        {% elseif analysis.status != lens.status.failed and errorMessage %}
+            {% embed 'lens/_components/inline-notice' with {
+                type: 'warning',
+                title: 'Re-analysis Failed'|t('lens'),
+                message: errorMessage ~ ' ' ~ ('Your previous analysis data is still available below.'|t('lens')),
+            } %}
+                {% block action %}
+                    <div class="lens-inline-notice__action">
+                        <button type="button" class="btn small" data-lens-action="analyze" data-lens-asset-id="{{ asset.id }}" data-lens-loading-text="{{ 'Processing'|t('lens') }}">
+                            <div class="spinner small"></div>
+                            <span class="label" data-lens-target="button-label">{{ 'Try Again'|t('lens') }}</span>
+                        </button>
+                    </div>
+                {% endblock %}
+            {% endembed %}
         {% endif %}
     {% endif %}
 
     {% if analysis %}
         {# Pending review notice #}
-        {% if analysis.status == lens.status.pendingReview and not (static ?? false) and lens.isPro %}
+        {% if analysis.status == lens.status.pendingReview and not (static ?? false) and lens.isReviewActive %}
             {% include 'lens/_components/inline-notice' with {
                 type: 'warning',
                 title: 'Pending Review'|t('lens'),

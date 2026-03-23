@@ -10,6 +10,7 @@ use DateTime;
 use vitordiniz22\craftlens\enums\AiProvider;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\helpers\ImageMetricsAnalyzer;
+use vitordiniz22\craftlens\helpers\ImageQualityChecker;
 use vitordiniz22\craftlens\migrations\Install;
 use vitordiniz22\craftlens\Plugin;
 use vitordiniz22\craftlens\records\AssetAnalysisRecord;
@@ -315,13 +316,23 @@ class StatisticsService extends Component
      */
     public function getRecentActivity(int $limit = 10): array
     {
+        $plugin = Plugin::getInstance();
+        $isReviewActive = $plugin->getIsPro() && $plugin->getSettings()->requireReviewBeforeApply;
+
         $statusTypeMap = [
             AnalysisStatus::Completed->value => 'analyzed',
-            AnalysisStatus::Approved->value => 'approved',
-            AnalysisStatus::Rejected->value => 'rejected',
             AnalysisStatus::Failed->value => 'failed',
-            AnalysisStatus::PendingReview->value => 'pending_review',
         ];
+
+        if ($isReviewActive) {
+            $statusTypeMap[AnalysisStatus::PendingReview->value] = 'pending_review';
+            $statusTypeMap[AnalysisStatus::Approved->value] = 'approved';
+            $statusTypeMap[AnalysisStatus::Rejected->value] = 'rejected';
+        } else {
+            $statusTypeMap[AnalysisStatus::PendingReview->value] = 'analyzed';
+            $statusTypeMap[AnalysisStatus::Approved->value] = 'analyzed';
+            $statusTypeMap[AnalysisStatus::Rejected->value] = 'analyzed';
+        }
 
         $records = AssetAnalysisRecord::find()
             ->where(['in', 'status', array_keys($statusTypeMap)])
@@ -352,7 +363,9 @@ class StatisticsService extends Component
 
             $activities[] = [
                 'type' => $statusTypeMap[$record->status] ?? 'analyzed',
-                'statusLabel' => AnalysisStatus::from($record->status)->label(),
+                'statusLabel' => ($statusTypeMap[$record->status] ?? 'analyzed') === 'analyzed'
+                    ? AnalysisStatus::Completed->label()
+                    : AnalysisStatus::from($record->status)->label(),
                 'assetId' => $record->assetId,
                 'assetTitle' => $asset?->title ?? Craft::t('lens', 'Deleted asset'),
                 'assetUrl' => $asset?->getCpEditUrl(),
@@ -535,10 +548,12 @@ class StatisticsService extends Component
         $nsfwCount = $this->getNsfwFlaggedCount();
         $watermarkedCount = $this->getWatermarkedCount();
         $duplicateCount = $plugin->duplicateDetection->getUnresolvedDuplicateCount();
+        $fileTooLargeCount = $this->getFileTooLargeCount();
+        $qualityIssues = $this->getQualityIssueCounts();
 
         $items = [];
 
-        if ($overview['pendingReview'] > 0 && $isPro) {
+        if ($overview['pendingReview'] > 0 && $isPro && $plugin->getSettings()->requireReviewBeforeApply) {
             $items[] = [
                 'type' => 'pending_review',
                 'label' => Craft::t('lens', 'Pending Review'),
@@ -599,8 +614,18 @@ class StatisticsService extends Component
             ];
         }
 
-        // Quality issues
-        $qualityIssues = $this->getQualityIssueCounts();
+        if ($fileTooLargeCount > 0) {
+            $items[] = [
+                'type' => 'file_too_large',
+                'label' => Craft::t('lens', 'Too Large'),
+                'count' => $fileTooLargeCount,
+                'url' => $isPro
+                    ? 'lens/search?webReadinessIssues[]=fileTooLarge'
+                    : 'assets?lensFilter=web-readiness-issues',
+                'color' => 'amber',
+                'icon' => 'file',
+            ];
+        }
 
         if ($qualityIssues['blurry'] > 0) {
             $items[] = [
@@ -749,6 +774,29 @@ class StatisticsService extends Component
             'tooBright' => (int) ($result['tooBright'] ?? 0),
             'lowContrast' => (int) ($result['lowContrast'] ?? 0),
         ];
+    }
+
+    /**
+     * Count analyzed image assets with file size >= warning threshold (1MB).
+     */
+    public function getFileTooLargeCount(): int
+    {
+        $volumeIds = $this->getEnabledVolumeIds();
+
+        $query = (new Query())
+            ->from(Install::TABLE_ASSET_ANALYSES . ' lens')
+            ->innerJoin('{{%assets}} assets', '[[assets.id]] = [[lens.assetId]]')
+            ->where(['in', 'lens.status', AnalysisStatus::processedValues()])
+            ->andWhere(['>=', 'assets.size', ImageQualityChecker::FILE_SIZE_WARNING]);
+
+        if ($volumeIds !== null) {
+            if (empty($volumeIds)) {
+                return 0;
+            }
+            $query->andWhere(['in', 'assets.volumeId', $volumeIds]);
+        }
+
+        return (int) $query->count();
     }
 
     /**

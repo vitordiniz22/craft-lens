@@ -119,4 +119,10 @@ class LensTwigGlobal
     {
         return Plugin::getInstance()->getIsLite();
     }
+
+    public function getIsReviewActive(): bool
+    {
+        $plugin = Plugin::getInstance();
+        return $plugin->getIsPro() && $plugin->getSettings()->requireReviewBeforeApply;
+    }
 }

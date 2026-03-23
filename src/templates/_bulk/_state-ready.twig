@@ -32,7 +32,7 @@
         <div class="lens-progress">
             <div class="lens-progress__fill" style="width: {{ analyzedPercent }}%"></div>
         </div>
-        {% if stats.pendingReview == 0 and stats.unprocessed == 0 and stats.failed == 0 %}
+        {% if (not lens.isReviewActive or stats.pendingReview == 0) and stats.unprocessed == 0 and stats.failed == 0 %}
             <div class="lens-coverage-bar__legend">
                 <span class="lens-badge lens-badge--small lens-badge--success">
                     {{ 'All analyzed'|t('lens') }}
@@ -56,7 +56,7 @@
             description: doneDescription,
         } only %}
 
-        {% if stats.pendingReview > 0 %}
+        {% if stats.pendingReview > 0 and lens.isReviewActive %}
             <div class="lens-complete-actions">
                 <a href="{{ _reviewUrl }}" class="btn submit">{{ 'Review Assets'|t('lens') }}</a>
             </div>
@@ -124,7 +124,7 @@
                     </button>
                 </form>
             {% endif %}
-            {% if stats.pendingReview > 0 %}
+            {% if stats.pendingReview > 0 and lens.isReviewActive %}
                 <a href="{{ _reviewUrl }}" class="btn">{{ 'Review Assets'|t('lens') }}</a>
             {% endif %}
         </div>

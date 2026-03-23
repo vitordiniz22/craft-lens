@@ -219,7 +219,7 @@ class FilterParser
     {
         $arrayFilters = [
             'qualityIssues' => ['blurry', 'tooDark', 'tooBright', 'lowContrast', 'lowOverall'],
-            'webReadinessIssues' => ['fileTooLarge', 'resolutionTooSmall', 'unsupportedFormat'],
+            'webReadinessIssues' => ['fileTooLarge', 'resolutionTooSmall', 'resolutionOversized', 'unsupportedFormat'],
         ];
 
         foreach ($arrayFilters as $key => $allowedValues) {

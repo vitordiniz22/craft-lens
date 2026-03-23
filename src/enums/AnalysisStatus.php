@@ -23,7 +23,7 @@ enum AnalysisStatus: string
         return match ($this) {
             self::Pending => Craft::t('lens', 'Pending'),
             self::Processing => Craft::t('lens', 'Processing'),
-            self::Completed => Craft::t('lens', 'Completed'),
+            self::Completed => Craft::t('lens', 'Analyzed'),
             self::Failed => Craft::t('lens', 'Failed'),
             self::PendingReview => Craft::t('lens', 'Pending Review'),
             self::Approved => Craft::t('lens', 'Approved'),

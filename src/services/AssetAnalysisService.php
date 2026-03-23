@@ -78,6 +78,8 @@ class AssetAnalysisService extends Component
     public function processAsset(Asset $asset): AssetAnalysisRecord
     {
         $record = $this->getOrCreateRecord($asset);
+        $previousStatus = $record->status;
+        $hadExistingData = in_array($previousStatus, AnalysisStatus::processedValues(), true);
         $record->status = AnalysisStatus::Processing->value;
         $record->save();
 
@@ -99,11 +101,7 @@ class AssetAnalysisService extends Component
 
             throw $e;
         } catch (AnalysisException $e) {
-            $record->status = AnalysisStatus::Failed->value;
-            $record->processedAt = DateTimeHelper::now();
-            $record->save();
-
-            $this->getContentStorage()->saveErrorMessage($record, $e->getUserMessage());
+            $this->handleAnalysisFailure($record, $previousStatus, $hadExistingData, $e->getUserMessage());
 
             Logger::error(
                 LogCategory::AssetProcessing,
@@ -116,12 +114,8 @@ class AssetAnalysisService extends Component
                 ]
             );
         } catch (\Throwable $e) {
-            $record->status = AnalysisStatus::Failed->value;
-            $record->processedAt = DateTimeHelper::now();
-            $record->save();
-
             $userMessage = "Analysis failed due to an unexpected error. Please try again later or contact support.";
-            $this->getContentStorage()->saveErrorMessage($record, $userMessage);
+            $this->handleAnalysisFailure($record, $previousStatus, $hadExistingData, $userMessage);
 
             Logger::error(
                 LogCategory::AssetProcessing,
@@ -137,6 +131,26 @@ class AssetAnalysisService extends Component
     /**
      * Get analysis record for an asset.
      */
+    /**
+     * Handle analysis failure, preserving previous status when existing data is available.
+     */
+    private function handleAnalysisFailure(
+        AssetAnalysisRecord $record,
+        ?string $previousStatus,
+        bool $hadExistingData,
+        string $errorMessage,
+    ): void {
+        if ($hadExistingData) {
+            $record->status = $previousStatus;
+        } else {
+            $record->status = AnalysisStatus::Failed->value;
+        }
+        $record->processedAt = DateTimeHelper::now();
+        $record->save();
+
+        $this->getContentStorage()->saveErrorMessage($record, $errorMessage);
+    }
+
     public function getAnalysis(int $assetId): ?AssetAnalysisRecord
     {
         return AssetAnalysisRecord::findOne(['assetId' => $assetId]);
