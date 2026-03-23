@@ -27,7 +27,7 @@
    ============================================================ #}
 {% if fieldState == 'readonly' %}
 
-<div class="lens-alt-proxy">
+<div class="lens-accent-bar">
     <div class="lens-field-header" data-lens-target="field-header">
         <span class="lens-field-label">{{ 'Alt Text'|t('lens') }}</span>
         {% if confidence and not (hideConfidence ?? false) %}
@@ -35,18 +35,20 @@
         {% endif %}
     </div>
 
-    <div class="lens-field-display">
-        {% if nativeValue %}
-            <p>{{ nativeValue }}</p>
-        {% else %}
-            <p class="light">{{ 'Empty'|t('lens') }}</p>
-        {% endif %}
-    </div>
-
-    {% if hasSuggestion and not valuesMatch %}
-        <div class="lens-native-suggestion">
-            <span class="lens-native-suggestion-label">{{ 'AI Suggestion'|t('lens') }}:</span>
-            <p>{{ suggestionValue }}</p>
+    {% if hasSuggestion %}
+        <div class="lens-ai-suggestion-inline">
+            {% include 'lens/_components/analysis/_tooltip-ai' only %}
+            <span>{{ suggestionValue }}</span>
+            {% if valuesMatch %}
+                <span class="lens-applied-indicator">
+                    <span class="status on"></span>
+                    <span class="smalltext">{{ 'Applied'|t('lens') }}</span>
+                </span>
+            {% endif %}
+        </div>
+    {% else %}
+        <div class="lens-field-display">
+            <p class="light">{{ 'No suggestion available'|t('lens') }}</p>
         </div>
     {% endif %}
 </div>
@@ -60,7 +62,7 @@
 
 {% set isReview = fieldState == 'editing' %}
 
-<div class="lens-alt-proxy"
+<div class="lens-accent-bar"
      {% if isReview %}
      data-lens-target="bridge-field"
      {% else %}
@@ -108,14 +110,40 @@
             {% endif %}
         </div>
     {% else %}
-        {# Display mode — current asset alt #}
-        <div class="lens-field-display" data-lens-target="alt-proxy-display">
-            {% if nativeValue %}
-                <p>{{ nativeValue }}</p>
-            {% else %}
-                <p class="light">{{ 'Empty'|t('lens') }}</p>
-            {% endif %}
-        </div>
+        {% if not valuesMatch %}
+            <div class="lens-field-display" data-lens-target="alt-proxy-current">
+                {% if nativeValue %}
+                    <p>{{ nativeValue }}</p>
+                {% else %}
+                    <p class="light">{{ 'Empty'|t('lens') }}</p>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        {% if hasSuggestion %}
+            <div class="lens-ai-suggestion-inline" data-lens-target="alt-proxy-suggestion-row">
+                {% include 'lens/_components/analysis/_tooltip-ai' only %}
+                <span data-lens-target="alt-proxy-suggestion-text">{{ suggestionValue }}</span>
+                {% if valuesMatch %}
+                    <span class="lens-applied-indicator" data-lens-target="alt-proxy-applied">
+                        <span class="status on"></span>
+                        <span class="smalltext">{{ 'Applied'|t('lens') }}</span>
+                    </span>
+                {% else %}
+                    <button type="button" class="lens-revert-trigger"
+                            data-lens-target="alt-proxy-apply-link"
+                            data-lens-action="apply-alt"
+                            data-lens-asset-id="{{ assetId }}"
+                            data-lens-analysis-id="{{ analysisId }}">
+                        {{ 'Apply to Asset'|t('lens') }}
+                    </button>
+                {% endif %}
+            </div>
+        {% else %}
+            <div class="lens-field-display">
+                <p class="light">{{ 'No suggestion available'|t('lens') }}</p>
+            </div>
+        {% endif %}
 
         {# Edit mode (hidden by default) #}
         <div class="lens-field-edit" data-lens-target="alt-proxy-edit-area" hidden>
@@ -125,29 +153,6 @@
                 <button type="button" class="btn small" data-lens-action="alt-proxy-cancel">{{ 'Cancel'|t('lens') }}</button>
             </div>
         </div>
-
-        {# AI suggestion + Apply Suggestion button #}
-        {% if hasSuggestion and not valuesMatch %}
-            <div class="lens-native-suggestion" data-lens-target="alt-proxy-suggestion">
-                <span class="lens-native-suggestion-label">{{ 'AI Suggestion'|t('lens') }}:</span>
-                <p>{{ suggestionValue }}</p>
-            </div>
-            <div class="lens-apply-row" data-lens-target="alt-proxy-apply-row">
-                <button type="button" class="btn small submit"
-                        data-lens-action="apply-alt"
-                        data-lens-asset-id="{{ assetId }}"
-                        data-lens-analysis-id="{{ analysisId }}">
-                    {{ 'Apply Suggestion'|t('lens') }}
-                </button>
-            </div>
-        {% elseif valuesMatch %}
-            <div class="lens-apply-row" data-lens-target="alt-proxy-apply-row">
-                <div class="lens-applied-indicator">
-                    <span class="status on"></span>
-                    <span class="smalltext">{{ 'Matches suggestion'|t('lens') }}</span>
-                </div>
-            </div>
-        {% endif %}
     {% endif %}
 
     {# AI suggestion inline — shows original AI value when suggestion has been edited #}

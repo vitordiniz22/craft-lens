@@ -221,30 +221,21 @@
             var proxy = btn.closest('[data-lens-target="alt-proxy-field"]');
             if (!proxy) return;
 
-            // Update display value
-            var display = proxy.querySelector('[data-lens-target="alt-proxy-display"]');
-            if (display) {
-                display.innerHTML = '<p>' + window.Lens.utils.escapeHtml(appliedValue) + '</p>';
-            }
-
             // Update textarea value
             var input = proxy.querySelector('[data-lens-target="alt-proxy-input"]');
             if (input) {
                 input.value = appliedValue;
             }
 
-            // Replace apply row with applied indicator
-            var applyRow = proxy.querySelector('[data-lens-target="alt-proxy-apply-row"]');
-            if (applyRow) {
-                applyRow.innerHTML = '';
-                var applied = this._cloneAppliedIndicator(Craft.t('lens', 'Matches suggestion'));
-                if (applied) applyRow.appendChild(applied);
-            }
+            // Hide current value display (values now match)
+            var currentDisplay = proxy.querySelector('[data-lens-target="alt-proxy-current"]');
+            if (currentDisplay) window.Lens.core.DOM.hide(currentDisplay);
 
-            // Hide suggestion section
-            var suggestion = proxy.querySelector('[data-lens-target="alt-proxy-suggestion"]');
-            if (suggestion) {
-                window.Lens.core.DOM.hide(suggestion);
+            // Swap the apply link for an Applied indicator (same as native-field-bridge)
+            var applyLink = proxy.querySelector('[data-lens-target="alt-proxy-apply-link"]');
+            if (applyLink) {
+                var applied = this._cloneAppliedIndicator();
+                if (applied) applyLink.replaceWith(applied);
             }
         },
 
@@ -254,16 +245,26 @@
 
         _handleAltProxyEdit: function (e, btn) {
             var proxy = btn.closest('[data-lens-target="alt-proxy-field"]');
-            if (proxy) {
-                window.Lens.core.DOM.enterEditMode(proxy, 'alt-proxy-display', 'alt-proxy-edit-area');
-            }
+            if (!proxy) return;
+
+            var currentDisplay = proxy.querySelector('[data-lens-target="alt-proxy-current"]');
+            var suggestionRow = proxy.querySelector('[data-lens-target="alt-proxy-suggestion-row"]');
+            var editArea = proxy.querySelector('[data-lens-target="alt-proxy-edit-area"]');
+            if (currentDisplay) window.Lens.core.DOM.hide(currentDisplay);
+            if (suggestionRow) window.Lens.core.DOM.hide(suggestionRow);
+            if (editArea) window.Lens.core.DOM.show(editArea);
         },
 
         _handleAltProxyCancel: function (e, btn) {
             var proxy = btn.closest('[data-lens-target="alt-proxy-field"]');
-            if (proxy) {
-                window.Lens.core.DOM.exitEditMode(proxy, 'alt-proxy-display', 'alt-proxy-edit-area');
-            }
+            if (!proxy) return;
+
+            var currentDisplay = proxy.querySelector('[data-lens-target="alt-proxy-current"]');
+            var suggestionRow = proxy.querySelector('[data-lens-target="alt-proxy-suggestion-row"]');
+            var editArea = proxy.querySelector('[data-lens-target="alt-proxy-edit-area"]');
+            if (editArea) window.Lens.core.DOM.hide(editArea);
+            if (currentDisplay) window.Lens.core.DOM.show(currentDisplay);
+            if (suggestionRow) window.Lens.core.DOM.show(suggestionRow);
         },
 
         _handleAltProxySave: function (e, btn) {
@@ -291,20 +292,59 @@
                                 Craft.t('lens', 'Alt text updated.'),
                             );
 
-                            // Update display
-                            var display = proxy.querySelector('[data-lens-target="alt-proxy-display"]');
-                            if (display) {
-                                if (value) {
-                                    display.innerHTML = '<p>' + window.Lens.utils.escapeHtml(value) + '</p>';
-                                } else {
-                                    display.innerHTML = '<p class="light">' + Craft.t('lens', 'Empty') + '</p>';
-                                }
-                                window.Lens.core.DOM.show(display);
-                            }
-
                             // Hide edit area
                             var editArea = proxy.querySelector('[data-lens-target="alt-proxy-edit-area"]');
                             if (editArea) window.Lens.core.DOM.hide(editArea);
+
+                            // Update current value display
+                            var currentDisplay = proxy.querySelector('[data-lens-target="alt-proxy-current"]');
+                            var suggestionRow = proxy.querySelector('[data-lens-target="alt-proxy-suggestion-row"]');
+                            var suggestionText = suggestionRow ? suggestionRow.querySelector('[data-lens-target="alt-proxy-suggestion-text"]') : null;
+                            var suggestionValue = suggestionText ? suggestionText.textContent.trim() : '';
+
+                            // Find the trailing action element (Applied indicator or Apply link)
+                            var appliedIndicator = suggestionRow ? suggestionRow.querySelector('.lens-applied-indicator') : null;
+                            var applyLink = proxy.querySelector('[data-lens-target="alt-proxy-apply-link"]');
+
+                            if (value === suggestionValue) {
+                                // Values now match — hide current display, show Applied
+                                if (currentDisplay) window.Lens.core.DOM.hide(currentDisplay);
+                                if (applyLink) {
+                                    var applied = this._cloneAppliedIndicator();
+                                    if (applied) applyLink.replaceWith(applied);
+                                }
+                            } else {
+                                // Values differ — show/update current display
+                                if (!currentDisplay) {
+                                    currentDisplay = document.createElement('div');
+                                    currentDisplay.className = 'lens-field-display';
+                                    currentDisplay.dataset.lensTarget = 'alt-proxy-current';
+                                    if (suggestionRow) {
+                                        suggestionRow.parentNode.insertBefore(currentDisplay, suggestionRow);
+                                    }
+                                }
+                                if (value) {
+                                    currentDisplay.innerHTML = '<p>' + window.Lens.utils.escapeHtml(value) + '</p>';
+                                } else {
+                                    currentDisplay.innerHTML = '<p class="light">' + Craft.t('lens', 'Empty') + '</p>';
+                                }
+                                window.Lens.core.DOM.show(currentDisplay);
+
+                                // Swap Applied indicator back to Apply to Asset button
+                                if (appliedIndicator && suggestionRow) {
+                                    var applyBtn = document.createElement('button');
+                                    applyBtn.type = 'button';
+                                    applyBtn.className = 'lens-revert-trigger';
+                                    applyBtn.dataset.lensTarget = 'alt-proxy-apply-link';
+                                    applyBtn.dataset.lensAction = 'apply-alt';
+                                    applyBtn.dataset.lensAssetId = proxy.dataset.lensAssetId;
+                                    applyBtn.dataset.lensAnalysisId = proxy.dataset.lensAnalysisId;
+                                    applyBtn.textContent = Craft.t('lens', 'Apply to Asset');
+                                    appliedIndicator.replaceWith(applyBtn);
+                                }
+                            }
+
+                            if (suggestionRow) window.Lens.core.DOM.show(suggestionRow);
 
                             // Sync Craft's native alt input (if AltField happens to be in layout elsewhere)
                             this._syncNativeField('alt', value);

@@ -401,27 +401,11 @@
 }
 
 /* ==========================================================================
-   Alt Proxy Field (editable alt when AltField not in layout)
+   Accent Bar Spacing — Adjacent editable fields need top margin.
    ========================================================================== */
 
-.lens-alt-proxy {
-    position: relative;
-    width: 100%;
-    padding: 12px 14px;
-    border-left: 3px solid var(--link-color);
-    border-radius: 0 var(--small-border-radius) var(--small-border-radius) 0;
-    background: var(--gray-050);
-}
-
-.lens-alt-proxy + .lens-editable-field {
+.lens-accent-bar + .lens-editable-field {
     margin-top: 16px;
-}
-
-.lens-alt-proxy .lens-field-display p {
-    margin: 0;
-    font-size: 14px;
-    color: var(--text-color);
-    line-height: 1.5;
 }
 
 /* ==========================================================================
