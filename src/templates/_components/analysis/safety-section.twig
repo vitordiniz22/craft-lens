@@ -46,8 +46,8 @@
     falseValue: 0,
     confidence: analysis.watermarkConfidence ?? null,
     hideConfidence: hideConfidence ?? false,
-    details: (analysis.watermarkType) ? [
-        ({ 'stock': 'Stock Photo'|t('lens'), 'logo': 'Logo'|t('lens'), 'text': 'Text'|t('lens'), 'copyright': 'Copyright'|t('lens'), 'unknown': 'Unknown'|t('lens') }[analysis.watermarkType] ?? analysis.watermarkType|capitalize)
+    details: (analysis.watermarkType and analysis.watermarkType != 'unknown') ? [
+        ({ 'stock': 'Stock Photo'|t('lens'), 'logo': 'Logo'|t('lens'), 'text': 'Text'|t('lens'), 'copyright': 'Copyright'|t('lens') }[analysis.watermarkType] ?? analysis.watermarkType|capitalize)
         ~ ((analysis.watermarkType == 'stock' and analysis.watermarkDetails.stockProvider is defined) ? ' · ' ~ analysis.watermarkDetails.stockProvider : '')
     ] : []
 } only %}
