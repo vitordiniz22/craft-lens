@@ -35,9 +35,6 @@ class Settings extends Model
     // Semantic Search
     public bool $enableSemanticSearch = false;
 
-    // Logging
-    public int $logRetentionDays = 30;
-
     // Batch Processing
     public const BATCH_SIZE = 20;
 

@@ -56,7 +56,6 @@ class SettingsController extends Controller
             'requireReviewBeforeApply',
             'enabledVolumes',
             'enableSemanticSearch',
-            'logRetentionDays',
         ];
 
         $settings->setAttributes(array_intersect_key((array) $settingsData, array_flip($allowedKeys)));
