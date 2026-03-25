@@ -62,7 +62,12 @@ class OpenAiProvider extends BaseAiProvider
 
     protected function extractTokenUsage(array $response): array
     {
-        return Plugin::getInstance()->pricing->extractOpenAiUsage($response);
+        $usage = $response['usage'] ?? [];
+
+        return [
+            'inputTokens' => (int) ($usage['prompt_tokens'] ?? 0),
+            'outputTokens' => (int) ($usage['completion_tokens'] ?? 0),
+        ];
     }
 
     /**
@@ -112,7 +117,7 @@ class OpenAiProvider extends BaseAiProvider
                 throw AnalysisException::invalidResponse($this->getName(), $assetId);
             }
 
-            $usage = Plugin::getInstance()->pricing->extractOpenAiUsage($body);
+            $usage = $this->extractTokenUsage($body);
 
             $logPayload = $payload;
             $dataUrl = $logPayload['messages'][0]['content'][1]['image_url']['url'] ?? '';

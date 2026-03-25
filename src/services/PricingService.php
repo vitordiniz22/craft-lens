@@ -114,18 +114,4 @@ class PricingService extends Component
         };
     }
 
-    /**
-     * Extract token usage from OpenAI response.
-     *
-     * @return array{inputTokens: int, outputTokens: int}
-     */
-    public function extractOpenAiUsage(array $response): array
-    {
-        $usage = $response['usage'] ?? [];
-
-        return [
-            'inputTokens' => (int)($usage['prompt_tokens'] ?? 0),
-            'outputTokens' => (int)($usage['completion_tokens'] ?? 0),
-        ];
-    }
 }

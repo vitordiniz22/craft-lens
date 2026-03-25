@@ -81,16 +81,22 @@ class AssetAnalysisService extends Component
         $previousStatus = $record->status;
         $hadExistingData = in_array($previousStatus, AnalysisStatus::processedValues(), true);
         $record->status = AnalysisStatus::Processing->value;
-        $record->save();
+
+        if (!$record->save()) {
+            throw new \RuntimeException(
+                "Failed to save analysis record for asset {$asset->id}: " . implode(', ', $record->getErrorSummary(true))
+            );
+        }
 
         try {
             $this->processImageAsset($asset, $record);
         } catch (ConfigurationException $e) {
             $record->status = AnalysisStatus::Failed->value;
             $record->processedAt = DateTimeHelper::now();
-            $record->save();
 
-            $this->getContentStorage()->saveErrorMessage($record, $e->getMessage());
+            if ($record->save()) {
+                $this->getContentStorage()->saveErrorMessage($record, $e->getMessage());
+            }
 
             Logger::error(
                 LogCategory::Configuration,
@@ -146,7 +152,13 @@ class AssetAnalysisService extends Component
             $record->status = AnalysisStatus::Failed->value;
         }
         $record->processedAt = DateTimeHelper::now();
-        $record->save();
+
+        if (!$record->save()) {
+            Logger::error(LogCategory::AssetProcessing, 'Failed to save analysis failure status', assetId: $record->assetId, context: [
+                'errors' => $record->getErrorSummary(true),
+            ]);
+            return;
+        }
 
         $this->getContentStorage()->saveErrorMessage($record, $errorMessage);
     }
@@ -412,7 +424,12 @@ class AssetAnalysisService extends Component
 
             $record->processedAt = DateTimeHelper::now();
             $record->fileContentHash = $fileContentHash;
-            $record->save();
+
+            if (!$record->save()) {
+                throw new \RuntimeException(
+                    "Failed to save analysis results for asset {$record->assetId}: " . implode(', ', $record->getErrorSummary(true))
+                );
+            }
 
             $contentStorage->saveAnalysisContent($record);
 
