@@ -49,27 +49,27 @@ class AnalysisException extends Exception
     {
         if ($statusCode !== null) {
             return match ($statusCode) {
-                401 => "Your {$provider} API key appears to be invalid or expired. Please check your API key in the plugin settings.",
-                403 => "Access denied by {$provider}. Please verify your API key has the correct permissions.",
-                404 => "The AI model configured for {$provider} was not found. Please check your model settings.",
-                429 => "{$provider} rate limit exceeded. Please wait a moment and try again.",
-                413 => "The image is too large for {$provider} to process. Please resize or compress the image.",
-                500, 502, 503 => "{$provider} is temporarily unavailable. Please try again in a few minutes.",
-                default => "Analysis failed due to an error with {$provider}. Please try again or check the logs for more details.",
+                401 => "Invalid or expired {$provider} API key. Check your key in Settings.",
+                403 => "Access denied by {$provider}. Verify your API key permissions in Settings.",
+                404 => "The AI model configured for {$provider} was not found. Check your model in Settings.",
+                429 => "Too many requests to {$provider}. Wait a moment and try again.",
+                413 => "This image is too large for {$provider}. Resize or compress the image and try again.",
+                500, 502, 503 => "{$provider} is temporarily unavailable. Try again in a few minutes.",
+                default => "Unexpected error from {$provider} (HTTP {$statusCode}). Try again or check the logs.",
             };
         }
 
         $lowerMessage = strtolower($message);
 
         if (str_contains($lowerMessage, 'timed out') || str_contains($lowerMessage, 'timeout')) {
-            return "The request to {$provider} timed out. This usually means the service is slow or temporarily overloaded. Please try again in a few moments.";
+            return "The request to {$provider} timed out. The service may be overloaded. Try again in a few moments.";
         }
 
         if (str_contains($lowerMessage, 'connection failed') || str_contains($lowerMessage, 'could not resolve') || str_contains($lowerMessage, 'connection refused')) {
-            return "Could not connect to {$provider}. Please check your internet connection and try again.";
+            return "Could not connect to {$provider}. Check your internet connection and try again.";
         }
 
-        return "Analysis failed due to an error with {$provider}. Please try again or check the logs for more details.";
+        return "Unexpected error from {$provider}. Try again or check the logs.";
     }
 
     public static function invalidResponse(string $provider, ?int $assetId = null, ?string $detail = null): self
@@ -83,7 +83,7 @@ class AnalysisException extends Exception
             message: $message,
             provider: $provider,
             assetId: $assetId,
-            userMessage: "{$provider} returned an unexpected response that couldn't be processed. This is usually a temporary issue. Please try again.",
+            userMessage: "{$provider} returned an unreadable response. Try again. If this keeps happening, try a different model or provider.",
         );
     }
 

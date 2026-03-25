@@ -109,7 +109,7 @@ class GeminiProvider extends BaseAiProvider
             $this->checkApiError($body, $assetId);
 
             if (!isset($body['candidates'][0]['content']['parts'][0]['text'])) {
-                throw AnalysisException::invalidResponse($this->getName(), $assetId);
+                throw AnalysisException::invalidResponse($this->getDisplayName(), $assetId);
             }
 
             $usage = $body['usageMetadata'] ?? [];

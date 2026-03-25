@@ -226,7 +226,7 @@ abstract class BaseAiProvider implements AiProviderInterface
                 'Response truncated by ' . $this->getName() . ' due to token limit',
             );
             throw AnalysisException::invalidResponse(
-                $this->getName(),
+                $this->getDisplayName(),
                 detail: 'Response was truncated due to token limits. The image may require too many tokens to analyze.'
             );
         }
@@ -234,7 +234,7 @@ abstract class BaseAiProvider implements AiProviderInterface
         $content = ResponseNormalizer::stripMarkdownCodeBlocks($this->extractContentText($response));
 
         if ($content === '') {
-            throw AnalysisException::invalidResponse($this->getName());
+            throw AnalysisException::invalidResponse($this->getDisplayName());
         }
 
         $data = ResponseNormalizer::safeJsonDecode($content, $this->getName());
@@ -465,7 +465,7 @@ abstract class BaseAiProvider implements AiProviderInterface
                     level: LogLevel::Error->value,
                 );
                 throw AnalysisException::apiError(
-                    $this->getName(),
+                    $this->getDisplayName(),
                     'Connection failed: ' . $sanitizedMessage,
                     $assetId
                 );
@@ -498,7 +498,7 @@ abstract class BaseAiProvider implements AiProviderInterface
                     level: LogLevel::Error->value,
                 );
                 throw AnalysisException::apiError(
-                    $this->getName(),
+                    $this->getDisplayName(),
                     $errorMessage,
                     $assetId,
                     $statusCode
@@ -515,7 +515,7 @@ abstract class BaseAiProvider implements AiProviderInterface
                     level: LogLevel::Error->value,
                 );
                 throw AnalysisException::apiError(
-                    $this->getName(),
+                    $this->getDisplayName(),
                     $sanitizedMessage,
                     $assetId
                 );
@@ -526,7 +526,7 @@ abstract class BaseAiProvider implements AiProviderInterface
         $errorMessage = $lastException !== null
             ? $this->sanitizeErrorMessage($lastException->getMessage())
             : 'Request failed after retries';
-        throw AnalysisException::apiError($this->getName(), $errorMessage, $assetId);
+        throw AnalysisException::apiError($this->getDisplayName(), $errorMessage, $assetId);
     }
 
     /**
@@ -614,7 +614,7 @@ abstract class BaseAiProvider implements AiProviderInterface
 
         if (json_last_error() !== JSON_ERROR_NONE) {
             throw AnalysisException::invalidResponse(
-                $this->getName(),
+                $this->getDisplayName(),
                 $assetId,
                 'JSON parsing failed: ' . json_last_error_msg()
             );
@@ -632,7 +632,7 @@ abstract class BaseAiProvider implements AiProviderInterface
     {
         if (isset($body['error'])) {
             throw AnalysisException::apiError(
-                $this->getName(),
+                $this->getDisplayName(),
                 $body['error']['message'] ?? 'Unknown API error',
                 $assetId
             );

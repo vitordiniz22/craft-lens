@@ -111,7 +111,7 @@ class ClaudeProvider extends BaseAiProvider
             $this->checkApiError($body, $assetId);
 
             if (!isset($body['content'][0]['text'])) {
-                throw AnalysisException::invalidResponse($this->getName(), $assetId);
+                throw AnalysisException::invalidResponse($this->getDisplayName(), $assetId);
             }
 
             $usage = $body['usage'] ?? [];

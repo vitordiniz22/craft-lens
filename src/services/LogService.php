@@ -282,6 +282,10 @@ class LogService extends Component
         return true;
     }
 
+    /**
+     * Forward warning/error logs to Craft's file logger (storage/logs/).
+     * INFO is kept in the dev log table only to avoid noisy log files.
+     */
     private function forwardToCraftLogger(
         string $level,
         string $message,
@@ -290,6 +294,10 @@ class LogService extends Component
         ?string $stackTrace = null,
         ?array $context = null,
     ): void {
+        if ($level === LogLevel::Info->value) {
+            return;
+        }
+
         $parts = [];
         if ($category !== null) {
             $parts[] = "[{$category}]";
@@ -308,10 +316,9 @@ class LogService extends Component
         $formatted = implode(' ', $parts);
 
         match ($level) {
-            LogLevel::Info->value => Craft::info($formatted, 'lens'),
             LogLevel::Warning->value => Craft::warning($formatted, 'lens'),
             LogLevel::Error->value, LogLevel::Critical->value => Craft::error($formatted, 'lens'),
-            default => Craft::info($formatted, 'lens'),
+            default => Craft::warning($formatted, 'lens'),
         };
     }
 }

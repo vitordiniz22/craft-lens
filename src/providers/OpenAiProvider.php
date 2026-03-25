@@ -114,7 +114,7 @@ class OpenAiProvider extends BaseAiProvider
             $body = $this->parseJsonBody($response->getBody()->getContents(), $assetId);
 
             if (!isset($body['choices'][0]['message']['content'])) {
-                throw AnalysisException::invalidResponse($this->getName(), $assetId);
+                throw AnalysisException::invalidResponse($this->getDisplayName(), $assetId);
             }
 
             $usage = $this->extractTokenUsage($body);
