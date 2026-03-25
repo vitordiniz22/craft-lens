@@ -1,53 +1,55 @@
 {# Section 6: Recent Activity #}
 {% if recentActivity|length %}
-<div class="lens-dashboard-section lens-activity pane">
+<div class="lens-dashboard-section pane">
     <div class="lens-section-header">
         <h2 class="lens-section-header__title">{{ 'Recent Activity'|t('lens') }}</h2>
     </div>
 
-    <table class="lens-activity__table">
-        <tbody>
-            {% for activity in recentActivity %}
-                <tr class="lens-activity__row">
-                    <td class="lens-activity__cell lens-activity__cell--thumb">
-                        {% if activity.thumbnailUrl %}
-                            <img src="{{ activity.thumbnailUrl }}"
-                                 alt=""
-                                 class="lens-activity__thumb-img"
-                                 loading="lazy">
-                        {% else %}
-                            <div class="lens-activity__thumb-placeholder" data-icon="image"></div>
-                        {% endif %}
-                    </td>
+    <div class="lens-data-table-wrap">
+        <table class="lens-data-table">
+            <tbody>
+                {% for activity in recentActivity %}
+                    <tr>
+                        <td class="--thumb">
+                            {% if activity.thumbnailUrl %}
+                                <img src="{{ activity.thumbnailUrl }}"
+                                     alt=""
+                                     class="lens-activity__thumb-img"
+                                     loading="lazy">
+                            {% else %}
+                                <div class="lens-activity__thumb-placeholder" data-icon="image"></div>
+                            {% endif %}
+                        </td>
 
-                    <td class="lens-activity__cell lens-activity__cell--name">
-                        {% if activity.assetUrl %}
-                            <a href="{{ activity.assetUrl }}" class="lens-activity__link">
-                                {{ activity.assetTitle }}
-                            </a>
-                        {% else %}
-                            <span class="lens-activity__filename">
-                                {{ activity.assetTitle }}
+                        <td>
+                            {% if activity.assetUrl %}
+                                <a href="{{ activity.assetUrl }}" class="lens-activity__link">
+                                    {{ activity.assetTitle }}
+                                </a>
+                            {% else %}
+                                <span class="lens-activity__filename">
+                                    {{ activity.assetTitle }}
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <td class="--right --nowrap">
+                            <span class="lens-activity__badge lens-activity__badge--{{ activity.type }}">
+                                <span class="lens-activity__badge-dot"></span>
+                                {{ activity.statusLabel }}
                             </span>
-                        {% endif %}
-                    </td>
+                        </td>
 
-                    <td class="lens-activity__cell lens-activity__cell--status">
-                        <span class="lens-activity__badge lens-activity__badge--{{ activity.type }}">
-                            <span class="lens-activity__badge-dot"></span>
-                            {{ activity.statusLabel }}
-                        </span>
-                    </td>
-
-                    <td class="lens-activity__cell lens-activity__cell--time">
-                        <time datetime="{{ activity.timestamp }}"
-                              title="{{ activity.timestamp|date('M j, Y g:i A') }}">
-                            {{ activity.timeAgo }}
-                        </time>
-                    </td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                        <td class="--right --light --nowrap">
+                            <time datetime="{{ activity.timestamp }}"
+                                  title="{{ activity.timestamp|date('M j, Y g:i A') }}">
+                                {{ activity.timeAgo }}
+                            </time>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endif %}

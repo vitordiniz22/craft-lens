@@ -1,7 +1,7 @@
 {# Section 7: Usage & Costs — Efficiency Dashboard #}
 {% set hasUsageData = allTimeUsage.totalAssets > 0 %}
 {% if hasUsageData %}
-<div class="lens-dashboard-section lens-usage pane">
+<div class="lens-dashboard-section pane">
     <div class="lens-section-header">
         <h2 class="lens-section-header__title">{{ 'Usage & Costs'|t('lens') }}</h2>
     </div>
@@ -9,101 +9,134 @@
     {% set avgCost = allTimeUsage.totalAssets > 0
         ? allTimeUsage.totalCost / allTimeUsage.totalAssets : 0 %}
 
-    {# ── Zone 1: Horizontal stat strip ── #}
-    <div class="lens-stat-strip lens-stat-strip--lg">
-        <div class="lens-stat-strip__cell">
-            <div class="lens-stat-strip__icon">{{ iconSvg('coins')|attr({width: 18, height: 18, fill: 'currentColor'}) }}</div>
-            <div class="lens-stat-strip__value">${{ allTimeUsage.totalCost|number_format(2) }}</div>
-            <div class="lens-stat-strip__label">{{ 'Total Spent'|t('lens') }}</div>
-        </div>
-        <div class="lens-stat-strip__cell">
-            <div class="lens-stat-strip__icon">{{ iconSvg('images')|attr({width: 18, height: 18, fill: 'currentColor'}) }}</div>
-            <div class="lens-stat-strip__value">{{ allTimeUsage.totalAssets|number_format }} / {{ processingStats.totalImages|number_format }}</div>
-            <div class="lens-stat-strip__label">{{ 'Processed'|t('lens') }}</div>
-        </div>
-        <div class="lens-stat-strip__cell">
-            <div class="lens-stat-strip__icon">{{ iconSvg('gauge')|attr({width: 18, height: 18, fill: 'currentColor'}) }}</div>
-            <div class="lens-stat-strip__value">${{ avgCost|number_format(avgCost < 0.01 ? 4 : 2) }}</div>
-            <div class="lens-stat-strip__label">{{ 'Avg. Per Asset'|t('lens') }}</div>
-        </div>
-        <div class="lens-stat-strip__cell">
-            <div class="lens-stat-strip__icon">{{ iconSvg('bolt')|attr({width: 18, height: 18, fill: 'currentColor'}) }}</div>
-            <div class="lens-stat-strip__value">
-                {% if tokenUsage.totalTokens >= 1000000 %}
-                    {{ (tokenUsage.totalTokens / 1000000)|number_format(1) }}M
-                {% elseif tokenUsage.totalTokens >= 1000 %}
-                    {{ (tokenUsage.totalTokens / 1000)|number_format(1) }}k
-                {% else %}
-                    {{ tokenUsage.totalTokens|number_format }}
-                {% endif %}
-            </div>
-            <div class="lens-stat-strip__label">{{ 'Tokens Used'|t('lens') }}</div>
-        </div>
-    </div>
+    <div class="lens-dashboard-section__body">
 
-    {# ── Zone 2: Provider breakdown (only when multiple providers used) ── #}
-    {% if providerBreakdown|length > 1 %}
-        {% set maxProviderCost = providerBreakdown|first.cost %}
-        <div class="lens-usage__providers">
-            <h3 class="lens-field-label">{{ 'Provider Breakdown'|t('lens') }}</h3>
-            {% for item in providerBreakdown %}
-            {% set perAssetCost = item.assets > 0 ? item.cost / item.assets : 0 %}
-            <div class="lens-usage__provider-row">
-                <span class="lens-usage__provider-label">{{ item.label }}</span>
-                <div class="lens-progress">
-                    <div class="lens-progress__fill"
-                         style="width: {{ maxProviderCost > 0 ? (item.cost / maxProviderCost * 100)|round : 0 }}%">
-                    </div>
-                </div>
-                <span class="lens-usage__provider-value">
-                    ${{ item.cost|number_format(2) }} · {{ item.assets|number_format }} {{ 'assets'|t('lens') }}
-                    {% if perAssetCost > 0 %}
-                        · ${{ perAssetCost|number_format(perAssetCost < 0.01 ? 4 : 2) }}/{{ 'img'|t('lens') }}
+        {# ── Zone 1: Horizontal stat strip ── #}
+        <div class="lens-stat-strip lens-stat-strip--lg">
+            <div class="lens-stat-strip__cell">
+                <div class="lens-stat-strip__icon">{{ iconSvg('coins')|attr({width: 18, height: 18, fill: 'currentColor'}) }}</div>
+                <div class="lens-stat-strip__value">${{ allTimeUsage.totalCost|number_format(2) }}</div>
+                <div class="lens-stat-strip__label">{{ 'Total Spent'|t('lens') }}</div>
+            </div>
+            <div class="lens-stat-strip__cell">
+                <div class="lens-stat-strip__icon">{{ iconSvg('images')|attr({width: 18, height: 18, fill: 'currentColor'}) }}</div>
+                <div class="lens-stat-strip__value">{{ allTimeUsage.totalAssets|number_format }} / {{ processingStats.totalImages|number_format }}</div>
+                <div class="lens-stat-strip__label">{{ 'Processed'|t('lens') }}</div>
+            </div>
+            <div class="lens-stat-strip__cell">
+                <div class="lens-stat-strip__icon">{{ iconSvg('gauge')|attr({width: 18, height: 18, fill: 'currentColor'}) }}</div>
+                <div class="lens-stat-strip__value">${{ avgCost|number_format(avgCost < 0.01 ? 4 : 2) }}</div>
+                <div class="lens-stat-strip__label">{{ 'Avg. Per Asset'|t('lens') }}</div>
+            </div>
+            <div class="lens-stat-strip__cell">
+                <div class="lens-stat-strip__icon">{{ iconSvg('bolt')|attr({width: 18, height: 18, fill: 'currentColor'}) }}</div>
+                <div class="lens-stat-strip__value">
+                    {% if tokenUsage.totalTokens >= 1000000 %}
+                        {{ (tokenUsage.totalTokens / 1000000)|number_format(1) }}M
+                    {% elseif tokenUsage.totalTokens >= 1000 %}
+                        {{ (tokenUsage.totalTokens / 1000)|number_format(1) }}k
+                    {% else %}
+                        {{ tokenUsage.totalTokens|number_format }}
                     {% endif %}
-                </span>
+                </div>
+                <div class="lens-stat-strip__label">{{ 'Tokens Used'|t('lens') }}</div>
             </div>
-            {% endfor %}
         </div>
-    {% endif %}
 
-    {# ── Zone 3: Monthly trend ── #}
-    {% if monthlyHistory|length %}
-    <div class="lens-usage__trend">
-        <h3 class="lens-field-label">{{ 'Monthly Trend'|t('lens') }}</h3>
-        {% set maxSpend = 0 %}
-        {% for month in monthlyHistory %}
-            {% if month.totalCost > maxSpend %}{% set maxSpend = month.totalCost %}{% endif %}
-        {% endfor %}
-
-        {% for month in monthlyHistory|reverse %}
-        <div class="lens-usage__trend-row">
-            <span class="lens-usage__trend-label">{{ month.label }}</span>
-            <div class="lens-progress">
-                <div class="lens-progress__fill{% if not loop.first %} lens-usage__trend-bar--secondary{% endif %}"
-                     style="width: {{ maxSpend > 0 ? (month.totalCost / maxSpend * 100)|round : 0 }}%">
+        {# ── Zone 2: Provider breakdown (only when multiple providers used) ── #}
+        {% if providerBreakdown|length > 1 %}
+            {% set maxProviderCost = providerBreakdown|first.cost %}
+            {% set showProviderBar = providerBreakdown|length > 2 %}
+            <div>
+                <h3 class="lens-field-label">{{ 'Provider Breakdown'|t('lens') }}</h3>
+                <div class="lens-data-table-wrap">
+                    <table class="lens-data-table">
+                        <thead>
+                            <tr>
+                                <th>{{ 'Model'|t('lens') }}</th>
+                                {% if showProviderBar %}<th></th>{% endif %}
+                                <th class="--right">{{ 'Assets'|t('lens') }}</th>
+                                <th class="--right">{{ 'Total'|t('lens') }}</th>
+                                <th class="--right">{{ 'Per Asset'|t('lens') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in providerBreakdown %}
+                            {% set perAssetCost = item.assets > 0 ? item.cost / item.assets : 0 %}
+                            <tr>
+                                <td class="--nowrap">{{ item.model }}</td>
+                                {% if showProviderBar %}
+                                <td class="--bar">
+                                    <div class="lens-progress">
+                                        <div class="lens-progress__fill"
+                                            style="width: {{ maxProviderCost > 0 ? (item.cost / maxProviderCost * 100)|round : 0 }}%">
+                                        </div>
+                                    </div>
+                                </td>
+                                {% endif %}
+                                <td class="--numeric">{{ item.assets|number_format }}</td>
+                                <td class="--numeric">${{ item.cost|number_format(item.cost < 0.01 ? 4 : 2) }}</td>
+                                <td class="--numeric">
+                                    {% if perAssetCost > 0 %}
+                                        ${{ perAssetCost|number_format(perAssetCost < 0.01 ? 4 : 2) }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
-            <span class="lens-usage__trend-value">
-                ${{ month.totalCost|number_format(2) }}
-                <span class="lens-usage__trend-count">· {{ month.assetsProcessed }} {{ 'assets'|t('lens') }}</span>
-            </span>
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
+        {% endif %}
 
-    {# ── Zone 4: Cost projection ── #}
-    {% if costProjection.remainingAssets > 0 %}
-    <div class="lens-usage__projection">
-        <div class="lens-usage__projection-text">
-            <strong>{{ costProjection.remainingAssets|number_format }}</strong> {{ 'unprocessed'|t('lens') }} · {{ 'Est.'|t('lens') }} <strong>${{ costProjection.estimatedCost|number_format(2) }}</strong> {{ 'using'|t('lens') }} <strong>{{ currentModel }}</strong>
+        {# ── Zone 3: Monthly trend (only shown with 2+ months of data) ── #}
+        {% if monthlyHistory|length > 1 %}
+        <div>
+            <h3 class="lens-field-label">{{ 'Monthly Trend'|t('lens') }}</h3>
+            {% set maxSpend = 0 %}
+            {% for month in monthlyHistory %}
+                {% if month.totalCost > maxSpend %}{% set maxSpend = month.totalCost %}{% endif %}
+            {% endfor %}
+
+            <div class="lens-data-table-wrap">
+                <table class="lens-data-table">
+                    <tbody>
+                        {% for month in monthlyHistory|reverse %}
+                        <tr>
+                            <td>{{ month.label }}</td>
+                            <td class="--bar">
+                                <div class="lens-progress">
+                                    <div class="lens-progress__fill{% if not loop.first %} lens-progress__fill--secondary{% endif %}"
+                                        style="width: {{ maxSpend > 0 ? (month.totalCost / maxSpend * 100)|round : 0 }}%">
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="--numeric">${{ month.totalCost|number_format(2) }}</td>
+                            <td class="--numeric">{{ month.assetsProcessed }} {{ 'assets'|t('lens') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
-        <a href="{{ cpUrl('lens/bulk') }}" class="lens-link">{{ 'Process now'|t('lens') }} &rarr;</a>
+        {% endif %}
+
+        {# ── Zone 4: Cost projection ── #}
+        {% if costProjection.remainingAssets > 0 %}
+        <div class="lens-usage__projection">
+            <div class="lens-usage__projection-text">
+                <strong>{{ costProjection.remainingAssets|number_format }}</strong> {{ 'unprocessed'|t('lens') }} · {{ 'Est.'|t('lens') }} <strong>${{ costProjection.estimatedCost|number_format(2) }}</strong> {{ 'using'|t('lens') }} <strong>{{ currentModel }}</strong>
+            </div>
+            <a href="{{ cpUrl('lens/bulk') }}" class="lens-link">{{ 'Process now'|t('lens') }} &rarr;</a>
+        </div>
+        {% else %}
+        <div class="lens-usage__projection lens-usage__projection--complete">
+            <span data-icon="check"></span> {{ 'All assets processed'|t('lens') }}
+        </div>
+        {% endif %}
+
     </div>
-    {% else %}
-    <div class="lens-usage__projection lens-usage__projection--complete">
-        <span data-icon="check"></span> {{ 'All assets processed'|t('lens') }}
-    </div>
-    {% endif %}
 </div>
 {% endif %}

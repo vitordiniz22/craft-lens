@@ -1,0 +1,86 @@
+/* ==========================================================================
+   Generic Data Table
+   Lightweight table for dashboard-style data rows.
+   Use modifier classes for column-specific behavior.
+   ========================================================================== */
+
+.lens-data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+/* Header */
+.lens-data-table th {
+    font-weight: 600;
+    color: var(--medium-text-color);
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--hairline-color);
+    text-align: left;
+    white-space: nowrap;
+}
+
+/* Cells */
+.lens-data-table td {
+    padding: 6px 8px;
+    color: var(--text-color);
+    border-bottom: 1px solid var(--hairline-color);
+    vertical-align: middle;
+}
+
+.lens-data-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* ── Alignment modifiers ── */
+.lens-data-table .--right {
+    text-align: right;
+}
+
+/* ── Column type modifiers ── */
+.lens-data-table .--numeric {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.lens-data-table .--truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 0;
+}
+
+.lens-data-table .--muted {
+    color: var(--medium-text-color);
+}
+
+.lens-data-table .--light {
+    color: var(--light-text-color);
+    font-size: 12px;
+}
+
+.lens-data-table .--bar {
+    width: 200px;
+    min-width: 150px;
+    max-width: 200px;
+}
+
+.lens-data-table .--thumb {
+    width: 42px;
+    padding-left: 0;
+}
+
+.lens-data-table .--nowrap {
+    white-space: nowrap;
+}
+
+/* ── Scroll wrapper for narrow viewports ── */
+.lens-data-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.lens-data-table-wrap .lens-data-table {
+    min-width: 500px;
+}

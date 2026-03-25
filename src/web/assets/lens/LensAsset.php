@@ -25,6 +25,7 @@ class LensAsset extends AssetBundle
             'css/components/badge.css',
             'css/components/card.css',
             'css/components/confidence-badge.css',
+            'css/components/data-table.css',
             'css/components/empty-state.css',
             'css/components/inline-notice.css',
             'css/components/link.css',

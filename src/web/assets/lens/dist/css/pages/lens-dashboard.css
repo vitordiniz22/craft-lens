@@ -19,6 +19,23 @@
 
 .lens-dashboard-section {
     margin: 0;
+    padding: 10px;
+}
+
+.lens-dashboard-section__body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+@media (min-width: 768px) {
+    .lens-dashboard-section {
+        padding: 20px;
+    }
+
+    .lens-dashboard-section__body {
+        gap: 20px;
+    }
 }
 
 /* ==========================================================================
@@ -213,10 +230,6 @@
    Section 5: Quick Insights
    ========================================================================== */
 
-.lens-insights {
-    padding: 20px;
-}
-
 .lens-insights__grid {
     display: grid;
     grid-template-columns: 2fr 1fr;
@@ -240,54 +253,6 @@
 /* ==========================================================================
    Section 6: Recent Activity
    ========================================================================== */
-
-.lens-activity {
-    padding: 20px;
-    overflow: hidden;
-}
-
-.lens-activity__table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-    table-layout: fixed;
-}
-
-.lens-activity__row {
-    border-bottom: 1px solid var(--hairline-color);
-}
-
-.lens-activity__row:last-child {
-    border-bottom: none;
-}
-
-.lens-activity__cell {
-    padding: 8px 5px;
-    vertical-align: middle;
-}
-
-.lens-activity__cell--thumb {
-    width: 42px;
-    padding-left: 0;
-}
-
-.lens-activity__cell--name {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    max-width: 0;
-}
-
-.lens-activity__cell--status {
-    width: 120px;
-    text-align: right;
-}
-
-.lens-activity__cell--time {
-    width: 90px;
-    text-align: right;
-    padding-right: 0;
-}
 
 /* Thumbnail */
 .lens-activity__thumb-img,
@@ -378,88 +343,9 @@
     background: var(--warning-color);
 }
 
-/* Time ago */
-.lens-activity__time {
-    color: var(--light-text-color);
-    font-size: 12px;
-}
-
 /* ==========================================================================
    Section 7: Usage & Costs — Efficiency Dashboard
    ========================================================================== */
-
-.lens-usage {
-    padding: 20px;
-}
-
-/* Zone 1: Stat strip (uses shared .lens-stat-strip component) */
-.lens-usage .lens-stat-strip {
-    margin-bottom: 20px;
-}
-
-/* Zone 2: Provider breakdown */
-.lens-usage__providers {
-    margin-bottom: 20px;
-}
-
-.lens-usage__provider-row {
-    display: grid;
-    grid-template-columns: 140px 1fr auto;
-    align-items: center;
-    gap: 10px;
-    font-size: 13px;
-    margin-top: 8px;
-}
-
-.lens-usage__provider-label {
-    color: var(--medium-text-color);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.lens-usage__provider-value {
-    text-align: right;
-    font-weight: 600;
-    color: var(--text-color);
-    white-space: nowrap;
-}
-
-/* Zone 3: Monthly trend bars */
-.lens-usage__trend {
-    margin-bottom: 20px;
-}
-
-.lens-usage__trend-row {
-    display: grid;
-    grid-template-columns: 70px 1fr auto;
-    align-items: center;
-    gap: 10px;
-    font-size: 13px;
-    margin-top: 6px;
-}
-
-.lens-usage__trend-label {
-    color: var(--medium-text-color);
-    white-space: nowrap;
-}
-
-.lens-usage__trend-bar--secondary {
-    opacity: 0.5;
-}
-
-.lens-usage__trend-value {
-    text-align: right;
-    font-weight: 600;
-    color: var(--text-color);
-    white-space: nowrap;
-}
-
-.lens-usage__trend-count {
-    font-weight: 400;
-    color: var(--light-text-color);
-    font-size: 12px;
-}
 
 /* Zone 4: Cost projection */
 .lens-usage__projection {
@@ -534,17 +420,4 @@
     .lens-actions__grid .lens-actions__form .btn {
         width: 100%;
     }
-
-    .lens-usage__trend-row {
-        grid-template-columns: 80px 1fr auto;
-    }
-
-    .lens-usage__provider-row {
-        grid-template-columns: 120px 1fr auto;
-    }
-
-    .lens-activity__thumb {
-        display: none;
-    }
-
 }

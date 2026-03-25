@@ -34,6 +34,11 @@
   transition: width 0.3s ease;
 }
 
+/* Secondary variant (faded, for non-current items) */
+.lens-progress__fill--secondary {
+  opacity: 0.5;
+}
+
 /* Animated variant (gradient + shimmer) */
 .lens-progress--animated .lens-progress__fill {
   background: linear-gradient(
