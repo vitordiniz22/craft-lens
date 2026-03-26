@@ -10,8 +10,8 @@ use Imagick;
 use vitordiniz22\craftlens\enums\LogCategory;
 
 /**
- * Computes image quality metrics locally using Imagick — no AI required.
- * Measures sharpness, brightness, contrast, JPEG compression, and color profile.
+ * Computes image quality metrics locally using Imagick -- no AI required.
+ * Measures sharpness, brightness, contrast, compression quality, and color profile.
  */
 class ImageMetricsAnalyzer
 {
@@ -27,16 +27,23 @@ class ImageMetricsAnalyzer
     public const CONTRAST_FLAT = 0.1;
     public const CONTRAST_LOW = 0.15;
 
-    // JPEG quality thresholds (0-100)
-    public const JPEG_HEAVY_ARTIFACTS = 30;
-    public const JPEG_COMPRESSED = 60;
+    // Compression quality thresholds (0-100)
+    public const COMPRESSION_HEAVY_ARTIFACTS = 30;
+    public const COMPRESSION_MODERATE = 60;
 
-    // Sigmoid parameters for sharpness normalization
-    private const SHARPNESS_SIGMOID_RATE = 0.01;
-    private const SHARPNESS_SIGMOID_MIDPOINT = 200;
-
-    // Multiplier to scale normalized variance into a useful range for sigmoid input
-    private const VARIANCE_SCALE_FACTOR = 10000;
+    // Sharpness: multi-sigma blur decay parameters
+    private const SHARPNESS_DECAY_SIGMOID_RATE = 20.0;
+    private const SHARPNESS_DECAY_SIGMOID_MIDPOINT = 0.71;
+    private const SHARPNESS_MIN_DIMENSION = 100;
+    private const SHARPNESS_ANALYSIS_MAX_SIZE = 500;
+    // Below this stdDev, image is near-featureless and decay curve is unreliable
+    private const SHARPNESS_MIN_DETAIL_STDDEV = 0.015;
+    // Sobel gradient stdDev below this = noise, not real edges
+    private const SHARPNESS_NOISE_SOBEL_THRESHOLD = 0.03;
+    // Patch analysis blend zone: patches contribute 0% below low, 30% above high
+    private const SHARPNESS_PATCH_BLEND_LOW = 200;
+    private const SHARPNESS_PATCH_BLEND_HIGH = 400;
+    private const SHARPNESS_PATCH_MAX_WEIGHT = 0.3;
 
     // Overall quality threshold — below this is considered "low quality"
     public const LOW_QUALITY_THRESHOLD = 0.3;
@@ -60,7 +67,7 @@ class ImageMetricsAnalyzer
      * Run full Imagick analysis on an asset file.
      * Returns raw scores for DB storage and display-ready checks.
      *
-     * @return array{raw: array{sharpnessScore: float, exposureScore: float, contrastScore: float, jpegQuality: int|null, colorProfile: string|null}, checks: array}|null
+     * @return array{raw: array{sharpnessScore: ?float, exposureScore: float, contrastScore: float, compressionQuality: int|null, colorProfile: string|null}, checks: array}|null
      */
     public static function analyze(Asset $asset): ?array
     {
@@ -69,6 +76,7 @@ class ImageMetricsAnalyzer
         }
 
         $tempPath = null;
+        $imagick = null;
 
         try {
             $tempPath = $asset->getCopyOfFile();
@@ -89,11 +97,9 @@ class ImageMetricsAnalyzer
                 'sharpnessScore' => self::measureSharpness($imagick),
                 'exposureScore' => self::measureBrightness($imagick),
                 'contrastScore' => self::measureContrast($imagick),
-                'jpegQuality' => self::measureJpegQuality($imagick, $asset),
+                'compressionQuality' => self::measureCompressionQuality($imagick, $asset, $tempPath),
                 'colorProfile' => self::detectColorProfile($imagick, $originalColorspace),
             ];
-
-            $imagick->clear();
 
             return [
                 'raw' => $raw,
@@ -108,6 +114,8 @@ class ImageMetricsAnalyzer
 
             return null;
         } finally {
+            $imagick?->clear();
+
             if ($tempPath !== null && file_exists($tempPath)) {
                 unlink($tempPath);
             }
@@ -124,14 +132,14 @@ class ImageMetricsAnalyzer
         ?float $sharpnessScore,
         ?float $exposureScore,
         ?float $contrastScore,
-        ?int $jpegQuality,
+        ?int $compressionQuality,
         ?string $colorProfile,
     ): array {
         $raw = [
             'sharpnessScore' => $sharpnessScore,
             'exposureScore' => $exposureScore,
             'contrastScore' => $contrastScore,
-            'jpegQuality' => $jpegQuality,
+            'compressionQuality' => $compressionQuality,
             'colorProfile' => $colorProfile,
         ];
 
@@ -147,7 +155,7 @@ class ImageMetricsAnalyzer
         ?float $sharpnessScore,
         ?float $exposureScore,
         ?float $contrastScore,
-        ?int $jpegQuality,
+        ?int $compressionQuality,
         ?string $colorProfile,
     ): ?float {
         $components = [];
@@ -157,7 +165,7 @@ class ImageMetricsAnalyzer
             $components[] = ['score' => $sharpnessScore, 'weight' => self::WEIGHT_SHARPNESS];
         }
 
-        // Brightness: sweet spot is 0.2–0.85, linear penalty outside
+        // Brightness: sweet spot is 0.2-0.85, linear penalty outside
         if ($exposureScore !== null) {
             if ($exposureScore >= self::BRIGHTNESS_DARK && $exposureScore <= self::BRIGHTNESS_BRIGHT) {
                 $brightnessQuality = 1.0;
@@ -175,9 +183,9 @@ class ImageMetricsAnalyzer
             $components[] = ['score' => $contrastQuality, 'weight' => self::WEIGHT_CONTRAST];
         }
 
-        // Compression: JPEG quality 0-100 mapped to 0-1 (non-JPEG = no penalty)
-        if ($jpegQuality !== null) {
-            $components[] = ['score' => $jpegQuality / 100, 'weight' => self::WEIGHT_COMPRESSION];
+        // Compression: quality 0-100 mapped to 0-1
+        if ($compressionQuality !== null) {
+            $components[] = ['score' => $compressionQuality / 100, 'weight' => self::WEIGHT_COMPRESSION];
         }
 
         // Color profile: sRGB is ideal, CMYK is worst for web
@@ -209,39 +217,200 @@ class ImageMetricsAnalyzer
     }
 
     /**
-     * Measure image sharpness using Laplacian variance.
-     * Higher variance = sharper image.
+     * Measure image sharpness using multi-sigma blur decay analysis.
+     *
+     * Applies Gaussian blur at 3 sigma levels and measures how much Laplacian variance drops.
+     * Sharp images have high variance loss at sigma 0.3 (fine detail destroyed); blurry images
+     * retain ~98% at sigma 0.3 (nothing fine to lose). Format-independent, single code path.
+     *
+     * Patch-based 3x3 grid analysis catches partially blurry images (sharp center, soft edges).
+     * Sobel gradient check penalizes noise that mimics sharpness in the Laplacian.
+     *
+     * Returns null for images with shortest side < 100px.
      */
-    private static function measureSharpness(Imagick $imagick): float
+    private static function measureSharpness(Imagick $imagick): ?float
     {
-        $clone = clone $imagick;
+        $width = $imagick->getImageWidth();
+        $height = $imagick->getImageHeight();
+        $minDim = \min($width, $height);
 
-        // Convert to grayscale for sharpness analysis
-        $clone->transformImageColorspace(Imagick::COLORSPACE_GRAY);
+        if ($minDim < self::SHARPNESS_MIN_DIMENSION) {
+            return null;
+        }
 
-        // Resize to a consistent size to normalize variance across resolutions
-        $clone->resizeImage(800, 800, Imagick::FILTER_LANCZOS, 1, true);
+        // Prepare grayscale clone at analysis resolution (capped at 500px)
+        $gray = clone $imagick;
+        $gray->transformImageColorspace(Imagick::COLORSPACE_GRAY);
+        if ($minDim > self::SHARPNESS_ANALYSIS_MAX_SIZE) {
+            $gray->resizeImage(
+                self::SHARPNESS_ANALYSIS_MAX_SIZE,
+                self::SHARPNESS_ANALYSIS_MAX_SIZE,
+                Imagick::FILTER_LANCZOS,
+                1,
+                true,
+            );
+        }
 
-        // Apply Laplacian kernel for edge detection (3x3 flat array)
-        $laplacian = [0, -1, 0, -1, 4, -1, 0, -1, 0];
-        $clone->convolveImage($laplacian);
+        $baseVariance = self::laplacianVarianceRaw($gray);
+        if ($baseVariance <= 0) {
+            $gray->clear();
+            return 0.0;
+        }
 
-        // Get standard deviation after edge detection
-        $channelStats = $clone->getImageChannelMean(Imagick::CHANNEL_GRAY);
-        $stdDev = $channelStats['standardDeviation'] ?? 0.0;
+        // Near-featureless images produce unreliable decay curves; short-circuit with low score
+        if (\sqrt($baseVariance) < self::SHARPNESS_MIN_DETAIL_STDDEV) {
+            $gray->clear();
+            return 0.05;
+        }
 
-        // Normalize std dev by quantum range
-        $quantumRange = $clone->getQuantumRange();
-        $maxQuantum = (float) ($quantumRange['quantumRangeLong'] ?? 65535);
-        $normalizedStdDev = $stdDev / $maxQuantum;
+        // Measure variance retention after progressive blur at 3 sigma levels
+        // Explicit radius = ceil(3 * sigma) for full Gaussian coverage
+        $sigmas = [0.3, 0.7, 1.5];
+        $retentions = [];
 
-        // Square to get variance-like metric
-        $variance = $normalizedStdDev * $normalizedStdDev * self::VARIANCE_SCALE_FACTOR;
+        foreach ($sigmas as $sigma) {
+            $blurred = clone $gray;
+            $blurred->gaussianBlurImage((int) \ceil($sigma * 3), $sigma);
+            $blurredVariance = self::laplacianVarianceInPlace($blurred);
+            $blurred->clear();
+            $retentions[] = $blurredVariance / $baseVariance;
+        }
 
+        // Decay score: sigma 0.7 is the primary discriminator, sigma 0.3 has minimal weight
+        $decayScore = 0.05 * (1.0 - $retentions[0])
+                    + 0.65 * (1.0 - $retentions[1])
+                    + 0.30 * (1.0 - $retentions[2]);
+
+        // Patch-based analysis using actual width/height for full image coverage
+        $actualWidth = $gray->getImageWidth();
+        $actualHeight = $gray->getImageHeight();
+        $patchMinSide = \min($actualWidth, $actualHeight);
+
+        // Blend zone: patches contribute 0% below BLEND_LOW, up to PATCH_MAX_WEIGHT above BLEND_HIGH
+        if ($patchMinSide >= self::SHARPNESS_PATCH_BLEND_LOW) {
+            $patchW = (int) ($actualWidth / 3);
+            $patchH = (int) ($actualHeight / 3);
+
+            // Only analyze if patches are large enough to be meaningful (min side >= 50px)
+            if ($patchW >= 50 && $patchH >= 50) {
+                // Pre-blur at full resolution, then crop patches from both original and blurred
+                $grayBlurred = clone $gray;
+                $grayBlurred->gaussianBlurImage((int) \ceil(0.5 * 3), 0.5);
+
+                $patchScores = [];
+
+                for ($row = 0; $row < 3; $row++) {
+                    for ($col = 0; $col < 3; $col++) {
+                        $x = $col * $patchW;
+                        $y = $row * $patchH;
+
+                        $patch = clone $gray;
+                        $patch->cropImage($patchW, $patchH, $x, $y);
+                        $patch->setImagePage($patchW, $patchH, 0, 0);
+                        $patchBase = self::laplacianVarianceInPlace($patch);
+                        $patch->clear();
+
+                        if ($patchBase > 0) {
+                            $patchBlur = clone $grayBlurred;
+                            $patchBlur->cropImage($patchW, $patchH, $x, $y);
+                            $patchBlur->setImagePage($patchW, $patchH, 0, 0);
+                            $blurredVar = self::laplacianVarianceInPlace($patchBlur);
+                            $patchBlur->clear();
+                            $patchScores[] = 1.0 - ($blurredVar / $patchBase);
+                        }
+                    }
+                }
+
+                $grayBlurred->clear();
+
+                if (\count($patchScores) >= 5) {
+                    sort($patchScores);
+                    // 25th percentile catches "sharp center, blurry edges"
+                    $patchDecay = $patchScores[(int) (\count($patchScores) * 0.25)];
+
+                    $patchWeight = self::SHARPNESS_PATCH_MAX_WEIGHT;
+                    if ($patchMinSide < self::SHARPNESS_PATCH_BLEND_HIGH) {
+                        $t = ($patchMinSide - self::SHARPNESS_PATCH_BLEND_LOW)
+                           / (self::SHARPNESS_PATCH_BLEND_HIGH - self::SHARPNESS_PATCH_BLEND_LOW);
+                        $patchWeight *= $t;
+                    }
+
+                    $decayScore = (1.0 - $patchWeight) * $decayScore + $patchWeight * $patchDecay;
+                }
+            }
+        }
+
+        // Sobel gradient check: high Laplacian decay + low Sobel stdDev = noise, not detail
+        $sobelScore = self::sobelMagnitude($gray);
+        $gray->clear();
+
+        if ($decayScore > 0.3 && $sobelScore < self::SHARPNESS_NOISE_SOBEL_THRESHOLD) {
+            $noisePenalty = 1.0 - ($sobelScore / self::SHARPNESS_NOISE_SOBEL_THRESHOLD);
+            $decayScore *= (1.0 - 0.4 * $noisePenalty);
+        }
+
+        return 1.0 / (1.0 + \exp(-self::SHARPNESS_DECAY_SIGMOID_RATE * ($decayScore - self::SHARPNESS_DECAY_SIGMOID_MIDPOINT)));
+    }
+
+    /**
+     * Compute Laplacian variance of a grayscale image (non-destructive).
+     * Clones internally so the source image is preserved for reuse.
+     * Returns squared normalized standard deviation of edge-detected pixels.
+     */
+    private static function laplacianVarianceRaw(Imagick $grayImage): float
+    {
+        $clone = clone $grayImage;
+        $variance = self::laplacianVarianceInPlace($clone);
         $clone->clear();
+        return $variance;
+    }
 
-        // Normalize to 0-1 using sigmoid
-        return 1.0 / (1.0 + \exp(-self::SHARPNESS_SIGMOID_RATE * ($variance - self::SHARPNESS_SIGMOID_MIDPOINT)));
+    /**
+     * Compute Laplacian variance by convolving the image in-place.
+     * The image pixel data is mutated (convolved) but NOT freed -- the caller
+     * is responsible for clearing the Imagick object when done with it.
+     */
+    private static function laplacianVarianceInPlace(Imagick $grayImage): float
+    {
+        $grayImage->convolveImage([0, -1, 0, -1, 4, -1, 0, -1, 0]);
+
+        $stats = $grayImage->getImageChannelMean(Imagick::CHANNEL_GRAY);
+        $stdDev = $stats['standardDeviation'] ?? 0.0;
+
+        $quantumRange = $grayImage->getQuantumRange();
+        $maxQuantum = (float) ($quantumRange['quantumRangeLong'] ?? 65535);
+
+        $normalized = $stdDev / $maxQuantum;
+        return $normalized * $normalized;
+    }
+
+    /**
+     * Compute Sobel gradient magnitude of a grayscale image.
+     * Uses stdDev (not mean) because Sobel is a derivative filter where positive/negative
+     * gradients cancel in the mean, making it near-zero regardless of image content.
+     * StdDev captures the spread of gradient values, which correlates with edge presence.
+     */
+    private static function sobelMagnitude(Imagick $grayImage): float
+    {
+        $cloneX = clone $grayImage;
+        $cloneY = clone $grayImage;
+
+        $cloneX->convolveImage([-1, 0, 1, -2, 0, 2, -1, 0, 1]);
+        $cloneY->convolveImage([-1, -2, -1, 0, 0, 0, 1, 2, 1]);
+
+        $statsX = $cloneX->getImageChannelMean(Imagick::CHANNEL_GRAY);
+        $statsY = $cloneY->getImageChannelMean(Imagick::CHANNEL_GRAY);
+
+        $quantumRange = $cloneX->getQuantumRange();
+        $maxQuantum = (float) ($quantumRange['quantumRangeLong'] ?? 65535);
+
+        $cloneX->clear();
+        $cloneY->clear();
+
+        $stdDevX = ($statsX['standardDeviation'] ?? 0.0) / $maxQuantum;
+        $stdDevY = ($statsY['standardDeviation'] ?? 0.0) / $maxQuantum;
+
+        return \sqrt($stdDevX * $stdDevX + $stdDevY * $stdDevY);
     }
 
     /**
@@ -286,24 +455,139 @@ class ImageMetricsAnalyzer
     }
 
     /**
-     * Get JPEG compression quality (0-100). NULL for non-JPEG.
+     * Measure compression quality (0-100) for any image format.
+     * JPEG/TIFF-JPEG: read embedded quality. Lossless formats: 100.
+     * AVIF/HEIC: try Imagick first, fall back to file-size ratio.
+     * WebP: detect lossy vs lossless from RIFF header.
      */
-    private static function measureJpegQuality(Imagick $imagick, Asset $asset): ?int
+    private static function measureCompressionQuality(Imagick $imagick, Asset $asset, string $tempPath): ?int
     {
         $ext = strtolower($asset->getExtension());
 
-        if (!\in_array($ext, ['jpg', 'jpeg'], true)) {
+        // JPEG: use Imagick's embedded quality
+        if (\in_array($ext, ['jpg', 'jpeg', 'jpe', 'jfif'], true)) {
+            $quality = $imagick->getImageCompressionQuality();
+            return $quality === 0 ? null : $quality;
+        }
+
+        // PNG/BMP: always lossless
+        if (\in_array($ext, ['png', 'bmp'], true)) {
+            return 100;
+        }
+
+        // TIFF: check for JPEG-in-TIFF compression
+        if (\in_array($ext, ['tiff', 'tif'], true)) {
+            if ($imagick->getImageCompression() === Imagick::COMPRESSION_JPEG) {
+                $quality = $imagick->getImageCompressionQuality();
+                return $quality === 0 ? null : $quality;
+            }
+            return 100;
+        }
+
+        // WebP: detect lossy vs lossless from file header
+        if ($ext === 'webp') {
+            return self::measureWebPQuality($tempPath, $imagick, $asset);
+        }
+
+        // AVIF, HEIC, HEIF: try Imagick quality first, fall back to file-size ratio
+        if (\in_array($ext, ['avif', 'heic', 'heif'], true)) {
+            $quality = $imagick->getImageCompressionQuality();
+            if ($quality > 0) {
+                return $quality;
+            }
+            return self::estimateQualityFromFileSize($asset, $imagick, $ext);
+        }
+
+        return null;
+    }
+
+    /**
+     * Determine WebP compression quality.
+     * Validates RIFF/WEBP magic bytes, then checks chunk type.
+     * VP8L = lossless (100). VP8X scans for lossless sub-chunk. VP8 = lossy (file-size estimate).
+     */
+    private static function measureWebPQuality(string $tempPath, Imagick $imagick, Asset $asset): ?int
+    {
+        $handle = fopen($tempPath, 'rb');
+        if ($handle === false) {
             return null;
         }
 
-        $quality = $imagick->getImageCompressionQuality();
+        $header = fread($handle, 20);
+        fclose($handle);
 
-        // Imagick returns 0 when quality can't be determined
-        if ($quality === 0) {
+        if ($header === false || \strlen($header) < 16) {
             return null;
         }
 
-        return $quality;
+        // Validate RIFF container and WEBP format
+        if (substr($header, 0, 4) !== 'RIFF' || substr($header, 8, 4) !== 'WEBP') {
+            return null;
+        }
+
+        $chunkType = substr($header, 12, 4);
+
+        if ($chunkType === 'VP8L') {
+            return 100;
+        }
+
+        // VP8X is the extended format that can contain either lossy or lossless bitstreams.
+        // Scan for a VP8L sub-chunk to determine if the actual content is lossless.
+        if ($chunkType === 'VP8X') {
+            $handle = fopen($tempPath, 'rb');
+            if ($handle !== false) {
+                $data = fread($handle, 4096);
+                fclose($handle);
+                if ($data !== false && str_contains($data, 'VP8L')) {
+                    return 100;
+                }
+            }
+        }
+
+        return self::estimateQualityFromFileSize($asset, $imagick, 'webp');
+    }
+
+    /**
+     * Estimate compression quality from file-size-to-raw-pixels ratio.
+     * Uses actual channel count (not hardcoded RGB) and format-specific efficiency
+     * multipliers to normalize across codecs with different compression ratios.
+     * Smooth log curve instead of piecewise linear segments.
+     */
+    private static function estimateQualityFromFileSize(Asset $asset, Imagick $imagick, string $extension = ''): ?int
+    {
+        $fileSize = (int) $asset->size;
+        if ($fileSize <= 0) {
+            return null;
+        }
+
+        $width = $imagick->getImageWidth();
+        $height = $imagick->getImageHeight();
+
+        // Determine actual channel count based on colorspace and alpha
+        $channels = match ($imagick->getImageColorspace()) {
+            Imagick::COLORSPACE_GRAY => 1,
+            Imagick::COLORSPACE_CMYK => 4,
+            default => $imagick->getImageAlphaChannel() ? 4 : 3,
+        };
+
+        $rawSize = $width * $height * $channels;
+        if ($rawSize <= 0) {
+            return null;
+        }
+
+        $ratio = $fileSize / $rawSize;
+
+        // Format-specific efficiency normalization: modern codecs achieve the same
+        // perceptual quality at lower ratios, so scale up to JPEG-equivalent
+        $ratio *= match ($extension) {
+            'avif' => 2.0,
+            'heic', 'heif' => 1.5,
+            'webp' => 1.3,
+            default => 1.0,
+        };
+
+        // Smooth log curve: maps ratio to 0-100 quality
+        return (int) \min(100, \round(25 * \log($ratio * 30 + 1)));
     }
 
     /**
@@ -441,17 +725,17 @@ class ImageMetricsAnalyzer
 
     private static function addCompressionCheck(array &$checks, array $raw): void
     {
-        if ($raw['jpegQuality'] === null) {
+        if ($raw['compressionQuality'] === null) {
             return;
         }
 
-        $quality = (int) $raw['jpegQuality'];
+        $quality = (int) $raw['compressionQuality'];
         $value = $quality . '%';
 
-        if ($quality < self::JPEG_HEAVY_ARTIFACTS) {
-            $checks['compression'] = self::checkResult('error', 'file-zipper', 'Compression', $value, 'Heavy artifacts', 'JPEG quality is very low with visible artifacts. Replace with a higher quality source.');
-        } elseif ($quality < self::JPEG_COMPRESSED) {
-            $checks['compression'] = self::checkResult('warning', 'file-zipper', 'Compression', $value, 'Compressed', 'Noticeable compression, consider using a higher quality source');
+        if ($quality < self::COMPRESSION_HEAVY_ARTIFACTS) {
+            $checks['compression'] = self::checkResult('error', 'file-zipper', 'Compression', $value, 'Heavy artifacts', 'Compression quality is very low with likely visible artifacts. Replace with a higher quality source.');
+        } elseif ($quality < self::COMPRESSION_MODERATE) {
+            $checks['compression'] = self::checkResult('warning', 'file-zipper', 'Compression', $value, 'Compressed', 'Noticeable compression. Consider using a higher quality source.');
         } else {
             $checks['compression'] = self::checkResult('pass', 'file-zipper', 'Compression', $value, 'Good', null);
         }

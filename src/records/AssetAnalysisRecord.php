@@ -73,7 +73,7 @@ use yii\db\ActiveQueryInterface;
  * @property float|null $exposureScore
  * @property float|null $noiseScore
  * @property float|null $overallQualityScore
- * @property int|null $jpegQuality
+ * @property int|null $compressionQuality
  * @property string|null $colorProfile
  *
  * Focal point detection (editable):

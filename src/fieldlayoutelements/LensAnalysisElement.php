@@ -137,7 +137,7 @@ class LensAnalysisElement extends BaseUiElement
                         $analysis->sharpnessScore !== null ? (float) $analysis->sharpnessScore : null,
                         $analysis->exposureScore !== null ? (float) $analysis->exposureScore : null,
                         $analysis->noiseScore !== null ? (float) $analysis->noiseScore : null,
-                        $analysis->jpegQuality !== null ? (int) $analysis->jpegQuality : null,
+                        $analysis->compressionQuality !== null ? (int) $analysis->compressionQuality : null,
                         $analysis->colorProfile,
                     ) : [],
                 ]

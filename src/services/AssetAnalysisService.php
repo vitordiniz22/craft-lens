@@ -410,14 +410,14 @@ class AssetAnalysisService extends Component
                 $record->sharpnessScore = $localMetrics['raw']['sharpnessScore'];
                 $record->exposureScore = $localMetrics['raw']['exposureScore'];
                 $record->noiseScore = $localMetrics['raw']['contrastScore'];
-                $record->jpegQuality = $localMetrics['raw']['jpegQuality'];
+                $record->compressionQuality = $localMetrics['raw']['compressionQuality'];
                 $record->colorProfile = $localMetrics['raw']['colorProfile'];
 
                 $record->overallQualityScore = ImageMetricsAnalyzer::computeOverallQuality(
                     $localMetrics['raw']['sharpnessScore'],
                     $localMetrics['raw']['exposureScore'],
                     $localMetrics['raw']['contrastScore'],
-                    $localMetrics['raw']['jpegQuality'],
+                    $localMetrics['raw']['compressionQuality'],
                     $localMetrics['raw']['colorProfile'],
                 );
             }

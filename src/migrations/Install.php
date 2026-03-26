@@ -101,7 +101,7 @@ class Install extends Migration
             'exposureScore' => $this->decimal(5, 4)->null(),
             'noiseScore' => $this->decimal(5, 4)->null(),
             'overallQualityScore' => $this->decimal(5, 4)->null(),
-            'jpegQuality' => $this->tinyInteger()->unsigned()->null(),
+            'compressionQuality' => $this->tinyInteger()->unsigned()->null(),
             'colorProfile' => $this->string(20)->null(),
             // Focal point detection (editable)
             'focalPointX' => $this->decimal(5, 4)->null(),
