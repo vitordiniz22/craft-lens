@@ -59,10 +59,15 @@
   align-self: start;
 }
 
+.lens-review-left .lens-ai-suggestion-inline {
+  margin-top: 0;
+}
+
 .lens-review-image-container {
   display: flex;
   align-items: center;
   justify-content: center;
+  background-color: var(--hairline-color);
 }
 
 .lens-review-image-inner {

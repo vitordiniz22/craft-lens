@@ -27,8 +27,8 @@
 {% set fieldState = fieldState ?? 'readonly' %}
 {% set isAltTranslatable = isAltTranslatable ?? true %}
 {% set isTitleTranslatable = isTitleTranslatable ?? true %}
-{% set currentSiteId = currentSiteId ?? primarySiteId %}
 {% set primarySiteId = primarySiteId ?? craft.app.sites.primarySite.id %}
+{% set currentSiteId = currentSiteId ?? primarySiteId %}
 
 {# Resolve IDs once — record uses .id, review array uses .analysisId #}
 {% set resolvedAnalysisId = fieldState == 'editing' ? analysis.analysisId : analysis.id %}
@@ -142,7 +142,7 @@
     } %}
 {% endif %}
 
-{% if lens.isPro %}
+{% if lens.isPro and not isSecondarySite %}
     {% include 'lens/_components/analysis/editable-field' with {
         fieldName: 'longDescription',
         label: 'Description'|t('lens'),

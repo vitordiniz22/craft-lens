@@ -6,7 +6,6 @@ namespace vitordiniz22\craftlens\services;
 
 use Craft;
 use craft\elements\Asset;
-use craft\helpers\DateTimeHelper;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\AssetTitleHelper;
@@ -235,23 +234,6 @@ class ReviewService extends Component
             ->count();
     }
 
-    /**
-     * Skip an analysis (keep pending for later).
-     *
-     * @throws InvalidArgumentException If analysis record not found
-     * @throws \RuntimeException If save fails
-     */
-    public function skip(int $analysisId): void
-    {
-        $record = AssetAnalysisRecord::findOne($analysisId);
-
-        if ($record === null) {
-            throw new InvalidArgumentException("Analysis record {$analysisId} not found");
-        }
-
-        $record->dateUpdated = DateTimeHelper::now();
-        $this->validateRecordSave($record, $analysisId);
-    }
 
     /**
      * Get IDs of all pending review records, ordered by dateCreated ASC.

@@ -573,7 +573,6 @@ class Plugin extends BasePlugin
                 $event->rules['lens/review/reject'] = 'lens/review/reject';
                 $event->rules['lens/review/bulk-approve'] = 'lens/review/bulk-approve';
                 $event->rules['lens/review/bulk-reject'] = 'lens/review/bulk-reject';
-                $event->rules['lens/review/skip'] = 'lens/review/skip';
                 $event->rules['lens/analysis/reprocess'] = 'lens/analysis/reprocess';
                 $event->rules['lens/analysis/update-field'] = 'lens/analysis/update-field';
                 $event->rules['lens/analysis/revert-field'] = 'lens/analysis/revert-field';

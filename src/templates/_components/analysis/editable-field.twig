@@ -24,6 +24,7 @@
 {% set featured = featured ?? false %}
 {% set fieldState = fieldState ?? 'readonly' %}
 {% set siteId = siteId ?? null %}
+{% set emptyText = emptyText ?? 'Not available'|t('lens') %}
 {% set fieldMaxLengths = { altText: 500, suggestedTitle: 255, longDescription: 5000, extractedText: 50000 } %}
 {% set maxlength = fieldMaxLengths[fieldName] ?? null %}
 
@@ -53,7 +54,7 @@
                 <p>{{ value }}</p>
             {% endif %}
         {% else %}
-            <p class="light">{{ 'Not available'|t('lens') }}</p>
+            <p class="light">{{ emptyText }}</p>
         {% endif %}
     </div>
 </div>
@@ -115,7 +116,7 @@
                     <p>{{ value }}</p>
                 {% endif %}
             {% else %}
-                <p class="light">{{ 'Not available'|t('lens') }}</p>
+                <p class="light">{{ emptyText }}</p>
             {% endif %}
         </div>
 
@@ -140,7 +141,7 @@
             <div class="lens-ai-suggestion-inline">
                 {% include 'lens/_components/analysis/_tooltip-ai' only %}
                 {% if aiValue %}
-                    {{ 'AI: "{value}"'|t('lens', {value: aiValue|truncate(60)}) }}
+                    {{ 'AI: "{value}"'|t('lens', {value: aiValue}) }}
                 {% else %}
                     {{ 'AI: No text detected'|t('lens') }}
                 {% endif %}
@@ -153,7 +154,7 @@
             <span data-lens-target="ai-suggestion-text">
                 {% if showAiSuggestion %}
                     {% if aiValue %}
-                        {{ 'AI suggested: "{value}"'|t('lens', {value: aiValue|truncate(100)}) }}
+                        {{ 'AI suggested: "{value}"'|t('lens', {value: aiValue}) }}
                     {% else %}
                         {{ 'AI suggested: No text detected'|t('lens') }}
                     {% endif %}

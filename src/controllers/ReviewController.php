@@ -126,7 +126,7 @@ class ReviewController extends Controller
             return $this->asJson(['success' => true]);
         }
 
-        return $this->redirectToNextOrBrowse('Analysis approved.');
+        return $this->redirectToNextReview('Analysis approved.');
     }
 
     public function actionReject(): Response
@@ -151,7 +151,7 @@ class ReviewController extends Controller
             return $this->asJson(['success' => true]);
         }
 
-        return $this->redirectToNextOrBrowse('Analysis rejected.');
+        return $this->redirectToNextReview('Analysis rejected.');
     }
 
     public function actionBulkApprove(): Response
@@ -190,24 +190,6 @@ class ReviewController extends Controller
         );
 
         return $this->redirectToPostedUrl();
-    }
-
-    public function actionSkip(): Response
-    {
-        $this->requireCpRequest();
-        $this->requirePostRequest();
-        $this->requirePermission('accessPlugin-lens');
-        Plugin::getInstance()->requireProEdition();
-
-        $analysisId = $this->requireValidId('analysisId', 'analysis ID');
-
-        Plugin::getInstance()->review->skip($analysisId);
-
-        if ($this->request->getAcceptsJson()) {
-            return $this->asJson(['success' => true]);
-        }
-
-        return $this->redirectToNextOrBrowse('Analysis skipped.');
     }
 
     /**
@@ -408,7 +390,7 @@ class ReviewController extends Controller
         return is_array($decoded) && !empty($decoded) ? $decoded : null;
     }
 
-    private function redirectToNextOrBrowse(string $successMessage): Response
+    private function redirectToNextReview(string $successMessage): Response
     {
         $queueIds = Plugin::getInstance()->review->getPendingReviewIds();
 

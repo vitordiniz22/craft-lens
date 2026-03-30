@@ -648,9 +648,7 @@
                 var textSpan = aiSuggestion.querySelector('[data-lens-target="ai-suggestion-text"]');
                 if (textSpan) {
                     if (data.aiValue) {
-                        var maxLen = window.Lens.config.THRESHOLDS.AI_SUGGESTION_PREVIEW_LENGTH;
-                        var truncated = data.aiValue.length > maxLen ? data.aiValue.substring(0, maxLen) + '...' : data.aiValue;
-                        textSpan.textContent = Craft.t('lens', 'AI suggested: "{value}"', { value: truncated });
+                        textSpan.textContent = Craft.t('lens', 'AI suggested: "{value}"', { value: data.aiValue });
                     } else {
                         textSpan.textContent = Craft.t('lens', 'AI suggested: No text detected');
                     }

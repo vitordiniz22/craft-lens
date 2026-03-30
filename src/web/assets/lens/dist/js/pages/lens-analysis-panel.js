@@ -95,6 +95,12 @@
         _handleAnalyze: function (e, btn) {
             if (btn.disabled) return;
 
+            if (btn.dataset.lensAction === 'reprocess') {
+                if (!confirm(Craft.t('lens', 'Re-analyze this image?\n\nAI-generated suggestions will be replaced with fresh results. Fields you\'ve manually edited will be preserved.'))) {
+                    return;
+                }
+            }
+
             const assetId = btn.dataset.lensAssetId;
             const loadingText = btn.dataset.lensLoadingText;
 

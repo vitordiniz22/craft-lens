@@ -1,5 +1,5 @@
 {#
- # Review Action Bar — Approve/Skip/Reject navigation controls
+ # Review Action Bar — Approve/Reject navigation controls
  #
  # Expected variables:
  #   prevId - int|null, previous analysis ID
@@ -10,18 +10,10 @@
         <a href="{{ cpUrl('lens/review/' ~ prevId) }}" class="btn">
             &larr; {{ 'Previous'|t('lens') }}
         </a>
-    {% else %}
-        <button type="button" class="btn" disabled>&larr; {{ 'Previous'|t('lens') }}</button>
     {% endif %}
 
     <button type="submit" class="btn submit" data-lens-action="review-approve">
         {{ 'Approve & Next'|t('lens') }} <kbd>A</kbd>
-    </button>
-
-    <button type="submit" class="btn"
-            formaction="{{ actionUrl('lens/review/skip') }}"
-            data-lens-action="review-skip">
-        {{ 'Skip'|t('lens') }} <kbd>S</kbd>
     </button>
 
     <button type="submit" class="btn"
@@ -34,7 +26,5 @@
         <a href="{{ cpUrl('lens/review/' ~ nextId) }}" class="btn">
             {{ 'Next'|t('lens') }} &rarr;
         </a>
-    {% else %}
-        <button type="button" class="btn" disabled>{{ 'Next'|t('lens') }} &rarr;</button>
     {% endif %}
 </div>

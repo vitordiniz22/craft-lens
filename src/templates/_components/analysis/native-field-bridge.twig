@@ -175,7 +175,7 @@
             {% include 'lens/_components/analysis/_tooltip-ai' only %}
             <span data-lens-target="bridge-review-ai-text">
                 {% if showBridgeAi %}
-                    {{ 'AI: "{value}"'|t('lens', {value: aiValue|truncate(60)}) }}
+                    {{ 'AI: "{value}"'|t('lens', {value: aiValue}) }}
                 {% endif %}
             </span>
             {% if aiValue ?? null %}

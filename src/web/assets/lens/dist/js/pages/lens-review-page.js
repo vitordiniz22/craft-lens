@@ -24,7 +24,7 @@
         },
 
         // ================================================================
-        // Keyboard Shortcuts: A (approve), S (skip), R (reject)
+        // Keyboard Shortcuts: A (approve), R (reject)
         // ================================================================
 
         _bindKeyboardShortcuts: function() {
@@ -38,10 +38,6 @@
                     e.preventDefault();
                     var approveBtn = document.querySelector('[data-lens-action="review-approve"]');
                     if (approveBtn && !approveBtn.disabled) approveBtn.click();
-                } else if (key === 's') {
-                    e.preventDefault();
-                    var skipBtn = document.querySelector('[data-lens-action="review-skip"]');
-                    if (skipBtn && !skipBtn.disabled) skipBtn.click();
                 } else if (key === 'r') {
                     e.preventDefault();
                     var rejectBtn = document.querySelector('[data-lens-action="review-reject"]');
@@ -75,9 +71,7 @@
                 if (differs) {
                     var textSpan = aiDiv.querySelector('[data-lens-target="bridge-review-ai-text"]');
                     if (textSpan) {
-                        var maxLen = window.Lens.config.THRESHOLDS.AI_PREVIEW_LENGTH;
-                        var truncated = aiValue.length > maxLen ? aiValue.substring(0, maxLen) + '...' : aiValue;
-                        textSpan.textContent = Craft.t('lens', 'AI: "{value}"', { value: truncated });
+                        textSpan.textContent = Craft.t('lens', 'AI: "{value}"', { value: aiValue });
                     }
                 }
             });

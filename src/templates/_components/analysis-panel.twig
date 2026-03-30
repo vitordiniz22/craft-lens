@@ -37,6 +37,8 @@
 {% endif %}
 <div class="lens-analysis-panel" data-lens-target="analysis-panel" data-lens-asset-id="{{ asset.id }}" data-lens-analysis-status="{{ displayStatus }}">
 
+    {% set isSecondarySite = currentSiteId != (primarySiteId ?? craft.app.sites.primarySite.id) %}
+
     {# Templates for dynamically inserted elements — cloned by JS #}
     {% if fieldState is defined and fieldState == 'unlocked' %}
         <template data-lens-target="lock-template">
@@ -50,83 +52,95 @@
         </template>
     {% endif %}
 
-    {# Header: Status + Re-analyze + Meta + Cost #}
     {% include 'lens/_components/analysis/header' with {analysis: analysis, asset: asset, static: readOnly} %}
 
-    {# Processing banner #}
-    {% if isProcessing %}
-        {% include 'lens/_components/analysis/processing-banner' with {
-            isReprocessing: isReprocessing,
-            hasExistingData: hasExistingData
+    {% if isSecondarySite and analysis %}
+        {% set primarySite = craft.app.sites.getSiteById(primarySiteId) %}
+        {% include 'lens/_components/inline-notice' with {
+            type: 'info',
+            title: 'Viewing Translations'|t('lens'),
+            message: 'Showing translated title and alt text for this site. View the full analysis on the primary site ({siteName}).'|t('lens', {siteName: primarySite.name ?? 'primary'}),
         } %}
     {% endif %}
 
-    {# ============================================ #}
-    {# ERROR DISPLAY - MOVED TO TOP FOR VISIBILITY #}
-    {# ============================================ #}
-    {% if analysis %}
-        {% set errorMessage = analysis.analysisContent.errorMessage ?? null %}
-        {% if analysis.status == lens.status.failed and errorMessage %}
-            {% embed 'lens/_components/inline-notice' with {
-                type: 'error',
-                title: 'Analysis Failed'|t('lens'),
-                message: errorMessage,
+    {% if not isSecondarySite %}
+        {# Processing banner #}
+        {% if isProcessing %}
+            {% include 'lens/_components/analysis/processing-banner' with {
+                isReprocessing: isReprocessing,
+                hasExistingData: hasExistingData
             } %}
-                {% block action %}
-                    <div class="lens-inline-notice__action">
-                        <button type="button" class="btn small" data-lens-action="analyze" data-lens-asset-id="{{ asset.id }}" data-lens-loading-text="{{ 'Processing'|t('lens') }}">
-                            <div class="spinner small"></div>
-                            <span class="label" data-lens-target="button-label">{{ 'Try Again'|t('lens') }}</span>
-                        </button>
-                    </div>
-                {% endblock %}
-            {% endembed %}
-        {% elseif analysis.status != lens.status.failed and errorMessage %}
-            {% embed 'lens/_components/inline-notice' with {
-                type: 'warning',
-                title: 'Re-analysis Failed'|t('lens'),
-                message: errorMessage ~ ' ' ~ ('Your previous analysis data is still available below.'|t('lens')),
-            } %}
-                {% block action %}
-                    <div class="lens-inline-notice__action">
-                        <button type="button" class="btn small" data-lens-action="analyze" data-lens-asset-id="{{ asset.id }}" data-lens-loading-text="{{ 'Processing'|t('lens') }}">
-                            <div class="spinner small"></div>
-                            <span class="label" data-lens-target="button-label">{{ 'Try Again'|t('lens') }}</span>
-                        </button>
-                    </div>
-                {% endblock %}
-            {% endembed %}
+        {% endif %}
+
+        {# ============================================ #}
+        {# ERROR DISPLAY - MOVED TO TOP FOR VISIBILITY #}
+        {# ============================================ #}
+        {% if analysis %}
+            {% set errorMessage = analysis.analysisContent.errorMessage ?? null %}
+            {% if analysis.status == lens.status.failed and errorMessage %}
+                {% embed 'lens/_components/inline-notice' with {
+                    type: 'error',
+                    title: 'Analysis Failed'|t('lens'),
+                    message: errorMessage,
+                } %}
+                    {% block action %}
+                        <div class="lens-inline-notice__action">
+                            <button type="button" class="btn small" data-lens-action="analyze" data-lens-asset-id="{{ asset.id }}" data-lens-loading-text="{{ 'Processing'|t('lens') }}">
+                                <div class="spinner small"></div>
+                                <span class="label" data-lens-target="button-label">{{ 'Try Again'|t('lens') }}</span>
+                            </button>
+                        </div>
+                    {% endblock %}
+                {% endembed %}
+            {% elseif analysis.status != lens.status.failed and errorMessage %}
+                {% embed 'lens/_components/inline-notice' with {
+                    type: 'warning',
+                    title: 'Re-analysis Failed'|t('lens'),
+                    message: errorMessage ~ ' ' ~ ('Your previous analysis data is still available below.'|t('lens')),
+                } %}
+                    {% block action %}
+                        <div class="lens-inline-notice__action">
+                            <button type="button" class="btn small" data-lens-action="analyze" data-lens-asset-id="{{ asset.id }}" data-lens-loading-text="{{ 'Processing'|t('lens') }}">
+                                <div class="spinner small"></div>
+                                <span class="label" data-lens-target="button-label">{{ 'Try Again'|t('lens') }}</span>
+                            </button>
+                        </div>
+                    {% endblock %}
+                {% endembed %}
+            {% endif %}
         {% endif %}
     {% endif %}
 
     {% if analysis %}
-        {# Pending review notice #}
-        {% if analysis.status == lens.status.pendingReview and not (static ?? false) and lens.isReviewActive %}
-            {% include 'lens/_components/inline-notice' with {
-                type: 'warning',
-                title: 'Pending Review'|t('lens'),
-                message: 'This analysis is awaiting review. All data shown is provisional and may be edited after approval or rejection.'|t('lens'),
-                cta: {
-                    label: 'Review now'|t('lens'),
-                    url: 'lens/review/' ~ analysis.id,
-                    small: false,
-                    submit: true
-                }
-            } %}
+        {% if not isSecondarySite %}
+            {# Pending review notice #}
+            {% if analysis.status == lens.status.pendingReview and not (static ?? false) and lens.isReviewActive %}
+                {% include 'lens/_components/inline-notice' with {
+                    type: 'warning',
+                    title: 'Pending Review'|t('lens'),
+                    message: 'This analysis is awaiting review. All data shown is provisional and may be edited after approval or rejection.'|t('lens'),
+                    cta: {
+                        label: 'Review now'|t('lens'),
+                        url: 'lens/review/' ~ analysis.id,
+                        small: false,
+                        submit: true
+                    }
+                } %}
+            {% endif %}
+
+            {# Similar Assets notice — shown prominently when duplicates detected #}
+            {% if analysis.status not in [lens.status.failed] and (not isProcessing or isReprocessing) and (similarImages ?? [])|length %}
+                {% include 'lens/_components/analysis/similar-assets-notice' with {
+                    similarImages: similarImages,
+                    totalSimilarCount: totalSimilarCount ?? similarImages|length,
+                    asset: asset,
+                    static: static ?? false,
+                    isProcessing: isProcessing
+                } %}
+            {% endif %}
         {% endif %}
 
-        {# Similar Assets notice — shown prominently when duplicates detected #}
-        {% if analysis.status not in [lens.status.failed] and (not isProcessing or isReprocessing) and (similarImages ?? [])|length %}
-            {% include 'lens/_components/analysis/similar-assets-notice' with {
-                similarImages: similarImages,
-                totalSimilarCount: totalSimilarCount ?? similarImages|length,
-                asset: asset,
-                static: static ?? false,
-                isProcessing: isProcessing
-            } %}
-        {% endif %}
-
-        {# Section 1: Description #}
+        {# Section 1: Description (title/alt — shown on all sites, description hidden on secondary) #}
         {% if analysis.status not in [lens.status.failed] and (not isProcessing or isReprocessing) %}
             <div class="lens-section">
                 {% include 'lens/_components/analysis/_section-header' with {
@@ -146,102 +160,105 @@
                         isAltTranslatable: isAltTranslatable ?? false,
                         isTitleTranslatable: isTitleTranslatable ?? false,
                         currentSiteId: currentSiteId ?? craft.app.sites.primarySite.id,
-                        primarySiteId: primarySiteId ?? craft.app.sites.primarySite.id
+                        primarySiteId: primarySiteId ?? craft.app.sites.primarySite.id,
+                        isSecondarySite: isSecondarySite
                     } %}
                 </div>
             </div>
         {% endif %}
 
-        {# Section 2: Taxonomy #}
-        {% if lens.isPro and analysis.status not in [lens.status.pending, lens.status.failed] and (not isProcessing or isReprocessing) %}
-            <div class="lens-section" data-lens-target="taxonomy-section">
-                {% include 'lens/_components/analysis/_section-header' with {
-                    title: 'Taxonomy'|t('lens'),
-                    intro: (readOnly or isProcessing)
-                        ? 'AI-generated tags and colors for categorization.'|t('lens')
-                        : 'AI-generated tags and colors. Use the edit button to add or remove.'|t('lens')
-                } only %}
-                <div class="lens-section-body">
-                    {% include 'lens/_components/analysis/taxonomy-section' with {
-                        analysis: analysis, analysisTags: analysisTags,
-                        analysisColors: analysisColors,
-                        fieldState: fieldState
-                    } %}
+        {# Sections 2-5: primary site only #}
+        {% if not isSecondarySite %}
+            {# Section 2: Taxonomy #}
+            {% if lens.isPro and analysis.status not in [lens.status.pending, lens.status.failed] and (not isProcessing or isReprocessing) %}
+                <div class="lens-section" data-lens-target="taxonomy-section">
+                    {% include 'lens/_components/analysis/_section-header' with {
+                        title: 'Taxonomy'|t('lens'),
+                        intro: (readOnly or isProcessing)
+                            ? 'AI-generated tags and colors for categorization.'|t('lens')
+                            : 'AI-generated tags and colors. Use the edit button to add or remove.'|t('lens')
+                    } only %}
+                    <div class="lens-section-body">
+                        {% include 'lens/_components/analysis/taxonomy-section' with {
+                            analysis: analysis, analysisTags: analysisTags,
+                            analysisColors: analysisColors,
+                            fieldState: fieldState
+                        } %}
+                    </div>
                 </div>
-            </div>
-        {% endif %}
+            {% endif %}
 
-        {# Section 3: Image Assessment #}
-        {% if analysis.status not in [lens.status.failed] and (not isProcessing or isReprocessing) %}
-            {% set wrStatus = (webReadiness ?? {}).overallStatus ?? 'pass' %}
-            {% set hasQualityWarning = false %}
-            {% set hasQualityError = false %}
-            {% for metric in (qualityMetrics ?? []) %}
-                {% if metric.status == 'error' %}{% set hasQualityError = true %}{% endif %}
-                {% if metric.status == 'warning' %}{% set hasQualityWarning = true %}{% endif %}
-            {% endfor %}
-            {% set qualityBadge = (wrStatus == 'error' or hasQualityError) ? 'error'
-                : ((wrStatus == 'warning' or hasQualityWarning) ? 'warning' : null) %}
-            <div class="lens-section">
-                {% include 'lens/_components/analysis/_section-header' with {
-                    title: 'Image Assessment'|t('lens'),
-                    intro: 'Technical checks to ensure your image is web-ready.'|t('lens'),
-                    badge: qualityBadge
-                } only %}
-                <div class="lens-section-body">
-                    {% include 'lens/_components/analysis/quality-section' with {
-                        analysis: analysis, asset: asset,
-                        fieldState: fieldState,
-                        webReadiness: webReadiness ?? {issues: [], checks: {}},
-                        qualityMetrics: qualityMetrics ?? {}
-                    } %}
+            {# Section 3: Image Assessment #}
+            {% if analysis.status not in [lens.status.failed] and (not isProcessing or isReprocessing) %}
+                {% set wrStatus = (webReadiness ?? {}).overallStatus ?? 'pass' %}
+                {% set hasQualityWarning = false %}
+                {% set hasQualityError = false %}
+                {% for metric in (qualityMetrics ?? []) %}
+                    {% if metric.status == 'error' %}{% set hasQualityError = true %}{% endif %}
+                    {% if metric.status == 'warning' %}{% set hasQualityWarning = true %}{% endif %}
+                {% endfor %}
+                {% set qualityBadge = (wrStatus == 'error' or hasQualityError) ? 'error'
+                    : ((wrStatus == 'warning' or hasQualityWarning) ? 'warning' : null) %}
+                <div class="lens-section">
+                    {% include 'lens/_components/analysis/_section-header' with {
+                        title: 'Image Assessment'|t('lens'),
+                        intro: 'Technical checks to ensure your image is web-ready.'|t('lens'),
+                        badge: qualityBadge
+                    } only %}
+                    <div class="lens-section-body">
+                        {% include 'lens/_components/analysis/quality-section' with {
+                            analysis: analysis, asset: asset,
+                            fieldState: fieldState,
+                            webReadiness: webReadiness ?? {issues: [], checks: {}},
+                            qualityMetrics: qualityMetrics ?? {}
+                        } %}
+                    </div>
                 </div>
-            </div>
-        {% endif %}
+            {% endif %}
 
-        {# Section 4: Content Safety #}
-        {% if analysis.status not in [lens.status.failed] and (not isProcessing or isReprocessing) %}
-            {% set safetyBadge = analysis.isFlaggedNsfw ? 'error'
-                : ((analysis.nsfwScore is defined and analysis.nsfwScore >= 0.2) ? 'warning' : null) %}
-            <div class="lens-section">
-                {% include 'lens/_components/analysis/_section-header' with {
-                    title: 'Flags & Detection'|t('lens'),
-                    intro: 'Safety signals to help guide editorial decisions.'|t('lens'),
-                    badge: safetyBadge
-                } only %}
-                <div class="lens-section-body">
-                    {% include 'lens/_components/analysis/safety-section' with {
-                        analysis: analysis,
-                        fieldState: fieldState
-                    } %}
+            {# Section 4: Content Safety #}
+            {% if analysis.status not in [lens.status.failed] and (not isProcessing or isReprocessing) %}
+                {% set safetyBadge = analysis.isFlaggedNsfw ? 'error'
+                    : ((analysis.nsfwScore is defined and analysis.nsfwScore >= 0.2) ? 'warning' : null) %}
+                <div class="lens-section">
+                    {% include 'lens/_components/analysis/_section-header' with {
+                        title: 'Flags & Detection'|t('lens'),
+                        intro: 'Safety signals to help guide editorial decisions.'|t('lens'),
+                        badge: safetyBadge
+                    } only %}
+                    <div class="lens-section-body">
+                        {% include 'lens/_components/analysis/safety-section' with {
+                            analysis: analysis,
+                            fieldState: fieldState
+                        } %}
+                    </div>
                 </div>
-            </div>
-        {% endif %}
+            {% endif %}
 
-        {# Section 5: Extracted Text #}
-        {% if lens.isPro and analysis.status not in [lens.status.failed] and (not isProcessing or isReprocessing) %}
-            <div class="lens-section">
-                {% include 'lens/_components/analysis/_section-header' with {
-                    title: 'Extracted Text'|t('lens'),
-                    intro: (readOnly or isProcessing)
-                        ? 'Text detected within the image via OCR.'|t('lens')
-                        : 'Text detected within the image via OCR. Click the pencil to edit.'|t('lens')
-                } only %}
-                <div class="lens-section-body">
-                    {% include 'lens/_components/analysis/editable-field' with {
-                        fieldName: 'extractedText',
-                        label: 'Extracted Text'|t('lens'),
-                        value: analysis.extractedText,
-                        aiValue: analysis.extractedTextAi,
-                        confidence: null,
-                        inputType: 'textarea',
-                        featured: false,
-                        analysisId: analysis.id,
-                        fieldState: fieldState,
-                        nullAiIsValid: true
-                    } %}
+            {# Section 5: Extracted Text #}
+            {% if lens.isPro and analysis.status not in [lens.status.failed] and (not isProcessing or isReprocessing) %}
+                <div class="lens-section">
+                    {% include 'lens/_components/analysis/_section-header' with {
+                        title: 'Extracted Text'|t('lens'),
+                        intro: 'Text detected within the image via OCR.'|t('lens')
+                    } only %}
+                    <div class="lens-section-body">
+                        {% include 'lens/_components/analysis/editable-field' with {
+                            fieldName: 'extractedText',
+                            label: 'Extracted Text'|t('lens'),
+                            value: analysis.extractedText,
+                            aiValue: analysis.extractedTextAi,
+                            confidence: null,
+                            inputType: 'textarea',
+                            featured: false,
+                            analysisId: analysis.id,
+                            fieldState: fieldState,
+                            nullAiIsValid: true,
+                            emptyText: 'No text detected'|t('lens')
+                        } %}
+                    </div>
                 </div>
-            </div>
+            {% endif %}
         {% endif %}
 
 
