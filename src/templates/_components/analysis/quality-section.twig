@@ -63,11 +63,37 @@
         </div>
 
         {% if fieldState == 'editing' %}
-            <div class="lens-field-display">
+            {% set fpMatchesAsset = analysis.assetHasFocalPoint is defined and analysis.assetHasFocalPoint
+                and analysis.assetFocalPoint
+                and (analysis.focalPointX|round(4) == analysis.assetFocalPoint.x|round(4))
+                and (analysis.focalPointY|round(4) == analysis.assetFocalPoint.y|round(4)) %}
+            {% set fpMatchesAi = analysis.focalPointXAi is not null
+                and (analysis.focalPointX|round(4) == analysis.focalPointXAi|round(4))
+                and (analysis.focalPointY|round(4) == analysis.focalPointYAi|round(4)) %}
+            {% set aiMatchesAsset = analysis.assetHasFocalPoint is defined and analysis.assetHasFocalPoint
+                and analysis.assetFocalPoint
+                and analysis.focalPointXAi is not null
+                and (analysis.focalPointXAi|round(4) == analysis.assetFocalPoint.x|round(4))
+                and (analysis.focalPointYAi|round(4) == analysis.assetFocalPoint.y|round(4)) %}
+            {% set showRevert = analysis.assetHasFocalPoint is defined and analysis.assetHasFocalPoint
+                and analysis.assetFocalPoint
+                and not fpMatchesAsset
+                and not aiMatchesAsset %}
+            <div class="lens-field-display lens-field-display--inline">
                 <p data-lens-target="focal-display-text">{{ 'X: {x}, Y: {y}'|t('lens', {
                     x: (analysis.focalPointX * 100)|round ~ '%',
                     y: (analysis.focalPointY * 100)|round ~ '%'
                 }) }}</p>
+                {% if analysis.assetHasFocalPoint is defined and analysis.assetHasFocalPoint and analysis.assetFocalPoint %}
+                    <button type="button" class="lens-revert-trigger lens-revert-trigger--original"
+                            data-lens-action="focal-use-current"
+                            data-lens-target="focal-revert-original"
+                            data-lens-asset-focal-x="{{ analysis.assetFocalPoint.x }}"
+                            data-lens-asset-focal-y="{{ analysis.assetFocalPoint.y }}"
+                            {% if not showRevert %}hidden{% endif %}>
+                        {{ 'Revert to original'|t('lens') }}
+                    </button>
+                {% endif %}
             </div>
         {% else %}
             <div class="lens-ai-suggestion-inline">
@@ -92,36 +118,6 @@
                         </button>
                     {% endif %}
                 {% endif %}
-            </div>
-        {% endif %}
-
-        {# Asset FP conflict — editing mode only, when asset has a different FP #}
-        {% if fieldState == 'editing' and analysis.assetHasFocalPoint is defined and analysis.assetHasFocalPoint %}
-            {% set fpMatchesAsset = analysis.assetFocalPoint
-                and (analysis.focalPointX|round(4) == analysis.assetFocalPoint.x|round(4))
-                and (analysis.focalPointY|round(4) == analysis.assetFocalPoint.y|round(4)) %}
-
-            <div class="lens-ai-suggestion-inline" data-lens-target="focal-asset-conflict"
-                {% if fpMatchesAsset %}hidden{% endif %}>
-                {% include 'lens/_components/analysis/_tooltip-ai' with {extraClass: 'lens-ai-suggestion-icon--ai'} only %}
-                <span class="lens-ai-suggestion-icon lens-ai-suggestion-icon--action">{{ iconSvg('triangle-exclamation')|attr({width: 12, height: 12}) }}</span>
-                <span data-lens-target="focal-asset-conflict-text">
-                    {{ 'Different focal point suggested'|t('lens') }}
-                </span>
-                <span class="lens-ai-suggestion-actions">
-                    <button type="button" class="lens-revert-trigger"
-                            data-lens-action="focal-accept">
-                        {{ 'Accept'|t('lens') }}
-                    </button>
-                    <span class="lens-focal-undo-group">
-                        <button type="button" class="lens-revert-trigger"
-                                data-lens-action="focal-use-current"
-                                data-lens-asset-focal-x="{{ analysis.assetFocalPoint.x }}"
-                                data-lens-asset-focal-y="{{ analysis.assetFocalPoint.y }}">
-                            {{ 'Undo'|t('lens') }}
-                        </button>
-                    </span>
-                </span>
             </div>
         {% endif %}
 

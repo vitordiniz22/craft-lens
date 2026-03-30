@@ -47,7 +47,6 @@
 </div>
 
 <div class="lens-review-focal-status" data-lens-target="focal-status">
-    <span class="lens-review-focal-status__icon">&#9678;</span>
     <span data-lens-target="focal-status-text">
         {% if analysis.focalPointX %}
             {{ 'Focal: {x}, {y}'|t('lens', {
@@ -58,11 +57,15 @@
             {{ 'No focal point set'|t('lens') }}
         {% endif %}
     </span>
-    {% if analysis.focalPointX and not fpMatchesAsset %}
+    {% if analysis.focalPointX %}
         {% set fpMatchesAi = analysis.focalPointXAi is not null
             and (analysis.focalPointX|round(4) == analysis.focalPointXAi|round(4))
             and (analysis.focalPointY|round(4) == analysis.focalPointYAi|round(4)) %}
-        {% if fpMatchesAi %}
+        {% if fpMatchesAsset %}
+            <span data-lens-target="focal-status-badge" class="lens-review-focal-badge lens-review-focal-badge--original">
+                {{ 'Original'|t('lens') }}
+            </span>
+        {% elseif fpMatchesAi %}
             <span data-lens-target="focal-status-badge" class="lens-review-focal-badge">
                 {{ 'AI'|t('lens') }}
             </span>
@@ -74,33 +77,31 @@
     {% else %}
         <span data-lens-target="focal-status-badge" class="lens-review-focal-badge" hidden></span>
     {% endif %}
-</div>
 
-{# Focal point action bar — visible when review FP differs from asset's existing FP #}
-{% if analysis.assetHasFocalPoint and analysis.assetFocalPoint %}
-    <div class="lens-ai-suggestion-inline" data-lens-target="fp-actions"
-         {% if fpMatchesAsset %}hidden{% endif %}>
-        <craft-tooltip text="{{ 'AI suggested'|t('lens') }}"><button type="button" class="lens-ai-badge-icon lens-ai-suggestion-icon--ai">{{ iconSvg('wand-magic-sparkles')|attr({width: 12, height: 12}) }}</button></craft-tooltip>
-        <span class="lens-ai-suggestion-icon lens-ai-suggestion-icon--action">{{ iconSvg('triangle-exclamation')|attr({width: 12, height: 12}) }}</span>
-        <span data-lens-target="fp-actions-text">
-            {{ 'Different focal point suggested'|t('lens') }}
-        </span>
-        <span class="lens-ai-suggestion-actions">
-            <button type="button" class="lens-revert-trigger"
-                    data-lens-action="focal-accept">
-                {{ 'Accept'|t('lens') }}
-            </button>
-            <span class="lens-focal-undo-group">
-                <button type="button" class="lens-revert-trigger"
-                        data-lens-action="focal-use-current"
-                        data-lens-asset-focal-x="{{ analysis.assetFocalPoint.x }}"
-                        data-lens-asset-focal-y="{{ analysis.assetFocalPoint.y }}">
-                    {{ 'Undo'|t('lens') }}
-                </button>
-            </span>
-        </span>
-    </div>
-{% endif %}
+    {# Inline Reset button — visible only when user-edited, asset has existing FP,
+       AND AI suggestion differs from asset original (otherwise "Revert to AI" already covers it) #}
+    {% if analysis.assetHasFocalPoint and analysis.assetFocalPoint %}
+        {% set aiMatchesAsset = analysis.focalPointXAi is not null
+            and (analysis.focalPointXAi|round(4) == analysis.assetFocalPoint.x|round(4))
+            and (analysis.focalPointYAi|round(4) == analysis.assetFocalPoint.y|round(4)) %}
+        {% set showReset = analysis.focalPointX is not null
+            and not fpMatchesAsset
+            and not aiMatchesAsset %}
+        <button type="button" class="lens-review-focal-reset lens-revert-trigger lens-revert-trigger--original"
+                data-lens-action="focal-use-current"
+                data-lens-target="focal-reset-btn"
+                data-lens-asset-focal-x="{{ analysis.assetFocalPoint.x }}"
+                data-lens-asset-focal-y="{{ analysis.assetFocalPoint.y }}"
+                {% if not showReset %}hidden{% endif %}>
+            {{ 'Revert to original'|t('lens') }}
+        </button>
+    {% else %}
+        <button type="button" class="lens-review-focal-reset lens-revert-trigger"
+                data-lens-target="focal-reset-btn" hidden>
+            {{ 'Reset'|t('lens') }}
+        </button>
+    {% endif %}
+</div>
 
 {# AI focal point revert — visible when FP differs from AI suggestion #}
 {% if analysis.focalPointXAi is not null and analysis.focalPointYAi is not null %}

@@ -78,6 +78,7 @@
                 <div class="lens-section">
                     <div class="lens-section-header">
                         <span class="lens-section-header__title">{{ 'Taxonomy'|t('lens') }}</span>
+                        <p class="lens-section-header__intro">{{ 'AI-generated tags and colors for categorization.'|t('lens') }}</p>
                     </div>
                     <div class="lens-section-body">
                         {% include 'lens/_components/analysis/taxonomy-section' with {
@@ -92,6 +93,7 @@
                 <div class="lens-section">
                     <div class="lens-section-header">
                         <span class="lens-section-header__title">{{ 'Image Assessment'|t('lens') }}</span>
+                        <p class="lens-section-header__intro">{{ 'Technical checks to ensure your image is web-ready.'|t('lens') }}</p>
                     </div>
                     <div class="lens-section-body">
                         {% include 'lens/_components/analysis/quality-section' with {
@@ -104,6 +106,7 @@
                 <div class="lens-section">
                     <div class="lens-section-header">
                         <span class="lens-section-header__title">{{ 'Flags & Detection'|t('lens') }}</span>
+                        <p class="lens-section-header__intro">{{ 'Safety signals to help guide editorial decisions.'|t('lens') }}</p>
                     </div>
                     <div class="lens-section-body">
                         {% include 'lens/_components/analysis/safety-section' with {
@@ -114,6 +117,10 @@
                 </div>
 
                 <div class="lens-section">
+                    <div class="lens-section-header">
+                        <span class="lens-section-header__title">{{ 'Extracted Text'|t('lens') }}</span>
+                        <p class="lens-section-header__intro">{{ 'Text detected within the image via OCR.'|t('lens') }}</p>
+                    </div>
                     <div class="lens-section-body">
                         {% include 'lens/_components/analysis/editable-field' with {
                             fieldName: 'extractedText',

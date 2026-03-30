@@ -126,6 +126,7 @@
   pointer-events: none;
   transform: translate(-50%, -50%);
   z-index: var(--lens-z-focal-ref);
+  opacity: 0.6;
 }
 
 .lens-review-focal-ref::after {
@@ -138,6 +139,7 @@
   background: var(--lens-overlay-light);
   border: 2px solid var(--lens-overlay-light);
   border-radius: 4px;
+  opacity: 0.6;
 }
 
 /* Focal point hint overlay */
@@ -183,6 +185,11 @@
 .lens-review-focal-badge--edited {
   background: var(--amber-100);
   color: var(--amber-700);
+}
+
+.lens-review-focal-badge--original {
+  background: var(--gray-100);
+  color: var(--gray-600);
 }
 
 /* Active marker — Craft native colors when matching asset's current FP */
@@ -435,13 +442,14 @@
   color: var(--amber-500);
 }
 
-/* Right-panel undo group — hidden in AI state, visible after manual click */
-.lens-focal-undo-group {
-  display: none;
+/* Inline Reset button in focal status line */
+.lens-review-focal-reset {
+  font-size: 12px;
+  margin-left: auto;
 }
 
-.lens-ai-suggestion-inline--warning .lens-focal-undo-group {
-  display: contents;
+.lens-review-focal-reset[hidden] {
+  display: none;
 }
 
 .lens-ai-suggestion-inline--warning .lens-revert-trigger {

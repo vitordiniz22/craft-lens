@@ -216,6 +216,16 @@
     width: 100%;
 }
 
+.lens-field-display--inline {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.lens-field-display--inline .lens-revert-trigger {
+    margin-left: auto;
+}
+
 .lens-field-display p {
     margin: 0;
     font-size: 14px;
@@ -306,6 +316,14 @@
 
 .lens-revert-trigger:hover {
     color: var(--violet-800);
+}
+
+.lens-revert-trigger--original {
+    color: var(--gray-600);
+}
+
+.lens-revert-trigger--original:hover {
+    color: var(--gray-800);
 }
 
 /* Apply button row */
