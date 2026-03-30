@@ -78,13 +78,38 @@
             {value: 'lowOverall', label: 'Low Overall Quality'|t('lens')},
         ], filters.qualityIssues ?? []) }}
 
-        {# Web Readiness Issues #}
-        {{ _self.checkboxGroup('Web Readiness'|t('lens'), 'webReadinessIssues[]', [
-            {value: 'fileTooLarge', label: 'File Too Large (>1MB)'|t('lens')},
-            {value: 'resolutionTooSmall', label: 'Resolution Too Small'|t('lens')},
-            {value: 'resolutionOversized', label: 'Resolution Oversized (>4096px)'|t('lens')},
-            {value: 'unsupportedFormat', label: 'Unsupported Format'|t('lens')},
-        ], filters.webReadinessIssues ?? []) }}
+        {# Too Large #}
+        {{ forms.selectField({
+            label: 'File Too Large'|t('lens'),
+            name: 'isTooLarge',
+            options: [
+                {value: '', label: 'Any'|t('lens')},
+                {value: '1', label: 'Yes'|t('lens')},
+            ],
+            value: (filters.isTooLarge ?? null) is same as(true) ? '1' : '',
+        }) }}
+
+        {# Blurry #}
+        {{ forms.selectField({
+            label: 'Blurry'|t('lens'),
+            name: 'isBlurry',
+            options: [
+                {value: '', label: 'Any'|t('lens')},
+                {value: '1', label: 'Yes'|t('lens')},
+            ],
+            value: (filters.isBlurry ?? null) is same as(true) ? '1' : '',
+        }) }}
+
+        {# Too Dark #}
+        {{ forms.selectField({
+            label: 'Too Dark'|t('lens'),
+            name: 'isTooDark',
+            options: [
+                {value: '', label: 'Any'|t('lens')},
+                {value: '1', label: 'Yes'|t('lens')},
+            ],
+            value: (filters.isTooDark ?? null) is same as(true) ? '1' : '',
+        }) }}
 
         {# Has Text in Image #}
         {{ forms.selectField({

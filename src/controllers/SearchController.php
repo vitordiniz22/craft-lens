@@ -93,7 +93,7 @@ class SearchController extends Controller
             'quickFilters' => $plugin->search->getQuickFilters(),
             'quickFilterDerivedParams' => QuickFilter::derivedParamsMap(),
             'hasFilters' => FilterParser::hasAnyFilters($filters),
-            'showFilterPanel' => false,
+            'showFilterPanel' => FilterParser::hasActiveFilters($filters),
             'hasActiveFilters' => FilterParser::hasActiveFilters($filters),
             'analysisMap' => $analysisMap,
             'tagsMap' => $tagsMap,

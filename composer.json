@@ -48,8 +48,32 @@
   "extra": {
     "handle": "lens",
     "name": "Lens",
+    "class": "vitordiniz22\\craftlens\\Plugin",
     "developer": "Vitor Diniz",
-    "documentationUrl": "https://github.com/vitordiniz22/craft-lens"
+    "developerUrl": "https://github.com/vitordiniz22",
+    "documentationUrl": "https://github.com/vitordiniz22/craft-lens/wiki",
+    "changelogUrl": "https://raw.githubusercontent.com/vitordiniz22/craft-lens/main/CHANGELOG.md",
+    "editions": [
+      {
+        "name": "Lite",
+        "handle": "lite"
+      },
+      {
+        "name": "Pro",
+        "handle": "pro",
+        "features": [
+          "Find any asset instantly with smart search and advanced filters",
+          "Review Queue to track and verify AI results across your library",
+          "Analyze your entire media library in one click",
+          "Detect duplicate and near-identical images automatically",
+          "AI-powered semantic search in the native asset picker",
+          "Full dashboard with usage stats, insights, and attention alerts",
+          "Custom condition rules for stock photos and text-in-image filtering",
+          "Edit AI-generated tags, colors, and extracted text per asset",
+          "CSV export and CLI tools for advanced workflows"
+        ]
+      }
+    ]
   },
   "scripts": {
     "check-cs": "ecs check --ansi",

@@ -80,6 +80,7 @@ class DashboardController extends Controller
                 'processingProgress' => $processingStatus['progress'] ?? null,
 
                 // Section 3: Metadata Coverage
+                'overviewStats' => $overviewStats,
                 'altTextCoverage' => $stats->getAltTextCoverage(),
                 'taggedPercentage' => $stats->getTaggedPercentage(),
                 'focalPointCoverage' => $stats->getFocalPointCoverage(),

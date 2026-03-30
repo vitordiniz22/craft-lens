@@ -194,7 +194,7 @@
 .lens-coverage__details-cell {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 2px;
     align-items: flex-end;
     white-space: nowrap;
 }

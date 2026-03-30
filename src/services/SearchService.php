@@ -274,7 +274,7 @@ class SearchService extends Component
         $this->applyMissingAltTextFilter($query, $filters);
         $this->applyUnprocessedFilter($query, $filters);
         $this->applyQualityIssuesFilter($query, $filters);
-        $this->applyWebReadinessIssuesFilter($query, $filters);
+        $this->applyStandaloneQualityFilters($query, $filters);
         $this->applyHasTextInImageFilter($query, $filters);
         $this->applyVolumeFilter($query);
 
@@ -709,35 +709,68 @@ class SearchService extends Component
     }
 
     /**
-     * Filter assets by web readiness issues (fileTooLarge, resolutionTooSmall, unsupportedFormat).
+     * Filter assets by standalone quality flags.
      */
-    private function applyWebReadinessIssuesFilter(Query $query, array $filters): void
+    private function applyStandaloneQualityFilters(Query $query, array $filters): void
     {
-        if (empty($filters['webReadinessIssues'])) {
-            return;
+        if (!empty($filters['isBlurry'])) {
+            $query->andWhere([
+                'and',
+                ['<', 'lens.sharpnessScore', ImageMetricsAnalyzer::SHARPNESS_BLURRY],
+                ['not', ['lens.sharpnessScore' => null]],
+            ]);
         }
 
-        $conditions = ['or'];
-
-        foreach ($filters['webReadinessIssues'] as $issue) {
-            match ($issue) {
-                'fileTooLarge' => $conditions[] = ['>=', 'assets.size', ImageQualityChecker::FILE_SIZE_WARNING],
-                'resolutionTooSmall' => $conditions[] = [
-                    'and',
-                    ['>', 'assets.width', 0],
-                    ['<', 'assets.width', ImageQualityChecker::MIN_WIDTH_RECOMMENDED],
-                ],
-                'unsupportedFormat' => $conditions[] = [
-                    'or',
-                    ['like', 'assets.filename', '%.tif', false],
-                    ['like', 'assets.filename', '%.tiff', false],
-                ],
-                default => null,
-            };
+        if (!empty($filters['isTooDark'])) {
+            $query->andWhere([
+                'and',
+                ['<', 'lens.exposureScore', ImageMetricsAnalyzer::BRIGHTNESS_DARK],
+                ['not', ['lens.exposureScore' => null]],
+            ]);
         }
 
-        if (count($conditions) > 1) {
-            $query->andWhere($conditions);
+        if (!empty($filters['isTooBright'])) {
+            $query->andWhere([
+                'and',
+                ['>', 'lens.exposureScore', ImageMetricsAnalyzer::BRIGHTNESS_BRIGHT],
+                ['not', ['lens.exposureScore' => null]],
+            ]);
+        }
+
+        if (!empty($filters['isLowContrast'])) {
+            $query->andWhere([
+                'and',
+                ['<', 'lens.noiseScore', ImageMetricsAnalyzer::CONTRAST_LOW],
+                ['not', ['lens.noiseScore' => null]],
+            ]);
+        }
+
+        if (!empty($filters['isTooLarge'])) {
+            $query->andWhere(['>=', 'assets.size', ImageQualityChecker::FILE_SIZE_WARNING]);
+        }
+
+        if (!empty($filters['isResolutionTooSmall'])) {
+            $query->andWhere([
+                'and',
+                ['>', 'assets.width', 0],
+                ['<', 'assets.width', ImageQualityChecker::MIN_WIDTH_RECOMMENDED],
+            ]);
+        }
+
+        if (!empty($filters['isResolutionOversized'])) {
+            $query->andWhere([
+                'and',
+                ['>', 'assets.width', 0],
+                ['>', 'assets.width', ImageQualityChecker::MAX_WIDTH_RECOMMENDED],
+            ]);
+        }
+
+        if (!empty($filters['isUnsupportedFormat'])) {
+            $query->andWhere([
+                'or',
+                ['like', 'assets.filename', '%.tif', false],
+                ['like', 'assets.filename', '%.tiff', false],
+            ]);
         }
     }
 

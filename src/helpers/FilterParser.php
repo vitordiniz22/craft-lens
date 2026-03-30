@@ -26,7 +26,7 @@ class FilterParser
         'qualityPreset', 'hasFocalPoint',
         'nsfwFlagged', 'missingAltText', 'unprocessed',
         'similarTo',
-        'qualityIssues', 'webReadinessIssues', 'hasTextInImage',
+        'qualityIssues', 'isTooLarge', 'isBlurry', 'isTooDark', 'hasTextInImage',
     ];
 
     /**
@@ -179,6 +179,7 @@ class FilterParser
         $booleanFilterKeys = [
             'hasDuplicates', 'hasWatermark', 'containsBrandLogo',
             'hasFocalPoint', 'unprocessed', 'hasTextInImage',
+            'isTooLarge', 'isBlurry', 'isTooDark',
         ];
 
         foreach ($booleanFilterKeys as $key) {
@@ -219,7 +220,6 @@ class FilterParser
     {
         $arrayFilters = [
             'qualityIssues' => ['blurry', 'tooDark', 'tooBright', 'lowContrast', 'lowOverall'],
-            'webReadinessIssues' => ['fileTooLarge', 'resolutionTooSmall', 'resolutionOversized', 'unsupportedFormat'],
         ];
 
         foreach ($arrayFilters as $key => $allowedValues) {

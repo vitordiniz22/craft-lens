@@ -33,12 +33,14 @@ enum AnalysisStatus: string
 
     /**
      * Statuses considered "successfully analyzed" (for queries and display).
+     * Includes pending_review because those assets have full AI metadata
+     * even though the review workflow hasn't approved them yet.
      *
      * @return string[]
      */
     public static function analyzedValues(): array
     {
-        return [self::Completed->value, self::Approved->value];
+        return [self::Completed->value, self::PendingReview->value, self::Approved->value];
     }
 
     /**

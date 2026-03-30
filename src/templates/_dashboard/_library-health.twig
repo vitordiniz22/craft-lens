@@ -14,10 +14,10 @@
 
             {# Link destination: Pro → bulk page, Lite → assets filter #}
             {% if isProcessing %}
-                {% set linkUrl = lens.isPro ? cpUrl('lens/bulk') : cpUrl('assets', {lensFilter: 'not-analysed'}) %}
+                {% set linkUrl = lens.isPro ? cpUrl('lens/bulk') : cpUrl('assets', {source: 'lens:not-analysed'}) %}
                 {% set linkText = lens.isPro ? 'View progress'|t('lens') : 'View assets'|t('lens') %}
             {% elseif unanalyzed > 0 %}
-                {% set linkUrl = lens.isPro ? cpUrl('lens/bulk') : cpUrl('assets', {lensFilter: 'not-analysed'}) %}
+                {% set linkUrl = lens.isPro ? cpUrl('lens/bulk') : cpUrl('assets', {source: 'lens:not-analysed'}) %}
                 {% set linkText = lens.isPro ? 'Bulk process'|t('lens') : 'View missing'|t('lens') %}
             {% else %}
                 {% set linkUrl = null %}
@@ -35,6 +35,22 @@
             } only %}
         {% endif %}
 
+        {# Review Coverage — only when review workflow is active #}
+        {% if lens.isReviewActive and overviewStats is defined %}
+            {% set reviewedCount = overviewStats.approved|default(0) %}
+            {% set totalReviewable = (overviewStats.approved|default(0)) + (overviewStats.pendingReview|default(0)) %}
+            {% set reviewPercentage = totalReviewable > 0 ? ((reviewedCount / totalReviewable) * 100)|round(1) : 0 %}
+
+            {% include 'lens/_dashboard/_coverage-metric' with {
+                label: 'Reviewed'|t('lens'),
+                percentage: reviewPercentage,
+                covered: reviewedCount,
+                total: totalReviewable,
+                linkUrl: cpUrl('lens/review'),
+                linkText: 'Review queue'|t('lens'),
+            } only %}
+        {% endif %}
+
         {# Alt Text Coverage #}
         {% set altMissing = altTextCoverage.total - altTextCoverage.withAltText %}
         {% include 'lens/_dashboard/_coverage-metric' with {
@@ -42,7 +58,7 @@
             percentage: altTextCoverage.percentage,
             covered: altTextCoverage.withAltText,
             total: altTextCoverage.total,
-            linkUrl: altMissing > 0 ? (lens.isPro ? cpUrl('lens/search', {missingAltText: 1}) : cpUrl('assets', {lensFilter: 'missing-alt-text'})) : null,
+            linkUrl: altMissing > 0 ? (lens.isPro ? cpUrl('lens/search', {missingAltText: 1}) : cpUrl('assets', {source: 'lens:missing-alt-text'})) : null,
             linkText: 'View missing'|t('lens'),
         } only %}
 
@@ -66,7 +82,7 @@
             percentage: focalPointCoverage.percentage,
             covered: focalPointCoverage.withFocalPoint,
             total: focalPointCoverage.total,
-            linkUrl: fpMissing > 0 ? (lens.isPro ? cpUrl('lens/search', {hasFocalPoint: 0}) : cpUrl('assets', {lensFilter: 'missing-focal-point'})) : null,
+            linkUrl: fpMissing > 0 ? (lens.isPro ? cpUrl('lens/search', {hasFocalPoint: 0}) : cpUrl('assets', {source: 'lens:missing-focal-point'})) : null,
             linkText: 'View missing'|t('lens'),
         } only %}
     </div>

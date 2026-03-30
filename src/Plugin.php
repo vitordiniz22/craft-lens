@@ -479,7 +479,11 @@ class Plugin extends BasePlugin
                     'missing-alt-text' => ['Missing Alt Text', ['hasAlt' => false, 'kind' => 'image']],
                     'nsfw-flagged' => ['NSFW Flagged', ['lensNsfwFlagged' => true, 'kind' => 'image']],
                     'low-quality' => ['Low Quality', ['lensLowQuality' => true, 'kind' => 'image']],
-                    'web-readiness-issues' => ['Web Readiness Issues', ['lensWebReadinessIssues' => ['fileTooLarge', 'resolutionTooSmall', 'resolutionOversized', 'unsupportedFormat'], 'kind' => 'image']],
+                    'blurry' => ['Blurry', ['lensBlurry' => true, 'kind' => 'image']],
+                    'too-dark' => ['Too Dark', ['lensTooDark' => true, 'kind' => 'image']],
+                    'too-bright' => ['Too Bright', ['lensTooBright' => true, 'kind' => 'image']],
+                    'low-contrast' => ['Low Contrast', ['lensLowContrast' => true, 'kind' => 'image']],
+                    'file-too-large' => ['File Too Large', ['lensTooLarge' => true, 'kind' => 'image']],
                     'missing-focal-point' => ['Missing Focal Point', ['lensHasFocalPoint' => false, 'kind' => 'image']],
                     'contains-people' => ['Contains People', ['lensContainsPeople' => true, 'kind' => 'image']],
                     'has-watermark' => ['Has Watermark', ['lensHasWatermark' => true, 'kind' => 'image']],
@@ -499,22 +503,6 @@ class Plugin extends BasePlugin
             }
         );
 
-        // Auto-select source when arriving via dashboard link (e.g. ?lensFilter=missing-alt-text)
-        if (!Craft::$app->getRequest()->getIsConsoleRequest()) {
-            Craft::$app->getView()->hook('cp.layouts.elementindex', function() {
-                $lensFilter = Craft::$app->getRequest()->getQueryParam('lensFilter');
-                if ($lensFilter) {
-                    $safeKey = preg_replace('/[^a-z0-9\-]/', '', $lensFilter);
-                    if ($safeKey === null || $safeKey === '') {
-                        return;
-                    }
-                    $sourceKey = 'lens:' . $safeKey;
-                    Craft::$app->getView()->registerJs(
-                        "requestAnimationFrame(function() { var link = document.querySelector('[data-key=\"{$sourceKey}\"]'); if (link) link.click(); });"
-                    );
-                }
-            });
-        }
     }
 
     private function registerAssetSidebarHandler(): void

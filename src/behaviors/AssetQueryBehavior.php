@@ -47,6 +47,11 @@ class AssetQueryBehavior extends Behavior
     public ?bool $lensExposureIssues = null;
     public ?bool $lensHasFocalPoint = null;
     public ?bool $lensLowQuality = null;
+    public ?bool $lensBlurry = null;
+    public ?bool $lensTooDark = null;
+    public ?bool $lensTooBright = null;
+    public ?bool $lensLowContrast = null;
+    public ?bool $lensTooLarge = null;
     public ?array $lensWebReadinessIssues = null;
     public ?bool $lensHasTextInImage = null;
     /** @var array[] Raw WHERE conditions requiring the lens join, used by complex condition rules */
@@ -244,6 +249,51 @@ class AssetQueryBehavior extends Behavior
     public function lensLowQuality(?bool $value): AssetQuery
     {
         $this->lensLowQuality = $value;
+        return $this->owner;
+    }
+
+    /**
+     * Filters assets that are blurry (low sharpness score).
+     */
+    public function lensBlurry(?bool $value): AssetQuery
+    {
+        $this->lensBlurry = $value;
+        return $this->owner;
+    }
+
+    /**
+     * Filters assets that are too dark (low exposure score).
+     */
+    public function lensTooDark(?bool $value): AssetQuery
+    {
+        $this->lensTooDark = $value;
+        return $this->owner;
+    }
+
+    /**
+     * Filters assets that are too bright (high exposure score).
+     */
+    public function lensTooBright(?bool $value): AssetQuery
+    {
+        $this->lensTooBright = $value;
+        return $this->owner;
+    }
+
+    /**
+     * Filters assets with low contrast.
+     */
+    public function lensLowContrast(?bool $value): AssetQuery
+    {
+        $this->lensLowContrast = $value;
+        return $this->owner;
+    }
+
+    /**
+     * Filters assets with file size >= 1MB.
+     */
+    public function lensTooLarge(?bool $value): AssetQuery
+    {
+        $this->lensTooLarge = $value;
         return $this->owner;
     }
 
@@ -461,6 +511,26 @@ class AssetQueryBehavior extends Behavior
 
         if ($this->lensLowQuality !== null) {
             $this->applyLowQualityFilter();
+        }
+
+        if ($this->lensBlurry !== null) {
+            $this->applyBlurryFilter();
+        }
+
+        if ($this->lensTooDark !== null) {
+            $this->applyTooDarkFilter();
+        }
+
+        if ($this->lensTooBright !== null) {
+            $this->applyTooBrightFilter();
+        }
+
+        if ($this->lensLowContrast !== null) {
+            $this->applyLowContrastFilter();
+        }
+
+        if ($this->lensTooLarge !== null) {
+            $this->applyTooLargeFilter();
         }
 
         if ($this->lensWebReadinessIssues !== null && !empty($this->lensWebReadinessIssues)) {
@@ -733,6 +803,49 @@ class AssetQueryBehavior extends Behavior
                 ['lens.overallQualityScore' => null],
                 ['>=', 'lens.overallQualityScore', ImageMetricsAnalyzer::LOW_QUALITY_THRESHOLD],
             ]);
+        }
+    }
+
+    private function applyBlurryFilter(): void
+    {
+        if ($this->lensBlurry) {
+            $this->ensureJoined();
+            $this->owner->subQuery->andWhere(['<', 'lens.sharpnessScore', ImageMetricsAnalyzer::SHARPNESS_BLURRY]);
+            $this->owner->subQuery->andWhere(['not', ['lens.sharpnessScore' => null]]);
+        }
+    }
+
+    private function applyTooDarkFilter(): void
+    {
+        if ($this->lensTooDark) {
+            $this->ensureJoined();
+            $this->owner->subQuery->andWhere(['<', 'lens.exposureScore', ImageMetricsAnalyzer::BRIGHTNESS_DARK]);
+            $this->owner->subQuery->andWhere(['not', ['lens.exposureScore' => null]]);
+        }
+    }
+
+    private function applyTooBrightFilter(): void
+    {
+        if ($this->lensTooBright) {
+            $this->ensureJoined();
+            $this->owner->subQuery->andWhere(['>', 'lens.exposureScore', ImageMetricsAnalyzer::BRIGHTNESS_BRIGHT]);
+            $this->owner->subQuery->andWhere(['not', ['lens.exposureScore' => null]]);
+        }
+    }
+
+    private function applyLowContrastFilter(): void
+    {
+        if ($this->lensLowContrast) {
+            $this->ensureJoined();
+            $this->owner->subQuery->andWhere(['<', 'lens.noiseScore', ImageMetricsAnalyzer::CONTRAST_LOW]);
+            $this->owner->subQuery->andWhere(['not', ['lens.noiseScore' => null]]);
+        }
+    }
+
+    private function applyTooLargeFilter(): void
+    {
+        if ($this->lensTooLarge) {
+            $this->owner->subQuery->andWhere(['>=', 'assets.size', ImageQualityChecker::FILE_SIZE_WARNING]);
         }
     }
 

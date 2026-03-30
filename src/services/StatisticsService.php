@@ -39,8 +39,8 @@ class StatisticsService extends Component
             ->select([
                 'COUNT(*) as total',
                 new Expression(
-                    'SUM(CASE WHEN status IN (:analyzed1, :analyzed2) THEN 1 ELSE 0 END) as analyzed',
-                    [':analyzed1' => $analyzedStatuses[0], ':analyzed2' => $analyzedStatuses[1]]
+                    'SUM(CASE WHEN status IN (:analyzed1, :analyzed2, :analyzed3) THEN 1 ELSE 0 END) as analyzed',
+                    [':analyzed1' => $analyzedStatuses[0], ':analyzed2' => $analyzedStatuses[1], ':analyzed3' => $analyzedStatuses[2]]
                 ),
                 new Expression(
                     'SUM(CASE WHEN status IN (:proc1, :proc2, :proc3, :proc4) THEN 1 ELSE 0 END) as processed',
@@ -571,7 +571,7 @@ class StatisticsService extends Component
                 'count' => $overview['failed'],
                 'url' => $isPro
                     ? 'lens/search?status=' . AnalysisStatus::Failed->value
-                    : 'assets?lensFilter=failed',
+                    : 'assets?source=lens:failed',
                 'color' => 'red',
                 'icon' => 'triangle-exclamation',
             ];
@@ -584,7 +584,7 @@ class StatisticsService extends Component
                 'count' => $nsfwCount,
                 'url' => $isPro
                     ? 'lens/search?nsfwFlagged=1'
-                    : 'assets?lensFilter=nsfw-flagged',
+                    : 'assets?source=lens:nsfw-flagged',
                 'color' => 'red',
                 'icon' => 'triangle-exclamation',
             ];
@@ -597,7 +597,7 @@ class StatisticsService extends Component
                 'count' => $watermarkedCount,
                 'url' => $isPro
                     ? 'lens/search?hasWatermark=1'
-                    : 'assets?lensFilter=has-watermark',
+                    : 'assets?source=lens:has-watermark',
                 'color' => 'amber',
                 'icon' => 'stamp',
             ];
@@ -617,11 +617,11 @@ class StatisticsService extends Component
         if ($fileTooLargeCount > 0) {
             $items[] = [
                 'type' => 'file_too_large',
-                'label' => Craft::t('lens', 'Too Large'),
+                'label' => Craft::t('lens', 'File Too Large'),
                 'count' => $fileTooLargeCount,
                 'url' => $isPro
-                    ? 'lens/search?webReadinessIssues[]=fileTooLarge'
-                    : 'assets?lensFilter=web-readiness-issues',
+                    ? 'lens/search?isTooLarge=1'
+                    : 'assets?source=lens:file-too-large',
                 'color' => 'amber',
                 'icon' => 'file',
             ];
@@ -633,8 +633,8 @@ class StatisticsService extends Component
                 'label' => Craft::t('lens', 'Blurry'),
                 'count' => $qualityIssues['blurry'],
                 'url' => $isPro
-                    ? 'lens/search?qualityIssues[]=blurry'
-                    : 'assets?lensFilter=blurry',
+                    ? 'lens/search?isBlurry=1'
+                    : 'assets?source=lens:blurry',
                 'color' => 'amber',
                 'icon' => 'eye',
             ];
@@ -646,8 +646,8 @@ class StatisticsService extends Component
                 'label' => Craft::t('lens', 'Too Dark'),
                 'count' => $qualityIssues['tooDark'],
                 'url' => $isPro
-                    ? 'lens/search?qualityIssues[]=tooDark'
-                    : 'assets?lensFilter=too-dark',
+                    ? 'lens/search?isTooDark=1'
+                    : 'assets?source=lens:too-dark',
                 'color' => 'amber',
                 'icon' => 'sun',
             ];
@@ -660,7 +660,7 @@ class StatisticsService extends Component
                 'count' => $qualityIssues['tooBright'],
                 'url' => $isPro
                     ? 'lens/search?qualityIssues[]=tooBright'
-                    : 'assets?lensFilter=too-bright',
+                    : 'assets?source=lens:too-bright',
                 'color' => 'amber',
                 'icon' => 'sun',
             ];
@@ -673,7 +673,7 @@ class StatisticsService extends Component
                 'count' => $qualityIssues['lowContrast'],
                 'url' => $isPro
                     ? 'lens/search?qualityIssues[]=lowContrast'
-                    : 'assets?lensFilter=low-contrast',
+                    : 'assets?source=lens:low-contrast',
                 'color' => 'amber',
                 'icon' => 'circle-half-stroke',
             ];
