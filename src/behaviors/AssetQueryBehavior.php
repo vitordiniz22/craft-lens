@@ -861,11 +861,13 @@ class AssetQueryBehavior extends Behavior
                     'and',
                     ['>', 'assets.width', 0],
                     ['<', 'assets.width', ImageQualityChecker::MIN_WIDTH_RECOMMENDED],
+                    ['not like', 'assets.filename', '%.svg', false],
                 ],
                 'resolutionOversized' => $conditions[] = [
                     'and',
                     ['>', 'assets.width', 0],
                     ['>', 'assets.width', ImageQualityChecker::MAX_WIDTH_RECOMMENDED],
+                    ['not like', 'assets.filename', '%.svg', false],
                 ],
                 'unsupportedFormat' => $conditions[] = [
                     'or',

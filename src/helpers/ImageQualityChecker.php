@@ -31,46 +31,49 @@ class ImageQualityChecker
         $issues = [];
         $checks = [];
 
-        // File size check
         $fileSize = $asset->size ?? 0;
         $formattedSize = self::formatFileSize($fileSize);
 
-        if ($fileSize >= self::FILE_SIZE_CRITICAL) {
-            $issues[] = WebReadinessRecommendation::FileVeryLarge;
-            $checks['fileSize'] = [
-                'status' => 'error',
-                'icon' => 'file',
-                'label' => Craft::t('lens', 'File Size'),
-                'value' => $formattedSize,
-                'verdict' => Craft::t('lens', 'Too large'),
-                'recommendation' => Craft::t('lens', 'Very large source file. Ensure Craft image transforms are used in templates to avoid slow page loads.'),
-            ];
-        } elseif ($fileSize >= self::FILE_SIZE_WARNING) {
-            $issues[] = WebReadinessRecommendation::FileLarge;
-            $checks['fileSize'] = [
-                'status' => 'warning',
-                'icon' => 'file',
-                'label' => Craft::t('lens', 'File Size'),
-                'value' => $formattedSize,
-                'verdict' => Craft::t('lens', 'Large'),
-                'recommendation' => Craft::t('lens', 'Consider using Craft image transforms in templates to serve an optimized version to visitors.'),
-            ];
-        } else {
-            $checks['fileSize'] = [
-                'status' => 'pass',
-                'icon' => 'file',
-                'label' => Craft::t('lens', 'File Size'),
-                'value' => $formattedSize,
-                'verdict' => Craft::t('lens', 'Good'),
-                'recommendation' => null,
-            ];
+        if ($fileSize > 0) {
+            if ($fileSize >= self::FILE_SIZE_CRITICAL) {
+                $issues[] = WebReadinessRecommendation::FileVeryLarge;
+                $checks['fileSize'] = [
+                    'status' => 'error',
+                    'icon' => 'file',
+                    'label' => Craft::t('lens', 'File Size'),
+                    'value' => $formattedSize,
+                    'verdict' => Craft::t('lens', 'Too large'),
+                    'recommendation' => Craft::t('lens', 'This file may cause slow page loads if served at full size.'),
+                ];
+            } elseif ($fileSize >= self::FILE_SIZE_WARNING) {
+                $issues[] = WebReadinessRecommendation::FileLarge;
+                $checks['fileSize'] = [
+                    'status' => 'warning',
+                    'icon' => 'file',
+                    'label' => Craft::t('lens', 'File Size'),
+                    'value' => $formattedSize,
+                    'verdict' => Craft::t('lens', 'Large'),
+                    'recommendation' => Craft::t('lens', 'Large for web delivery. If your site doesn\'t resize images automatically, consider uploading a smaller version.'),
+                ];
+            } else {
+                $checks['fileSize'] = [
+                    'status' => 'pass',
+                    'icon' => 'file',
+                    'label' => Craft::t('lens', 'File Size'),
+                    'value' => $formattedSize,
+                    'verdict' => Craft::t('lens', 'Good'),
+                    'recommendation' => null,
+                ];
+            }
         }
 
-        // Resolution check
+        $extension = strtolower($asset->getExtension());
+        $formatDisplay = strtoupper($extension);
+
         $width = $asset->width ?? 0;
         $height = $asset->height ?? 0;
 
-        if ($width > 0) {
+        if ($width > 0 && $extension !== 'svg') {
             $dimensions = "{$width} × {$height}";
 
             if ($width < self::MIN_WIDTH_RECOMMENDED) {
@@ -80,7 +83,7 @@ class ImageQualityChecker
                     'icon' => 'arrows-maximize',
                     'label' => Craft::t('lens', 'Resolution'),
                     'value' => $dimensions,
-                    'verdict' => Craft::t('lens', 'Too small'),
+                    'verdict' => Craft::t('lens', 'Small'),
                     'recommendation' => Craft::t('lens', 'May be too small for full-width layouts. 1200px or wider is recommended.'),
                 ];
             } elseif ($width > self::MAX_WIDTH_RECOMMENDED) {
@@ -91,7 +94,7 @@ class ImageQualityChecker
                     'label' => Craft::t('lens', 'Resolution'),
                     'value' => $dimensions,
                     'verdict' => Craft::t('lens', 'Oversized'),
-                    'recommendation' => Craft::t('lens', 'Larger than needed for web. Use Craft image transforms to serve appropriately sized images.'),
+                    'recommendation' => Craft::t('lens', 'Larger than most screens need. This is fine if your site resizes images automatically.'),
                 ];
             } else {
                 $checks['resolution'] = [
@@ -105,24 +108,20 @@ class ImageQualityChecker
             }
         }
 
-        // Format check — only shown when there's a problem (TIFF)
-        $extension = strtolower($asset->getExtension());
-        $formatDisplay = strtoupper($extension);
-
         if ($extension === 'tiff' || $extension === 'tif') {
             $issues[] = WebReadinessRecommendation::BrowserUnsupportedFormat;
             $checks['format'] = [
-                'status' => 'warning',
+                'status' => 'error',
                 'icon' => 'image',
                 'label' => Craft::t('lens', 'Format'),
                 'value' => $formatDisplay,
                 'verdict' => Craft::t('lens', 'Unsupported'),
-                'recommendation' => Craft::t('lens', 'Convert to JPEG, PNG, or WebP for broad browser support'),
+                'recommendation' => Craft::t('lens', 'This format cannot be displayed by browsers. Convert to JPEG, PNG, or WebP.'),
             ];
         }
 
-        // Standard web formats — shown as passing (broad support)
-        $standardFormats = ['jpg', 'jpeg', 'png', 'gif', 'svg'];
+        $standardFormats = ['jpg', 'jpeg', 'jfif', 'png', 'gif', 'svg'];
+
         if (in_array($extension, $standardFormats, true) && !isset($checks['format'])) {
             $checks['format'] = [
                 'status' => 'pass',
@@ -134,7 +133,6 @@ class ImageQualityChecker
             ];
         }
 
-        // Modern format — only shown when asset is already WebP/AVIF (positive signal)
         if (in_array($extension, self::MODERN_FORMATS, true)) {
             $checks['format'] = [
                 'status' => 'pass',
@@ -146,9 +144,20 @@ class ImageQualityChecker
             ];
         }
 
-        // Derive overall status from checks
+        if (!isset($checks['format'])) {
+            $checks['format'] = [
+                'status' => 'warning',
+                'icon' => 'image',
+                'label' => Craft::t('lens', 'Format'),
+                'value' => $formatDisplay,
+                'verdict' => Craft::t('lens', 'Check compatibility'),
+                'recommendation' => Craft::t('lens', 'This format may not be supported by all browsers. Consider converting to JPEG, PNG, or WebP.'),
+            ];
+        }
+
         $hasError = false;
         $hasWarning = false;
+
         foreach ($checks as $check) {
             if ($check['status'] === 'error') {
                 $hasError = true;

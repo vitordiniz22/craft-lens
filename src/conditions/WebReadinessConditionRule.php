@@ -76,8 +76,8 @@ class WebReadinessConditionRule extends BaseMultiSelectConditionRule implements 
         foreach ($values as $value) {
             $matches = match ($value) {
                 'fileTooLarge' => ($element->size ?? 0) >= ImageQualityChecker::FILE_SIZE_WARNING,
-                'resolutionTooSmall' => ($element->width ?? 0) > 0 && ($element->width ?? 0) < ImageQualityChecker::MIN_WIDTH_RECOMMENDED,
-                'resolutionOversized' => ($element->width ?? 0) > ImageQualityChecker::MAX_WIDTH_RECOMMENDED,
+                'resolutionTooSmall' => ($element->width ?? 0) > 0 && strtolower($element->getExtension()) !== 'svg' && ($element->width ?? 0) < ImageQualityChecker::MIN_WIDTH_RECOMMENDED,
+                'resolutionOversized' => ($element->width ?? 0) > 0 && strtolower($element->getExtension()) !== 'svg' && ($element->width ?? 0) > ImageQualityChecker::MAX_WIDTH_RECOMMENDED,
                 'unsupportedFormat' => in_array(strtolower($element->getExtension()), ['tif', 'tiff'], true),
                 default => false,
             };

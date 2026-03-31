@@ -32,11 +32,11 @@ enum WebReadinessRecommendation: string
     public function recommendation(): string
     {
         return match ($this) {
-            self::FileLarge => Craft::t('lens', 'Consider using Craft image transforms in templates to serve an optimized version to visitors.'),
-            self::FileVeryLarge => Craft::t('lens', 'Very large source file. Ensure Craft image transforms are used in templates to avoid slow page loads.'),
+            self::FileLarge => Craft::t('lens', 'Large for web delivery. If your site doesn\'t resize images automatically, consider uploading a smaller version.'),
+            self::FileVeryLarge => Craft::t('lens', 'This file may cause slow page loads if served at full size.'),
             self::ResolutionTooSmall => Craft::t('lens', 'May be too small for full-width layouts. 1200px or wider is recommended.'),
-            self::ResolutionOversized => Craft::t('lens', 'Larger than needed for web. Use Craft image transforms to serve appropriately sized images.'),
-            self::BrowserUnsupportedFormat => Craft::t('lens', 'Convert to JPEG, PNG, or WebP for broad browser support.'),
+            self::ResolutionOversized => Craft::t('lens', 'Larger than most screens need. This is fine if your site resizes images automatically.'),
+            self::BrowserUnsupportedFormat => Craft::t('lens', 'This format cannot be displayed by browsers. Convert to JPEG, PNG, or WebP.'),
         };
     }
 
@@ -46,7 +46,7 @@ enum WebReadinessRecommendation: string
     public function severity(): string
     {
         return match ($this) {
-            self::FileVeryLarge => 'error',
+            self::FileVeryLarge, self::BrowserUnsupportedFormat => 'error',
             default => 'warning',
         };
     }
