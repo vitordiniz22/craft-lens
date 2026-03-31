@@ -27,9 +27,8 @@ class ImageMetricsAnalyzer
     public const CONTRAST_FLAT = 0.1;
     public const CONTRAST_LOW = 0.15;
 
-    // Compression quality thresholds (0-100)
-    public const COMPRESSION_HEAVY_ARTIFACTS = 30;
-    public const COMPRESSION_MODERATE = 60;
+    // Compression quality threshold (0-100) — below this, degradation is visible to non-technical users
+    public const COMPRESSION_VISIBLE_DEGRADATION = 50;
 
     // Sharpness: multi-sigma blur decay parameters
     private const SHARPNESS_DECAY_SIGMOID_RATE = 20.0;
@@ -484,18 +483,17 @@ class ImageMetricsAnalyzer
             return 100;
         }
 
-        // WebP: detect lossy vs lossless from file header
+        // WebP: lossless gets 100, lossy returns null (WebP doesn't embed quality metadata
+        // and file-size estimation is too unreliable to show to users)
         if ($ext === 'webp') {
-            return self::measureWebPQuality($tempPath, $imagick, $asset);
+            return self::measureWebPQuality($tempPath, $imagick);
         }
 
-        // AVIF, HEIC, HEIF: try Imagick quality first, fall back to file-size ratio
+        // AVIF, HEIC, HEIF: use Imagick quality if available, otherwise null
+        // (file-size estimation is too unreliable across these codecs)
         if (\in_array($ext, ['avif', 'heic', 'heif'], true)) {
             $quality = $imagick->getImageCompressionQuality();
-            if ($quality > 0) {
-                return $quality;
-            }
-            return self::estimateQualityFromFileSize($asset, $imagick, $ext);
+            return $quality > 0 ? $quality : null;
         }
 
         return null;
@@ -504,9 +502,10 @@ class ImageMetricsAnalyzer
     /**
      * Determine WebP compression quality.
      * Validates RIFF/WEBP magic bytes, then checks chunk type.
-     * VP8L = lossless (100). VP8X scans for lossless sub-chunk. VP8 = lossy (file-size estimate).
+     * VP8L = lossless (100). VP8X scans for lossless sub-chunk.
+     * Lossy WebP returns null — the format doesn't embed quality metadata.
      */
-    private static function measureWebPQuality(string $tempPath, Imagick $imagick, Asset $asset): ?int
+    private static function measureWebPQuality(string $tempPath, Imagick $imagick): ?int
     {
         $handle = fopen($tempPath, 'rb');
         if ($handle === false) {
@@ -544,50 +543,8 @@ class ImageMetricsAnalyzer
             }
         }
 
-        return self::estimateQualityFromFileSize($asset, $imagick, 'webp');
-    }
-
-    /**
-     * Estimate compression quality from file-size-to-raw-pixels ratio.
-     * Uses actual channel count (not hardcoded RGB) and format-specific efficiency
-     * multipliers to normalize across codecs with different compression ratios.
-     * Smooth log curve instead of piecewise linear segments.
-     */
-    private static function estimateQualityFromFileSize(Asset $asset, Imagick $imagick, string $extension = ''): ?int
-    {
-        $fileSize = (int) $asset->size;
-        if ($fileSize <= 0) {
-            return null;
-        }
-
-        $width = $imagick->getImageWidth();
-        $height = $imagick->getImageHeight();
-
-        // Determine actual channel count based on colorspace and alpha
-        $channels = match ($imagick->getImageColorspace()) {
-            Imagick::COLORSPACE_GRAY => 1,
-            Imagick::COLORSPACE_CMYK => 4,
-            default => $imagick->getImageAlphaChannel() ? 4 : 3,
-        };
-
-        $rawSize = $width * $height * $channels;
-        if ($rawSize <= 0) {
-            return null;
-        }
-
-        $ratio = $fileSize / $rawSize;
-
-        // Format-specific efficiency normalization: modern codecs achieve the same
-        // perceptual quality at lower ratios, so scale up to JPEG-equivalent
-        $ratio *= match ($extension) {
-            'avif' => 2.0,
-            'heic', 'heif' => 1.5,
-            'webp' => 1.3,
-            default => 1.0,
-        };
-
-        // Smooth log curve: maps ratio to 0-100 quality
-        return (int) \min(100, \round(25 * \log($ratio * 30 + 1)));
+        // Lossy WebP — no reliable quality signal available
+        return null;
     }
 
     /**
@@ -681,9 +638,9 @@ class ImageMetricsAnalyzer
         $score = (float) $raw['sharpnessScore'];
 
         if ($score < self::SHARPNESS_BLURRY) {
-            $checks['sharpness'] = self::checkResult('warning', 'eye', 'Sharpness', null, 'Blurry', 'Sharpness is low, consider replacing this image');
+            $checks['sharpness'] = self::checkResult('warning', 'eye', 'Sharpness', null, 'Blurry', 'This image will look blurry on the page. Try uploading a sharper version.');
         } elseif ($score < self::SHARPNESS_SOFT) {
-            $checks['sharpness'] = self::checkResult('warning', 'eye', 'Sharpness', null, 'Soft', 'Image is slightly soft, may lack detail at full size');
+            $checks['sharpness'] = self::checkResult('warning', 'eye', 'Sharpness', null, 'Soft', 'May appear blurry at full size. If a sharper version is available, use that instead.');
         } else {
             $checks['sharpness'] = self::checkResult('pass', 'eye', 'Sharpness', null, 'Sharp', null);
         }
@@ -698,9 +655,9 @@ class ImageMetricsAnalyzer
         $score = (float) $raw['exposureScore'];
 
         if ($score < self::BRIGHTNESS_DARK) {
-            $checks['brightness'] = self::checkResult('warning', 'sun', 'Brightness', null, 'Too dark', 'Image may be too dark for web use. Consider replacing or editing the source.');
+            $checks['brightness'] = self::checkResult('warning', 'sun', 'Brightness', null, 'Too dark', 'This image is quite dark and may not display well. If a brighter version is available, consider using that. If this is intentional, you can safely ignore this.');
         } elseif ($score > self::BRIGHTNESS_BRIGHT) {
-            $checks['brightness'] = self::checkResult('warning', 'sun', 'Brightness', null, 'Too bright', 'Image may be too bright, some detail may be lost in light areas.');
+            $checks['brightness'] = self::checkResult('warning', 'sun', 'Brightness', null, 'Too bright', 'Very bright — some detail may be lost in highlights. If a better-exposed version is available, consider using that. If this is intentional, you can safely ignore this.');
         } else {
             $checks['brightness'] = self::checkResult('pass', 'sun', 'Brightness', null, 'Good', null);
         }
@@ -715,9 +672,9 @@ class ImageMetricsAnalyzer
         $score = (float) $raw['contrastScore'];
 
         if ($score < self::CONTRAST_FLAT) {
-            $checks['contrast'] = self::checkResult('warning', 'circle-half-stroke', 'Contrast', null, 'Flat', 'Very low contrast, image may appear washed out');
+            $checks['contrast'] = self::checkResult('warning', 'circle-half-stroke', 'Contrast', null, 'Washed out', 'This image looks washed out and may not stand out on the page. If this is intentional, you can safely ignore this.');
         } elseif ($score < self::CONTRAST_LOW) {
-            $checks['contrast'] = self::checkResult('warning', 'circle-half-stroke', 'Contrast', null, 'Low contrast', 'Low contrast may reduce visual impact');
+            $checks['contrast'] = self::checkResult('warning', 'circle-half-stroke', 'Contrast', null, 'Low contrast', 'Low contrast may make this image look flat on the page. If this is intentional, you can safely ignore this.');
         } else {
             $checks['contrast'] = self::checkResult('pass', 'circle-half-stroke', 'Contrast', null, 'Good', null);
         }
@@ -730,14 +687,10 @@ class ImageMetricsAnalyzer
         }
 
         $quality = (int) $raw['compressionQuality'];
-        $value = $quality . '%';
 
-        if ($quality < self::COMPRESSION_HEAVY_ARTIFACTS) {
-            $checks['compression'] = self::checkResult('error', 'file-zipper', 'Compression', $value, 'Heavy artifacts', 'Compression quality is very low with likely visible artifacts. Replace with a higher quality source.');
-        } elseif ($quality < self::COMPRESSION_MODERATE) {
-            $checks['compression'] = self::checkResult('warning', 'file-zipper', 'Compression', $value, 'Compressed', 'Noticeable compression. Consider using a higher quality source.');
-        } else {
-            $checks['compression'] = self::checkResult('pass', 'file-zipper', 'Compression', $value, 'Good', null);
+        // Only show when there's a problem — no row for healthy images
+        if ($quality < self::COMPRESSION_VISIBLE_DEGRADATION) {
+            $checks['compression'] = self::checkResult('warning', 'file-zipper', 'Compression', null, 'Low quality', 'This image has been heavily compressed and may show visible quality loss. Replace with a higher quality source.');
         }
     }
 
@@ -752,10 +705,10 @@ class ImageMetricsAnalyzer
 
         if ($profile === 'cmyk') {
             $checks['colorProfile'] = self::checkResult('warning', 'palette', 'Color Profile', $displayName, 'Not web-ready', 'CMYK is for print, convert to sRGB for web display');
-        } elseif ($profile === 'srgb') {
-            $checks['colorProfile'] = self::checkResult('pass', 'palette', 'Color Profile', $displayName, 'Web standard', null);
+        } elseif ($profile === 'srgb' || $profile === 'grayscale') {
+            $checks['colorProfile'] = self::checkResult('pass', 'palette', 'Color Profile', $displayName, 'Good', null);
         } else {
-            $checks['colorProfile'] = self::checkResult('warning', 'palette', 'Color Profile', $displayName, 'Not sRGB', 'Colors may look different across browsers. Convert to sRGB for consistent display.');
+            $checks['colorProfile'] = self::checkResult('warning', 'palette', 'Color Profile', $displayName, 'Colors may shift', 'Colors may look slightly different across browsers. For consistent colors, convert to sRGB before uploading.');
         }
     }
 
