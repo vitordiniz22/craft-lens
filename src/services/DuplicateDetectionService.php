@@ -252,9 +252,10 @@ class DuplicateDetectionService extends Component
     /**
      * Get duplicate cluster keys for a set of assets.
      *
-     * Each asset is assigned a "group key" — the smallest canonicalAssetId it's
-     * connected to in unresolved pairs. Assets sharing the same group key belong
-     * to the same duplicate cluster.
+     * Each asset is assigned a "group key" — the smallest asset ID in the
+     * connected component it belongs to (via unresolved duplicate pairs).
+     * Transitive relationships are resolved using Union-Find, so if A~B
+     * and B~C, all connected assets share the same group key.
      *
      * @param int[] $assetIds
      * @return array<int, int> Map of assetId => groupKey
@@ -265,34 +266,81 @@ class DuplicateDetectionService extends Component
             return [];
         }
 
-        $rows = (new Query())
-            ->select(['dup_asset_id', new Expression('MIN(group_key) AS dup_group')])
-            ->from([
-                'dup_pairs' => (new Query())
-                    ->select([
-                        new Expression('canonicalAssetId AS dup_asset_id'),
-                        new Expression('canonicalAssetId AS group_key'),
-                    ])
-                    ->from(Install::TABLE_DUPLICATE_GROUPS)
-                    ->where(['resolution' => null, 'canonicalAssetId' => $assetIds])
-                    ->union(
-                        (new Query())
-                            ->select([
-                                new Expression('duplicateAssetId AS dup_asset_id'),
-                                new Expression('canonicalAssetId AS group_key'),
-                            ])
-                            ->from(Install::TABLE_DUPLICATE_GROUPS)
-                            ->where(['resolution' => null, 'duplicateAssetId' => $assetIds]),
-                        true,
-                    ),
+        $pairs = (new Query())
+            ->select(['canonicalAssetId', 'duplicateAssetId'])
+            ->from(Install::TABLE_DUPLICATE_GROUPS)
+            ->where(['resolution' => null])
+            ->andWhere([
+                'or',
+                ['canonicalAssetId' => $assetIds],
+                ['duplicateAssetId' => $assetIds],
             ])
-            ->groupBy(['dup_asset_id'])
             ->all();
 
-        $map = [];
+        if (empty($pairs)) {
+            return [];
+        }
 
-        foreach ($rows as $row) {
-            $map[(int) $row['dup_asset_id']] = (int) $row['dup_group'];
+        $parent = [];
+        $rank = [];
+
+        $find = function (int $x) use (&$parent, &$find): int {
+            if ($parent[$x] !== $x) {
+                $parent[$x] = $find($parent[$x]);
+            }
+
+            return $parent[$x];
+        };
+
+        $union = function (int $a, int $b) use (&$parent, &$rank, $find): void {
+            $rootA = $find($a);
+            $rootB = $find($b);
+
+            if ($rootA === $rootB) {
+                return;
+            }
+
+            if ($rank[$rootA] < $rank[$rootB]) {
+                $parent[$rootA] = $rootB;
+            } elseif ($rank[$rootA] > $rank[$rootB]) {
+                $parent[$rootB] = $rootA;
+            } else {
+                $parent[$rootB] = $rootA;
+                $rank[$rootA]++;
+            }
+        };
+
+        foreach ($pairs as $pair) {
+            $canonical = (int) $pair['canonicalAssetId'];
+            $duplicate = (int) $pair['duplicateAssetId'];
+
+            foreach ([$canonical, $duplicate] as $id) {
+                if (!isset($parent[$id])) {
+                    $parent[$id] = $id;
+                    $rank[$id] = 0;
+                }
+            }
+
+            $union($canonical, $duplicate);
+        }
+
+        // Find the minimum asset ID in each connected component.
+        $componentMin = [];
+        foreach ($parent as $id => $__) {
+            $root = $find($id);
+
+            if (!isset($componentMin[$root]) || $id < $componentMin[$root]) {
+                $componentMin[$root] = $id;
+            }
+        }
+
+        // Build final map filtered to requested asset IDs.
+        $assetIdSet = array_flip($assetIds);
+        $map = [];
+        foreach ($parent as $id => $__) {
+            if (isset($assetIdSet[$id])) {
+                $map[$id] = $componentMin[$find($id)];
+            }
         }
 
         return $map;

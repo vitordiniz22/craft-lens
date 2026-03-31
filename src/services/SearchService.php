@@ -145,38 +145,20 @@ class SearchService extends Component
                 ->column();
         } elseif (!empty($filters['hasDuplicates'])) {
             // Cluster-grouped ordering: group duplicate pairs together.
-            // For each asset, compute a "group key" = the smallest canonicalAssetId
-            // it's connected to in unresolved pairs. Assets sharing a group key
-            // appear adjacent, with the canonical (lower ID) first.
-            $dupGroupSub = (new Query())
-                ->select(['dup_asset_id', new Expression('MIN(group_key) AS dup_group')])
-                ->from([
-                    'dup_pairs' => (new Query())
-                        ->select([
-                            new Expression('canonicalAssetId AS dup_asset_id'),
-                            new Expression('canonicalAssetId AS group_key'),
-                        ])
-                        ->from(Install::TABLE_DUPLICATE_GROUPS)
-                        ->where(['resolution' => null])
-                        ->union(
-                            (new Query())
-                                ->select([
-                                    new Expression('duplicateAssetId AS dup_asset_id'),
-                                    new Expression('canonicalAssetId AS group_key'),
-                                ])
-                                ->from(Install::TABLE_DUPLICATE_GROUPS)
-                                ->where(['resolution' => null]),
-                            true,
-                        ),
-                ])
-                ->groupBy(['dup_asset_id']);
+            // Fetch all matching IDs, compute transitive clusters via Union-Find,
+            // then sort by cluster key (smallest ID in component) and asset ID.
+            $allIds = array_map('intval', (clone $baseQuery)->column());
+            $clusterKeys = Plugin::getInstance()
+                ->duplicateDetection
+                ->getClusterKeysForAssets($allIds);
 
-            $paginatedIds = (clone $baseQuery)
-                ->leftJoin(['dup_order' => $dupGroupSub], '[[assets.id]] = [[dup_order.dup_asset_id]]')
-                ->orderBy(new Expression('MIN([[dup_order]].[[dup_group]]) ASC, [[assets]].[[id]] ASC'))
-                ->offset($offset)
-                ->limit($limit)
-                ->column();
+            usort($allIds, function (int $a, int $b) use ($clusterKeys): int {
+                $groupA = $clusterKeys[$a] ?? PHP_INT_MAX;
+                $groupB = $clusterKeys[$b] ?? PHP_INT_MAX;
+                return $groupA <=> $groupB ?: $a <=> $b;
+            });
+
+            $paginatedIds = array_slice($allIds, $offset, $limit);
         } else {
             $paginatedIds = (clone $baseQuery)
                 ->orderBy(['MAX([[lens.processedAt]])' => SORT_DESC])
