@@ -93,8 +93,7 @@
     margin-top: var(--s);
 }
 
-.lens-filter-range {
-    width: 100%;
+.lens-filter-tolerance .btngroup {
     margin-top: 4px;
 }
 

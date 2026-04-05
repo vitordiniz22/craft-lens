@@ -141,9 +141,11 @@
                         </span>
                     {% endif %}
                     {% if filters.color is defined and filters.color %}
+                        {% set toleranceLabels = {10: 'exact'|t('lens'), 30: 'close'|t('lens'), 55: 'broad'|t('lens'), 80: 'any'|t('lens')} %}
+                        {% set chipTolerance = filters.colorTolerance ?? 30 %}
                         <span class="lens-filter-chip" data-lens-filter-param="color,colorTolerance">
                             <span class="lens-filter-chip-swatch" style="background:{{ filters.color }}"></span>
-                            {{ 'Color'|t('lens') }}: <strong>{{ filters.color }}{% if filters.colorTolerance is defined and filters.colorTolerance != 30 %} ({{ filters.colorTolerance }}%){% endif %}</strong>
+                            {{ 'Color'|t('lens') }}: <strong>{{ filters.color }}{% if chipTolerance != 30 %} ({{ toleranceLabels[chipTolerance] ?? chipTolerance ~ '%' }}){% endif %}</strong>
                             <button type="button" data-lens-action="remove-filter-chip" data-lens-filter-param="color,colorTolerance" title="{{ 'Remove filter'|t('lens') }}">&times;</button>
                         </span>
                     {% endif %}

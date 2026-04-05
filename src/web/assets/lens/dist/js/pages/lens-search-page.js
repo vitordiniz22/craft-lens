@@ -25,7 +25,7 @@
             this.initSearchEnterKey();
             this.initPresetButtonGroups();
             this.initColorInput();
-            this.initColorToleranceSlider();
+
             this.initDatePickers();
             this.initKeyboardNavigation();
             this._initialized = true;
@@ -193,35 +193,6 @@
                     });
                 }
             }
-        },
-
-        initColorToleranceSlider: function () {
-            var self = this;
-            DOM.delegate(
-                '[data-lens-control="color-tolerance"]',
-                'input',
-                function (e, slider) {
-                    var display = document.querySelector(
-                        '[data-lens-target="tolerance-value"]'
-                    );
-                    if (display) display.textContent = slider.value;
-                    var label = document.querySelector(
-                        '[data-lens-target="tolerance-label"]'
-                    );
-                    if (label)
-                        label.textContent =
-                            '(' +
-                            self.getToleranceLabel(parseInt(slider.value)) +
-                            ')';
-                }
-            );
-        },
-
-        getToleranceLabel: function (value) {
-            if (value <= 20) return Craft.t('lens', 'Exact');
-            if (value <= 50) return Craft.t('lens', 'Similar');
-            if (value <= 75) return Craft.t('lens', 'Broad');
-            return Craft.t('lens', 'Very broad');
         },
 
         initDatePickers: function () {

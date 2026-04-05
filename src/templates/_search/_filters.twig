@@ -161,18 +161,20 @@
                     small: true,
                 }) }}
                 {% set toleranceValue = filters.colorTolerance ?? 30 %}
-                {% set toleranceLabel = toleranceValue <= 20 ? 'Exact' : (toleranceValue <= 50 ? 'Similar' : (toleranceValue <= 75 ? 'Broad' : 'Very broad')) %}
+                {% set tolerancePreset = toleranceValue <= 15 ? '10' : (toleranceValue <= 40 ? '30' : (toleranceValue <= 65 ? '55' : '80')) %}
                 <div class="lens-filter-tolerance{% if not (filters.color ?? false) %} hidden{% endif %}" data-lens-target="color-tolerance-wrap">
-                    <label class="light">
-                        {{ 'Tolerance'|t('lens') }}: <span data-lens-target="tolerance-value">{{ toleranceValue }}</span>%
-                        <span class="light" data-lens-target="tolerance-label">({{ toleranceLabel|t('lens') }})</span>
-                    </label>
-                    <input type="range"
-                           name="colorTolerance"
-                           data-lens-control="color-tolerance"
-                           min="0" max="100" step="5"
-                           value="{{ toleranceValue }}"
-                           class="lens-filter-range">
+                    <label class="light">{{ 'Color match'|t('lens') }}</label>
+                    <div class="btngroup" data-lens-preset="colorTolerance">
+                        {% for preset in [{value: '10', label: 'Exact match'|t('lens')}, {value: '30', label: 'Close shades'|t('lens')}, {value: '55', label: 'Broad range'|t('lens')}, {value: '80', label: 'Any resemblance'|t('lens')}] %}
+                            <button type="button"
+                                    class="btn small{% if tolerancePreset == preset.value %} active{% endif %}"
+                                    data-lens-value="{{ preset.value }}"
+                                    aria-pressed="{{ tolerancePreset == preset.value ? 'true' : 'false' }}">
+                                {{ preset.label }}
+                            </button>
+                        {% endfor %}
+                    </div>
+                    <input type="hidden" name="colorTolerance" value="{{ tolerancePreset }}">
                 </div>
             </div>
         </div>

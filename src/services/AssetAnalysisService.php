@@ -17,6 +17,7 @@ use vitordiniz22\craftlens\enums\WatermarkType;
 use vitordiniz22\craftlens\exceptions\AnalysisException;
 use vitordiniz22\craftlens\exceptions\ConfigurationException;
 use vitordiniz22\craftlens\helpers\AssetTitleHelper;
+use vitordiniz22\craftlens\helpers\DominantColorExtractor;
 use vitordiniz22\craftlens\helpers\ImageMetricsAnalyzer;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\helpers\MultisiteHelper;
@@ -385,6 +386,29 @@ class AssetAnalysisService extends Component
         // Local image quality analysis via Imagick (before AI to avoid holding temp file)
         $localMetrics = ImageMetricsAnalyzer::analyze($asset);
 
+        // Local dominant color extraction via GD (deterministic, pixel-accurate)
+        $localColors = [];
+
+        try {
+            $colorTempPath = $asset->getCopyOfFile();
+
+            if ($colorTempPath !== null && file_exists($colorTempPath)) {
+                try {
+                    $localColors = DominantColorExtractor::extract($colorTempPath);
+                } finally {
+                    if (file_exists($colorTempPath)) {
+                        unlink($colorTempPath);
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            Logger::warning(
+                LogCategory::AssetProcessing,
+                'Local color extraction failed: ' . $e->getMessage(),
+                assetId: $asset->id,
+            );
+        }
+
         // AI call is external HTTP — keep outside transaction to avoid long-held locks
         $result = Plugin::getInstance()->aiProvider->analyzeAsset($asset, $primaryLanguage, $additionalLanguages);
         $settings = $this->getSettings();
@@ -441,7 +465,7 @@ class AssetAnalysisService extends Component
 
             // Sync tags and colors to indexed tables (respects user-added items)
             $this->syncTagsFromAiResult($record, $result->tags);
-            $this->syncColorsFromAiResult($record, $result->dominantColors);
+            $this->syncColorsFromAiResult($record, $localColors);
 
             // Save per-site content (translated alt text and title for non-primary sites)
             if (!empty($sites) && !empty($result->siteContent)) {
