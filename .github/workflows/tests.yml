@@ -62,6 +62,9 @@ jobs:
           DEFAULT_SITE_URL="https://test.craftcms.test/"
           EOF
 
+      - name: Create test directories
+        run: mkdir -p tests/_craft/storage/logs tests/_craft/templates tests/_craft/migrations tests/_craft/translations tests/_output tests/_data
+
       - name: Build Codeception actors
         run: php vendor/bin/codecept build
 
