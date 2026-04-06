@@ -8,3 +8,9 @@
 .claude
 /docs
 /.specify
+
+# Tests
+tests/.env
+tests/_output/
+tests/_support/_generated/
+tests/_craft/storage/

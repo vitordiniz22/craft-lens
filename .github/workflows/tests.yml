@@ -1,0 +1,75 @@
+name: Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: lens_test
+          MYSQL_USER: db
+          MYSQL_PASSWORD: db
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, intl, pdo_mysql, gd, imagick
+          coverage: none
+
+      - name: Get Composer cache dir
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Create test .env
+        run: |
+          cat > tests/.env << 'EOF'
+          CRAFT_DB_DSN="mysql:host=127.0.0.1;port=3306;dbname=lens_test"
+          CRAFT_DB_USER="db"
+          CRAFT_DB_PASSWORD="db"
+          CRAFT_DB_SCHEMA=""
+          CRAFT_DB_TABLE_PREFIX=""
+          SECURITY_KEY="ci-test-security-key"
+          DEFAULT_SITE_URL="https://test.craftcms.test/"
+          EOF
+
+      - name: Build Codeception actors
+        run: php vendor/bin/codecept build
+
+      - name: Run unit tests
+        run: php vendor/bin/codecept run unit --ansi
+
+      - name: Run integration tests
+        run: php vendor/bin/codecept run integration --ansi
+
+      - name: Run functional tests
+        run: php vendor/bin/codecept run functional --ansi
