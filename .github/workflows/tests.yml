@@ -25,9 +25,6 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=3
-          --default-authentication-plugin=mysql_native_password
-          --character-set-server=utf8mb4
-          --collation-server=utf8mb4_unicode_ci
 
     steps:
       - uses: actions/checkout@v4
@@ -64,6 +61,10 @@ jobs:
           SECURITY_KEY="ci-test-security-key"
           DEFAULT_SITE_URL="https://test.craftcms.test/"
           EOF
+
+      - name: Configure test database charset
+        run: |
+          mysql -h 127.0.0.1 -u root -proot -e "ALTER DATABASE lens_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 
       - name: Create test directories
         run: mkdir -p tests/_craft/storage/logs tests/_craft/templates tests/_craft/migrations tests/_craft/translations tests/_output tests/_data
