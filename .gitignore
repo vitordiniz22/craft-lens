@@ -7,7 +7,9 @@
 /vendor
 .claude
 /docs
+
 /.specify
+/specs
 
 # Tests
 tests/.env
