@@ -161,7 +161,7 @@ abstract class BaseAiProvider implements AiProviderInterface
         $instructions[] = '    0.8-1.0: Extreme content (pornography, extreme gore, torture)';
         $instructions[] = '  IMPORTANT: When MULTIPLE concerning elements appear together, scores should COMPOUND. For example: shirtless person (0.25) + suggestive objects/restraints (0.2) + dark unsettling composition (0.15) together should score at least 0.4-0.5, not just 0.25.';
         $instructions[] = '- "nsfwConfidence": How confident you are in your nsfwScore assessment (0.0-1.0). Should be HIGH (0.8-1.0) when content is clearly safe OR clearly unsafe. Should be LOW (0.3-0.6) only when the image is genuinely ambiguous (e.g., borderline suggestive content, artistic nudity, fantasy violence)';
-        $instructions[] = '- "nsfwCategories": Array of objects with "category" (one of: adult, violence, hate, self-harm, sexual-minors, drugs) and "confidence" (0.0-1.0). Only include categories with confidence > 0.1';
+        $instructions[] = '- "nsfwCategories": Array of objects with "category" (one of: adult, violence, hate, self-harm, sexual, drugs) and "confidence" (0.0-1.0). Only include categories with confidence > 0.1';
         $instructions[] = '  Violence category should include: fighting, weapons (guns, knives, swords), blood, injuries, physical assault, warfare, dead bodies, torture';
         $instructions[] = '  Adult category should include: nudity, sexual content, suggestive poses, intimate acts, revealing clothing, shirtless individuals';
         $instructions[] = '- "hasWatermark": Whether the image contains any visible watermark (boolean)';

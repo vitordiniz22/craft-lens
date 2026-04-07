@@ -142,8 +142,6 @@ class LensAnalysisElement extends BaseUiElement
                     ) : [],
                 ]
             );
-        // Catch all errors to prevent analysis panel failures from breaking asset edit pages.
-        // The panel is non-critical UI; a render error should degrade gracefully, not crash the editor.
         } catch (\Throwable $e) {
             Logger::error(LogCategory::AssetProcessing, "Analysis panel render error: {$e->getMessage()}", $element->id, $e);
             return '<div class="lens-analysis-panel"><p class="error">'

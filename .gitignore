@@ -1,3 +1,4 @@
+# General
 *.DS_Store
 *.idea/*
 *.log
@@ -5,10 +6,13 @@
 .env
 /node_modules
 /vendor
-.claude
-.worktreeinclude
-/docs
 
+# Claude
+.claude
+Claude.md
+.worktreeinclude
+
+# Speckit
 /.specify
 /specs
 

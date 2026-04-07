@@ -32,6 +32,24 @@
 } only %}
 
 {# Watermark Detection Toggle #}
+{% set wmDetails = analysis.watermarkDetails is iterable ? analysis.watermarkDetails : {} %}
+{% set wmTypeChip = null %}
+
+{% if analysis.watermarkType and analysis.watermarkType != 'unknown' %}
+    {% set wmTypeLabels = { 'stock': 'Stock Photo'|t('lens'), 'logo': 'Logo'|t('lens'), 'text': 'Text'|t('lens'), 'copyright': 'Copyright'|t('lens') } %}
+    {% set wmTypeChip = wmTypeLabels[analysis.watermarkType] ?? analysis.watermarkType|capitalize %}
+    
+    {% if analysis.watermarkType == 'stock' and wmDetails.stockProvider is defined and wmDetails.stockProvider %}
+        {% set wmTypeChip = wmTypeChip ~ ' · ' ~ wmDetails.stockProvider %}
+    {% endif %}
+{% endif %}
+
+{% set wmChips = wmTypeChip ? [wmTypeChip] : [] %}
+
+{% if wmDetails.position is defined and wmDetails.position %}
+    {% set wmChips = wmChips|merge([wmDetails.position|capitalize]) %}
+{% endif %}
+
 {% include 'lens/_components/analysis/detection-toggle-field' with {
     icon: 'droplet',
     fieldName: 'hasWatermark',
@@ -46,10 +64,7 @@
     falseValue: 0,
     confidence: analysis.watermarkConfidence ?? null,
     hideConfidence: hideConfidence ?? false,
-    details: (analysis.watermarkType and analysis.watermarkType != 'unknown') ? [
-        ({ 'stock': 'Stock Photo'|t('lens'), 'logo': 'Logo'|t('lens'), 'text': 'Text'|t('lens'), 'copyright': 'Copyright'|t('lens') }[analysis.watermarkType] ?? analysis.watermarkType|capitalize)
-        ~ ((analysis.watermarkType == 'stock' and analysis.watermarkDetails.stockProvider is defined) ? ' · ' ~ analysis.watermarkDetails.stockProvider : '')
-    ] : []
+    details: wmChips
 } only %}
 
 {# Brand Detection Toggle #}

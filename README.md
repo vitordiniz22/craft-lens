@@ -53,7 +53,7 @@ Choose your AI provider (**OpenAI**, **Google Gemini**, or **Anthropic Claude**)
 
 - **Faces and people** with 6-tier detection: no people, no faces, individual, duo, small group, large group
 - **NSFW scoring** with category breakdown (adult, violence, hate, self-harm, drugs) to catch unsafe content before it goes live
-- **Watermarks** identified by type (text overlay, logo, stock provider) and position to flag assets that shouldn't be published
+- **Watermarks** identified by type (text, logo, stock, copyright) and position to flag assets that shouldn't be published
 - **Brand/logo recognition** to instantly find every asset featuring a specific brand
 - **Stock photo detection** to identify which assets came from stock providers
 - **OCR** extracts text directly from images, fully searchable
@@ -62,7 +62,7 @@ Choose your AI provider (**OpenAI**, **Google Gemini**, or **Anthropic Claude**)
 
 ### Quality & Assessment
 
-- **Image quality analysis** covering sharpness, brightness, contrast, noise, JPEG compression quality, and color profile detection via Imagick
+- **Image quality analysis** covering sharpness, brightness, contrast, JPEG compression quality, and color profile detection via Imagick
 - **Web readiness** flags oversized files, low resolutions, and unsupported formats so you can fix them before they slow down your site
 - **Text-in-image detection** flags images with embedded text as an accessibility reminder
 - **Focal point detection** automatically sets the focal point on the primary subject so Craft's image transforms crop around what matters
@@ -75,7 +75,7 @@ Choose your AI provider (**OpenAI**, **Google Gemini**, or **Anthropic Claude**)
 - **Bulk Processing** to analyze entire volumes with real-time progress tracking, cost estimation, and retry for failed assets
 - **Confidence thresholds** flag low-confidence results so you can focus review time where it matters
 
-[[Image: Review Queue Focus View. Show the two-panel layout with a large image preview on the left (focal point crosshair visible if possible), and the right panel displaying editable title, alt text, long description, tag chips, color swatches, and the approve/skip/reject buttons. The keyboard shortcut hints (A/S/R) should be visible in the toolbar area. Pick an asset with rich metadata to showcase the depth of analysis.]]
+[[Image: Review Queue Focus View. Show the two-panel layout with a large image preview on the left (focal point crosshair visible if possible), and the right panel displaying editable title, alt text, long description, tag chips, color swatches, and the approve/reject buttons. Pick an asset with rich metadata to showcase the depth of analysis.]]
 
 [[Image: Bulk Processing. Show the processing-in-progress state with the progress bar partially filled (e.g. "Processing 34 of 127"), the cost estimate visible, and the volume selector dropdown. This shows the scale of what Pro can handle.]]
 
@@ -88,7 +88,7 @@ Choose your AI provider (**OpenAI**, **Google Gemini**, or **Anthropic Claude**)
 
 ## Editions
 
-Lens is available in two editions. **Lite** is free and includes AI analysis for every image (alt text, titles, descriptions, colors, focal points, people and content detection), auto-processing on upload, the analysis panel, multisite translations, 23 asset query methods, and 10 condition rules. **Pro** adds semantic tags, OCR text extraction, the Asset Browser, Review Queue, Bulk Processing, duplicate detection, enhanced asset search, and 2 additional condition rules.
+Lens is available in two editions. **Lite** is free and includes AI analysis for every image (alt text, titles, descriptions, colors, focal points, people and content detection), auto-processing on upload, the analysis panel, multisite translations, 23 asset query methods, and 10 condition rules. **Pro** adds semantic tags, OCR text extraction, the Asset Browser, Review Queue, Bulk Processing, duplicate detection, enhanced asset search, 5 additional query methods, and 2 additional condition rules.
 
 Available on the [Craft Plugin Store](https://plugins.craftcms.com/lens).
 
@@ -96,7 +96,7 @@ Available on the [Craft Plugin Store](https://plugins.craftcms.com/lens).
 
 - **Craft CMS** 5.0.0 or later
 - **PHP** 8.2 or later
-- **MySQL** 8.0+
+- **MySQL** 8.0+, **MariaDB** 10.6+, or **PostgreSQL** 14+
 - An API key from one of: [OpenAI](https://platform.openai.com/), [Google AI](https://ai.google.dev/), or [Anthropic](https://www.anthropic.com/)
 - **Imagick PHP extension** (recommended) enables local quality analysis (sharpness, brightness, contrast, JPEG quality, color profile detection). Without it, the Quality section is hidden and only Web Readiness checks are shown.
 

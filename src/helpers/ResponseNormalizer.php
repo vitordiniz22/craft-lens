@@ -14,7 +14,7 @@ use vitordiniz22\craftlens\exceptions\AnalysisException;
  */
 final class ResponseNormalizer
 {
-    private const VALID_NSFW_CATEGORIES = ['adult', 'violence', 'hate', 'self-harm', 'sexual-minors', 'drugs'];
+    private const VALID_NSFW_CATEGORIES = ['adult', 'violence', 'hate', 'self-harm', 'sexual', 'drugs'];
     private const VALID_WATERMARK_TYPES = ['stock', 'logo', 'text', 'copyright', 'unknown'];
     /**
      * Normalize tags from API response.
