@@ -40,39 +40,6 @@ final class ResponseNormalizer
     }
 
     /**
-     * Normalize colors from API response.
-     *
-     * @param array $colors Raw colors from API
-     * @param string $providerName Provider name for error messages
-     * @return array<array{hex: string, percentage: float}>
-     * @throws AnalysisException If color structure is invalid
-     */
-    public static function normalizeColors(array $colors, string $providerName): array
-    {
-        $normalized = self::normalizeItems(
-            $colors,
-            $providerName,
-            'Color',
-            'hex',
-            'percentage',
-            function($color) {
-                $hex = $color['hex'];
-
-                if (!str_starts_with($hex, '#')) {
-                    $hex = '#' . $hex;
-                }
-
-                return [
-                    'hex' => strtoupper($hex),
-                    'percentage' => self::clampConfidence($color['percentage'] ?? 0.0),
-                ];
-            }
-        );
-
-        return array_slice($normalized, 0, 6);
-    }
-
-    /**
      * Normalize NSFW categories from API response.
      *
      * @param array $categories Raw NSFW categories from API

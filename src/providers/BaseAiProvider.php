@@ -256,7 +256,6 @@ abstract class BaseAiProvider implements AiProviderInterface
             suggestedTitle: $data['suggestedTitle'] ?? '',
             titleConfidence: (float) ($data['titleConfidence'] ?? 0.0),
             tags: ResponseNormalizer::normalizeTags($data['tags'] ?? [], $this->getName()),
-            dominantColors: ResponseNormalizer::normalizeColors($data['dominantColors'] ?? [], $this->getName()),
             extractedText: $data['extractedText'] ?? null,
             faceCount: (int) ($data['faceCount'] ?? 0),
             containsPeople: (bool) ($data['containsPeople'] ?? false),

@@ -21,7 +21,6 @@ readonly class AnalysisResult
      * @param string $suggestedTitle Generated title (2-6 words, Title Case)
      * @param float $titleConfidence Confidence score for title (0.0 - 1.0)
      * @param array<array{tag: string, confidence: float}> $tags Detected tags with confidence scores
-     * @param array<array{hex: string, percentage: float}> $dominantColors Detected colors with percentages
      * @param string|null $extractedText Visible text detected in image (signs, labels, etc.)
      * @param int $faceCount Number of faces/people detected
      * @param bool $containsPeople Whether the image contains people
@@ -51,7 +50,6 @@ readonly class AnalysisResult
         public string $suggestedTitle,
         public float $titleConfidence,
         public array $tags,
-        public array $dominantColors,
         public ?string $extractedText,
         public int $faceCount,
         public bool $containsPeople,
@@ -92,7 +90,6 @@ readonly class AnalysisResult
             'suggestedTitle' => $this->suggestedTitle,
             'titleConfidence' => $this->titleConfidence,
             'tags' => $this->tags,
-            'dominantColors' => $this->dominantColors,
             'extractedText' => $this->extractedText,
             'faceCount' => $this->faceCount,
             'containsPeople' => $this->containsPeople,
@@ -140,7 +137,6 @@ readonly class AnalysisResult
             suggestedTitle: '',
             titleConfidence: 0.0,
             tags: [],
-            dominantColors: [],
             extractedText: null,
             faceCount: 0,
             containsPeople: false,
