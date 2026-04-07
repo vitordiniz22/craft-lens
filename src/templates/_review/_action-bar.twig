@@ -7,8 +7,8 @@
  #}
 <div class="lens-review-action-bar">
     {% if prevId %}
-        <a href="{{ cpUrl('lens/review/' ~ prevId) }}" class="btn">
-            &larr; {{ 'Previous'|t('lens') }}
+        <a href="{{ cpUrl('lens/review/' ~ prevId) }}" class="btn" data-lens-action="review-prev">
+            <kbd>&larr;</kbd> {{ 'Previous'|t('lens') }}
         </a>
     {% endif %}
 
@@ -23,8 +23,8 @@
     </button>
 
     {% if nextId %}
-        <a href="{{ cpUrl('lens/review/' ~ nextId) }}" class="btn">
-            {{ 'Next'|t('lens') }} &rarr;
+        <a href="{{ cpUrl('lens/review/' ~ nextId) }}" class="btn" data-lens-action="review-next">
+            {{ 'Next'|t('lens') }} <kbd>&rarr;</kbd>
         </a>
     {% endif %}
 </div>

@@ -24,7 +24,7 @@
         },
 
         // ================================================================
-        // Keyboard Shortcuts: A (approve), R (reject)
+        // Keyboard Shortcuts: ← (prev), → (next), A (approve), R (reject)
         // ================================================================
 
         _bindKeyboardShortcuts: function() {
@@ -35,13 +35,29 @@
                 var key = e.key.toLowerCase();
 
                 if (key === 'a') {
-                    e.preventDefault();
-                    var approveBtn = document.querySelector('[data-lens-action="review-approve"]');
-                    if (approveBtn && !approveBtn.disabled) approveBtn.click();
+                    var approveBtn = DOM.findAction('review-approve');
+                    if (approveBtn && !approveBtn.disabled) {
+                        e.preventDefault();
+                        approveBtn.click();
+                    }
                 } else if (key === 'r') {
-                    e.preventDefault();
-                    var rejectBtn = document.querySelector('[data-lens-action="review-reject"]');
-                    if (rejectBtn && !rejectBtn.disabled) rejectBtn.click();
+                    var rejectBtn = DOM.findAction('review-reject');
+                    if (rejectBtn && !rejectBtn.disabled) {
+                        e.preventDefault();
+                        rejectBtn.click();
+                    }
+                } else if (key === 'arrowleft') {
+                    var prevLink = DOM.findAction('review-prev');
+                    if (prevLink) {
+                        e.preventDefault();
+                        prevLink.click();
+                    }
+                } else if (key === 'arrowright') {
+                    var nextLink = DOM.findAction('review-next');
+                    if (nextLink) {
+                        e.preventDefault();
+                        nextLink.click();
+                    }
                 }
             });
         },

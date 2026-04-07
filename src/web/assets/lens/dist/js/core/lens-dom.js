@@ -112,6 +112,17 @@
         },
 
         /**
+         * Find element with data-lens-action attribute
+         * @param {string} actionName - Action name (value of data-lens-action)
+         * @param {HTMLElement} [context=document] - Context to search within
+         * @returns {HTMLElement|null} Found element or null
+         */
+        findAction: function(actionName, context) {
+            context = context || document;
+            return context.querySelector('[data-lens-action="' + actionName + '"]');
+        },
+
+        /**
          * Enter edit mode pattern - hide display, show edit
          * Replaces 11+ instances of manual show/hide logic
          * @param {HTMLElement} container - Container element
