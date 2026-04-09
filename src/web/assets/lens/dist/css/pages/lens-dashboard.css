@@ -22,6 +22,11 @@
     padding: 10px;
 }
 
+.lens-dashboard-section--flush {
+    padding-left: 0;
+    padding-right: 0;
+}
+
 .lens-dashboard-section__body {
     display: flex;
     flex-direction: column;
@@ -31,6 +36,11 @@
 @media (min-width: 768px) {
     .lens-dashboard-section {
         padding: 20px;
+    }
+
+    .lens-dashboard-section--flush {
+        padding-left: 0;
+        padding-right: 0;
     }
 
     .lens-dashboard-section__body {

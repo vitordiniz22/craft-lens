@@ -1,7 +1,7 @@
 {# Section 1: Needs Attention - only shows when issues exist #}
 {% if attentionItems|length %}
 {% set colorMap = {red: 'error', amber: 'warning', blue: 'info'} %}
-<div class="lens-dashboard-section">
+<div class="lens-dashboard-section lens-dashboard-section--flush">
     <div class="lens-section-header">
         <h2 class="lens-section-header__title">{{ 'Needs Attention'|t('lens') }}</h2>
     </div>
