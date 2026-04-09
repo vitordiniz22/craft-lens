@@ -19,7 +19,8 @@
 {# Unified field state: readonly (no editing), unlocked (edit pencil + save/cancel), editing (review page) #}
 {% set fieldState = (readOnly or isProcessing) ? 'readonly' : 'unlocked' %}
 {% set hideConfidence = analysis is not null and (
-    analysis.status in [lens.status.completed, lens.status.approved]
+    isProcessing
+    or analysis.status in [lens.status.completed, lens.status.approved]
     or (not lens.isReviewActive and analysis.status == lens.status.pendingReview)
 ) %}
 {% set hasExistingData = analysis and (
@@ -35,7 +36,7 @@
 {% if not lens.isReviewActive and displayStatus in [lens.status.pendingReview, lens.status.approved, lens.status.rejected] %}
     {% set displayStatus = lens.status.completed %}
 {% endif %}
-<div class="lens-analysis-panel" data-lens-target="analysis-panel" data-lens-asset-id="{{ asset.id }}" data-lens-analysis-status="{{ displayStatus }}">
+<div class="lens-analysis-panel{% if isProcessing %} lens-analysis-panel--processing{% endif %}" data-lens-target="analysis-panel" data-lens-asset-id="{{ asset.id }}" data-lens-analysis-status="{{ displayStatus }}">
 
     {% set isSecondarySite = currentSiteId != (primarySiteId ?? craft.app.sites.primarySite.id) %}
 
@@ -64,13 +65,12 @@
     {% endif %}
 
     {% if not isSecondarySite %}
-        {# Processing banner #}
-        {% if isProcessing %}
-            {% include 'lens/_components/analysis/processing-banner' with {
-                isReprocessing: isReprocessing,
-                hasExistingData: hasExistingData
-            } %}
-        {% endif %}
+        {# Processing banner — always rendered, shown/hidden via data attribute #}
+        {% include 'lens/_components/analysis/processing-banner' with {
+            isReprocessing: isReprocessing,
+            hasExistingData: hasExistingData,
+            isVisible: isProcessing
+        } %}
 
         {# ============================================ #}
         {# ERROR DISPLAY - MOVED TO TOP FOR VISIBILITY #}
@@ -142,7 +142,7 @@
 
         {# Section 1: Description (title/alt — shown on all sites, description hidden on secondary) #}
         {% if analysis.status not in [lens.status.failed] and (not isProcessing or isReprocessing) %}
-            <div class="lens-section">
+            <div class="lens-section" data-lens-target="section">
                 {% include 'lens/_components/analysis/_section-header' with {
                     title: 'Description'|t('lens'),
                     intro: 'Ready-to-use metadata for accessibility and search.'|t('lens')
@@ -277,13 +277,12 @@
                 } %}
             {% endif %}
         {% else %}
-            <div class="lens-empty-analysis">
+            <div class="lens-empty-analysis" data-lens-target="empty-analysis">
                 <p class="light">{{ 'This image has not been analyzed yet.'|t('lens') }}</p>
 
                 {% if not static %}
-                    <button type="button" class="btn submit" data-lens-action="analyze" data-lens-asset-id="{{ asset.id }}" data-lens-loading-text="{{ 'Processing'|t('lens') }}">
-                        <div class="spinner"></div>
-                        <span class="label" data-lens-target="button-label">{{ 'Analyze Now'|t('lens') }}</span>
+                    <button type="button" class="btn submit" data-lens-action="analyze" data-lens-asset-id="{{ asset.id }}">
+                        {{ 'Analyze Now'|t('lens') }}
                     </button>
                 {% endif %}
             </div>

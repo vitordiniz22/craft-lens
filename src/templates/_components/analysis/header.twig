@@ -10,11 +10,11 @@
             <label class="alt-label">{{ svg(craft.app.plugins.getPlugin('lens').basePath ~ '/icon.svg')|attr({width: 16, height: 16}) }} {{ 'Lens Analysis'|t('lens') }}</label>
         </div>
     </div>
-    <div class="flex items-center gap-s">
+    <div class="flex items-center gap-s" data-lens-target="header-actions">
         {% if analysis %}
             {% set showStatus = lens.isReviewActive or analysis.status in [lens.status.pending, lens.status.processing, lens.status.failed] %}
             {% if showStatus %}
-                <div class="flex items-center gap-2xs">
+                <div class="flex items-center gap-2xs" data-lens-target="status-badge">
                     {% switch analysis.status %}
                         {% case lens.status.pending %}
                             <span class="status"></span>{{ 'Pending'|t('lens') }}

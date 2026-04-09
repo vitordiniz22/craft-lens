@@ -1,13 +1,16 @@
 {#
  # Processing Banner
  # Shows processing state with appropriate messaging for initial vs. reprocessing.
+ # Always rendered in DOM; visibility controlled by isVisible flag.
  #
  # Expected variables:
  # - isReprocessing: boolean - true if existing data is being reprocessed
  # - hasExistingData: boolean - true if analysis has existing content
+ # - isVisible: boolean - whether the banner is currently shown
  #}
 
-<div class="lens-processing-banner">
+{% set isVisible = isVisible ?? false %}
+<div class="lens-processing-banner" data-lens-target="processing-banner"{% if not isVisible %} hidden{% endif %}>
     <div class="lens-processing-banner-content">
         <div class="lens-processing-spinner">
             <svg class="lens-spinner-icon" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
@@ -15,7 +18,7 @@
             </svg>
         </div>
         <div class="lens-processing-text">
-            {% if isReprocessing %}
+            {% if isReprocessing or hasExistingData %}
                 <strong>{{ 'Re-analyzing asset'|t('lens') }}</strong>
                 <p class="smalltext">{{ 'Current data is visible but locked during processing. The page will refresh when complete.'|t('lens') }}</p>
             {% else %}

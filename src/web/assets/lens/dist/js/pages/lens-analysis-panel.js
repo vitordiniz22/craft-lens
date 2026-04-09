@@ -103,14 +103,13 @@
 
             const assetId = btn.dataset.lensAssetId;
             const loadingText = btn.dataset.lensLoadingText;
+            var self = this;
 
             var restoreBtn = window.Lens.core.ButtonState.setLoading(
                 btn,
                 loadingText,
                 { labelSelector: '[data-lens-target="button-label"]', loadingClass: 'loading' },
             );
-
-            var label = btn.querySelector('[data-lens-target="button-label"]');
 
             window.Lens.core.API.post('lens/analysis/reprocess', {
                 assetId: assetId,
@@ -122,10 +121,7 @@
                         );
 
                         Craft.cp.runQueue();
-
-                        if (label) {
-                            label.textContent = Craft.t('lens', 'Analyzing');
-                        }
+                        self._enterProcessingState();
 
                         window.Lens.services.AssetProcessing.poll(assetId, {
                             onError: function() {
@@ -143,6 +139,53 @@
                     restoreBtn();
                     Craft.cp.displayError(Craft.t('lens', 'Failed to start analysis. Please try again.'));
                 });
+        },
+
+        /**
+         * Transition the analysis panel to a locked processing state.
+         * Called after the reprocess API call succeeds, shows the processing
+         * banner, hides edit triggers, and dims section content until the
+         * page auto-reloads on completion.
+         */
+        _enterProcessingState: function () {
+            const panel = document.querySelector('[data-lens-target="analysis-panel"]');
+
+            if (!panel) return;
+
+            const banner = panel.querySelector('[data-lens-target="processing-banner"]');
+            const reprocessBtn = panel.querySelector('[data-lens-action="reprocess"]');
+            const emptyState = panel.querySelector('[data-lens-target="empty-analysis"]');
+            const statusBadge = panel.querySelector('[data-lens-target="status-badge"]');
+            const actionsContainer = panel.querySelector('[data-lens-target="header-actions"]');
+
+            panel.dataset.lensAnalysisStatus = window.Lens.config.STATUS.PROCESSING;
+            panel.classList.add('lens-analysis-panel--processing');
+
+            if (banner) {
+                banner.removeAttribute('hidden');
+            }
+
+            if (reprocessBtn) {
+                reprocessBtn.style.display = 'none';
+            }
+
+            if (emptyState) {
+                emptyState.style.display = 'none';
+            }
+
+            if (statusBadge) {
+                statusBadge.innerHTML =
+                    '<span class="status pending"></span>' +
+                    Craft.t('lens', 'Processing');
+            } else if (actionsContainer) {
+                const badge = document.createElement('div');
+                badge.className = 'flex items-center gap-2xs';
+                badge.dataset.lensTarget = 'status-badge';
+                badge.innerHTML =
+                    '<span class="status pending"></span>' +
+                    Craft.t('lens', 'Processing');
+                actionsContainer.insertBefore(badge, actionsContainer.firstChild);
+            }
         },
 
         _handleApplyTitle: function (e, btn) {
