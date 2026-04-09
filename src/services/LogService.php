@@ -14,6 +14,7 @@ use vitordiniz22\craftlens\jobs\BulkAnalyzeAssetsJob;
 use vitordiniz22\craftlens\Plugin;
 use vitordiniz22\craftlens\records\LogRecord;
 use yii\base\Component;
+use yii\db\IntegrityException;
 
 /**
  * Service for structured logging to both the database and Craft's file logger.
@@ -77,7 +78,14 @@ class LogService extends Component
         $record->requestPayload = $requestPayload;
         $record->responsePayload = $responsePayload;
 
-        $record->save(false);
+        try {
+            $record->save(false);
+        } catch (IntegrityException $e) {
+            if ($assetId !== null) {
+                $record->assetId = null;
+                $record->save(false);
+            }
+        }
     }
 
     public function info(string $category, string $message, ?int $assetId = null, ?array $context = null): void
