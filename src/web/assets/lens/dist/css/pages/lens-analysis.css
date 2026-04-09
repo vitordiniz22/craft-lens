@@ -129,48 +129,6 @@
     container-type: inline-size;
 }
 
-/* ==========================================================================
-   Processing Banner
-   ========================================================================== */
-
-.lens-processing-banner {
-    padding: 12px 16px;
-    background: var(--gray-050);
-    border: 1px solid var(--hairline-color);
-    border-radius: var(--medium-border-radius);
-}
-
-.lens-processing-banner-content {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-}
-
-.lens-processing-spinner {
-    flex-shrink: 0;
-    margin-top: 2px;
-}
-
-
-.lens-spinner-icon {
-    color: var(--ui-control-color);
-    animation: lens-spin 1s linear infinite;
-}
-
-.lens-processing-text strong {
-    display: block;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-color);
-    margin-bottom: 4px;
-}
-
-.lens-processing-text p {
-    margin: 0;
-    color: var(--medium-text-color);
-    line-height: 1.5;
-}
-
 /* Processing modifier — lock panel and hide edit triggers */
 .lens-analysis-panel--processing .lens-edit-trigger,
 .lens-analysis-panel--processing .lens-revert-trigger,

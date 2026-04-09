@@ -140,8 +140,17 @@
             {% endif %}
         {% endif %}
 
+        {# Pending state — analysis queued but not yet processed #}
+        {% if analysis.status == lens.status.pending %}
+            {% include 'lens/_components/inline-notice' with {
+                type: 'info',
+                title: 'Awaiting Analysis'|t('lens'),
+                message: 'This image is queued for analysis. Results will appear here once processing is complete.'|t('lens'),
+            } %}
+        {% endif %}
+
         {# Section 1: Description (title/alt — shown on all sites, description hidden on secondary) #}
-        {% if analysis.status not in [lens.status.failed] and (not isProcessing or isReprocessing) %}
+        {% if analysis.status not in [lens.status.pending, lens.status.failed] and (not isProcessing or isReprocessing) %}
             <div class="lens-section" data-lens-target="section">
                 {% include 'lens/_components/analysis/_section-header' with {
                     title: 'Description'|t('lens'),
@@ -189,7 +198,7 @@
             {% endif %}
 
             {# Section 3: Image Assessment #}
-            {% if analysis.status not in [lens.status.failed] and (not isProcessing or isReprocessing) %}
+            {% if analysis.status not in [lens.status.pending, lens.status.failed] and (not isProcessing or isReprocessing) %}
                 {% set wrStatus = (webReadiness ?? {}).overallStatus ?? 'pass' %}
                 {% set hasQualityWarning = false %}
                 {% set hasQualityError = false %}
@@ -217,7 +226,7 @@
             {% endif %}
 
             {# Section 4: Content Safety #}
-            {% if analysis.status not in [lens.status.failed] and (not isProcessing or isReprocessing) %}
+            {% if analysis.status not in [lens.status.pending, lens.status.failed] and (not isProcessing or isReprocessing) %}
                 {% set safetyBadge = analysis.isFlaggedNsfw ? 'error'
                     : ((analysis.nsfwScore is defined and analysis.nsfwScore >= 0.2) ? 'warning' : null) %}
                 <div class="lens-section">
@@ -236,7 +245,7 @@
             {% endif %}
 
             {# Section 5: Extracted Text #}
-            {% if lens.isPro and analysis.status not in [lens.status.failed] and (not isProcessing or isReprocessing) %}
+            {% if lens.isPro and analysis.status not in [lens.status.pending, lens.status.failed] and (not isProcessing or isReprocessing) %}
                 <div class="lens-section">
                     {% include 'lens/_components/analysis/_section-header' with {
                         title: 'Extracted Text'|t('lens'),
