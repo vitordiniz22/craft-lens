@@ -165,9 +165,9 @@ class SetupStatusService extends Component
         $settings = $this->getSettings();
 
         return match ($settings->getAiProviderEnum()) {
-            AiProvider::OpenAi => !empty($settings->getOpenaiApiKey()),
-            AiProvider::Gemini => !empty($settings->getGeminiApiKey()),
-            AiProvider::Claude => !empty($settings->getClaudeApiKey()),
+            AiProvider::OpenAi => $settings->hasApiKey('openaiApiKey'),
+            AiProvider::Gemini => $settings->hasApiKey('geminiApiKey'),
+            AiProvider::Claude => $settings->hasApiKey('claudeApiKey'),
         };
     }
 

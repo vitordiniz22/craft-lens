@@ -7,6 +7,7 @@ namespace vitordiniz22\craftlens\models;
 use Craft;
 use craft\base\Model;
 use craft\helpers\App;
+use craft\errors\MissingComponentException;
 use vitordiniz22\craftlens\enums\AiProvider;
 
 /**
@@ -51,9 +52,12 @@ class Settings extends Model
             [['aiProvider'], 'in', 'range' => array_column(AiProvider::cases(), 'value')],
 
             // Provider API keys (conditionally required)
-            [['openaiApiKey'], 'required', 'when' => fn() => $this->aiProvider === AiProvider::OpenAi->value],
-            [['geminiApiKey'], 'required', 'when' => fn() => $this->aiProvider === AiProvider::Gemini->value],
-            [['claudeApiKey'], 'required', 'when' => fn() => $this->aiProvider === AiProvider::Claude->value],
+            [['openaiApiKey'], 'required', 'when' => fn() => $this->aiProvider === AiProvider::OpenAi->value,
+                'message' => Craft::t('lens', 'Add your OpenAI API key or set the $OPENAI_API_KEY environment variable.')],
+            [['geminiApiKey'], 'required', 'when' => fn() => $this->aiProvider === AiProvider::Gemini->value,
+                'message' => Craft::t('lens', 'Add your Gemini API key or set the $GEMINI_API_KEY environment variable.')],
+            [['claudeApiKey'], 'required', 'when' => fn() => $this->aiProvider === AiProvider::Claude->value,
+                'message' => Craft::t('lens', 'Add your Claude API key or set the $ANTHROPIC_API_KEY environment variable.')],
             [['claudeModel'], 'required', 'when' => fn() => $this->aiProvider === AiProvider::Claude->value],
             [['claudeModel'], 'in', 'range' => self::CLAUDE_MODELS],
             [['openaiModel'], 'required', 'when' => fn() => $this->aiProvider === AiProvider::OpenAi->value],
@@ -111,11 +115,33 @@ class Settings extends Model
     }
 
     /**
+     * Checks whether a given API key property resolves to a non-empty value.
+     */
+    public function hasApiKey(string $property): bool
+    {
+        $value = App::parseEnv($this->{$property});
+
+        return $value !== null && $value !== '';
+    }
+
+    /**
      * Returns a parsed API key for a given property, supporting environment variables.
      */
     private function getApiKey(string $property): string
     {
-        return App::parseEnv($this->{$property});
+        $value = App::parseEnv($this->{$property});
+
+        if ($value === null || $value === '') {
+            $provider = $this->getAiProviderEnum()->label();
+
+            throw new MissingComponentException(
+                Craft::t('lens', '{provider} API key is not configured. Add it to your .env file or enter it directly in the API key field.', [
+                    'provider' => $provider,
+                ])
+            );
+        }
+
+        return $value;
     }
 
     /**

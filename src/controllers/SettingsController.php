@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace vitordiniz22\craftlens\controllers;
 
 use Craft;
+use craft\helpers\App;
 use craft\web\Controller;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\Logger;
+use vitordiniz22\craftlens\models\Settings;
 use vitordiniz22\craftlens\Plugin;
 use yii\web\Response;
 
@@ -26,9 +28,12 @@ class SettingsController extends Controller
         $plugin = Plugin::getInstance();
         $volumeOptions = $this->getVolumeOptions();
 
+        $settings = $plugin->getSettings();
+        $this->validateUnresolvedApiKey($settings);
+
         return $this->renderTemplate('lens/_settings/index', [
             'plugin' => $plugin,
-            'settings' => $plugin->getSettings(),
+            'settings' => $settings,
             'volumeOptions' => $volumeOptions,
         ]);
     }
@@ -90,6 +95,26 @@ class SettingsController extends Controller
         Craft::$app->getSession()->setNotice(Craft::t('lens', 'Settings saved.'));
 
         return $this->redirectToPostedUrl();
+    }
+
+    /**
+     * Adds a field error when the API key field has a value (e.g. an env var reference)
+     * that doesn't resolve. Skips empty fields (fresh install).
+     */
+    private function validateUnresolvedApiKey(Settings $settings): void
+    {
+        $property = match ($settings->aiProvider) {
+            'openai' => 'openaiApiKey',
+            'gemini' => 'geminiApiKey',
+            'claude' => 'claudeApiKey',
+            default => null,
+        };
+
+        $raw = $property ? $settings->{$property} : '';
+
+        if ($raw !== '' && App::parseEnv($raw) === null) {
+            $settings->addError($property, Craft::t('lens', 'The configured environment variable could not be resolved. Check that it is set in your .env file.'));
+        }
     }
 
     private function getVolumeOptions(): array

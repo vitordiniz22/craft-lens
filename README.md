@@ -19,15 +19,15 @@
 
 Lens uses AI to automatically analyze every image in your asset library, generating alt text, titles, descriptions, semantic tags, color palettes, focal points, and more. It detects faces, flags NSFW content, spots watermarks, identifies brands, extracts text via OCR, and finds duplicate images across your library.
 
-Choose your AI provider (**OpenAI**, **Google Gemini**, or **Anthropic Claude**) and turn your asset library from a pile of `IMG_4382.jpg` files into an organized, accessible, and fully searchable media system. Everything Lens generates is editable, reviewable, and queryable directly from your Twig templates.
+Choose your AI provider (**OpenAI**, **Google Gemini**, or **Anthropic Claude**) and turn your asset library from bare-bones metadata into an organized, accessible, and fully searchable media system. All generated metadata is instantly searchable, and fully editable when you need to refine it.
 
 [[Image: Lens Dashboard. Show the full dashboard with library health stats, coverage metrics (analyzed vs total), attention items panel highlighting assets that need action, and the analysis status breakdown. Use a library with 50+ analyzed assets so the dashboard looks populated and useful.]]
 
 ## How It Works
 
 1. **Upload.** Drop images into any enabled volume. Lens analyzes them automatically on upload, or trigger analysis manually from the asset editor.
-2. **Analyze.** AI generates alt text, titles, descriptions, tags, colors, focal points, detects faces, flags content issues, extracts text, and more, all in a single request.
-3. **Review & Apply.** Edit any suggestion inline, approve via the Review Queue, or let Lens apply results automatically.
+2. **Analyze.** In a single pass, AI generates rich metadata for every image, searchable right away.
+3. **Refine.** AI does the heavy lifting, you ensure the quality. Edit any field inline, or work through the Review Queue at your own pace.
 
 ## Features
 

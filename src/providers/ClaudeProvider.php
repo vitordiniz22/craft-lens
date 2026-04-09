@@ -28,9 +28,7 @@ class ClaudeProvider extends BaseAiProvider
 
     public function validateCredentials(Settings $settings): void
     {
-        $apiKey = $settings->getClaudeApiKey();
-
-        if (empty($apiKey)) {
+        if (!$settings->hasApiKey('claudeApiKey')) {
             throw ConfigurationException::missingApiKey($this->getName());
         }
     }

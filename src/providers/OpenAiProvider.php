@@ -29,14 +29,8 @@ class OpenAiProvider extends BaseAiProvider
 
     public function validateCredentials(Settings $settings): void
     {
-        $apiKey = $settings->getOpenaiApiKey();
-
-        if (empty($apiKey)) {
+        if (!$settings->hasApiKey('openaiApiKey')) {
             throw ConfigurationException::missingApiKey($this->getName());
-        }
-
-        if (!str_starts_with($apiKey, 'sk-')) {
-            throw ConfigurationException::invalidApiKey($this->getName());
         }
     }
 

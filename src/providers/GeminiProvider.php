@@ -28,9 +28,7 @@ class GeminiProvider extends BaseAiProvider
 
     public function validateCredentials(Settings $settings): void
     {
-        $apiKey = $settings->getGeminiApiKey();
-
-        if (empty($apiKey)) {
+        if (!$settings->hasApiKey('geminiApiKey')) {
             throw ConfigurationException::missingApiKey($this->getName());
         }
     }
