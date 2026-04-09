@@ -129,25 +129,8 @@
     container-type: inline-size;
 }
 
-/* Processing modifier — lock panel and hide edit triggers */
-.lens-analysis-panel--processing .lens-edit-trigger,
-.lens-analysis-panel--processing .lens-revert-trigger,
-.lens-analysis-panel--processing [data-lens-action="tag-remove"],
-.lens-analysis-panel--processing [data-lens-action="color-remove"],
-.lens-analysis-panel--processing [data-lens-target="tag-input-wrapper"],
-.lens-analysis-panel--processing [data-lens-target="color-add-row"],
-.lens-analysis-panel--processing [data-lens-action="alt-proxy-edit"],
-.lens-analysis-panel--processing [data-lens-action="apply-title"],
-.lens-analysis-panel--processing [data-lens-action="apply-alt"],
-.lens-analysis-panel--processing [data-lens-action="apply-focal-point"],
-.lens-analysis-panel--processing [data-lens-action="people-edit"],
-.lens-analysis-panel--processing [data-lens-target="detection-edit-panel"] {
-    display: none !important;
-}
-
-.lens-analysis-panel--processing .lens-section-body {
-    opacity: 0.5;
-    pointer-events: none;
+.lens-analysis-panel--processing .lens-section {
+    display: none;
 }
 
 /* ==========================================================================

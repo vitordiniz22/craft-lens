@@ -142,10 +142,10 @@
         },
 
         /**
-         * Transition the analysis panel to a locked processing state.
+         * Transition the analysis panel to a processing state.
          * Called after the reprocess API call succeeds, shows the processing
-         * banner, hides edit triggers, and dims section content until the
-         * page auto-reloads on completion.
+         * banner and hides content sections until the page auto-reloads
+         * on completion.
          */
         _enterProcessingState: function () {
             const panel = document.querySelector('[data-lens-target="analysis-panel"]');
@@ -155,6 +155,7 @@
             const banner = panel.querySelector('[data-lens-target="processing-banner"]');
             const reprocessBtn = panel.querySelector('[data-lens-action="reprocess"]');
             const emptyState = panel.querySelector('[data-lens-target="empty-analysis"]');
+            const translationsNotice = panel.querySelector('[data-lens-target="translations-notice"]');
             const statusBadge = panel.querySelector('[data-lens-target="status-badge"]');
             const actionsContainer = panel.querySelector('[data-lens-target="header-actions"]');
 
@@ -171,6 +172,10 @@
 
             if (emptyState) {
                 emptyState.style.display = 'none';
+            }
+
+            if (translationsNotice) {
+                translationsNotice.style.display = 'none';
             }
 
             if (statusBadge) {

@@ -16,13 +16,13 @@
         {% include 'lens/_components/inline-notice' with {
             type: 'info',
             title: 'Re-analyzing asset'|t('lens'),
-            message: 'Current data is visible but locked during processing. The page will refresh when complete.'|t('lens'),
+            message: 'Generating fresh AI suggestions for alt text, title, quality scores, and detection flags. Your manual edits will be preserved. Editing is locked until the analysis completes.'|t('lens'),
         } %}
     {% else %}
         {% include 'lens/_components/inline-notice' with {
             type: 'info',
             title: 'Analyzing asset'|t('lens'),
-            message: 'AI analysis in progress. The page will refresh when complete.'|t('lens'),
+            message: 'Generating alt text, title suggestions, quality scores, and detection flags using AI. This page will refresh automatically when the analysis is ready.'|t('lens'),
         } %}
     {% endif %}
 </div>

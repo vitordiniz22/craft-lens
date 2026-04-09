@@ -57,19 +57,21 @@
 
     {% include 'lens/_components/analysis/header' with {analysis: analysis, asset: asset, static: readOnly} %}
 
-    {% if isSecondarySite and analysis %}
-        {% set primarySite = craft.app.sites.getSiteById(primarySiteId) %}
-        {% include 'lens/_components/inline-notice' with {
-            type: 'info',
-            title: 'Viewing Translations'|t('lens'),
-            message: 'Showing translated title and alt text for this site. View the full analysis on the primary site ({siteName}).'|t('lens', {siteName: primarySite.name ?? 'primary'}),
-        } %}
+    {% if isSecondarySite and analysis and not isProcessing and not isRepending %}
+        <div data-lens-target="translations-notice">
+            {% set primarySite = craft.app.sites.getSiteById(primarySiteId) %}
+            {% include 'lens/_components/inline-notice' with {
+                type: 'info',
+                title: 'Viewing Translations'|t('lens'),
+                message: 'Showing translated title and alt text for this site. View the full analysis on the primary site ({siteName}).'|t('lens', {siteName: primarySite.name ?? 'primary'}),
+            } %}
+        </div>
     {% endif %}
 
     {% include 'lens/_components/analysis/processing-banner' with {
         isReprocessing: isReprocessing or isRepending,
         hasExistingData: hasExistingData,
-        isVisible: isProcessing or isRepending
+        isVisible: isProcessing or isRepending,
     } %}
 
     {% if not isSecondarySite %}
