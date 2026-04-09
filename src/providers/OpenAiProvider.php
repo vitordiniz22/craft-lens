@@ -88,6 +88,8 @@ class OpenAiProvider extends BaseAiProvider
             ],
         ];
 
+        $payload['response_format'] = ['type' => 'json_object'];
+
         if ($this->isReasoningModel($settings->openaiModel)) {
             $payload['max_completion_tokens'] = self::REASONING_MAX_TOKENS;
         } else {
