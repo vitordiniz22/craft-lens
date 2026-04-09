@@ -236,7 +236,7 @@ abstract class BaseAiProvider implements AiProviderInterface
             throw AnalysisException::invalidResponse($this->getDisplayName());
         }
 
-        $data = ResponseNormalizer::safeJsonDecode($content, $this->getName());
+        $data = ResponseNormalizer::safeJsonDecode($content, $this->getDisplayName());
 
         // Detect language mixing: if a top-level text field is identical to a
         // siteContent translation, the AI used the wrong language. Clear the
@@ -245,7 +245,7 @@ abstract class BaseAiProvider implements AiProviderInterface
 
         $nsfwScore = ResponseNormalizer::clampConfidence($data['nsfwScore'] ?? 0.0);
         $nsfwConfidence = ResponseNormalizer::clampConfidence($data['nsfwConfidence'] ?? 0.0);
-        $detectedBrands = ResponseNormalizer::normalizeDetectedBrands($data['detectedBrands'] ?? [], $this->getName());
+        $detectedBrands = ResponseNormalizer::normalizeDetectedBrands($data['detectedBrands'] ?? [], $this->getDisplayName());
         $usage = $this->extractTokenUsage($response);
 
         return new AnalysisResult(
@@ -255,14 +255,14 @@ abstract class BaseAiProvider implements AiProviderInterface
             longDescriptionConfidence: (float) ($data['longDescriptionConfidence'] ?? 0.0),
             suggestedTitle: $data['suggestedTitle'] ?? '',
             titleConfidence: (float) ($data['titleConfidence'] ?? 0.0),
-            tags: ResponseNormalizer::normalizeTags($data['tags'] ?? [], $this->getName()),
+            tags: ResponseNormalizer::normalizeTags($data['tags'] ?? [], $this->getDisplayName()),
             extractedText: $data['extractedText'] ?? null,
             faceCount: (int) ($data['faceCount'] ?? 0),
             containsPeople: (bool) ($data['containsPeople'] ?? false),
             containsPeopleConfidence: ResponseNormalizer::clampConfidence($data['containsPeopleConfidence'] ?? 0.0),
             nsfwScore: $nsfwScore,
             nsfwConfidence: $nsfwConfidence,
-            nsfwCategories: ResponseNormalizer::normalizeNsfwCategories($data['nsfwCategories'] ?? [], $this->getName()),
+            nsfwCategories: ResponseNormalizer::normalizeNsfwCategories($data['nsfwCategories'] ?? [], $this->getDisplayName()),
             isFlaggedNsfw: $nsfwScore >= 0.5,
             hasWatermark: (bool) ($data['hasWatermark'] ?? false),
             watermarkConfidence: ResponseNormalizer::clampConfidence($data['watermarkConfidence'] ?? 0.0),

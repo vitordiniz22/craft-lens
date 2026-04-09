@@ -365,13 +365,27 @@ class ImageMetricsAnalyzer
     }
 
     /**
+     * Apply a convolution kernel, supporting both old (array) and new (ImagickKernel) Imagick APIs.
+     */
+    private static function applyConvolution(Imagick $image, array $kernel, int $size): void
+    {
+        if (class_exists('ImagickKernel')) {
+            $matrix = array_chunk($kernel, $size);
+            $kernelObj = \ImagickKernel::fromMatrix($matrix);
+            $image->convolveImage($kernelObj);
+        } else {
+            $image->convolveImage($kernel);
+        }
+    }
+
+    /**
      * Compute Laplacian variance by convolving the image in-place.
      * The image pixel data is mutated (convolved) but NOT freed -- the caller
      * is responsible for clearing the Imagick object when done with it.
      */
     private static function laplacianVarianceInPlace(Imagick $grayImage): float
     {
-        $grayImage->convolveImage([0, -1, 0, -1, 4, -1, 0, -1, 0]);
+        self::applyConvolution($grayImage, [0, -1, 0, -1, 4, -1, 0, -1, 0], 3);
 
         $stats = $grayImage->getImageChannelMean(Imagick::CHANNEL_GRAY);
         $stdDev = $stats['standardDeviation'] ?? 0.0;
@@ -394,8 +408,8 @@ class ImageMetricsAnalyzer
         $cloneX = clone $grayImage;
         $cloneY = clone $grayImage;
 
-        $cloneX->convolveImage([-1, 0, 1, -2, 0, 2, -1, 0, 1]);
-        $cloneY->convolveImage([-1, -2, -1, 0, 0, 0, 1, 2, 1]);
+        self::applyConvolution($cloneX, [-1, 0, 1, -2, 0, 2, -1, 0, 1], 3);
+        self::applyConvolution($cloneY, [-1, -2, -1, 0, 0, 0, 1, 2, 1], 3);
 
         $statsX = $cloneX->getImageChannelMean(Imagick::CHANNEL_GRAY);
         $statsY = $cloneY->getImageChannelMean(Imagick::CHANNEL_GRAY);

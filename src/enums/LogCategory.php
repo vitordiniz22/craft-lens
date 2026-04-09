@@ -11,6 +11,7 @@ enum LogCategory: string
     use EnumOptionsTrait;
 
     case ApiRequest = 'api_request';
+    case JobStatus = 'job_status';
     case JobStarted = 'job_started';
     case JobCompleted = 'job_completed';
     case JobFailed = 'job_failed';
@@ -25,6 +26,7 @@ enum LogCategory: string
     {
         return match ($this) {
             self::ApiRequest => Craft::t('lens', 'API Request'),
+            self::JobStatus => Craft::t('lens', 'Job Status'),
             self::JobStarted => Craft::t('lens', 'Job Started'),
             self::JobCompleted => Craft::t('lens', 'Job Completed'),
             self::JobFailed => Craft::t('lens', 'Job Failed'),
