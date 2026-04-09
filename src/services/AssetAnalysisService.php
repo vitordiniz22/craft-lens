@@ -785,8 +785,8 @@ class AssetAnalysisService extends Component
                 $altValue = $primaryAlt;
             } else {
                 $siteRecord = $siteContentRecords[$siteId] ?? null;
-                $titleValue = $siteRecord->suggestedTitle ?? $primaryTitle;
-                $altValue = $siteRecord->altText ?? $primaryAlt;
+                $titleValue = $siteRecord?->suggestedTitle ?? $primaryTitle;
+                $altValue = $siteRecord?->altText ?? $primaryAlt;
             }
 
             $needsSave = false;

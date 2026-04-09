@@ -99,14 +99,14 @@ class LensAnalysisElement extends BaseUiElement
 
                         $siteContent[] = [
                             'siteId' => $siteId,
-                            'language' => $record->language ?? $siteInfo['language'],
+                            'language' => $record?->language ?? $siteInfo['language'],
                             'siteName' => $siteNames[$siteId] ?? "Site {$siteId}",
-                            'altText' => $record->altText ?? null,
-                            'altTextAi' => $record->altTextAi ?? null,
-                            'altTextConfidence' => $record->altTextConfidence ?? null,
-                            'suggestedTitle' => $record->suggestedTitle ?? null,
-                            'suggestedTitleAi' => $record->suggestedTitleAi ?? null,
-                            'titleConfidence' => $record->titleConfidence ?? null,
+                            'altText' => $record?->altText ?? null,
+                            'altTextAi' => $record?->altTextAi ?? null,
+                            'altTextConfidence' => $record?->altTextConfidence ?? null,
+                            'suggestedTitle' => $record?->suggestedTitle ?? null,
+                            'suggestedTitleAi' => $record?->suggestedTitleAi ?? null,
+                            'titleConfidence' => $record?->titleConfidence ?? null,
                         ];
                     }
                 }

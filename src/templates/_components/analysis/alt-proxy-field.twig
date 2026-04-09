@@ -13,11 +13,13 @@
  #   analysisId      - int, the analysis record ID
  #   assetId         - int|null, the asset ID
  #   fieldState      - 'readonly'|'unlocked'|'editing'
+ #   siteId          - int|null, optional site ID for per-site content (omit for primary site)
  #}
 
 {% from 'lens/_components/analysis/_confidence-badge' import confidenceBadge %}
 
 {% set fieldState = fieldState ?? 'readonly' %}
+{% set siteId = siteId ?? null %}
 {% set maxlength = 500 %}
 {% set hasSuggestion = suggestionValue is defined and suggestionValue is not empty %}
 {% set valuesMatch = hasSuggestion and nativeValue == suggestionValue %}
@@ -69,6 +71,7 @@
      data-lens-target="alt-proxy-field"
      data-lens-asset-id="{{ assetId }}"
      data-lens-analysis-id="{{ analysisId }}"
+     {% if siteId %}data-lens-site-id="{{ siteId }}"{% endif %}
      {% endif %}>
 
     <div class="lens-field-header" data-lens-target="field-header">
@@ -134,7 +137,8 @@
                             data-lens-target="alt-proxy-apply-link"
                             data-lens-action="apply-alt"
                             data-lens-asset-id="{{ assetId }}"
-                            data-lens-analysis-id="{{ analysisId }}">
+                            data-lens-analysis-id="{{ analysisId }}"
+                            {% if siteId %}data-lens-site-id="{{ siteId }}"{% endif %}>
                         {{ 'Apply to Asset'|t('lens') }}
                     </button>
                 {% endif %}

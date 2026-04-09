@@ -121,15 +121,31 @@
         } %}
     {% endif %}
 {% else %}
-    {% include 'lens/_components/analysis/alt-proxy-field' with {
-        nativeValue: assetAlt ?? '',
-        suggestionValue: analysis.altText,
-        aiValue: analysis.altTextAi,
-        confidence: analysis.altTextConfidence,
-        analysisId: resolvedAnalysisId,
-        assetId: resolvedAssetId,
-        fieldState: fieldState
-    } %}
+    {% if currentSiteData and isAltTranslatable %}
+        {# Secondary site: show this site's translation #}
+        {% include 'lens/_components/analysis/alt-proxy-field' with {
+            nativeValue: assetAlt ?? '',
+            suggestionValue: currentSiteData.altText,
+            aiValue: currentSiteData.altTextAi,
+            confidence: currentSiteData.altTextConfidence,
+            analysisId: resolvedAnalysisId,
+            assetId: resolvedAssetId,
+            fieldState: fieldState,
+            siteId: currentSiteId
+        } %}
+    {% else %}
+        {# Primary site: show primary suggestion #}
+        {% include 'lens/_components/analysis/alt-proxy-field' with {
+            nativeValue: assetAlt ?? '',
+            suggestionValue: analysis.altText,
+            aiValue: analysis.altTextAi,
+            confidence: analysis.altTextConfidence,
+            analysisId: resolvedAnalysisId,
+            assetId: resolvedAssetId,
+            fieldState: fieldState,
+            siteId: (isSecondarySite and isAltTranslatable) ? currentSiteId : null
+        } %}
+    {% endif %}
 {% endif %}
 
 {% if fieldState == 'editing' %}

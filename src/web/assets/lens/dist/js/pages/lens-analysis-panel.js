@@ -388,6 +388,9 @@
                                     applyBtn.dataset.lensAction = 'apply-alt';
                                     applyBtn.dataset.lensAssetId = proxy.dataset.lensAssetId;
                                     applyBtn.dataset.lensAnalysisId = proxy.dataset.lensAnalysisId;
+                                    if (proxy.dataset.lensSiteId) {
+                                        applyBtn.dataset.lensSiteId = proxy.dataset.lensSiteId;
+                                    }
                                     applyBtn.textContent = Craft.t('lens', 'Apply to Asset');
                                     appliedIndicator.replaceWith(applyBtn);
                                 }

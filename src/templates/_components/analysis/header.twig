@@ -17,7 +17,7 @@
                 <div class="flex items-center gap-2xs" data-lens-target="status-badge">
                     {% switch analysis.status %}
                         {% case lens.status.pending %}
-                            <span class="status"></span>{{ 'Pending'|t('lens') }}
+                            <span class="status pending"></span>{{ 'Pending'|t('lens') }}
                         {% case lens.status.processing %}
                             <span class="status pending"></span>{{ 'Processing'|t('lens') }}
                         {% case lens.status.completed %}
