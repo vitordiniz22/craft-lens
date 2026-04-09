@@ -95,7 +95,7 @@ class AssetAnalysisService extends Component
             $record->status = AnalysisStatus::Failed->value;
             $record->processedAt = DateTimeHelper::now();
 
-            if ($record->save()) {
+            if ($record->id && AssetAnalysisRecord::find()->where(['id' => $record->id])->exists() && $record->save()) {
                 $this->getContentStorage()->saveErrorMessage($record, $e->getMessage());
             }
 
@@ -147,11 +147,18 @@ class AssetAnalysisService extends Component
         bool $hadExistingData,
         string $errorMessage,
     ): void {
+        if ($record->id && !AssetAnalysisRecord::find()->where(['id' => $record->id])->exists()) {
+            Logger::warning(LogCategory::AssetProcessing, 'Analysis record deleted during processing, skipping failure handling', assetId: $record->assetId);
+
+            return;
+        }
+
         if ($hadExistingData) {
             $record->status = $previousStatus;
         } else {
             $record->status = AnalysisStatus::Failed->value;
         }
+
         $record->processedAt = DateTimeHelper::now();
 
         if (!$record->save()) {

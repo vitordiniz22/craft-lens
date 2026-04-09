@@ -11,6 +11,7 @@ use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\records\AnalysisContentRecord;
 use vitordiniz22\craftlens\records\AssetAnalysisRecord;
 use yii\base\Component;
+use yii\db\IntegrityException;
 
 /**
  * Content Storage Service.
@@ -59,19 +60,25 @@ class ContentStorageService extends Component
     /**
      * Save error message to analysis content.
      */
-    public function saveErrorMessage(AssetAnalysisRecord $analysisRecord, string $errorMessage): AnalysisContentRecord
+    public function saveErrorMessage(AssetAnalysisRecord $analysisRecord, string $errorMessage): ?AnalysisContentRecord
     {
         $record = $this->getOrCreateContentRecord($analysisRecord->id);
 
         $record->errorMessage = $errorMessage;
         $record->dateUpdated = DateTimeHelper::now();
 
-        if (!$record->save()) {
-            Logger::error(LogCategory::AssetProcessing, 'Failed to save error message', assetId: $analysisRecord->assetId, context: [
-                'errors' => $record->getErrorSummary(true),
-            ]);
+        try {
+            if (!$record->save()) {
+                Logger::error(LogCategory::AssetProcessing, 'Failed to save error message', assetId: $analysisRecord->assetId, context: [
+                    'errors' => $record->getErrorSummary(true),
+                ]);
 
-            return $record;
+                return $record;
+            }
+        } catch (IntegrityException) {
+            Logger::warning(LogCategory::AssetProcessing, 'Cannot save error message: analysis record no longer exists (asset may have been deleted during processing)', assetId: $analysisRecord->assetId);
+
+            return null;
         }
 
         Logger::warning(LogCategory::AssetProcessing, 'Error message stored for analysis', assetId: $analysisRecord->assetId, context: ['errorMessage' => $errorMessage]);
