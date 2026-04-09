@@ -164,7 +164,7 @@ abstract class BaseAiProvider implements AiProviderInterface
         $instructions[] = '- "nsfwCategories": Array of objects with "category" (one of: adult, violence, hate, self-harm, sexual, drugs) and "confidence" (0.0-1.0). Only include categories with confidence > 0.1';
         $instructions[] = '  Violence category should include: fighting, weapons (guns, knives, swords), blood, injuries, physical assault, warfare, dead bodies, torture';
         $instructions[] = '  Adult category should include: nudity, sexual content, suggestive poses, intimate acts, revealing clothing, shirtless individuals';
-        $instructions[] = '- "hasWatermark": Whether the image contains any visible watermark (boolean)';
+        $instructions[] = '- "hasWatermark": Whether the image contains a deliberate semi-transparent watermark overlay (text, logo, or pattern added to indicate ownership). When in doubt, default to false. Only flag true when you can identify a specific, intentional watermark (boolean)';
         $instructions[] = '- "watermarkConfidence": How confident you are in your hasWatermark assessment (0.0-1.0). Should be HIGH (0.8-1.0) when the image clearly has a watermark OR clearly has no watermark. Should be LOW (0.3-0.6) only when the image is genuinely ambiguous (e.g., faint overlays, decorative text that might be a watermark)';
         $instructions[] = '- "watermarkType": Type of watermark detected. Must be one of: stock, logo, text, copyright, unknown, or null if no watermark';
         $instructions[] = '- "watermarkDetails": Object with additional details:';
