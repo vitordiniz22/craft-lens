@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace vitordiniz22\craftlens\behaviors;
 
+use Craft;
 use craft\elements\db\AssetQuery;
 use craft\helpers\Db;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
+use vitordiniz22\craftlens\enums\LogCategory;
+use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\helpers\ImageQualityChecker;
 use vitordiniz22\craftlens\helpers\ImageMetricsAnalyzer;
 use vitordiniz22\craftlens\migrations\Install;
@@ -57,8 +60,8 @@ class AssetQueryBehavior extends Behavior
     /** @var array[] Raw WHERE conditions requiring the lens join, used by complex condition rules */
     public array $lensRawWhereConditions = [];
 
-    private bool $innerJoined = false;
-    private bool $leftJoined = false;
+    private static bool $flashShown = false;
+    private static ?bool $schemaValid = null;
     /**
      * Sets the lens status filter.
      */
@@ -325,91 +328,111 @@ class AssetQueryBehavior extends Behavior
     public function lensApplyStatusFilter(): void
     {
         if ($this->lensStatus !== null && $this->owner->subQuery !== null) {
-            $this->applyStatusFilter();
+            $this->safeApplyFilter(fn() => $this->applyStatusFilter(), 'StatusFilter', 'lensStatus');
         }
     }
 
     public function lensApplyContainsPeopleFilter(): void
     {
         if ($this->lensContainsPeople !== null && $this->owner->subQuery !== null) {
-            $this->applyContainsPeopleFilter();
+            $this->safeApplyFilter(
+                fn() => $this->applySimpleFilter('lens.containsPeople', $this->lensContainsPeople),
+                'ContainsPeopleFilter',
+                'lensContainsPeople',
+            );
         }
     }
 
     public function lensApplyHasTagsFilter(): void
     {
         if ($this->lensHasTags !== null && $this->owner->subQuery !== null) {
-            $this->applyHasTagsFilter();
+            $this->safeApplyFilter(fn() => $this->applyHasTagsFilter(), 'HasTagsFilter', 'lensHasTags');
         }
     }
 
     public function lensApplyNsfwFlaggedFilter(): void
     {
         if ($this->lensNsfwFlagged !== null && $this->owner->subQuery !== null) {
-            $this->applyNsfwFlaggedFilter();
+            $this->safeApplyFilter(
+                fn() => $this->applySimpleFilter('lens.isFlaggedNsfw', $this->lensNsfwFlagged),
+                'NsfwFlaggedFilter',
+                'lensNsfwFlagged',
+            );
         }
     }
 
     public function lensApplyHasWatermarkFilter(): void
     {
         if ($this->lensHasWatermark !== null && $this->owner->subQuery !== null) {
-            $this->applyHasWatermarkFilter();
+            $this->safeApplyFilter(
+                fn() => $this->applySimpleFilter('lens.hasWatermark', $this->lensHasWatermark),
+                'HasWatermarkFilter',
+                'lensHasWatermark',
+            );
         }
     }
 
     public function lensApplyWatermarkTypesFilter(): void
     {
         if ($this->lensWatermarkTypes !== null && !empty($this->lensWatermarkTypes) && $this->owner->subQuery !== null) {
-            $this->applyWatermarkTypesFilter();
+            $this->safeApplyFilter(
+                fn() => $this->applySimpleFilter('lens.watermarkType', $this->lensWatermarkTypes),
+                'WatermarkTypesFilter',
+                'lensWatermarkTypes',
+            );
         }
     }
 
     public function lensApplyContainsBrandLogoFilter(): void
     {
         if ($this->lensContainsBrandLogo !== null && $this->owner->subQuery !== null) {
-            $this->applyContainsBrandLogoFilter();
+            $this->safeApplyFilter(
+                fn() => $this->applySimpleFilter('lens.containsBrandLogo', $this->lensContainsBrandLogo),
+                'ContainsBrandLogoFilter',
+                'lensContainsBrandLogo',
+            );
         }
     }
 
     public function lensApplyStockProviderFilter(): void
     {
         if ($this->lensStockProvider !== null && $this->owner->subQuery !== null) {
-            $this->applyStockProviderFilter();
+            $this->safeApplyFilter(fn() => $this->applyStockProviderFilter(), 'StockProviderFilter', 'lensStockProvider');
         }
     }
 
     public function lensApplyHasFocalPointFilter(): void
     {
         if ($this->lensHasFocalPoint !== null && $this->owner->subQuery !== null) {
-            $this->applyHasFocalPointFilter();
+            $this->safeApplyFilter(fn() => $this->applyHasFocalPointFilter(), 'HasFocalPointFilter', 'lensHasFocalPoint');
         }
     }
 
     public function lensApplyLowQualityFilter(): void
     {
         if ($this->lensLowQuality !== null && $this->owner->subQuery !== null) {
-            $this->applyLowQualityFilter();
+            $this->safeApplyFilter(fn() => $this->applyLowQualityFilter(), 'LowQualityFilter', 'lensLowQuality');
         }
     }
 
     public function lensApplyWebReadinessFilter(): void
     {
         if ($this->lensWebReadinessIssues !== null && !empty($this->lensWebReadinessIssues) && $this->owner->subQuery !== null) {
-            $this->applyWebReadinessFilter();
+            $this->safeApplyFilter(fn() => $this->applyWebReadinessFilter(), 'WebReadinessFilter', 'lensWebReadinessIssues');
         }
     }
 
     public function lensApplyHasTextInImageFilter(): void
     {
         if ($this->lensHasTextInImage !== null && $this->owner->subQuery !== null) {
-            $this->applyHasTextInImageFilter();
+            $this->safeApplyFilter(fn() => $this->applyHasTextInImageFilter(), 'HasTextInImageFilter', 'lensHasTextInImage');
         }
     }
 
     public function lensApplyRawWhereConditions(): void
     {
         if (!empty($this->lensRawWhereConditions) && $this->owner->subQuery !== null) {
-            $this->applyRawWhereConditions();
+            $this->safeApplyFilter(fn() => $this->applyRawWhereConditions(), 'RawWhereConditions', 'lensRawWhereConditions');
         }
     }
 
@@ -422,7 +445,33 @@ class AssetQueryBehavior extends Behavior
 
     public function beforePrepare(): void
     {
-        $this->applyLensFilters();
+        if (!$this->hasAnyLensFilter()) {
+            return;
+        }
+
+        // Schema gate: verify the lens table exists before touching the query.
+        // Catches missing tables from failed migrations, partial installs, etc.
+        // Cached per-request (uses Yii2's schema cache, no extra DB query).
+        if (!$this->isLensSchemaValid()) {
+            $this->resetAllFilterProperties();
+            $this->logFilterFailure('schemaValidation', new \RuntimeException(
+                'Lens table ' . Install::TABLE_ASSET_ANALYSES . ' not found in database schema'
+            ));
+            return;
+        }
+
+        // Snapshot the clean subQuery BEFORE we touch it.
+        // If anything goes wrong, we restore this and the query runs
+        // as if Lens was never installed.
+        $cleanSubQuery = clone $this->owner->subQuery;
+
+        try {
+            $this->applyLensFilters();
+        } catch (\Throwable $e) {
+            $this->owner->subQuery = $cleanSubQuery;
+            $this->resetAllFilterProperties();
+            $this->logFilterFailure('applyLensFilters', $e);
+        }
     }
 
     private function applyLensFilters(): void
@@ -699,9 +748,168 @@ class AssetQueryBehavior extends Behavior
         }
     }
 
+    /**
+     * Verify the Lens analysis table exists in the database.
+     * Result cached per-request via static property.
+     */
+    private function isLensSchemaValid(): bool
+    {
+        if (self::$schemaValid !== null) {
+            return self::$schemaValid;
+        }
+
+        try {
+            $schema = Craft::$app->getDb()->getTableSchema(Install::TABLE_ASSET_ANALYSES);
+            self::$schemaValid = $schema !== null;
+        } catch (\Throwable) {
+            self::$schemaValid = false;
+        }
+
+        return self::$schemaValid;
+    }
+
+    /**
+     * Check whether any Lens filter property is set.
+     */
+    private function hasAnyLensFilter(): bool
+    {
+        return $this->lensStatus !== null
+            || $this->lensContainsPeople !== null
+            || $this->lensConfidenceBelow !== null
+            || $this->lensConfidenceAbove !== null
+            || $this->lensHasTags !== null
+            || $this->lensTag !== null
+            || $this->lensColor !== null
+            || $this->lensNsfwFlagged !== null
+            || $this->lensHasWatermark !== null
+            || $this->lensWatermarkType !== null
+            || $this->lensWatermarkTypes !== null
+            || $this->lensContainsBrandLogo !== null
+            || $this->lensDetectedBrand !== null
+            || $this->lensHasDuplicates !== null
+            || $this->lensTextSearch !== null
+            || $this->lensStockProvider !== null
+            || $this->lensQualityBelow !== null
+            || $this->lensSharpnessBelow !== null
+            || $this->lensExposureIssues !== null
+            || $this->lensHasFocalPoint !== null
+            || $this->lensLowQuality !== null
+            || $this->lensBlurry !== null
+            || $this->lensTooDark !== null
+            || $this->lensTooBright !== null
+            || $this->lensLowContrast !== null
+            || $this->lensTooLarge !== null
+            || $this->lensWebReadinessIssues !== null
+            || $this->lensHasTextInImage !== null
+            || !empty($this->lensRawWhereConditions);
+    }
+
+    /**
+     * Safely execute a filter callback. If it throws, null the property
+     * so Flow A skips it, log the error, and flash a one-time CP notice.
+     * The query continues without the broken filter.
+     */
+    private function safeApplyFilter(callable $fn, string $filterName, ?string $propertyToNull = null): void
+    {
+        try {
+            $fn();
+        } catch (\Throwable $e) {
+            if ($propertyToNull !== null && property_exists($this, $propertyToNull)) {
+                // Use [] for array-typed properties to avoid TypeError with strict_types
+                $this->{$propertyToNull} = is_array($this->{$propertyToNull}) ? [] : null;
+            }
+
+            $this->logFilterFailure($filterName, $e);
+        }
+    }
+
+    /**
+     * Null every Lens filter property to prevent partial re-application.
+     */
+    private function resetAllFilterProperties(): void
+    {
+        $this->lensStatus = null;
+        $this->lensContainsPeople = null;
+        $this->lensConfidenceBelow = null;
+        $this->lensConfidenceAbove = null;
+        $this->lensHasTags = null;
+        $this->lensTag = null;
+        $this->lensColor = null;
+        $this->lensNsfwFlagged = null;
+        $this->lensHasWatermark = null;
+        $this->lensWatermarkType = null;
+        $this->lensWatermarkTypes = null;
+        $this->lensContainsBrandLogo = null;
+        $this->lensDetectedBrand = null;
+        $this->lensHasDuplicates = null;
+        $this->lensTextSearch = null;
+        $this->lensStockProvider = null;
+        $this->lensQualityBelow = null;
+        $this->lensSharpnessBelow = null;
+        $this->lensExposureIssues = null;
+        $this->lensHasFocalPoint = null;
+        $this->lensLowQuality = null;
+        $this->lensBlurry = null;
+        $this->lensTooDark = null;
+        $this->lensTooBright = null;
+        $this->lensLowContrast = null;
+        $this->lensTooLarge = null;
+        $this->lensWebReadinessIssues = null;
+        $this->lensHasTextInImage = null;
+        $this->lensRawWhereConditions = [];
+    }
+
+    /**
+     * Log a filter failure and show a one-time CP notice (web only).
+     */
+    private function logFilterFailure(string $filterName, \Throwable $e): void
+    {
+        try {
+            Logger::warning(
+                LogCategory::QueryFilter,
+                "Lens filter '{$filterName}' failed: {$e->getMessage()}",
+                exception: $e,
+                context: ['filter' => $filterName],
+            );
+        } catch (\Throwable) {
+            Craft::warning(
+                "[lens] Lens filter '{$filterName}' failed: {$e->getMessage()}",
+                'lens',
+            );
+        }
+
+        if (!self::$flashShown) {
+            try {
+                if (!Craft::$app->getRequest()->getIsConsoleRequest()) {
+                    Craft::$app->getSession()->setNotice(
+                        Craft::t('lens', 'One or more Lens filters could not be applied. Results may include unfiltered assets.')
+                    );
+                    self::$flashShown = true;
+                }
+            } catch (\Throwable) {
+                // Session unavailable (queue worker, console)
+            }
+        }
+    }
+
+    /**
+     * Check whether the lens table is already JOINed on the subQuery
+     * by inspecting the actual query state, not a boolean flag.
+     * This eliminates stale-flag bugs entirely.
+     */
+    private function isLensTableJoined(): bool
+    {
+        foreach ($this->owner->subQuery->join ?? [] as $join) {
+            if (is_string($join[1] ?? null) && str_contains($join[1], 'lens_asset_analyses')) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private function ensureJoined(): void
     {
-        if ($this->innerJoined || $this->leftJoined) {
+        if ($this->isLensTableJoined()) {
             return;
         }
 
@@ -709,17 +917,11 @@ class AssetQueryBehavior extends Behavior
             Install::TABLE_ASSET_ANALYSES . ' lens',
             '[[lens.assetId]] = [[elements.id]]'
         );
-
-        $this->innerJoined = true;
     }
 
     private function ensureLeftJoined(): void
     {
-        if ($this->leftJoined) {
-            return;
-        }
-
-        if ($this->innerJoined) {
+        if ($this->isLensTableJoined()) {
             return;
         }
 
@@ -727,8 +929,6 @@ class AssetQueryBehavior extends Behavior
             Install::TABLE_ASSET_ANALYSES . ' lens',
             '[[lens.assetId]] = [[elements.id]]'
         );
-
-        $this->leftJoined = true;
     }
 
     private function applyTextSearchFilter(): void

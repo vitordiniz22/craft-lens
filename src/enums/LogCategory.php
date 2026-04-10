@@ -21,6 +21,7 @@ enum LogCategory: string
     case Duplicate = 'duplicate';
     case Review = 'review';
     case SearchIndex = 'search_index';
+    case QueryFilter = 'query_filter';
 
     public function label(): string
     {
@@ -36,6 +37,7 @@ enum LogCategory: string
             self::Duplicate => Craft::t('lens', 'Duplicate'),
             self::Review => Craft::t('lens', 'Review'),
             self::SearchIndex => Craft::t('lens', 'Search Index'),
+            self::QueryFilter => Craft::t('lens', 'Query Filter'),
         };
     }
 }
