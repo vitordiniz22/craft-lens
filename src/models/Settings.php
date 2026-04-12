@@ -24,7 +24,7 @@ class Settings extends Model
 
     // Claude (Anthropic) Configuration
     public string $claudeApiKey = '';
-    public string $claudeModel = 'claude-sonnet-4-5-20250929';
+    public string $claudeModel = 'claude-sonnet-4-6';
 
     // Processing Options
     public bool $autoProcessOnUpload = true;
@@ -42,7 +42,7 @@ class Settings extends Model
     // Supported models per provider (single source of truth for validation and defaults)
     public const OPENAI_MODELS = ['gpt-5.4', 'gpt-5.4-mini', 'gpt-5.4-nano'];
     public const GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.5-pro'];
-    public const CLAUDE_MODELS = ['claude-sonnet-4-5-20250929', 'claude-opus-4-5-20251101', 'claude-haiku-4-5-20251001'];
+    public const CLAUDE_MODELS = ['claude-sonnet-4-6', 'claude-opus-4-6', 'claude-haiku-4-5-20251001'];
 
     public function rules(): array
     {

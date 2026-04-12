@@ -58,11 +58,11 @@ class PricingService extends Component
      * @see https://www.anthropic.com/pricing
      */
     private const CLAUDE_PRICING = [
-        'claude-sonnet-4-5-20250929' => [
+        'claude-sonnet-4-6' => [
             'input' => 3.00,
             'output' => 15.00,
         ],
-        'claude-opus-4-5-20251101' => [
+        'claude-opus-4-6' => [
             'input' => 5.00,
             'output' => 25.00,
         ],
