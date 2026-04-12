@@ -75,6 +75,12 @@
                     if (status === S.COMPLETED || status === S.APPROVED || status === S.FAILED || status === S.PENDING_REVIEW) {
                         self._clearPoll(assetId);
 
+                        var cancelBtn = document.querySelector('[data-lens-action="cancel-analysis"]');
+                        
+                        if (cancelBtn) {
+                            cancelBtn.disabled = true;
+                        }
+
                         if (status === S.FAILED && options.onError) {
                             options.onError(response.data);
                         } else if (options.onComplete) {

@@ -14,6 +14,7 @@ use vitordiniz22\craftlens\enums\AiProvider;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\enums\WatermarkType;
+use vitordiniz22\craftlens\exceptions\AnalysisCancelledException;
 use vitordiniz22\craftlens\exceptions\AnalysisException;
 use vitordiniz22\craftlens\exceptions\ConfigurationException;
 use vitordiniz22\craftlens\helpers\AssetTitleHelper;
@@ -49,11 +50,16 @@ class AssetAnalysisService extends Component
             return;
         }
 
-        $this->createPendingRecord($asset);
+        $record = $this->createPendingRecord($asset);
 
-        Queue::push(new AnalyzeAssetJob([
+        $jobId = Queue::push(new AnalyzeAssetJob([
             'assetId' => $asset->id,
         ]));
+
+        if ($jobId !== null) {
+            $record->queueJobId = (string) $jobId;
+            $record->save();
+        }
 
         Logger::info(LogCategory::JobStarted, 'Asset queued for analysis', assetId: $asset->id);
     }
@@ -107,6 +113,12 @@ class AssetAnalysisService extends Component
             );
 
             throw $e;
+        } catch (AnalysisCancelledException $e) {
+            Logger::info(
+                LogCategory::Cancellation,
+                "Analysis cancelled for asset {$asset->id}",
+                assetId: $asset->id,
+            );
         } catch (AnalysisException $e) {
             $this->handleAnalysisFailure($record, $previousStatus, $hadExistingData, $e->getUserMessage());
 
@@ -268,13 +280,19 @@ class AssetAnalysisService extends Component
                 }
             }
 
+            $record->previousStatus = $record->status;
             $record->status = AnalysisStatus::Pending->value;
             $record->save();
         }
 
-        Queue::push(new AnalyzeAssetJob([
+        $jobId = Queue::push(new AnalyzeAssetJob([
             'assetId' => $asset->id,
         ]));
+
+        if ($jobId !== null && $record !== null) {
+            $record->queueJobId = (string) $jobId;
+            $record->save();
+        }
     }
 
     /**
@@ -416,6 +434,9 @@ class AssetAnalysisService extends Component
             );
         }
 
+        // Checkpoint 1: abort before expensive AI call if cancelled
+        Plugin::getInstance()->analysisCancellation->assertNotCancelled($asset->id);
+
         // AI call is external HTTP — keep outside transaction to avoid long-held locks
         $result = Plugin::getInstance()->aiProvider->analyzeAsset($asset, $primaryLanguage, $additionalLanguages);
         $settings = $this->getSettings();
@@ -427,8 +448,13 @@ class AssetAnalysisService extends Component
         $transaction = Craft::$app->getDb()->beginTransaction();
 
         try {
+            // Checkpoint 2: abort before committing results if cancelled
+            Plugin::getInstance()->analysisCancellation->assertNotCancelled($asset->id);
+
             // Apply AI results with dual-write pattern (respects user edits)
             $record->status = $this->determinePostAnalysisStatus();
+            $record->previousStatus = null;
+            $record->queueJobId = null;
             $record->provider = $settings->aiProvider;
             $record->providerModel = $providerModel;
             $record->inputTokens = $result->inputTokens;
@@ -490,6 +516,9 @@ class AssetAnalysisService extends Component
             $this->findDuplicatesForAsset($asset, $record);
 
             $transaction->commit();
+        } catch (AnalysisCancelledException $e) {
+            $transaction->rollBack();
+            throw $e;
         } catch (\Throwable $e) {
             $transaction->rollBack();
             Logger::warning(LogCategory::AssetProcessing, 'Transaction rolled back during analysis', assetId: $asset->id, exception: $e);

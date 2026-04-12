@@ -7,6 +7,7 @@ namespace vitordiniz22\craftlens\controllers;
 use Craft;
 use craft\elements\Asset;
 use craft\web\Controller;
+use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\helpers\MultisiteHelper;
@@ -24,6 +25,35 @@ class AnalysisController extends Controller
     use ValidatesIdsTrait;
 
     protected array|int|bool $allowAnonymous = false;
+
+    public function actionCancel(): Response
+    {
+        $this->requireCpRequest();
+        $this->requirePostRequest();
+        $this->requirePermission('accessPlugin-lens');
+
+        $assetId = $this->requireValidId('assetId', 'asset ID');
+
+        try {
+            $result = Plugin::getInstance()->analysisCancellation->cancel($assetId);
+
+            return $this->asJson($result);
+        } catch (\Throwable $e) {
+            Logger::error(
+                LogCategory::Cancellation,
+                "Error cancelling analysis for asset {$assetId}: {$e->getMessage()}",
+                assetId: $assetId,
+                exception: $e,
+            );
+
+            $this->response->setStatusCode(500);
+
+            return $this->asJson([
+                'error' => Craft::t('lens', 'An error occurred while cancelling the analysis.'),
+                'success' => false,
+            ]);
+        }
+    }
 
     public function actionReprocess(): Response
     {
@@ -257,6 +287,25 @@ class AnalysisController extends Controller
                     'status' => 'not_found',
                     'processedAt' => null,
                 ]);
+            }
+
+            $cancellation = Plugin::getInstance()->analysisCancellation;
+            
+            if (
+                in_array($analysis->status, [AnalysisStatus::Pending->value, AnalysisStatus::Processing->value], true)
+                && $analysis->queueJobId !== null
+                && !$cancellation->isQueueJobAlive($analysis->queueJobId)
+            ) {
+                $cancelResult = $cancellation->cancel($assetId);
+
+                if ($cancelResult['success'] && $cancelResult['restored']) {
+                    $analysis = Plugin::getInstance()->assetAnalysis->getAnalysis($assetId);
+                } else {
+                    return $this->asJson([
+                        'status' => 'not_found',
+                        'processedAt' => null,
+                    ]);
+                }
             }
 
             return $this->asJson([

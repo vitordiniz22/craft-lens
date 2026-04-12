@@ -22,6 +22,7 @@ enum LogCategory: string
     case Review = 'review';
     case SearchIndex = 'search_index';
     case QueryFilter = 'query_filter';
+    case Cancellation = 'cancellation';
 
     public function label(): string
     {
@@ -38,6 +39,7 @@ enum LogCategory: string
             self::Review => Craft::t('lens', 'Review'),
             self::SearchIndex => Craft::t('lens', 'Search Index'),
             self::QueryFilter => Craft::t('lens', 'Query Filter'),
+            self::Cancellation => Craft::t('lens', 'Cancellation'),
         };
     }
 }

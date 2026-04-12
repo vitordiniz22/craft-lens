@@ -51,6 +51,8 @@ class Install extends Migration
             'id' => $this->primaryKey(),
             'assetId' => $this->integer()->notNull(),
             'status' => $this->string(20)->notNull()->defaultValue('pending'),
+            'queueJobId' => $this->string(20)->null(),
+            'previousStatus' => $this->string(20)->null(),
             'provider' => $this->string(50)->null(),
             'providerModel' => $this->string(50)->null(),
 

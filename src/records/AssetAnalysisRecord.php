@@ -23,6 +23,8 @@ use yii\db\ActiveQueryInterface;
  * @property int $id
  * @property int $assetId
  * @property string $status
+ * @property string|null $queueJobId
+ * @property string|null $previousStatus
  * @property string|null $provider
  * @property string|null $providerModel
  *

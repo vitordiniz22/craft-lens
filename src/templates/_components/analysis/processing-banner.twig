@@ -13,16 +13,36 @@
 
 <div data-lens-target="processing-banner"{% if not isVisible %} hidden{% endif %}>
     {% if isReprocessing or hasExistingData %}
-        {% include 'lens/_components/inline-notice' with {
+        {% embed 'lens/_components/inline-notice' with {
             type: 'info',
             title: 'Re-analyzing asset'|t('lens'),
             message: 'Generating fresh AI suggestions for alt text, title, quality scores, and detection flags. Your manual edits will be preserved. Editing is locked until the analysis completes.'|t('lens'),
         } %}
+            {% block action %}
+                <div class="lens-inline-notice__action">
+                    <button type="button" class="btn small submit"
+                        data-lens-action="cancel-analysis"
+                        data-lens-asset-id="{{ assetId }}">
+                        {{ 'Cancel'|t('lens') }}
+                    </button>
+                </div>
+            {% endblock %}
+        {% endembed %}
     {% else %}
-        {% include 'lens/_components/inline-notice' with {
+        {% embed 'lens/_components/inline-notice' with {
             type: 'info',
             title: 'Analyzing asset'|t('lens'),
             message: 'Generating alt text, title suggestions, quality scores, and detection flags using AI. This page will refresh automatically when the analysis is ready.'|t('lens'),
         } %}
+            {% block action %}
+                <div class="lens-inline-notice__action">
+                    <button type="button" class="btn small submit"
+                        data-lens-action="cancel-analysis"
+                        data-lens-asset-id="{{ assetId }}">
+                        {{ 'Cancel'|t('lens') }}
+                    </button>
+                </div>
+            {% endblock %}
+        {% endembed %}
     {% endif %}
 </div>

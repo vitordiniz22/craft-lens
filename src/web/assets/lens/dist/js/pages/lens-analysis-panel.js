@@ -60,6 +60,11 @@
                 this._handleAnalyze.bind(this),
             );
             window.Lens.core.DOM.delegate(
+                '[data-lens-action="cancel-analysis"]',
+                'click',
+                this._handleCancelAnalysis.bind(this),
+            );
+            window.Lens.core.DOM.delegate(
                 '[data-lens-action="apply-title"]',
                 'click',
                 this._handleApplyTitle.bind(this),
@@ -138,6 +143,42 @@
                 .catch(function() {
                     restoreBtn();
                     Craft.cp.displayError(Craft.t('lens', 'Failed to start analysis. Please try again.'));
+                });
+        },
+
+        /**
+         * Handle cancel analysis button click.
+         * Stops polling, sends cancel request, reloads page on success.
+         */
+        _handleCancelAnalysis: function (e, btn) {
+            if (btn.disabled) return;
+
+            var assetId = btn.dataset.lensAssetId;
+
+            // Stop status polling immediately
+            window.Lens.services.AssetProcessing._clearPoll(parseInt(assetId, 10));
+
+            // Send cancel request with loading state
+            var restoreBtn = window.Lens.core.ButtonState.setLoading(
+                btn,
+                Craft.t('lens', 'Cancelling...'),
+            );
+
+            window.Lens.core.API.post('lens/analysis/cancel', { assetId: assetId })
+                .then(function (response) {
+                    if (response.data.success) {
+                        Craft.cp.displayNotice(Craft.t('lens', 'Analysis cancelled.'));
+                        window.Lens.utils.safeReload();
+                    } else if (response.data.alreadyCompleted) {
+                        Craft.cp.displayNotice(Craft.t('lens', 'Analysis already completed.'));
+                        window.Lens.utils.safeReload();
+                    }
+                })
+                .catch(function () {
+                    restoreBtn();
+                    Craft.cp.displayError(Craft.t('lens', 'Failed to cancel analysis. Please try again.'));
+                    // Restart polling since cancel failed
+                    window.Lens.services.AssetProcessing.poll(parseInt(assetId, 10));
                 });
         },
 

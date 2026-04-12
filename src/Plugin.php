@@ -48,6 +48,7 @@ use vitordiniz22\craftlens\conditions\WebReadinessConditionRule;
 use vitordiniz22\craftlens\fieldlayoutelements\LensAnalysisElement;
 use vitordiniz22\craftlens\models\Settings;
 use vitordiniz22\craftlens\services\AiProviderService;
+use vitordiniz22\craftlens\services\AnalysisCancellationService;
 use vitordiniz22\craftlens\services\AnalysisEditService;
 use vitordiniz22\craftlens\services\AssetAnalysisService;
 use vitordiniz22\craftlens\services\BulkProcessingStatusService;
@@ -194,6 +195,7 @@ class Plugin extends BasePlugin
                 'siteContent' => SiteContentService::class,
                 'log' => LogService::class,
                 'searchIndex' => SearchIndexService::class,
+                'analysisCancellation' => AnalysisCancellationService::class,
             ],
         ];
     }
@@ -574,6 +576,7 @@ class Plugin extends BasePlugin
                 $event->rules['lens/review/bulk-approve'] = 'lens/review/bulk-approve';
                 $event->rules['lens/review/bulk-reject'] = 'lens/review/bulk-reject';
                 $event->rules['lens/analysis/reprocess'] = 'lens/analysis/reprocess';
+                $event->rules['lens/analysis/cancel'] = 'lens/analysis/cancel';
                 $event->rules['lens/analysis/update-field'] = 'lens/analysis/update-field';
                 $event->rules['lens/analysis/revert-field'] = 'lens/analysis/revert-field';
                 $event->rules['lens/analysis/update-tags'] = 'lens/analysis/update-tags';
