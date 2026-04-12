@@ -36,7 +36,7 @@
 {% set wmTypeChip = null %}
 
 {% if analysis.watermarkType and analysis.watermarkType != 'unknown' %}
-    {% set wmTypeLabels = { 'stock': 'Stock Photo'|t('lens'), 'logo': 'Logo'|t('lens'), 'text': 'Text'|t('lens'), 'copyright': 'Copyright'|t('lens') } %}
+    {% set wmTypeLabels = { 'stock': 'Stock Photo'|t('lens'), 'logo': 'Logo'|t('lens'), 'text': 'Text'|t('lens'), 'copyright': 'Copyright'|t('lens'), 'ai': 'AI-Generated'|t('lens') } %}
     {% set wmTypeChip = wmTypeLabels[analysis.watermarkType] ?? analysis.watermarkType|capitalize %}
     
     {% if analysis.watermarkType == 'stock' and wmDetails.stockProvider is defined and wmDetails.stockProvider %}

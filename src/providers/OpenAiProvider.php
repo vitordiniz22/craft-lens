@@ -141,7 +141,7 @@ class OpenAiProvider extends BaseAiProvider
      */
     private function isReasoningModel(string $model): bool
     {
-        return in_array($model, ['gpt-5-mini', 'gpt-5-nano'], true);
+        return in_array($model, ['gpt-5.4-mini', 'gpt-5.4-nano'], true);
     }
 
     private const REASONING_MAX_TOKENS = 16000;

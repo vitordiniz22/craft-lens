@@ -20,17 +20,17 @@ class PricingService extends Component
      * @see https://openai.com/pricing
      */
     private const OPENAI_PRICING = [
-        'gpt-5.2' => [
-            'input' => 1.75,
-            'output' => 14.00,
+        'gpt-5.4' => [
+            'input' => 2.50,
+            'output' => 15.00,
         ],
-        'gpt-5-mini' => [
+        'gpt-5.4-mini' => [
             'input' => 0.25,
             'output' => 2.00,
         ],
-        'gpt-5-nano' => [
-            'input' => 0.05,
-            'output' => 0.40,
+        'gpt-5.4-nano' => [
+            'input' => 0.20,
+            'output' => 1.25,
         ],
     ];
 

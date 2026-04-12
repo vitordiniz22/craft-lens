@@ -143,11 +143,21 @@
 
         {# Pending state — analysis queued but not yet processed #}
         {% if analysis.status == lens.status.pending and not isRepending %}
-            {% include 'lens/_components/inline-notice' with {
+            {% embed 'lens/_components/inline-notice' with {
                 type: 'info',
                 title: 'Awaiting Analysis'|t('lens'),
                 message: 'This image is queued for analysis. Results will appear here once processing is complete.'|t('lens'),
             } %}
+                {% block action %}
+                    <div class="lens-inline-notice__action">
+                        <button type="button" class="btn small submit"
+                            data-lens-action="cancel-analysis"
+                            data-lens-asset-id="{{ asset.id }}">
+                            {{ 'Cancel'|t('lens') }}
+                        </button>
+                    </div>
+                {% endblock %}
+            {% endembed %}
         {% endif %}
 
         {# Section 1: Description (title/alt — shown on all sites, description hidden on secondary) #}

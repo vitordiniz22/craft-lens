@@ -46,14 +46,14 @@
 
         {{ forms.selectField({
             label: 'OpenAI Model'|t('lens'),
-            instructions: 'Mini is the best balance of speed and quality for most sites. Use GPT-5.2 for complex scenes or richer alt text. Nano minimizes costs on high-volume libraries.'|t('lens'),
+            instructions: 'Mini is the best balance of speed and quality for most sites. Use GPT-5.4 for complex scenes or richer alt text. Nano minimizes costs on high-volume libraries.'|t('lens'),
             id: 'openaiModel',
             name: 'settings[openaiModel]',
             value: settings.openaiModel,
             options: [
-                {label: 'GPT-5 Mini — $0.25/1M tokens (recommended)'|t('lens'), value: 'gpt-5-mini'},
-                {label: 'GPT-5.2 — $1.75/1M tokens (highest quality)'|t('lens'), value: 'gpt-5.2'},
-                {label: 'GPT-5 Nano — $0.05/1M tokens (lowest cost)'|t('lens'), value: 'gpt-5-nano'},
+                {label: 'GPT-5.4 Mini — $0.25/1M tokens (recommended)'|t('lens'), value: 'gpt-5.4-mini'},
+                {label: 'GPT-5.4 — $2.50/1M tokens (highest quality)'|t('lens'), value: 'gpt-5.4'},
+                {label: 'GPT-5.4 Nano — $0.20/1M tokens (lowest cost)'|t('lens'), value: 'gpt-5.4-nano'},
             ],
             errors: settings.getErrors('openaiModel'),
         }) }}
