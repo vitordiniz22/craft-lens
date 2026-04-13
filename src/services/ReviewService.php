@@ -6,6 +6,7 @@ namespace vitordiniz22\craftlens\services;
 
 use Craft;
 use craft\elements\Asset;
+use craft\helpers\Assets as AssetsHelper;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\AssetTitleHelper;
@@ -278,6 +279,16 @@ class ReviewService extends Component
     }
 
     /**
+     * Returns a preview URL that works on any volume (public or private),
+     * scaled to fit within the target bounds without cropping.
+     */
+    private function previewUrlForAsset(Asset $asset): ?string
+    {
+        [$w, $h] = AssetsHelper::scaledDimensions((int)$asset->getWidth(), (int)$asset->getHeight(), 1400, 1400);
+        return Craft::$app->getAssets()->getThumbUrl($asset, $w, $h);
+    }
+
+    /**
      * Asset metadata and native field context for review.
      */
     private function getAnalysisBaseData(AssetAnalysisRecord $record, Asset $asset): array
@@ -289,7 +300,7 @@ class ReviewService extends Component
             'filename' => $asset->filename,
             'editUrl' => $asset->getCpEditUrl(),
             'thumbnailUrl' => Craft::$app->getAssets()->getThumbUrl($asset, 800, 800),
-            'previewUrl' => $asset->getUrl(),
+            'previewUrl' => $this->previewUrlForAsset($asset),
             'uploadDate' => $asset->dateCreated ? $asset->dateCreated->format('Y-m-d H:i') : null,
             'fileSize' => $asset->size,
             'kind' => $asset->kind,
