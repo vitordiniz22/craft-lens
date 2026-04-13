@@ -430,7 +430,6 @@ class Plugin extends BasePlugin
             AssetCondition::class,
             AssetCondition::EVENT_REGISTER_CONDITION_RULES,
             function(RegisterConditionRulesEvent $event) {
-                $event->conditionRules[] = LensStatusConditionRule::class;
                 $event->conditionRules[] = NsfwFlaggedConditionRule::class;
                 $event->conditionRules[] = HasFocalPointConditionRule::class;
                 $event->conditionRules[] = ContainsPeopleConditionRule::class;
@@ -441,6 +440,7 @@ class Plugin extends BasePlugin
                 $event->conditionRules[] = WebReadinessConditionRule::class;
 
                 if ($this->getIsPro()) {
+                    $event->conditionRules[] = LensStatusConditionRule::class;
                     $event->conditionRules[] = StockProviderConditionRule::class;
                     $event->conditionRules[] = HasTextInImageConditionRule::class;
                 }
