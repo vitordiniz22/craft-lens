@@ -100,6 +100,8 @@ class Install extends Migration
             // Image quality scores (sharpness/exposure/noise computed locally via Imagick)
             'sharpnessScore' => $this->decimal(5, 4)->null(),
             'exposureScore' => $this->decimal(5, 4)->null(),
+            'shadowClipRatio' => $this->decimal(5, 4)->null(),
+            'highlightClipRatio' => $this->decimal(5, 4)->null(),
             'noiseScore' => $this->decimal(5, 4)->null(),
             'compressionQuality' => $this->tinyInteger()->unsigned()->null(),
             'colorProfile' => $this->string(20)->null(),

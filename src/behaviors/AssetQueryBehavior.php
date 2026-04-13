@@ -938,8 +938,11 @@ class AssetQueryBehavior extends Behavior
     {
         if ($this->lensTooDark) {
             $this->ensureJoined();
-            $this->owner->subQuery->andWhere(['<', 'lens.exposureScore', ImageMetricsAnalyzer::BRIGHTNESS_DARK]);
+            $this->owner->subQuery->andWhere(['<', 'lens.exposureScore', ImageMetricsAnalyzer::BRIGHTNESS_DARK_MEDIAN]);
+            $this->owner->subQuery->andWhere(['>', 'lens.shadowClipRatio', ImageMetricsAnalyzer::SHADOW_CLIP_RATIO]);
+            $this->owner->subQuery->andWhere(['<', 'lens.noiseScore', ImageMetricsAnalyzer::CONTRAST_LOW]);
             $this->owner->subQuery->andWhere(['not', ['lens.exposureScore' => null]]);
+            $this->owner->subQuery->andWhere(['not', ['lens.noiseScore' => null]]);
         }
     }
 
@@ -947,8 +950,11 @@ class AssetQueryBehavior extends Behavior
     {
         if ($this->lensTooBright) {
             $this->ensureJoined();
-            $this->owner->subQuery->andWhere(['>', 'lens.exposureScore', ImageMetricsAnalyzer::BRIGHTNESS_BRIGHT]);
+            $this->owner->subQuery->andWhere(['>', 'lens.exposureScore', ImageMetricsAnalyzer::BRIGHTNESS_BRIGHT_MEDIAN]);
+            $this->owner->subQuery->andWhere(['>', 'lens.highlightClipRatio', ImageMetricsAnalyzer::HIGHLIGHT_CLIP_RATIO]);
+            $this->owner->subQuery->andWhere(['<', 'lens.noiseScore', ImageMetricsAnalyzer::CONTRAST_LOW]);
             $this->owner->subQuery->andWhere(['not', ['lens.exposureScore' => null]]);
+            $this->owner->subQuery->andWhere(['not', ['lens.noiseScore' => null]]);
         }
     }
 

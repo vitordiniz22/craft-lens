@@ -19,9 +19,18 @@ class ImageMetricsAnalyzer
     public const SHARPNESS_BLURRY = 0.3;
     public const SHARPNESS_SOFT = 0.6;
 
-    // Brightness thresholds (normalized channel mean 0-1)
-    public const BRIGHTNESS_DARK = 0.2;
-    public const BRIGHTNESS_BRIGHT = 0.85;
+    // Brightness: dual-gate verdict on a grayscale luma histogram.
+    // A warning fires only when BOTH the median luma AND the clipping ratio agree.
+    // Tuned toward silence: under-flagging is cheaper than over-flagging, because a
+    // wrong warning poisons trust in every other check the plugin produces.
+    public const BRIGHTNESS_DARK_MEDIAN = 0.22;
+    public const BRIGHTNESS_BRIGHT_MEDIAN = 0.85;
+    public const SHADOW_CLIP_RATIO = 0.40;
+    public const HIGHLIGHT_CLIP_RATIO = 0.40;
+
+    // Luma bounds (0-1) that count as "detail lost" in shadow / highlight tails.
+    private const SHADOW_CLIP_LUMA = 0.05;
+    private const HIGHLIGHT_CLIP_LUMA = 0.95;
 
     // Contrast thresholds (normalized luma percentile spread p95-p5, range 0-1)
     public const CONTRAST_FLAT = 0.25;
@@ -56,7 +65,7 @@ class ImageMetricsAnalyzer
      * Run full Imagick analysis on an asset file.
      * Returns raw scores for DB storage and display-ready checks.
      *
-     * @return array{raw: array{sharpnessScore: ?float, exposureScore: float, contrastScore: float, compressionQuality: int|null, colorProfile: string|null}, checks: array}|null
+     * @return array{raw: array{sharpnessScore: ?float, exposureScore: float, shadowClipRatio: float, highlightClipRatio: float, contrastScore: float, compressionQuality: int|null, colorProfile: string|null}, checks: array}|null
      */
     public static function analyze(Asset $asset): ?array
     {
@@ -82,9 +91,13 @@ class ImageMetricsAnalyzer
                 $imagick->transformImageColorspace(Imagick::COLORSPACE_SRGB);
             }
 
+            $brightness = self::measureBrightness($imagick);
+
             $raw = [
                 'sharpnessScore' => self::measureSharpness($imagick),
-                'exposureScore' => self::measureBrightness($imagick),
+                'exposureScore' => $brightness['exposureScore'],
+                'shadowClipRatio' => $brightness['shadowClipRatio'],
+                'highlightClipRatio' => $brightness['highlightClipRatio'],
                 'contrastScore' => self::measureContrast($imagick),
                 'compressionQuality' => self::measureCompressionQuality($imagick, $asset, $tempPath),
                 'colorProfile' => self::detectColorProfile($imagick, $originalColorspace),
@@ -123,10 +136,14 @@ class ImageMetricsAnalyzer
         ?float $contrastScore,
         ?int $compressionQuality,
         ?string $colorProfile,
+        ?float $shadowClipRatio = null,
+        ?float $highlightClipRatio = null,
     ): array {
         $raw = [
             'sharpnessScore' => $sharpnessScore,
             'exposureScore' => $exposureScore,
+            'shadowClipRatio' => $shadowClipRatio,
+            'highlightClipRatio' => $highlightClipRatio,
             'contrastScore' => $contrastScore,
             'compressionQuality' => $compressionQuality,
             'colorProfile' => $colorProfile,
@@ -347,24 +364,73 @@ class ImageMetricsAnalyzer
     }
 
     /**
-     * Measure image brightness using weighted channel means (luminance).
+     * Measure image brightness from the grayscale luma histogram.
+     *
+     * Returns three values that the verdict uses as a dual gate:
+     *   - exposureScore: median luma (p50), rank-based so a bimodal histogram
+     *     (silhouette, backlit subject) can't drag it to the wrong end.
+     *   - shadowClipRatio: fraction of pixels sitting at or below SHADOW_CLIP_LUMA.
+     *   - highlightClipRatio: fraction of pixels at or above HIGHLIGHT_CLIP_LUMA.
+     *
+     * The arithmetic-mean approach this replaces applied BT.709 weights to
+     * gamma-encoded sRGB values and then collapsed the whole histogram into one
+     * number, which misfired on both low-key and high-key compositions.
+     *
+     * @return array{exposureScore: float, shadowClipRatio: float, highlightClipRatio: float}
      */
-    private static function measureBrightness(Imagick $imagick): float
+    private static function measureBrightness(Imagick $imagick): array
     {
-        $quantumRange = $imagick->getQuantumRange();
-        $maxQuantum = (float) ($quantumRange['quantumRangeLong'] ?? 65535);
+        $clone = self::prepareImageForContrastAnalysis($imagick);
 
-        // Get mean for each channel
-        $redStats = $imagick->getImageChannelMean(Imagick::CHANNEL_RED);
-        $greenStats = $imagick->getImageChannelMean(Imagick::CHANNEL_GREEN);
-        $blueStats = $imagick->getImageChannelMean(Imagick::CHANNEL_BLUE);
+        try {
+            [$bins, $totalPixels] = self::buildLumaHistogramBins($clone);
+        } finally {
+            $clone->clear();
+        }
 
-        $redMean = ($redStats['mean'] ?? 0.0) / $maxQuantum;
-        $greenMean = ($greenStats['mean'] ?? 0.0) / $maxQuantum;
-        $blueMean = ($blueStats['mean'] ?? 0.0) / $maxQuantum;
+        if ($totalPixels === 0) {
+            return ['exposureScore' => 0.5, 'shadowClipRatio' => 0.0, 'highlightClipRatio' => 0.0];
+        }
 
-        // ITU-R BT.709 luminance formula
-        return 0.2126 * $redMean + 0.7152 * $greenMean + 0.0722 * $blueMean;
+        return self::computeBrightnessMetrics($bins, $totalPixels);
+    }
+
+    /**
+     * Walk the sorted histogram bins once to derive the median luma and the
+     * fraction of pixels sitting in the near-black and near-white tails.
+     *
+     * @param array<int, array{value: float, count: int}> $sortedBins bins sorted ascending by value
+     * @return array{exposureScore: float, shadowClipRatio: float, highlightClipRatio: float}
+     */
+    private static function computeBrightnessMetrics(array $sortedBins, int $totalPixels): array
+    {
+        $medianTarget = $totalPixels * 0.5;
+        $median = $sortedBins[\count($sortedBins) - 1]['value'];
+        $shadowCount = 0;
+        $highlightCount = 0;
+        $cumulative = 0;
+        $foundMedian = false;
+
+        foreach ($sortedBins as $bin) {
+            if ($bin['value'] <= self::SHADOW_CLIP_LUMA) {
+                $shadowCount += $bin['count'];
+            }
+            if ($bin['value'] >= self::HIGHLIGHT_CLIP_LUMA) {
+                $highlightCount += $bin['count'];
+            }
+
+            $cumulative += $bin['count'];
+            if (!$foundMedian && $cumulative >= $medianTarget) {
+                $median = $bin['value'];
+                $foundMedian = true;
+            }
+        }
+
+        return [
+            'exposureScore' => \max(0.0, \min(1.0, $median)),
+            'shadowClipRatio' => $shadowCount / $totalPixels,
+            'highlightClipRatio' => $highlightCount / $totalPixels,
+        ];
     }
 
     /**
@@ -693,11 +759,28 @@ class ImageMetricsAnalyzer
         }
 
         $score = (float) $raw['exposureScore'];
+        $shadowClip = isset($raw['shadowClipRatio']) ? (float) $raw['shadowClipRatio'] : 0.0;
+        $highlightClip = isset($raw['highlightClipRatio']) ? (float) $raw['highlightClipRatio'] : 0.0;
+        // Tonal-range rescue: if the image spans a wide luma range, a bright or dark
+        // subject is almost certainly visible against its background (think: red ladybug
+        // on a white petal against a near-black background). Reuse the contrast check's
+        // "adequate range" threshold so the two checks stay aligned. When contrast is
+        // unknown (stale row), err toward silence and rescue rather than flag.
+        $hasNarrowRange = isset($raw['contrastScore'])
+            && (float) $raw['contrastScore'] < self::CONTRAST_LOW;
 
-        if ($score < self::BRIGHTNESS_DARK) {
-            $checks['brightness'] = self::checkResult('warning', 'sun', 'Brightness', null, 'Too dark', 'This image is quite dark and may not display well. If a brighter version is available, consider using that. If this is intentional, you can safely ignore this.');
-        } elseif ($score > self::BRIGHTNESS_BRIGHT) {
-            $checks['brightness'] = self::checkResult('warning', 'sun', 'Brightness', null, 'Too bright', 'Very bright — some detail may be lost in highlights. If a better-exposed version is available, consider using that. If this is intentional, you can safely ignore this.');
+        $tooDark = $score < self::BRIGHTNESS_DARK_MEDIAN
+            && $shadowClip > self::SHADOW_CLIP_RATIO
+            && $hasNarrowRange;
+
+        $tooBright = $score > self::BRIGHTNESS_BRIGHT_MEDIAN
+            && $highlightClip > self::HIGHLIGHT_CLIP_RATIO
+            && $hasNarrowRange;
+
+        if ($tooDark) {
+            $checks['brightness'] = self::checkResult('warning', 'sun', 'Brightness', null, 'Too dark', 'This image is quite dark and detail is lost in the shadows. If a brighter version is available, consider using that. If this is intentional, you can safely ignore this.');
+        } elseif ($tooBright) {
+            $checks['brightness'] = self::checkResult('warning', 'sun', 'Brightness', null, 'Too bright', 'Very bright and detail is lost in the highlights. If a better-exposed version is available, consider using that. If this is intentional, you can safely ignore this.');
         } else {
             $checks['brightness'] = self::checkResult('pass', 'sun', 'Brightness', null, 'Good', null);
         }
