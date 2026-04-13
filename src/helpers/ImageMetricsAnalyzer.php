@@ -23,9 +23,9 @@ class ImageMetricsAnalyzer
     public const BRIGHTNESS_DARK = 0.2;
     public const BRIGHTNESS_BRIGHT = 0.85;
 
-    // Contrast thresholds (normalized std deviation 0-1)
-    public const CONTRAST_FLAT = 0.1;
-    public const CONTRAST_LOW = 0.15;
+    // Contrast thresholds (normalized luma percentile spread p95-p5, range 0-1)
+    public const CONTRAST_FLAT = 0.25;
+    public const CONTRAST_LOW = 0.45;
 
     // Compression quality threshold (0-100) — below this, degradation is visible to non-technical users
     public const COMPRESSION_VISIBLE_DEGRADATION = 50;
@@ -448,23 +448,129 @@ class ImageMetricsAnalyzer
     }
 
     /**
-     * Measure image contrast using standard deviation of pixel values.
+     * Measure image contrast as the p95-p5 spread of luma.
+     *
+     * Matches the auto-tone approach used by Photoshop / Lightroom / ImageMagick
+     * `-contrast-stretch`. Outlier-robust (trims 5% tails) and closer to
+     * "tonal range" than RMS std-dev.
+     *
+     * Pipeline:
+     *   1. Prepare the image   — flatten alpha, trim borders, convert to gray.
+     *   2. Build luma histogram — list of (value, count) bins sorted darkest to lightest.
+     *   3. Walk percentiles    — find the value at p5 and p95, return the spread.
      */
     private static function measureContrast(Imagick $imagick): float
     {
-        $quantumRange = $imagick->getQuantumRange();
-        $maxQuantum = (float) ($quantumRange['quantumRangeLong'] ?? 65535);
+        $clone = self::prepareImageForContrastAnalysis($imagick);
 
-        // Use grayscale channel for overall contrast measurement
+        try {
+            [$bins, $totalPixels] = self::buildLumaHistogramBins($clone);
+        } finally {
+            $clone->clear();
+        }
+
+        if ($totalPixels === 0) {
+            return 0.0;
+        }
+
+        return self::computePercentileSpread($bins, $totalPixels);
+    }
+
+    /**
+     * Prepare a clone of the image for contrast analysis.
+     *
+     * - Flatten alpha against neutral gray so transparent pixels don't skew the histogram.
+     * - Trim 2% from each edge so letterbox or border bars don't pin p5 / p95.
+     * - Convert to grayscale (COLORSPACE_GRAY). Percentiles are rank-based, so gamma
+     *   encoding is irrelevant and COLORSPACE_GRAY gives the same ordering as REC709LUMA
+     *   while being available on every Imagick build.
+     */
+    private static function prepareImageForContrastAnalysis(Imagick $imagick): Imagick
+    {
         $clone = clone $imagick;
+
+        $clone->setImageBackgroundColor('gray50');
+        $clone->setImageAlphaChannel(Imagick::ALPHACHANNEL_REMOVE);
+
+        $width = $clone->getImageWidth();
+        $height = $clone->getImageHeight();
+        $cropX = (int) ($width * 0.02);
+        $cropY = (int) ($height * 0.02);
+        $cropW = $width - 2 * $cropX;
+        $cropH = $height - 2 * $cropY;
+        if ($cropW > 0 && $cropH > 0 && ($cropX > 0 || $cropY > 0)) {
+            $clone->cropImage($cropW, $cropH, $cropX, $cropY);
+            $clone->setImagePage(0, 0, 0, 0);
+        }
+
         $clone->transformImageColorspace(Imagick::COLORSPACE_GRAY);
 
-        $stats = $clone->getImageChannelMean(Imagick::CHANNEL_GRAY);
-        $stdDev = ($stats['standardDeviation'] ?? 0.0) / $maxQuantum;
+        return $clone;
+    }
 
-        $clone->clear();
+    /**
+     * Build a sorted list of luma histogram bins.
+     *
+     * Each bin is `['value' => 0.0-1.0, 'count' => int]`. Bins are sorted ascending
+     * by luma value so the caller can walk them cumulatively to find percentiles.
+     *
+     * @return array{0: array<int, array{value: float, count: int}>, 1: int} [bins, totalPixels]
+     */
+    private static function buildLumaHistogramBins(Imagick $grayscaleImage): array
+    {
+        $histogram = $grayscaleImage->getImageHistogram();
+        if (empty($histogram)) {
+            return [[], 0];
+        }
 
-        return \min(1.0, $stdDev);
+        $bins = [];
+        $totalPixels = 0;
+        foreach ($histogram as $pixel) {
+            // In a grayscale image R == G == B == luma; sample red, normalized 0-1.
+            $bins[] = [
+                'value' => $pixel->getColorValue(Imagick::COLOR_RED),
+                'count' => $pixel->getColorCount(),
+            ];
+            $totalPixels += $pixel->getColorCount();
+        }
+
+        usort($bins, static fn(array $a, array $b): int => $a['value'] <=> $b['value']);
+
+        return [$bins, $totalPixels];
+    }
+
+    /**
+     * Walk the sorted bins cumulatively to find the p5 and p95 luma values,
+     * then return their spread clamped to [0.0, 1.0].
+     *
+     * Trimming 5% from each tail makes the metric robust to single blown highlights
+     * or crushed shadows, which would otherwise inflate the raw min-max range.
+     *
+     * @param array<int, array{value: float, count: int}> $sortedBins bins sorted ascending by value
+     */
+    private static function computePercentileSpread(array $sortedBins, int $totalPixels): float
+    {
+        $p5Target = $totalPixels * 0.05;
+        $p95Target = $totalPixels * 0.95;
+
+        $p5 = $sortedBins[0]['value'];
+        $p95 = $sortedBins[\count($sortedBins) - 1]['value'];
+
+        $cumulative = 0;
+        $foundP5 = false;
+        foreach ($sortedBins as $bin) {
+            $cumulative += $bin['count'];
+            if (!$foundP5 && $cumulative >= $p5Target) {
+                $p5 = $bin['value'];
+                $foundP5 = true;
+            }
+            if ($cumulative >= $p95Target) {
+                $p95 = $bin['value'];
+                break;
+            }
+        }
+
+        return \max(0.0, \min(1.0, $p95 - $p5));
     }
 
     /**
@@ -686,7 +792,7 @@ class ImageMetricsAnalyzer
         $score = (float) $raw['contrastScore'];
 
         if ($score < self::CONTRAST_FLAT) {
-            $checks['contrast'] = self::checkResult('warning', 'circle-half-stroke', 'Contrast', null, 'Washed out', 'This image looks washed out and may not stand out on the page. If this is intentional, you can safely ignore this.');
+            $checks['contrast'] = self::checkResult('warning', 'circle-half-stroke', 'Contrast', null, 'Very low contrast', 'This image has a very narrow tonal range and may look flat on the page. If this is intentional, you can safely ignore this.');
         } elseif ($score < self::CONTRAST_LOW) {
             $checks['contrast'] = self::checkResult('warning', 'circle-half-stroke', 'Contrast', null, 'Low contrast', 'Low contrast may make this image look flat on the page. If this is intentional, you can safely ignore this.');
         } else {
