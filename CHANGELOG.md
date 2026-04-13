@@ -1,5 +1,13 @@
 # Release Notes for Lens
 
+## 1.0.0-alpha.3 - 2026-04-13
+
+- Cancel in-flight analyses from the asset page or Queue Manager with checkpoint-based cancellation
+- Rewritten quality engine: blur-decay sharpness, percentile-spread contrast, improved compression analysis
+- Updated AI providers to GPT-5.4 and Claude 4.6 model families with current pricing
+- Simplified safety detection UI and refined watermark and brand detection prompts
+- Quality of life updates
+
 ## 1.0.0-alpha.2 - 2026-03-23
 
 - Search index now includes AI original values, site translations, and language-specific stemming
