@@ -31,7 +31,6 @@ class AssetQueryBehavior extends Behavior
     public ?bool $lensContainsPeople = null;
     public ?float $lensConfidenceBelow = null;
     public ?float $lensConfidenceAbove = null;
-    public ?bool $lensHasTags = null;
     public ?string $lensTag = null;
     public ?string $lensColor = null;
     public ?bool $lensNsfwFlagged = null;
@@ -95,15 +94,6 @@ class AssetQueryBehavior extends Behavior
     public function lensConfidenceAbove(?float $value): AssetQuery
     {
         $this->lensConfidenceAbove = $value;
-        return $this->owner;
-    }
-
-    /**
-     * Sets the has tags filter.
-     */
-    public function lensHasTags(?bool $value): AssetQuery
-    {
-        $this->lensHasTags = $value;
         return $this->owner;
     }
 
@@ -343,13 +333,6 @@ class AssetQueryBehavior extends Behavior
         }
     }
 
-    public function lensApplyHasTagsFilter(): void
-    {
-        if ($this->lensHasTags !== null && $this->owner->subQuery !== null) {
-            $this->safeApplyFilter(fn() => $this->applyHasTagsFilter(), 'HasTagsFilter', 'lensHasTags');
-        }
-    }
-
     public function lensApplyNsfwFlaggedFilter(): void
     {
         if ($this->lensNsfwFlagged !== null && $this->owner->subQuery !== null) {
@@ -512,10 +495,6 @@ class AssetQueryBehavior extends Behavior
             $this->owner->subQuery->andWhere(['>=', 'lens.altTextConfidence', $this->lensConfidenceAbove]);
         }
 
-        if ($this->lensHasTags !== null) {
-            $this->applyHasTagsFilter();
-        }
-
         if ($this->lensTag !== null) {
             $this->applyTagFilter();
         }
@@ -660,23 +639,6 @@ class AssetQueryBehavior extends Behavior
         }
     }
 
-    private function applyHasTagsFilter(): void
-    {
-        $this->ensureJoined();
-        $tagTable = Install::TABLE_ASSET_TAGS;
-
-        $tagSubQuery = (new Query())
-            ->select(['analysisId'])
-            ->from(['t' => $tagTable])
-            ->where('[[t.analysisId]] = [[lens.id]]');
-
-        if ($this->lensHasTags) {
-            $this->owner->subQuery->andWhere(['exists', $tagSubQuery]);
-        } else {
-            $this->owner->subQuery->andWhere(['not exists', $tagSubQuery]);
-        }
-    }
-
     private function applyTagFilter(): void
     {
         $this->ensureJoined();
@@ -795,7 +757,6 @@ class AssetQueryBehavior extends Behavior
             || $this->lensContainsPeople !== null
             || $this->lensConfidenceBelow !== null
             || $this->lensConfidenceAbove !== null
-            || $this->lensHasTags !== null
             || $this->lensTag !== null
             || $this->lensColor !== null
             || $this->lensNsfwFlagged !== null
@@ -850,7 +811,6 @@ class AssetQueryBehavior extends Behavior
         $this->lensContainsPeople = null;
         $this->lensConfidenceBelow = null;
         $this->lensConfidenceAbove = null;
-        $this->lensHasTags = null;
         $this->lensTag = null;
         $this->lensColor = null;
         $this->lensNsfwFlagged = null;

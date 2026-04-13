@@ -204,7 +204,6 @@ class AssetQueryBehaviorDefensiveTest extends Unit
         $originalSubQuery = $behavior->owner->subQuery;
         $behavior->lensStatus = 'completed';
         $behavior->lensContainsPeople = true;
-        $behavior->lensHasTags = true;
 
         $behavior->beforePrepare();
 
@@ -213,7 +212,6 @@ class AssetQueryBehaviorDefensiveTest extends Unit
         // All properties reset
         $this->assertNull($behavior->lensStatus);
         $this->assertNull($behavior->lensContainsPeople);
-        $this->assertNull($behavior->lensHasTags);
     }
 
     public function testSchemaValidationCachedAcrossCalls(): void
@@ -245,7 +243,6 @@ class AssetQueryBehaviorDefensiveTest extends Unit
 
         $behavior->lensStatus = 'completed';
         $behavior->lensContainsPeople = true;
-        $behavior->lensHasTags = true;
         $behavior->lensRawWhereConditions = [['lens.status' => 'completed']];
 
         $behavior->beforePrepare();
@@ -255,7 +252,6 @@ class AssetQueryBehaviorDefensiveTest extends Unit
         // All properties reset
         $this->assertNull($behavior->lensStatus);
         $this->assertNull($behavior->lensContainsPeople);
-        $this->assertNull($behavior->lensHasTags);
         $this->assertSame([], $behavior->lensRawWhereConditions);
     }
 
@@ -283,7 +279,6 @@ class AssetQueryBehaviorDefensiveTest extends Unit
         return [
             'StatusFilter' => ['lensApplyStatusFilter', 'lensStatus', 'completed', null],
             'ContainsPeopleFilter' => ['lensApplyContainsPeopleFilter', 'lensContainsPeople', true, null],
-            'HasTagsFilter' => ['lensApplyHasTagsFilter', 'lensHasTags', true, null],
             'NsfwFlaggedFilter' => ['lensApplyNsfwFlaggedFilter', 'lensNsfwFlagged', true, null],
             'HasWatermarkFilter' => ['lensApplyHasWatermarkFilter', 'lensHasWatermark', true, null],
             'WatermarkTypesFilter' => ['lensApplyWatermarkTypesFilter', 'lensWatermarkTypes', ['stock'], []],
@@ -371,15 +366,12 @@ class AssetQueryBehaviorDefensiveTest extends Unit
         $behavior = $this->createBehaviorWithThrowingSubQuery();
         $behavior->lensStatus = 'completed';
         $behavior->lensContainsPeople = true;
-        $behavior->lensHasTags = true;
 
         $behavior->lensApplyStatusFilter();
         $behavior->lensApplyContainsPeopleFilter();
-        $behavior->lensApplyHasTagsFilter();
 
         $this->assertNull($behavior->lensStatus);
         $this->assertNull($behavior->lensContainsPeople);
-        $this->assertNull($behavior->lensHasTags);
     }
 
     public function testFlowBFailureDoesNotAffectOtherProperties(): void
@@ -407,7 +399,6 @@ class AssetQueryBehaviorDefensiveTest extends Unit
         $properties = [
             'lensStatus' => 'completed',
             'lensContainsPeople' => true,
-            'lensHasTags' => true,
             'lensNsfwFlagged' => true,
             'lensLowQuality' => true,
             'lensTextSearch' => 'test',

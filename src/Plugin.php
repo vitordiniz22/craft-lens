@@ -35,7 +35,6 @@ use vitordiniz22\craftlens\helpers\FieldLayoutHelper;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\conditions\ContainsBrandLogoConditionRule;
 use vitordiniz22\craftlens\conditions\ContainsPeopleConditionRule;
-use vitordiniz22\craftlens\conditions\HasAiTagsConditionRule;
 use vitordiniz22\craftlens\conditions\HasFocalPointConditionRule;
 use vitordiniz22\craftlens\conditions\HasTextInImageConditionRule;
 use vitordiniz22\craftlens\conditions\LowQualityConditionRule;
@@ -431,7 +430,6 @@ class Plugin extends BasePlugin
             AssetCondition::class,
             AssetCondition::EVENT_REGISTER_CONDITION_RULES,
             function(RegisterConditionRulesEvent $event) {
-                $event->conditionRules[] = HasAiTagsConditionRule::class;
                 $event->conditionRules[] = LensStatusConditionRule::class;
                 $event->conditionRules[] = NsfwFlaggedConditionRule::class;
                 $event->conditionRules[] = HasFocalPointConditionRule::class;
