@@ -85,19 +85,12 @@
                             <button type="button" data-lens-action="remove-filter-chip" data-lens-filter-param="faceCountPreset" title="{{ 'Remove filter'|t('lens') }}">&times;</button>
                         </span>
                     {% endif %}
-                    {% if filters.qualityPreset is defined and filters.qualityPreset %}
-                        <span class="lens-filter-chip" data-lens-filter-param="qualityPreset">
-                            {{ 'Quality'|t('lens') }}: <strong>{{ filters.qualityPreset|capitalize }}</strong>
-                            <button type="button" data-lens-action="remove-filter-chip" data-lens-filter-param="qualityPreset" title="{{ 'Remove filter'|t('lens') }}">&times;</button>
-                        </span>
-                    {% endif %}
                     {% if (filters.qualityIssues ?? [])|length %}
                         {% set qualityIssueLabels = {
                             blurry: 'Blurry'|t('lens'),
                             tooDark: 'Too Dark'|t('lens'),
                             tooBright: 'Too Bright'|t('lens'),
                             lowContrast: 'Low Contrast'|t('lens'),
-                            lowOverall: 'Low Overall'|t('lens'),
                         } %}
                         <span class="lens-filter-chip" data-lens-filter-param="qualityIssues[]">
                             {{ 'Quality Issues'|t('lens') }}: <strong>{{ filters.qualityIssues|map(v => qualityIssueLabels[v] ?? v)|join(', ') }}</strong>

@@ -37,7 +37,6 @@ use vitordiniz22\craftlens\conditions\ContainsBrandLogoConditionRule;
 use vitordiniz22\craftlens\conditions\ContainsPeopleConditionRule;
 use vitordiniz22\craftlens\conditions\HasFocalPointConditionRule;
 use vitordiniz22\craftlens\conditions\HasTextInImageConditionRule;
-use vitordiniz22\craftlens\conditions\LowQualityConditionRule;
 use vitordiniz22\craftlens\conditions\LensStatusConditionRule;
 use vitordiniz22\craftlens\conditions\NsfwFlaggedConditionRule;
 use vitordiniz22\craftlens\conditions\StockProviderConditionRule;
@@ -436,7 +435,6 @@ class Plugin extends BasePlugin
                 $event->conditionRules[] = WatermarkFlaggedConditionRule::class;
                 $event->conditionRules[] = ContainsBrandLogoConditionRule::class;
                 $event->conditionRules[] = WatermarkTypeConditionRule::class;
-                $event->conditionRules[] = LowQualityConditionRule::class;
                 $event->conditionRules[] = WebReadinessConditionRule::class;
 
                 if ($this->getIsPro()) {
@@ -478,7 +476,6 @@ class Plugin extends BasePlugin
                     'failed' => ['Failed Analyses', ['lensStatus' => 'failed', 'kind' => 'image']],
                     'missing-alt-text' => ['Missing Alt Text', ['hasAlt' => false, 'kind' => 'image']],
                     'nsfw-flagged' => ['NSFW Flagged', ['lensNsfwFlagged' => true, 'kind' => 'image']],
-                    'low-quality' => ['Low Quality', ['lensLowQuality' => true, 'kind' => 'image']],
                     'blurry' => ['Blurry', ['lensBlurry' => true, 'kind' => 'image']],
                     'too-dark' => ['Too Dark', ['lensTooDark' => true, 'kind' => 'image']],
                     'too-bright' => ['Too Bright', ['lensTooBright' => true, 'kind' => 'image']],

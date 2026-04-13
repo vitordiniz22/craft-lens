@@ -469,14 +469,6 @@ class AssetAnalysisService extends Component
                 $record->noiseScore = $localMetrics['raw']['contrastScore'];
                 $record->compressionQuality = $localMetrics['raw']['compressionQuality'];
                 $record->colorProfile = $localMetrics['raw']['colorProfile'];
-
-                $record->overallQualityScore = ImageMetricsAnalyzer::computeOverallQuality(
-                    $localMetrics['raw']['sharpnessScore'],
-                    $localMetrics['raw']['exposureScore'],
-                    $localMetrics['raw']['contrastScore'],
-                    $localMetrics['raw']['compressionQuality'],
-                    $localMetrics['raw']['colorProfile'],
-                );
             }
 
             $record->processedAt = DateTimeHelper::now();

@@ -62,20 +62,12 @@
             {value: '6+', label: '6+'},
         ], filters.faceCountPreset ?? '') }}
 
-        {# Quality Preset #}
-        {{ _self.presetButtonGroup('Quality'|t('lens'), 'qualityPreset', [
-            {value: 'high', label: 'High'|t('lens')},
-            {value: 'medium', label: 'Medium'|t('lens')},
-            {value: 'low', label: 'Low'|t('lens')},
-        ], filters.qualityPreset ?? '') }}
-
         {# Quality Issues #}
         {{ _self.checkboxGroup('Quality Issues'|t('lens'), 'qualityIssues[]', [
             {value: 'blurry', label: 'Blurry'|t('lens')},
             {value: 'tooDark', label: 'Too Dark'|t('lens')},
             {value: 'tooBright', label: 'Too Bright'|t('lens')},
             {value: 'lowContrast', label: 'Low Contrast'|t('lens')},
-            {value: 'lowOverall', label: 'Low Overall Quality'|t('lens')},
         ], filters.qualityIssues ?? []) }}
 
         {# Too Large #}

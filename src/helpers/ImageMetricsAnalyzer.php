@@ -44,16 +44,6 @@ class ImageMetricsAnalyzer
     private const SHARPNESS_PATCH_BLEND_HIGH = 400;
     private const SHARPNESS_PATCH_MAX_WEIGHT = 0.3;
 
-    // Overall quality threshold — below this is considered "low quality"
-    public const LOW_QUALITY_THRESHOLD = 0.3;
-
-    // Component weights for overall quality score computation
-    private const WEIGHT_SHARPNESS = 0.30;
-    private const WEIGHT_BRIGHTNESS = 0.20;
-    private const WEIGHT_CONTRAST = 0.15;
-    private const WEIGHT_COMPRESSION = 0.25;
-    private const WEIGHT_COLOR_PROFILE = 0.10;
-
     /**
      * Check if Imagick extension is available.
      */
@@ -143,76 +133,6 @@ class ImageMetricsAnalyzer
         ];
 
         return self::buildChecks($raw);
-    }
-
-    /**
-     * Compute overall quality score (0-1) from local metrics.
-     * Weighted average of normalized quality components, redistributed when some metrics are unavailable.
-     * Returns null if no metrics are available (e.g., Imagick not installed).
-     */
-    public static function computeOverallQuality(
-        ?float $sharpnessScore,
-        ?float $exposureScore,
-        ?float $contrastScore,
-        ?int $compressionQuality,
-        ?string $colorProfile,
-    ): ?float {
-        $components = [];
-
-        // Sharpness: higher = better, used directly
-        if ($sharpnessScore !== null) {
-            $components[] = ['score' => $sharpnessScore, 'weight' => self::WEIGHT_SHARPNESS];
-        }
-
-        // Brightness: sweet spot is 0.2-0.85, linear penalty outside
-        if ($exposureScore !== null) {
-            if ($exposureScore >= self::BRIGHTNESS_DARK && $exposureScore <= self::BRIGHTNESS_BRIGHT) {
-                $brightnessQuality = 1.0;
-            } elseif ($exposureScore < self::BRIGHTNESS_DARK) {
-                $brightnessQuality = $exposureScore / self::BRIGHTNESS_DARK;
-            } else {
-                $brightnessQuality = \max(0.0, 1.0 - ($exposureScore - self::BRIGHTNESS_BRIGHT) / (1.0 - self::BRIGHTNESS_BRIGHT));
-            }
-            $components[] = ['score' => $brightnessQuality, 'weight' => self::WEIGHT_BRIGHTNESS];
-        }
-
-        // Contrast: reaches full quality at CONTRAST_LOW threshold
-        if ($contrastScore !== null) {
-            $contrastQuality = \min(1.0, $contrastScore / self::CONTRAST_LOW);
-            $components[] = ['score' => $contrastQuality, 'weight' => self::WEIGHT_CONTRAST];
-        }
-
-        // Compression: quality 0-100 mapped to 0-1
-        if ($compressionQuality !== null) {
-            $components[] = ['score' => $compressionQuality / 100, 'weight' => self::WEIGHT_COMPRESSION];
-        }
-
-        // Color profile: sRGB is ideal, CMYK is worst for web
-        if ($colorProfile !== null) {
-            $colorQuality = match ($colorProfile) {
-                'srgb' => 1.0,
-                'grayscale' => 0.9,
-                'display-p3', 'adobe-rgb', 'prophoto' => 0.8,
-                'cmyk' => 0.4,
-                default => 0.8,
-            };
-            $components[] = ['score' => $colorQuality, 'weight' => self::WEIGHT_COLOR_PROFILE];
-        }
-
-        if (empty($components)) {
-            return null;
-        }
-
-        // Weighted average, redistributed across available components
-        $totalWeight = 0.0;
-        $weightedSum = 0.0;
-
-        foreach ($components as $component) {
-            $weightedSum += $component['score'] * $component['weight'];
-            $totalWeight += $component['weight'];
-        }
-
-        return \round($weightedSum / $totalWeight, 4);
     }
 
     /**

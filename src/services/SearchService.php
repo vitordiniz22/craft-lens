@@ -31,8 +31,6 @@ class SearchService extends Component
     private const DEFAULT_LIMIT = 50;
     private const NATIVE_SEARCH_LIMIT = 500;
     private const DEFAULT_COLOR_TOLERANCE = 30;
-    private const QUALITY_HIGH_THRESHOLD = 0.7;
-    private const QUALITY_LOW_THRESHOLD = 0.4;
 
 
     /**
@@ -251,7 +249,6 @@ class SearchService extends Component
         $this->applyDuplicatesFilter($query, $filters);
         $this->applyWatermarkFilter($query, $filters);
         $this->applyBrandLogoFilter($query, $filters);
-        $this->applyQualityPresetFilter($query, $filters);
         $this->applyFocalPointFilter($query, $filters);
         $this->applyMissingAltTextFilter($query, $filters);
         $this->applyUnprocessedFilter($query, $filters);
@@ -292,7 +289,7 @@ class SearchService extends Component
             'processedFrom', 'processedTo',
             'color', 'noTags', 'hasDuplicates',
             'hasWatermark', 'watermarkType', 'containsBrandLogo',
-            'qualityPreset', 'hasFocalPoint',
+            'hasFocalPoint',
             'missingAltText', 'unprocessed',
             'qualityIssues', 'webReadinessIssues', 'hasTextInImage',
         ];
@@ -560,31 +557,6 @@ class SearchService extends Component
     }
 
     /**
-     * Filter assets by quality preset (high/medium/low).
-     */
-    private function applyQualityPresetFilter(Query $query, array $filters): void
-    {
-        if (!isset($filters['qualityPreset'])) {
-            return;
-        }
-
-        switch ($filters['qualityPreset']) {
-            case 'high':
-                $query->andWhere(['>=', 'lens.overallQualityScore', self::QUALITY_HIGH_THRESHOLD]);
-                break;
-            case 'medium':
-                $query->andWhere(['>=', 'lens.overallQualityScore', self::QUALITY_LOW_THRESHOLD]);
-                $query->andWhere(['<', 'lens.overallQualityScore', self::QUALITY_HIGH_THRESHOLD]);
-                break;
-            case 'low':
-                $query->andWhere(['<', 'lens.overallQualityScore', self::QUALITY_LOW_THRESHOLD]);
-                break;
-        }
-
-        $query->andWhere(['not', ['lens.overallQualityScore' => null]]);
-    }
-
-    /**
      * Filter assets by focal point availability.
      *
      * Uses Craft's native assets.focalPoint field to match the dashboard coverage
@@ -644,7 +616,7 @@ class SearchService extends Component
     }
 
     /**
-     * Filter assets by specific quality issues (blurry, tooDark, tooBright, lowContrast, lowOverall).
+     * Filter assets by specific quality issues (blurry, tooDark, tooBright, lowContrast).
      */
     private function applyQualityIssuesFilter(Query $query, array $filters): void
     {
@@ -675,11 +647,6 @@ class SearchService extends Component
                     'and',
                     ['<', 'lens.noiseScore', ImageMetricsAnalyzer::CONTRAST_LOW],
                     ['not', ['lens.noiseScore' => null]],
-                ],
-                'lowOverall' => $conditions[] = [
-                    'and',
-                    ['<', 'lens.overallQualityScore', ImageMetricsAnalyzer::LOW_QUALITY_THRESHOLD],
-                    ['not', ['lens.overallQualityScore' => null]],
                 ],
                 default => null,
             };

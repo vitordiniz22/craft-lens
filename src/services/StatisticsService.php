@@ -24,8 +24,6 @@ use yii\db\Query;
 class StatisticsService extends Component
 {
     private const NSFW_SCORE_THRESHOLD = 0.5;
-    private const QUALITY_HIGH_THRESHOLD = 0.7;
-    private const QUALITY_LOW_THRESHOLD = 0.4;
 
     /**
      * Get overview statistics for the dashboard.
@@ -676,52 +674,6 @@ class StatisticsService extends Component
         }
 
         return $items;
-    }
-
-    /**
-     * Get quality score distribution across analyzed assets.
-     *
-     * @return array{high: int, medium: int, low: int, total: int}
-     */
-    public function getQualityDistribution(): array
-    {
-        $volumeIds = $this->getEnabledVolumeIds();
-
-        $query = (new Query())
-            ->select([
-                new Expression(
-                    'SUM(CASE WHEN [[overallQualityScore]] >= :high THEN 1 ELSE 0 END) as high',
-                    [':high' => self::QUALITY_HIGH_THRESHOLD]
-                ),
-                new Expression(
-                    'SUM(CASE WHEN [[overallQualityScore]] >= :low AND [[overallQualityScore]] < :high THEN 1 ELSE 0 END) as medium',
-                    [':low' => self::QUALITY_LOW_THRESHOLD, ':high' => self::QUALITY_HIGH_THRESHOLD]
-                ),
-                new Expression(
-                    'SUM(CASE WHEN [[overallQualityScore]] < :low THEN 1 ELSE 0 END) as low',
-                    [':low' => self::QUALITY_LOW_THRESHOLD]
-                ),
-                'COUNT(*) as total',
-            ])
-            ->from(Install::TABLE_ASSET_ANALYSES)
-            ->where(['in', 'status', AnalysisStatus::processedValues()])
-            ->andWhere(['not', ['overallQualityScore' => null]]);
-
-        if ($volumeIds !== null) {
-            if (empty($volumeIds)) {
-                return ['high' => 0, 'medium' => 0, 'low' => 0, 'total' => 0];
-            }
-            $query->andWhere(['in', 'assetId', $this->buildVolumeSubquery($volumeIds)]);
-        }
-
-        $result = $query->one();
-
-        return [
-            'high' => (int) ($result['high'] ?? 0),
-            'medium' => (int) ($result['medium'] ?? 0),
-            'low' => (int) ($result['low'] ?? 0),
-            'total' => (int) ($result['total'] ?? 0),
-        ];
     }
 
     /**

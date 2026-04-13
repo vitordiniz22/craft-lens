@@ -101,7 +101,6 @@ class Install extends Migration
             'sharpnessScore' => $this->decimal(5, 4)->null(),
             'exposureScore' => $this->decimal(5, 4)->null(),
             'noiseScore' => $this->decimal(5, 4)->null(),
-            'overallQualityScore' => $this->decimal(5, 4)->null(),
             'compressionQuality' => $this->tinyInteger()->unsigned()->null(),
             'colorProfile' => $this->string(20)->null(),
             // Focal point detection (editable)
@@ -256,7 +255,6 @@ class Install extends Migration
         $this->createIndex(null, self::TABLE_ASSET_ANALYSES, ['hasWatermark']);
         $this->createIndex(null, self::TABLE_ASSET_ANALYSES, ['watermarkType']);
         $this->createIndex(null, self::TABLE_ASSET_ANALYSES, ['containsBrandLogo']);
-        $this->createIndex(null, self::TABLE_ASSET_ANALYSES, ['overallQualityScore']);
         $this->createIndex(null, self::TABLE_ASSET_ANALYSES, ['sharpnessScore']);
         $this->createIndex(null, self::TABLE_ASSET_ANALYSES, ['exposureScore']);
 

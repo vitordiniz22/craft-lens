@@ -407,7 +407,6 @@ class ReviewService extends Component
             'sharpnessScore' => $record->sharpnessScore,
             'exposureScore' => $record->exposureScore,
             'noiseScore' => $record->noiseScore,
-            'overallQualityScore' => $record->overallQualityScore,
             'compressionQuality' => $record->compressionQuality,
             'colorProfile' => $record->colorProfile,
             'similarImages' => Plugin::getInstance()->duplicateDetection->getSimilarAssetsForDisplay($record->assetId),

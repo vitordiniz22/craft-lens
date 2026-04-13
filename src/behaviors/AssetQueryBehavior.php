@@ -44,11 +44,9 @@ class AssetQueryBehavior extends Behavior
     public string|array|null $lensStockProvider = null;
 
     // Quality filters
-    public ?float $lensQualityBelow = null;
     public ?float $lensSharpnessBelow = null;
     public ?bool $lensExposureIssues = null;
     public ?bool $lensHasFocalPoint = null;
-    public ?bool $lensLowQuality = null;
     public ?bool $lensBlurry = null;
     public ?bool $lensTooDark = null;
     public ?bool $lensTooBright = null;
@@ -201,15 +199,6 @@ class AssetQueryBehavior extends Behavior
     }
 
     /**
-     * Filters assets by overall quality score below threshold.
-     */
-    public function lensQualityBelow(?float $value): AssetQuery
-    {
-        $this->lensQualityBelow = $value;
-        return $this->owner;
-    }
-
-    /**
      * Filters assets by sharpness score below threshold.
      */
     public function lensSharpnessBelow(?float $value): AssetQuery
@@ -233,15 +222,6 @@ class AssetQueryBehavior extends Behavior
     public function lensHasFocalPoint(?bool $value): AssetQuery
     {
         $this->lensHasFocalPoint = $value;
-        return $this->owner;
-    }
-
-    /**
-     * Filters assets with low overall quality score.
-     */
-    public function lensLowQuality(?bool $value): AssetQuery
-    {
-        $this->lensLowQuality = $value;
         return $this->owner;
     }
 
@@ -409,13 +389,6 @@ class AssetQueryBehavior extends Behavior
         }
     }
 
-    public function lensApplyLowQualityFilter(): void
-    {
-        if ($this->lensLowQuality !== null && $this->owner->subQuery !== null) {
-            $this->safeApplyFilter(fn() => $this->applyLowQualityFilter(), 'LowQualityFilter', 'lensLowQuality');
-        }
-    }
-
     public function lensApplyWebReadinessFilter(): void
     {
         if ($this->lensWebReadinessIssues !== null && !empty($this->lensWebReadinessIssues) && $this->owner->subQuery !== null) {
@@ -539,10 +512,6 @@ class AssetQueryBehavior extends Behavior
             $this->applyTextSearchFilter();
         }
 
-        if ($this->lensQualityBelow !== null) {
-            $this->applyQualityBelowFilter();
-        }
-
         if ($this->lensSharpnessBelow !== null) {
             $this->applySharpnessBelowFilter();
         }
@@ -553,10 +522,6 @@ class AssetQueryBehavior extends Behavior
 
         if ($this->lensHasFocalPoint !== null) {
             $this->applyHasFocalPointFilter();
-        }
-
-        if ($this->lensLowQuality !== null) {
-            $this->applyLowQualityFilter();
         }
 
         if ($this->lensBlurry !== null) {
@@ -768,11 +733,9 @@ class AssetQueryBehavior extends Behavior
             || $this->lensHasDuplicates !== null
             || $this->lensTextSearch !== null
             || $this->lensStockProvider !== null
-            || $this->lensQualityBelow !== null
             || $this->lensSharpnessBelow !== null
             || $this->lensExposureIssues !== null
             || $this->lensHasFocalPoint !== null
-            || $this->lensLowQuality !== null
             || $this->lensBlurry !== null
             || $this->lensTooDark !== null
             || $this->lensTooBright !== null
@@ -822,11 +785,9 @@ class AssetQueryBehavior extends Behavior
         $this->lensHasDuplicates = null;
         $this->lensTextSearch = null;
         $this->lensStockProvider = null;
-        $this->lensQualityBelow = null;
         $this->lensSharpnessBelow = null;
         $this->lensExposureIssues = null;
         $this->lensHasFocalPoint = null;
-        $this->lensLowQuality = null;
         $this->lensBlurry = null;
         $this->lensTooDark = null;
         $this->lensTooBright = null;
@@ -924,15 +885,6 @@ class AssetQueryBehavior extends Behavior
         $this->owner->subQuery->andWhere(['like', 'lens.extractedTextAi', $this->lensTextSearch]);
     }
 
-    private function applyQualityBelowFilter(): void
-    {
-        $this->ensureJoined();
-        $this->owner->subQuery->andWhere(['and',
-            ['not', ['lens.overallQualityScore' => null]],
-            ['<', 'lens.overallQualityScore', $this->lensQualityBelow],
-        ]);
-    }
-
     private function applySharpnessBelowFilter(): void
     {
         $this->ensureJoined();
@@ -970,22 +922,6 @@ class AssetQueryBehavior extends Behavior
             $this->owner->subQuery->andWhere(['not', ['assets.focalPoint' => null]]);
         } else {
             $this->owner->subQuery->andWhere(['assets.focalPoint' => null]);
-        }
-    }
-
-    private function applyLowQualityFilter(): void
-    {
-        if ($this->lensLowQuality) {
-            $this->ensureJoined();
-            $this->owner->subQuery->andWhere(['<', 'lens.overallQualityScore', ImageMetricsAnalyzer::LOW_QUALITY_THRESHOLD]);
-            $this->owner->subQuery->andWhere(['not', ['lens.overallQualityScore' => null]]);
-        } else {
-            $this->ensureLeftJoined();
-            $this->owner->subQuery->andWhere([
-                'or',
-                ['lens.overallQualityScore' => null],
-                ['>=', 'lens.overallQualityScore', ImageMetricsAnalyzer::LOW_QUALITY_THRESHOLD],
-            ]);
         }
     }
 

@@ -23,7 +23,7 @@ class FilterParser
         'processedFrom', 'processedTo',
         'color', 'colorTolerance', 'hasDuplicates', 'quickFilter',
         'hasWatermark', 'watermarkType', 'containsBrandLogo',
-        'qualityPreset', 'hasFocalPoint',
+        'hasFocalPoint',
         'nsfwFlagged', 'missingAltText', 'unprocessed',
         'similarTo',
         'qualityIssues', 'isTooLarge', 'isBlurry', 'isTooDark', 'hasTextInImage',
@@ -204,7 +204,6 @@ class FilterParser
     {
         $enumFilters = [
             'watermarkType' => ['stock', 'logo', 'text', 'copyright'],
-            'qualityPreset' => ['high', 'medium', 'low'],
         ];
 
         foreach ($enumFilters as $key => $allowedValues) {
@@ -219,7 +218,7 @@ class FilterParser
     private static function parseArrayFilters(Request $request, array &$filters): void
     {
         $arrayFilters = [
-            'qualityIssues' => ['blurry', 'tooDark', 'tooBright', 'lowContrast', 'lowOverall'],
+            'qualityIssues' => ['blurry', 'tooDark', 'tooBright', 'lowContrast'],
         ];
 
         foreach ($arrayFilters as $key => $allowedValues) {

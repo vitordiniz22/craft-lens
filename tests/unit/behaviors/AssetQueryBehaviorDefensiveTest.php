@@ -285,7 +285,6 @@ class AssetQueryBehaviorDefensiveTest extends Unit
             'ContainsBrandLogoFilter' => ['lensApplyContainsBrandLogoFilter', 'lensContainsBrandLogo', true, null],
             'StockProviderFilter' => ['lensApplyStockProviderFilter', 'lensStockProvider', 'shutterstock', null],
             'HasFocalPointFilter' => ['lensApplyHasFocalPointFilter', 'lensHasFocalPoint', true, null],
-            'LowQualityFilter' => ['lensApplyLowQualityFilter', 'lensLowQuality', true, null],
             'WebReadinessFilter' => ['lensApplyWebReadinessFilter', 'lensWebReadinessIssues', ['fileTooLarge'], []],
             'HasTextInImageFilter' => ['lensApplyHasTextInImageFilter', 'lensHasTextInImage', true, null],
             'RawWhereConditions' => ['lensApplyRawWhereConditions', 'lensRawWhereConditions', [['lens.status' => 'completed']], []],
@@ -400,7 +399,6 @@ class AssetQueryBehaviorDefensiveTest extends Unit
             'lensStatus' => 'completed',
             'lensContainsPeople' => true,
             'lensNsfwFlagged' => true,
-            'lensLowQuality' => true,
             'lensTextSearch' => 'test',
         ];
 
