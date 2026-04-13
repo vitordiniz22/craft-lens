@@ -83,7 +83,6 @@ class Install extends Migration
             'nsfwScoreAi' => $this->decimal(5, 4)->null(),
             'nsfwConfidence' => $this->decimal(5, 4)->null(),
             'nsfwCategories' => $this->json()->null(),
-            'isFlaggedNsfw' => $this->boolean()->notNull()->defaultValue(false),
 
             // Watermark detection (editable)
             'hasWatermark' => $this->boolean()->notNull()->defaultValue(false),
@@ -254,7 +253,7 @@ class Install extends Migration
         $this->createIndex(null, self::TABLE_ASSET_ANALYSES, ['status']);
         $this->createIndex(null, self::TABLE_ASSET_ANALYSES, ['containsPeople']);
         $this->createIndex(null, self::TABLE_ASSET_ANALYSES, ['faceCount']);
-        $this->createIndex(null, self::TABLE_ASSET_ANALYSES, ['isFlaggedNsfw']);
+        $this->createIndex(null, self::TABLE_ASSET_ANALYSES, ['nsfwScore']);
         $this->createIndex(null, self::TABLE_ASSET_ANALYSES, ['hasWatermark']);
         $this->createIndex(null, self::TABLE_ASSET_ANALYSES, ['watermarkType']);
         $this->createIndex(null, self::TABLE_ASSET_ANALYSES, ['containsBrandLogo']);

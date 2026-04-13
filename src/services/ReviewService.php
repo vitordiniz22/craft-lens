@@ -374,7 +374,6 @@ class ReviewService extends Component
             'nsfwScoreAi' => $record->nsfwScoreAi,
             'nsfwConfidence' => $record->nsfwConfidence,
             'nsfwCategories' => $record->nsfwCategories,
-            'isFlaggedNsfw' => (bool)$record->isFlaggedNsfw,
             'hasWatermark' => (bool)$record->hasWatermark,
             'hasWatermarkAi' => (bool)($record->hasWatermarkAi ?? false),
             'watermarkType' => $record->watermarkType,

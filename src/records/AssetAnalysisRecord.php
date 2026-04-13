@@ -55,7 +55,6 @@ use yii\db\ActiveQueryInterface;
  * @property float|null $nsfwScoreAi
  * @property float|null $nsfwConfidence
  * @property array|null $nsfwCategories
- * @property bool $isFlaggedNsfw
  *
  * Watermark detection (editable):
  * @property bool $hasWatermark
@@ -182,7 +181,7 @@ class AssetAnalysisRecord extends ActiveRecord
             [['altTextConfidence', 'titleConfidence', 'longDescriptionConfidence', 'containsPeopleConfidence', 'containsBrandLogoConfidence', 'nsfwScore', 'nsfwScoreAi', 'nsfwConfidence', 'watermarkConfidence', 'sharpnessScore', 'exposureScore', 'noiseScore', 'overallQualityScore', 'focalPointX', 'focalPointXAi', 'focalPointY', 'focalPointYAi', 'focalPointConfidence'], 'number', 'min' => 0, 'max' => 1],
             [['faceCount'], 'integer', 'min' => 0],
             [['faceCountAi'], 'integer', 'min' => 0],
-            [['containsPeople', 'containsPeopleAi', 'isFlaggedNsfw', 'hasWatermark', 'hasWatermarkAi', 'containsBrandLogo', 'containsBrandLogoAi'], 'boolean'],
+            [['containsPeople', 'containsPeopleAi', 'hasWatermark', 'hasWatermarkAi', 'containsBrandLogo', 'containsBrandLogoAi'], 'boolean'],
             [['watermarkType'], 'string', 'max' => 30],
             [['watermarkType'], 'in', 'range' => array_column(WatermarkType::cases(), 'value')],
             [['extractedText', 'extractedTextAi'], 'string', 'max' => self::EXTRACTED_TEXT_MAX_LENGTH],

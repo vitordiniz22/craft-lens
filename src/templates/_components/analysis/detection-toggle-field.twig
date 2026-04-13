@@ -16,6 +16,10 @@
  #   falseValue     - mixed (value to send when "not detected", e.g., 0)
  #   confidence     - float|null (optional, 0.0-1.0 AI confidence score)
  #   details        - string[] (optional, contextual labels shown inside accent bar when flagged)
+ #   flaggedLabel   - string|null (optional, informational pill text when flagged;
+ #                    falls back to "Flagged")
+ #   flaggedHelp    - string|null (optional, guidance text shown below the header when
+ #                    flagged, e.g. "Model releases may be required for commercial use.")
  #}
 
 {% from 'lens/_components/analysis/_detection-status-badge' import detectionStatusBadge %}
@@ -24,13 +28,15 @@
 {% set fieldState = fieldState ?? 'readonly' %}
 {% set icon = icon ?? 'circle-question' %}
 {% set isEdited = (detectedAi is defined) and detected != detectedAi %}
+{% set flaggedLabel = flaggedLabel ?? null %}
+{% set flaggedHelp = flaggedHelp ?? null %}
 
 {# ============================================================
    READONLY — Icon + label + badge. No interactions.
    ============================================================ #}
 {% if fieldState == 'readonly' %}
 
-<div class="lens-editable-field lens-editable-field--detection{{ detected ? ' lens-accent-bar lens-accent-bar--red' : '' }}">
+<div class="lens-editable-field lens-editable-field--detection"{% if flaggedLabel %} data-lens-flagged-label="{{ flaggedLabel }}"{% endif %}>
     <div class="lens-field-header" data-lens-target="field-header">
         <span class="lens-detection-icon{{ detected ? ' lens-detection-icon--flagged' : '' }}" data-lens-target="detection-icon">
             {{ iconSvg(icon)|attr({width: 12, height: 12, fill: 'currentColor'}) }}
@@ -42,8 +48,15 @@
         {% if not isEdited and (confidence ?? null) and not (hideConfidence ?? false) %}
             {{ confidenceBadge(confidence, 'simple') }}
         {% endif %}
-        {{ detectionStatusBadge(detected) }}
+        {{ detectionStatusBadge(detected, false, flaggedLabel) }}
     </div>
+
+    {% if detected and flaggedHelp %}
+        <p class="lens-detection-help">
+            <span class="lens-detection-help__icon">{{ iconSvg('lightbulb')|attr({width: 12, height: 12, fill: 'currentColor'}) }}</span>
+            {{ flaggedHelp }}
+        </p>
+    {% endif %}
 
     {% if (details ?? [])|length %}
         <div class="lens-detection-detail" data-lens-chips-active="{{ detected ? '1' : '0' }}">
@@ -63,7 +76,7 @@
 
 {% set isReview = fieldState == 'editing' %}
 
-<div class="lens-editable-field lens-editable-field--detection{{ detected ? ' lens-accent-bar lens-accent-bar--red' : '' }}"
+<div class="lens-editable-field lens-editable-field--detection"
      data-lens-target="detection-toggle"
      data-lens-field="{{ fieldName }}"
      data-lens-analysis-id="{{ analysisId }}"
@@ -71,6 +84,7 @@
      data-lens-detected-ai="{{ detectedAi ? '1' : '0' }}"
      data-lens-true-value="{{ trueValue }}"
      data-lens-false-value="{{ falseValue }}"
+     {% if flaggedLabel %}data-lens-flagged-label="{{ flaggedLabel }}"{% endif %}
      {% if isReview %}data-lens-context="review"{% endif %}>
 
     <div class="lens-field-header" data-lens-target="field-header">
@@ -87,8 +101,15 @@
         {% if not isReview %}
             {% include 'lens/_components/analysis/_tooltip-edit' with {editAction: 'detection-edit'} only %}
         {% endif %}
-        {{ detectionStatusBadge(detected, true) }}
+        {{ detectionStatusBadge(detected, true, flaggedLabel) }}
     </div>
+
+    {% if flaggedHelp %}
+        <p class="lens-detection-help" data-lens-target="detection-help"{% if not detected %} hidden{% endif %}>
+            <span class="lens-detection-help__icon">{{ iconSvg('lightbulb')|attr({width: 12, height: 12, fill: 'currentColor'}) }}</span>
+            {{ flaggedHelp }}
+        </p>
+    {% endif %}
 
     {% if (details ?? [])|length %}
         <div class="lens-detection-detail" data-lens-target="detection-detail" data-lens-chips-active="{{ detected ? '1' : '0' }}">

@@ -321,12 +321,6 @@
     background: var(--gray-050);
 }
 
-.lens-accent-bar--red {
-    border-left-color: var(--red-500);
-    background: color-mix(in srgb, var(--red-500) 4%, transparent);
-}
-
-
 /* Bridge apply row (review page — apply checkbox + current value context) */
 .lens-bridge-apply-row {
     display: flex;
@@ -723,6 +717,10 @@
     margin: 2px 0 0 0;
 }
 
+.lens-detection-help[hidden] {
+    display: none;
+}
+
 .lens-detection-help__icon {
     flex-shrink: 0;
     display: inline-flex;
@@ -785,22 +783,6 @@
     color: var(--blue-600);
 }
 
-.lens-segmented-control__option:has([data-lens-target="detection-icon-flagged"]):has(input:checked) {
-    background: var(--red-100);
-    color: var(--red-700);
-}
-.lens-segmented-control__option:has([data-lens-target="detection-icon-flagged"]):has(input:checked) .lens-segmented-control__icon {
-    color: var(--red-500);
-}
-
-.lens-segmented-control__option:has([data-lens-target="detection-icon-clear"]):has(input:checked) {
-    background: var(--green-100);
-    color: var(--green-700);
-}
-.lens-segmented-control__option:has([data-lens-target="detection-icon-clear"]):has(input:checked) .lens-segmented-control__icon {
-    color: var(--green-500);
-}
-
 /* Native radio options (people detection, replaces bordered cards) */
 .lens-radio-option {
     display: flex;
@@ -860,8 +842,8 @@
     letter-spacing: 0.3px;
     padding: 2px 8px;
     border-radius: 3px;
-    background: color-mix(in srgb, var(--red-500) 15%, transparent);
-    color: var(--red-700);
+    background: var(--gray-100);
+    color: var(--medium-text-color);
 }
 
 

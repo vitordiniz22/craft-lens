@@ -354,10 +354,28 @@ class AssetQueryBehavior extends Behavior
     {
         if ($this->lensNsfwFlagged !== null && $this->owner->subQuery !== null) {
             $this->safeApplyFilter(
-                fn() => $this->applySimpleFilter('lens.isFlaggedNsfw', $this->lensNsfwFlagged),
+                fn() => $this->filterByNsfwFlagged((bool) $this->lensNsfwFlagged),
                 'NsfwFlaggedFilter',
                 'lensNsfwFlagged',
             );
+        }
+    }
+
+    /**
+     * NULL nsfwScore (unanalyzed) matches "not flagged", never "flagged".
+     */
+    private function filterByNsfwFlagged(bool $flagged): void
+    {
+        $this->ensureJoined();
+
+        if ($flagged) {
+            $this->owner->subQuery->andWhere(['>=', 'lens.nsfwScore', 0.5]);
+        } else {
+            $this->owner->subQuery->andWhere([
+                'or',
+                ['<', 'lens.nsfwScore', 0.5],
+                ['lens.nsfwScore' => null],
+            ]);
         }
     }
 
@@ -507,7 +525,7 @@ class AssetQueryBehavior extends Behavior
         }
 
         if ($this->lensNsfwFlagged !== null) {
-            $this->applySimpleFilter('lens.isFlaggedNsfw', $this->lensNsfwFlagged);
+            $this->filterByNsfwFlagged((bool) $this->lensNsfwFlagged);
         }
 
         if ($this->lensHasWatermark !== null) {

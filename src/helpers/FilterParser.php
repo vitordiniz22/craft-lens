@@ -203,7 +203,7 @@ class FilterParser
     private static function parseEnumFilters(Request $request, array &$filters): void
     {
         $enumFilters = [
-            'watermarkType' => ['stock', 'logo', 'text', 'copyright', 'ai'],
+            'watermarkType' => ['stock', 'logo', 'text', 'copyright'],
             'qualityPreset' => ['high', 'medium', 'low'],
         ];
 

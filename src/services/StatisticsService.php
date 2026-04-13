@@ -183,17 +183,13 @@ class StatisticsService extends Component
     }
 
     /**
-     * Get count of assets flagged as NSFW (nsfwScore >= 0.5 or isFlaggedNsfw = true).
+     * Get count of assets flagged as NSFW (nsfwScore >= threshold).
      */
     public function getNsfwFlaggedCount(): int
     {
         return (int) AssetAnalysisRecord::find()
             ->where(['in', 'status', AnalysisStatus::processedValues()])
-            ->andWhere([
-                'or',
-                ['>=', 'nsfwScore', self::NSFW_SCORE_THRESHOLD],
-                ['isFlaggedNsfw' => true],
-            ])
+            ->andWhere(['>=', 'nsfwScore', self::NSFW_SCORE_THRESHOLD])
             ->count();
     }
 

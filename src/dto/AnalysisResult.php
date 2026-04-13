@@ -28,14 +28,13 @@ readonly class AnalysisResult
      * @param float $nsfwScore NSFW severity score (0.0 - 1.0)
      * @param float $nsfwConfidence Confidence in NSFW assessment (0.0 - 1.0)
      * @param array<array{category: string, confidence: float}> $nsfwCategories NSFW category breakdown
-     * @param bool $isFlaggedNsfw Whether the image exceeds NSFW threshold
      * @param bool $hasWatermark Whether a watermark was detected
      * @param float $watermarkConfidence Confidence score for watermark detection (0.0 - 1.0)
      * @param string|null $watermarkType Type of watermark: stock, logo, text, copyright, unknown
-     * @param array{position?: string, detectedText?: string, stockProvider?: string, isObtrusive?: bool} $watermarkDetails Additional watermark details
+     * @param array{stockProvider?: string} $watermarkDetails Additional watermark details
      * @param bool $containsBrandLogo Whether brand logos were detected
      * @param float $containsBrandLogoConfidence Confidence in brand detection (0.0 - 1.0)
-     * @param array<array{brand: string, confidence: float, position: string}> $detectedBrands Detected brands with confidence
+     * @param array<array{brand: string, confidence: float}> $detectedBrands Detected brands with confidence
      * @param int $inputTokens Number of input tokens used (OpenAI)
      * @param int $outputTokens Number of output tokens used (OpenAI)
      * @param float|null $focalPointX Focal point X coordinate (0.0-1.0, left to right)
@@ -57,7 +56,6 @@ readonly class AnalysisResult
         public float $nsfwScore = 0.0,
         public float $nsfwConfidence = 0.0,
         public array $nsfwCategories = [],
-        public bool $isFlaggedNsfw = false,
         public bool $hasWatermark = false,
         public float $watermarkConfidence = 0.0,
         public ?string $watermarkType = null,
@@ -97,7 +95,6 @@ readonly class AnalysisResult
             'nsfwScore' => $this->nsfwScore,
             'nsfwConfidence' => $this->nsfwConfidence,
             'nsfwCategories' => $this->nsfwCategories,
-            'isFlaggedNsfw' => $this->isFlaggedNsfw,
             'hasWatermark' => $this->hasWatermark,
             'watermarkConfidence' => $this->watermarkConfidence,
             'watermarkType' => $this->watermarkType,

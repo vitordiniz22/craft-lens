@@ -44,7 +44,8 @@ class NsfwFlaggedConditionRule extends BaseLightswitchConditionRule implements E
     {
         /** @var Asset $element */
         $analysis = Plugin::getInstance()->assetAnalysis->getAnalysis($element->id);
-        $isFlagged = $analysis?->isFlaggedNsfw ?? false;
+        $score = $analysis?->nsfwScore;
+        $isFlagged = $score !== null && $score >= 0.5;
 
         return $this->matchValue($isFlagged);
     }

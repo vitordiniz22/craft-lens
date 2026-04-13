@@ -501,8 +501,9 @@
             var svg = badge.querySelector('svg');
 
             if (isDetected) {
+                var flaggedLabel = fieldEl.dataset.lensFlaggedLabel || Craft.t('lens', 'Flagged');
                 badge.className = 'lens-detection-badge lens-detection-badge--flagged';
-                badge.textContent = ' ' + Craft.t('lens', 'Flagged');
+                badge.textContent = ' ' + flaggedLabel;
             } else {
                 badge.className = 'lens-detection-badge lens-detection-badge--clear';
                 badge.textContent = ' ' + Craft.t('lens', 'Clear');
@@ -581,12 +582,14 @@
          * Update detection toggle row accent (flagged vs clear)
          */
         _updateDetectionRowAccent: function(fieldEl, isDetected) {
-            fieldEl.classList.toggle('lens-accent-bar', isDetected);
-            fieldEl.classList.toggle('lens-accent-bar--red', isDetected);
-
             var detailEl = fieldEl.querySelector('[data-lens-target="detection-detail"]');
             if (detailEl) {
                 detailEl.dataset.lensChipsActive = isDetected ? '1' : '0';
+            }
+
+            var helpEl = fieldEl.querySelector('[data-lens-target="detection-help"]');
+            if (helpEl) {
+                helpEl.hidden = !isDetected;
             }
         },
 

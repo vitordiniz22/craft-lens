@@ -161,23 +161,20 @@ abstract class BaseAiProvider implements AiProviderInterface
         $instructions[] = '    0.8-1.0: Extreme content (pornography, extreme gore, torture)';
         $instructions[] = '  IMPORTANT: When MULTIPLE concerning elements appear together, scores should COMPOUND. For example: shirtless person (0.25) + suggestive objects/restraints (0.2) + dark unsettling composition (0.15) together should score at least 0.4-0.5, not just 0.25.';
         $instructions[] = '- "nsfwConfidence": How confident you are in your nsfwScore assessment (0.0-1.0). Should be HIGH (0.8-1.0) when content is clearly safe OR clearly unsafe. Should be LOW (0.3-0.6) only when the image is genuinely ambiguous (e.g., borderline suggestive content, artistic nudity, fantasy violence)';
-        $instructions[] = '- "nsfwCategories": Array of objects with "category" (one of: adult, violence, hate, self-harm, sexual, drugs) and "confidence" (0.0-1.0). Only include categories with confidence > 0.1';
+        $instructions[] = '- "nsfwCategories": Array of objects with "category" (one of: adult, violence, hate, self-harm, drugs) and "confidence" (0.0-1.0). Only include categories with confidence > 0.1';
         $instructions[] = '  Violence category should include: fighting, weapons (guns, knives, swords), blood, injuries, physical assault, warfare, dead bodies, torture';
         $instructions[] = '  Adult category should include: nudity, sexual content, suggestive poses, intimate acts, revealing clothing, shirtless individuals';
         $instructions[] = '- "hasWatermark": Whether the image carries an overlay added on top of the scene to indicate its attribution, ownership, protection, or source/provenance. Typical shapes: diagonal text spanning the image, a tiled or repeating logo pattern, corner attribution marks, provider branding (e.g., Shutterstock, Getty, iStock, Adobe Stock), or small corner badges indicating AI generation (e.g., Gemini, ChatGPT, DALL-E, Midjourney, often a sparkle/star glyph).(boolean)';
         $instructions[] = '- "watermarkConfidence": How confident you are in your hasWatermark assessment (0.0-1.0). Should be HIGH (0.8-1.0) when the image clearly has a watermark OR clearly has no watermark. Should be LOW (0.3-0.6) only when the image is genuinely ambiguous (e.g., faint overlays, decorative text that might be a watermark)';
-        $instructions[] = '- "watermarkType": Type of watermark detected. Must be one of: stock, logo, text, copyright, ai, unknown, or null if no watermark';
+        $instructions[] = '- "watermarkType": Type of watermark detected. Must be one of: stock, logo, text, copyright, unknown, or null if no watermark';
         $instructions[] = '- "watermarkDetails": Object with additional details:';
-        $instructions[] = '  - "position": Where the watermark appears (center, corner, diagonal, tiled, edge)';
-        $instructions[] = '  - "detectedText": Any text visible in the watermark';
         $instructions[] = '  - "stockProvider": If stock watermark, the provider name (e.g., Shutterstock, Getty, iStock, Adobe Stock)';
-        $instructions[] = '  - "isObtrusive": Whether the watermark significantly obscures the image content (boolean)';
         $instructions[] = '- "focalPointX": X coordinate (0.0-1.0, left to right) of the primary subject or visual focal point of the image';
         $instructions[] = '- "focalPointY": Y coordinate (0.0-1.0, top to bottom) of the primary subject or visual focal point of the image';
         $instructions[] = '- "focalPointConfidence": Confidence in the focal point detection (0.0-1.0)';
         $instructions[] = '- "containsBrandLogo": Whether the image contains any recognizable brand logos (boolean)';
         $instructions[] = '- "containsBrandLogoConfidence": How confident you are in your containsBrandLogo assessment (0.0-1.0). Should be HIGH (0.8-1.0) when the image clearly has brand logos OR clearly has no brand logos. Should be LOW (0.3-0.6) only when the image is genuinely ambiguous (e.g., partial logos, generic shapes that might be a brand)';
-        $instructions[] = '- "detectedBrands": Array of objects with "brand" (company/brand name of logos that are part of the image composition — physically present in what the photographer captured, not applied on top afterward), "confidence" (0.0-1.0), and "position" (location in image)';
+        $instructions[] = '- "detectedBrands": Array of objects with "brand" (company/brand name of logos that are part of the image composition — physically present in what the photographer captured, not applied on top afterward) and "confidence" (0.0-1.0)';
 
         if (!empty($additionalLanguages)) {
             $langEntries = array_map(fn(string $code) => sprintf('%s (%s)', $this->languageDisplayName($code), $code), $additionalLanguages);
@@ -263,7 +260,6 @@ abstract class BaseAiProvider implements AiProviderInterface
             nsfwScore: $nsfwScore,
             nsfwConfidence: $nsfwConfidence,
             nsfwCategories: ResponseNormalizer::normalizeNsfwCategories($data['nsfwCategories'] ?? [], $this->getDisplayName()),
-            isFlaggedNsfw: $nsfwScore >= 0.5,
             hasWatermark: (bool) ($data['hasWatermark'] ?? false),
             watermarkConfidence: ResponseNormalizer::clampConfidence($data['watermarkConfidence'] ?? 0.0),
             watermarkType: ResponseNormalizer::normalizeWatermarkType($data['watermarkType'] ?? null),

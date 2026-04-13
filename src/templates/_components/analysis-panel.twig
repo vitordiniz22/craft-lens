@@ -8,7 +8,7 @@
  #   analysisTags, analysisColors, similarImages, siteContent
  #}
 
-{% set hasSafetyFlags = analysis and (analysis.containsPeople or analysis.isFlaggedNsfw or (analysis.nsfwScore is defined and analysis.nsfwScore >= 0.2) or analysis.hasWatermark or (analysis.containsBrandLogo and analysis.detectedBrands|length)) %}
+{% set hasSafetyFlags = analysis and (analysis.containsPeople or (analysis.nsfwScore is defined and analysis.nsfwScore >= 0.2) or analysis.hasWatermark or (analysis.containsBrandLogo and analysis.detectedBrands|length)) %}
 
 {# Editing is locked when static (Craft preview) or when asset is pending review #}
 {% set readOnly = (static ?? false) or (analysis and analysis.status == lens.status.pendingReview and lens.isReviewActive) %}
@@ -238,7 +238,7 @@
 
             {# Section 4: Content Safety #}
             {% if (analysis.status not in [lens.status.pending, lens.status.failed] or isRepending) and (not isProcessing or isReprocessing) %}
-                {% set safetyBadge = analysis.isFlaggedNsfw ? 'error'
+                {% set safetyBadge = (analysis.nsfwScore is defined and analysis.nsfwScore >= 0.5) ? 'error'
                     : ((analysis.nsfwScore is defined and analysis.nsfwScore >= 0.2) ? 'warning' : null) %}
                 <div class="lens-section">
                     {% include 'lens/_components/analysis/_section-header' with {

@@ -15,12 +15,12 @@ class ResponseNormalizerTest extends Unit
 {
     public function testAllValidCategoriesAreAccepted(): void
     {
-        $validCategories = ['adult', 'violence', 'hate', 'self-harm', 'sexual', 'drugs'];
+        $validCategories = ['adult', 'violence', 'hate', 'self-harm', 'drugs'];
         $input = array_map(fn(string $cat) => ['category' => $cat, 'confidence' => 0.5], $validCategories);
 
         $result = ResponseNormalizer::normalizeNsfwCategories($input, 'test');
 
-        $this->assertCount(6, $result);
+        $this->assertCount(5, $result);
         $returnedCategories = array_column($result, 'category');
         $this->assertSame($validCategories, $returnedCategories);
     }

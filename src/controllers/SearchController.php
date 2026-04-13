@@ -247,7 +247,7 @@ class SearchController extends Controller
                     self::formatConfidence($analysis?->noiseScore),
                     self::formatConfidence($analysis?->overallQualityScore),
                     self::formatConfidence($analysis?->nsfwScore),
-                    $analysis !== null ? ($analysis->isFlaggedNsfw ? 'Yes' : 'No') : '',
+                    $analysis?->nsfwScore !== null ? ($analysis->nsfwScore >= 0.5 ? 'Yes' : 'No') : '',
                     $nsfwCategories,
                     $analysis?->extractedText ?? '',
                     $analysis?->focalPointX ?? '',

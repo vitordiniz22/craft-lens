@@ -4,15 +4,18 @@
  # Renders a Flagged/Clear badge with appropriate icon and styling.
  #
  # Parameters:
- #   detected  - bool, current detection state
- #   hasTarget - bool (default false), adds data-lens-target="detection-badge" for JS updates
+ #   detected     - bool, current detection state
+ #   hasTarget    - bool (default false), adds data-lens-target="detection-badge" for JS updates
+ #   flaggedLabel - string|null, informational label shown when flagged (e.g. "Stock Photo",
+ #                  "Nudity +2"). Falls back to "Flagged" when empty.
  #}
-{% macro detectionStatusBadge(detected, hasTarget) %}
+{% macro detectionStatusBadge(detected, hasTarget, flaggedLabel) %}
 {% set hasTarget = hasTarget ?? false %}
+{% set flaggedLabel = flaggedLabel ?? null %}
 <span class="lens-detection-badge {{ detected ? 'lens-detection-badge--flagged' : 'lens-detection-badge--clear' }}"{% if hasTarget %} data-lens-target="detection-badge"{% endif %}>
     {% if detected %}
         {{ iconSvg('triangle-exclamation')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
-        {{ 'Flagged'|t('lens') }}
+        {{ flaggedLabel ?: 'Flagged'|t('lens') }}
     {% else %}
         {{ iconSvg('check')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
         {{ 'Clear'|t('lens') }}

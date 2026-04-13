@@ -53,7 +53,7 @@ Choose your AI provider (**OpenAI**, **Google Gemini**, or **Anthropic Claude**)
 
 - **Faces and people** with 6-tier detection: no people, no faces, individual, duo, small group, large group
 - **NSFW scoring** with category breakdown (adult, violence, hate, self-harm, drugs) to catch unsafe content before it goes live
-- **Watermarks** identified by type (text, logo, stock, copyright) and position to flag assets that shouldn't be published
+- **Watermarks** identified by type (text, logo, stock, copyright) to flag assets that shouldn't be published
 - **Brand/logo recognition** to instantly find every asset featuring a specific brand
 - **Stock photo detection** to identify which assets came from stock providers
 - **OCR** extracts text directly from images, fully searchable

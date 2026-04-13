@@ -14,12 +14,16 @@
 } only %}
 
 {# NSFW Detection Toggle #}
+{% set nsfwCats = analysis.nsfwCategories|default([])|map(c => c.category|capitalize) %}
+{% set nsfwFlaggedLabel = nsfwCats|length
+    ? (nsfwCats|slice(0, 2)|join(', ') ~ (nsfwCats|length > 2 ? ' +' ~ (nsfwCats|length - 2) : ''))
+    : null %}
 {% include 'lens/_components/analysis/detection-toggle-field' with {
     icon: 'shield-halved',
     fieldName: 'nsfwScore',
     label: 'NSFW Detection'|t('lens'),
-    detected: analysis.isFlaggedNsfw or (analysis.nsfwScore is defined and analysis.nsfwScore >= 0.2),
-    detectedAi: analysis.isFlaggedNsfw or (analysis.nsfwScoreAi is defined and analysis.nsfwScoreAi >= 0.2),
+    detected: analysis.nsfwScore is defined and analysis.nsfwScore >= 0.5,
+    detectedAi: analysis.nsfwScoreAi is defined and analysis.nsfwScoreAi >= 0.5,
     analysisId: analysis.id,
     fieldState: fieldState,
     detectedLabel: 'NSFW content detected'|t('lens'),
@@ -28,27 +32,31 @@
     falseValue: 0,
     confidence: analysis.nsfwConfidence ?? null,
     hideConfidence: hideConfidence ?? false,
-    details: analysis.nsfwCategories|default([])|map(c => c.category)
+    flaggedLabel: nsfwFlaggedLabel,
+    flaggedHelp: 'Content may be unsuitable for general audiences. Review before publishing.'|t('lens')
 } only %}
 
 {# Watermark Detection Toggle #}
 {% set wmDetails = analysis.watermarkDetails is iterable ? analysis.watermarkDetails : {} %}
-{% set wmTypeChip = null %}
+{% set wmTypeLabel = null %}
 
 {% if analysis.watermarkType and analysis.watermarkType != 'unknown' %}
-    {% set wmTypeLabels = { 'stock': 'Stock Photo'|t('lens'), 'logo': 'Logo'|t('lens'), 'text': 'Text'|t('lens'), 'copyright': 'Copyright'|t('lens'), 'ai': 'AI-Generated'|t('lens') } %}
-    {% set wmTypeChip = wmTypeLabels[analysis.watermarkType] ?? analysis.watermarkType|capitalize %}
-    
-    {% if analysis.watermarkType == 'stock' and wmDetails.stockProvider is defined and wmDetails.stockProvider %}
-        {% set wmTypeChip = wmTypeChip ~ ' · ' ~ wmDetails.stockProvider %}
-    {% endif %}
+    {% set wmTypeLabels = { 'stock': 'Stock Photo'|t('lens'), 'logo': 'Logo'|t('lens'), 'text': 'Text'|t('lens'), 'copyright': 'Copyright'|t('lens') } %}
+    {% set wmTypeLabel = wmTypeLabels[analysis.watermarkType] ?? null %}
 {% endif %}
 
-{% set wmChips = wmTypeChip ? [wmTypeChip] : [] %}
+{% set wmChips = [] %}
 
-{% if wmDetails.position is defined and wmDetails.position %}
-    {% set wmChips = wmChips|merge([wmDetails.position|capitalize]) %}
+{% if analysis.watermarkType == 'stock' and wmDetails.stockProvider is defined and wmDetails.stockProvider %}
+    {% set wmChips = wmChips|merge([wmDetails.stockProvider]) %}
 {% endif %}
+
+{% set wmHelp = {
+    'stock': 'Stock photo watermark detected. Licensing likely required before publishing.'|t('lens'),
+    'logo': 'Logo watermark detected. Verify usage rights before publishing.'|t('lens'),
+    'text': 'Text watermark detected. Verify the source and rights before publishing.'|t('lens'),
+    'copyright': 'Copyright watermark detected. Verify permission before commercial use.'|t('lens')
+}[analysis.watermarkType] ?? 'Watermark detected. Verify usage rights before publishing.'|t('lens') %}
 
 {% include 'lens/_components/analysis/detection-toggle-field' with {
     icon: 'droplet',
@@ -64,10 +72,16 @@
     falseValue: 0,
     confidence: analysis.watermarkConfidence ?? null,
     hideConfidence: hideConfidence ?? false,
-    details: wmChips
+    details: wmChips,
+    flaggedLabel: wmTypeLabel,
+    flaggedHelp: wmHelp
 } only %}
 
 {# Brand Detection Toggle #}
+{% set brandNames = (analysis.containsBrandLogo and analysis.detectedBrands|length) ? analysis.detectedBrands|map(b => b.brand) : [] %}
+{% set brandFlaggedLabel = brandNames|length
+    ? (brandNames|slice(0, 2)|join(', ') ~ (brandNames|length > 2 ? ' +' ~ (brandNames|length - 2) : ''))
+    : null %}
 {% include 'lens/_components/analysis/detection-toggle-field' with {
     icon: 'tag',
     fieldName: 'containsBrandLogo',
@@ -82,5 +96,6 @@
     falseValue: 0,
     confidence: analysis.containsBrandLogoConfidence ?? null,
     hideConfidence: hideConfidence ?? false,
-    details: (analysis.containsBrandLogo and analysis.detectedBrands|length) ? analysis.detectedBrands|map(b => b.brand) : []
+    flaggedLabel: brandFlaggedLabel,
+    flaggedHelp: 'Identifiable brand logos detected. Verify trademark and usage rights for commercial use.'|t('lens')
 } only %}

@@ -14,8 +14,8 @@ use vitordiniz22\craftlens\exceptions\AnalysisException;
  */
 final class ResponseNormalizer
 {
-    private const VALID_NSFW_CATEGORIES = ['adult', 'violence', 'hate', 'self-harm', 'sexual', 'drugs'];
-    private const VALID_WATERMARK_TYPES = ['stock', 'logo', 'text', 'copyright', 'ai', 'unknown'];
+    private const VALID_NSFW_CATEGORIES = ['adult', 'violence', 'hate', 'self-harm', 'drugs'];
+    private const VALID_WATERMARK_TYPES = ['stock', 'logo', 'text', 'copyright', 'unknown'];
     /**
      * Normalize tags from API response.
      *
@@ -79,7 +79,7 @@ final class ResponseNormalizer
      *
      * @param array $brands Raw brands from API
      * @param string $providerName Provider name for error messages
-     * @return array<array{brand: string, confidence: float, position: string}>
+     * @return array<array{brand: string, confidence: float}>
      * @throws AnalysisException If brand structure is invalid
      */
     public static function normalizeDetectedBrands(array $brands, string $providerName): array
@@ -93,7 +93,6 @@ final class ResponseNormalizer
             fn($brand) => [
                 'brand' => is_array($brand['brand']) ? trim((string) ($brand['brand']['name'] ?? 'unknown')) : trim((string) $brand['brand']),
                 'confidence' => self::clampConfidence($brand['confidence'] ?? 0.5),
-                'position' => is_array($brand['position'] ?? null) ? 'unknown' : trim((string) ($brand['position'] ?? 'unknown')),
             ]
         );
     }
@@ -115,7 +114,7 @@ final class ResponseNormalizer
     /**
      * Normalize watermark details from API response.
      *
-     * @return array{position?: string, detectedText?: string, stockProvider?: string, isObtrusive?: bool}
+     * @return array{stockProvider?: string}
      */
     public static function normalizeWatermarkDetails(?array $details = null): array
     {
@@ -125,20 +124,8 @@ final class ResponseNormalizer
 
         $normalized = [];
 
-        if (isset($details['position']) && is_string($details['position'])) {
-            $normalized['position'] = trim($details['position']);
-        }
-
-        if (isset($details['detectedText']) && is_string($details['detectedText'])) {
-            $normalized['detectedText'] = trim($details['detectedText']);
-        }
-
         if (isset($details['stockProvider']) && is_string($details['stockProvider'])) {
             $normalized['stockProvider'] = trim($details['stockProvider']);
-        }
-
-        if (isset($details['isObtrusive'])) {
-            $normalized['isObtrusive'] = (bool) $details['isObtrusive'];
         }
 
         return $normalized;
