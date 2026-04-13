@@ -45,7 +45,7 @@ class HasTextInImageConditionRule extends BaseLightswitchConditionRule implement
         /** @var Asset $element */
         $analysis = Plugin::getInstance()->assetAnalysis->getAnalysis($element->id);
 
-        $hasText = $analysis !== null && !empty($analysis->extractedText);
+        $hasText = $analysis !== null && !empty($analysis->extractedTextAi);
 
         return $this->matchValue($hasText);
     }

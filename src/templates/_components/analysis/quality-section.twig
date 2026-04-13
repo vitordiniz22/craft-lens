@@ -34,7 +34,7 @@
 {% endif %}
 
 {# ── Text in Image — Accessibility ────────── #}
-{% if lens.isPro and analysis.extractedText is defined and analysis.extractedText is not empty %}
+{% if lens.isPro and analysis.extractedTextAi is defined and analysis.extractedTextAi|length > 0 %}
     <div class="lens-assessment-notice lens-assessment-notice--info">
         <span class="lens-assessment-icon">{{ iconSvg('triangle-exclamation')|attr({width: 12, height: 12, fill: 'currentColor'}) }}</span>
         <span>{{ 'This image contains embedded text. Ensure this text is also available as HTML on the page for screen reader accessibility.'|t('lens') }}</span>

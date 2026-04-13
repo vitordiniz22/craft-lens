@@ -16,6 +16,7 @@ final class ResponseNormalizer
 {
     private const VALID_NSFW_CATEGORIES = ['adult', 'violence', 'hate', 'self-harm', 'drugs'];
     private const VALID_WATERMARK_TYPES = ['stock', 'logo', 'text', 'copyright', 'unknown'];
+    private const MAX_TEXT_REGIONS = 50;
     /**
      * Normalize tags from API response.
      *
@@ -95,6 +96,54 @@ final class ResponseNormalizer
                 'confidence' => self::clampConfidence($brand['confidence'] ?? 0.5),
             ]
         );
+    }
+
+    /**
+     * Normalize extracted-text regions.
+     *
+     * Accepts an array of strings, a single string, or null.
+     * Trims entries, drops empties and exact duplicates, and caps the list size.
+     *
+     * @return array<string>
+     */
+    public static function normalizeExtractedTextRegions(mixed $value): array
+    {
+        if ($value === null) {
+            return [];
+        }
+
+        if (is_string($value)) {
+            $trimmed = trim($value);
+            return $trimmed === '' ? [] : [$trimmed];
+        }
+
+        if (!is_array($value)) {
+            return [];
+        }
+
+        $regions = [];
+        $seen = [];
+
+        foreach ($value as $entry) {
+            if (!is_string($entry)) {
+                continue;
+            }
+
+            $region = trim($entry);
+
+            if ($region === '' || isset($seen[$region])) {
+                continue;
+            }
+
+            $seen[$region] = true;
+            $regions[] = $region;
+
+            if (count($regions) >= self::MAX_TEXT_REGIONS) {
+                break;
+            }
+        }
+
+        return $regions;
     }
 
     /**

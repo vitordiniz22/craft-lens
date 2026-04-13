@@ -1,0 +1,25 @@
+{#
+ # Extracted-text regions (readonly display).
+ # Each entry in analysis.extractedTextAi is one grouped text block (one sign,
+ # one label, one menu board). Not user-editable.
+ #
+ # Expected variables:
+ #   analysis — AssetAnalysisRecord
+ #}
+{% set regions = analysis.extractedTextAi ?? [] %}
+
+<div class="lens-editable-field">
+    <div class="lens-field-header">
+        <span class="lens-field-label">{{ 'Detected Text'|t('lens') }} ({{ regions|length }})</span>
+    </div>
+
+    {% if regions|length == 0 %}
+        <p class="light">{{ 'No text detected'|t('lens') }}</p>
+    {% else %}
+        <ul class="lens-text-regions{{ regions|length > 1 ? ' lens-text-regions--multi' }}">
+            {% for region in regions %}
+                <li class="lens-text-regions__item">{{ region|replace({"\n": ' '})|trim }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</div>

@@ -1000,16 +1000,8 @@ class AssetAnalysisService extends Component
      */
     private function applyAiExtractedText(AssetAnalysisRecord $record, AnalysisResult $result): void
     {
-        if ($result->extractedText === null || trim($result->extractedText) === '') {
-            return;
-        }
-
-        $wasEdited = $record->isFieldEdited('extractedText');
         $record->extractedTextAi = $result->extractedText;
-        if (!$wasEdited) {
-            $record->extractedText = $result->extractedText;
-        }
-        $record->save(false, ['extractedText', 'extractedTextAi', 'dateUpdated']);
+        $record->save(false, ['extractedTextAi', 'dateUpdated']);
     }
 
     /**

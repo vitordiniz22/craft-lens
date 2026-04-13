@@ -129,7 +129,7 @@ abstract class BaseAiProvider implements AiProviderInterface
         $instructions[] = '  • Focus on tags that would be useful for search and categorization across a large professional image library';
         $instructions[] = '  • Avoid brand names, artist names, or location-specific details unless they are obvious and iconic (e.g., "eiffel tower" is acceptable, but not "paris 16th arrondissement")';
         $instructions[] = '  • Prioritize tags that describe WHAT is in the image, not HOW it was made (avoid "bokeh", "long exposure", "f/2.8" unless these are the main subject)';
-        $instructions[] = '- "extractedText": Any visible text in the image (signs, labels, packaging, etc.), or null if none';
+        $instructions[] = '- "extractedText": Array of text transcribed from the image. Group all text on the same physical sign, panel, or board into ONE entry (all its lines together, separated by "\n"). Start a new entry only for text on a different sign or surface. Use [] if none.';
         $instructions[] = '- "containsPeople": Carefully examine the image for ANY human presence. Set to true if the image contains:';
         $instructions[] = '  - People facing the camera (even if face is small/unclear)';
         $instructions[] = '  - People from behind, side, or any angle where face is not visible';
@@ -253,7 +253,7 @@ abstract class BaseAiProvider implements AiProviderInterface
             suggestedTitle: $data['suggestedTitle'] ?? '',
             titleConfidence: (float) ($data['titleConfidence'] ?? 0.0),
             tags: ResponseNormalizer::normalizeTags($data['tags'] ?? [], $this->getDisplayName()),
-            extractedText: $data['extractedText'] ?? null,
+            extractedText: ResponseNormalizer::normalizeExtractedTextRegions($data['extractedText'] ?? null),
             faceCount: (int) ($data['faceCount'] ?? 0),
             containsPeople: (bool) ($data['containsPeople'] ?? false),
             containsPeopleConfidence: ResponseNormalizer::clampConfidence($data['containsPeopleConfidence'] ?? 0.0),

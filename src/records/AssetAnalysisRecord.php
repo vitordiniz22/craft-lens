@@ -84,9 +84,8 @@ use yii\db\ActiveQueryInterface;
  * @property float|null $focalPointYAi
  * @property float|null $focalPointConfidence
  *
- * Extracted text from image (editable):
- * @property string|null $extractedText
- * @property string|null $extractedTextAi
+ * Extracted text from image:
+ * @property array|null $extractedTextAi
  *
  * Hashes for duplicate detection:
  * @property string|null $perceptualHash
@@ -128,7 +127,6 @@ class AssetAnalysisRecord extends ActiveRecord
         'containsBrandLogo',
         'focalPointX',
         'focalPointY',
-        'extractedText',
     ];
 
     public static function tableName(): string
@@ -184,13 +182,17 @@ class AssetAnalysisRecord extends ActiveRecord
             [['containsPeople', 'containsPeopleAi', 'hasWatermark', 'hasWatermarkAi', 'containsBrandLogo', 'containsBrandLogoAi'], 'boolean'],
             [['watermarkType'], 'string', 'max' => 30],
             [['watermarkType'], 'in', 'range' => array_column(WatermarkType::cases(), 'value')],
-            [['extractedText', 'extractedTextAi'], 'string', 'max' => self::EXTRACTED_TEXT_MAX_LENGTH],
             [['perceptualHash', 'fileContentHash'], 'string', 'max' => 64],
             [['inputTokens', 'outputTokens'], 'integer', 'min' => 0],
             [['actualCost'], 'number', 'min' => 0],
             [['nsfwCategories', 'watermarkDetails', 'detectedBrands'], function(string $attribute): void {
                 if ($this->$attribute !== null && !is_array($this->$attribute)) {
                     $this->addError($attribute, "{$attribute} must be an array or null.");
+                }
+            }],
+            [['extractedTextAi'], function(string $attribute): void {
+                if (is_array($this->$attribute) && strlen((string) json_encode($this->$attribute)) > self::EXTRACTED_TEXT_MAX_LENGTH) {
+                    $this->addError($attribute, "{$attribute} exceeds maximum length of " . self::EXTRACTED_TEXT_MAX_LENGTH . ' characters.');
                 }
             }],
         ];

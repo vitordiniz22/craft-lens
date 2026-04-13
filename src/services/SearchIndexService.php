@@ -43,9 +43,8 @@ class SearchIndexService extends Component
         'suggestedTitleAi' => 0.90,
         'altTextAi' => 0.85,
         'longDescription' => 0.80,
-        'extractedText' => 0.70,
+        'extractedTextAi' => 0.70,
         'longDescriptionAi' => 0.60,
-        'extractedTextAi' => 0.55,
         'siteTitle' => 1.00,
         'siteAltText' => 0.90,
     ];
@@ -53,7 +52,6 @@ class SearchIndexService extends Component
         'suggestedTitle' => 'suggestedTitleAi',
         'altText' => 'altTextAi',
         'longDescription' => 'longDescriptionAi',
-        'extractedText' => 'extractedTextAi',
     ];
 
     // -------------------------------------------------------------------------
@@ -63,6 +61,12 @@ class SearchIndexService extends Component
     /**
      * Fully re-indexes a single asset: deletes existing rows then inserts fresh
      * tokens for all text fields and tags (primary-site content only).
+     *
+     * `extractedTextAi` is stored as a JSON array of regions. For BM25 scoring
+     * an array is equivalent to its regions joined by newlines — the stemmer
+     * tokenizes across whitespace and TF counts come out identical — so every
+     * read of this column is flattened with `implode("\n", ...)` before it
+     * reaches `buildTokenRows()`.
      */
     public function indexAsset(AssetAnalysisRecord $record): void
     {
@@ -95,7 +99,7 @@ class SearchIndexService extends Component
             'altText' => $record->altText,
             'suggestedTitle' => $record->suggestedTitle,
             'longDescription' => $record->longDescription,
-            'extractedText' => $record->extractedText,
+            'extractedTextAi' => is_array($record->extractedTextAi) ? implode("\n", $record->extractedTextAi) : null,
         ];
 
         foreach ($textFields as $field => $value) {
@@ -195,6 +199,9 @@ class SearchIndexService extends Component
             $rows = $this->buildAltRows($record->assetId, $record->id);
         } elseif (isset(self::FIELD_WEIGHTS[$field]) && $field !== 'tag') {
             $value = $record->$field ?? '';
+            if (is_array($value)) {
+                $value = implode("\n", $value);
+            }
             $rows = !empty($value)
                 ? $this->buildTokenRows($record->assetId, $record->id, $field, $value)
                 : [];
@@ -211,6 +218,9 @@ class SearchIndexService extends Component
         // Also index AI original value if field has been edited
         if ($aiField !== null && $record->isFieldEdited($field)) {
             $aiValue = $record->{$aiField} ?? '';
+            if (is_array($aiValue)) {
+                $aiValue = implode("\n", $aiValue);
+            }
 
             if (!empty($aiValue)) {
                 $aiRows = $this->buildTokenRows($record->assetId, $record->id, $aiField, $aiValue);
@@ -738,6 +748,10 @@ class SearchIndexService extends Component
             }
 
             $aiValue = $record->{$aiField} ?? '';
+
+            if (is_array($aiValue)) {
+                $aiValue = implode("\n", $aiValue);
+            }
 
             if (!empty($aiValue)) {
                 $fieldRows = $this->buildTokenRows($record->assetId, $record->id, $aiField, $aiValue);

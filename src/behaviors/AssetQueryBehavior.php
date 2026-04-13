@@ -909,6 +909,11 @@ class AssetQueryBehavior extends Behavior
         );
     }
 
+    /**
+     * Substring-matches `lensTextSearch` against both the edited and AI-original
+     * OCR columns. Both are JSON-encoded arrays of strings; LIKE on the
+     * serialized value still finds matches inside any region.
+     */
     private function applyTextSearchFilter(): void
     {
         if (empty($this->lensTextSearch)) {
@@ -916,7 +921,7 @@ class AssetQueryBehavior extends Behavior
         }
 
         $this->ensureJoined();
-        $this->owner->subQuery->andWhere(['like', 'lens.extractedText', $this->lensTextSearch]);
+        $this->owner->subQuery->andWhere(['like', 'lens.extractedTextAi', $this->lensTextSearch]);
     }
 
     private function applyQualityBelowFilter(): void
@@ -1061,18 +1066,23 @@ class AssetQueryBehavior extends Behavior
         }
     }
 
+    /**
+     * Presence filter for OCR text. extractedTextAi is a JSON array column:
+     * MySQL stores an empty array as the literal string '[]', so "has text"
+     * means "not NULL and not '[]'".
+     */
     private function applyHasTextInImageFilter(): void
     {
         $this->ensureJoined();
 
         if ($this->lensHasTextInImage) {
-            $this->owner->subQuery->andWhere(['not', ['lens.extractedText' => null]]);
-            $this->owner->subQuery->andWhere(['!=', 'lens.extractedText', '']);
+            $this->owner->subQuery->andWhere(['not', ['lens.extractedTextAi' => null]]);
+            $this->owner->subQuery->andWhere(['!=', 'lens.extractedTextAi', '[]']);
         } else {
             $this->owner->subQuery->andWhere([
                 'or',
-                ['lens.extractedText' => null],
-                ['lens.extractedText' => ''],
+                ['lens.extractedTextAi' => null],
+                ['lens.extractedTextAi' => '[]'],
             ]);
         }
     }

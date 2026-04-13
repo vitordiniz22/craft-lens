@@ -319,7 +319,7 @@ class ReviewController extends Controller
         $modifications = [];
 
         // Text fields — skip empty strings to avoid clearing data when form submits unmodified hidden inputs
-        foreach (['suggestedTitle', 'altText', 'longDescription', 'extractedText'] as $field) {
+        foreach (['suggestedTitle', 'altText', 'longDescription'] as $field) {
             $value = $this->request->getBodyParam($field);
             if ($value !== null && $value !== '') {
                 $modifications[$field] = $value;

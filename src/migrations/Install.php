@@ -115,9 +115,8 @@ class Install extends Migration
             'perceptualHash' => $this->string(64)->null(),
             'fileContentHash' => $this->string(64)->null(),
 
-            // Extracted text from image (editable)
-            'extractedText' => $this->text()->null(),
-            'extractedTextAi' => $this->text()->null(),
+            // Extracted text from image
+            'extractedTextAi' => $this->json()->null(),
 
             // Token usage and cost
             'inputTokens' => $this->integer()->null(),

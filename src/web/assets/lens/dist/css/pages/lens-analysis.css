@@ -996,3 +996,22 @@
     align-items: center;
     gap: 4px;
 }
+
+
+/* Extracted Text Regions ============================================= */
+
+.lens-text-regions {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0;
+}
+
+.lens-text-regions--multi {
+    list-style-type: disc;
+    padding-left: 20px;
+}
+
+.lens-text-regions__item {
+    word-break: break-word;
+}

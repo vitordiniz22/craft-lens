@@ -25,7 +25,7 @@
 {% set fieldState = fieldState ?? 'readonly' %}
 {% set siteId = siteId ?? null %}
 {% set emptyText = emptyText ?? 'Not available'|t('lens') %}
-{% set fieldMaxLengths = { altText: 500, suggestedTitle: 255, longDescription: 5000, extractedText: 50000 } %}
+{% set fieldMaxLengths = { altText: 500, suggestedTitle: 255, longDescription: 5000 } %}
 {% set maxlength = fieldMaxLengths[fieldName] ?? null %}
 
 {# ============================================================

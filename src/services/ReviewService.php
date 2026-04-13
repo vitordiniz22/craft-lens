@@ -321,7 +321,6 @@ class ReviewService extends Component
             'longDescription' => $record->longDescription,
             'longDescriptionAi' => $record->longDescriptionAi,
             'longDescriptionConfidence' => $record->longDescriptionConfidence,
-            'extractedText' => $record->extractedText,
             'extractedTextAi' => $record->extractedTextAi,
         ];
     }

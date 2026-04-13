@@ -21,7 +21,7 @@ readonly class AnalysisResult
      * @param string $suggestedTitle Generated title (2-6 words, Title Case)
      * @param float $titleConfidence Confidence score for title (0.0 - 1.0)
      * @param array<array{tag: string, confidence: float}> $tags Detected tags with confidence scores
-     * @param string|null $extractedText Visible text detected in image (signs, labels, etc.)
+     * @param array<string> $extractedText Visible text detected in image, one region per entry
      * @param int $faceCount Number of faces/people detected
      * @param bool $containsPeople Whether the image contains people
      * @param float $containsPeopleConfidence Confidence in people/face detection (0.0 - 1.0)
@@ -49,7 +49,7 @@ readonly class AnalysisResult
         public string $suggestedTitle,
         public float $titleConfidence,
         public array $tags,
-        public ?string $extractedText,
+        public array $extractedText,
         public int $faceCount,
         public bool $containsPeople,
         public float $containsPeopleConfidence,
@@ -134,7 +134,7 @@ readonly class AnalysisResult
             suggestedTitle: '',
             titleConfidence: 0.0,
             tags: [],
-            extractedText: null,
+            extractedText: [],
             faceCount: 0,
             containsPeople: false,
             containsPeopleConfidence: 0.0,

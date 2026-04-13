@@ -122,18 +122,10 @@
                         <p class="lens-section-header__intro">{{ 'Text detected within the image via OCR.'|t('lens') }}</p>
                     </div>
                     <div class="lens-section-body">
-                        {% include 'lens/_components/analysis/editable-field' with {
-                            fieldName: 'extractedText',
-                            label: 'Extracted Text'|t('lens'),
-                            value: analysis.extractedText,
-                            aiValue: analysis.extractedTextAi,
-                            confidence: null,
-                            inputType: 'textarea',
-                            featured: false,
+                        {% include 'lens/_components/analysis/extracted-text-regions' with {
+                            analysis: analysis,
                             analysisId: analysis.analysisId,
                             fieldState: 'editing',
-                            nullAiIsValid: true,
-                            emptyText: 'No text detected'|t('lens')
                         } %}
                     </div>
                 </div>

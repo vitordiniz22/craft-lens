@@ -758,6 +758,9 @@ class SearchService extends Component
 
     /**
      * Filter assets by whether they contain embedded text (OCR).
+     *
+     * extractedTextAi is a JSON array column: MySQL stores an empty array as
+     * the literal string '[]', so "has text" means "not NULL and not '[]'".
      */
     private function applyHasTextInImageFilter(Query $query, array $filters): void
     {
@@ -766,13 +769,13 @@ class SearchService extends Component
         }
 
         if ($filters['hasTextInImage']) {
-            $query->andWhere(['not', ['lens.extractedText' => null]]);
-            $query->andWhere(['!=', 'lens.extractedText', '']);
+            $query->andWhere(['not', ['lens.extractedTextAi' => null]]);
+            $query->andWhere(['!=', 'lens.extractedTextAi', '[]']);
         } else {
             $query->andWhere([
                 'or',
-                ['lens.extractedText' => null],
-                ['lens.extractedText' => ''],
+                ['lens.extractedTextAi' => null],
+                ['lens.extractedTextAi' => '[]'],
             ]);
         }
     }

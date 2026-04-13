@@ -39,7 +39,6 @@ class AnalysisEditService extends Component
         'containsBrandLogo' => ['type' => 'bool'],
         'focalPointX' => ['min' => 0.0, 'max' => 1.0, 'type' => 'float'],
         'focalPointY' => ['min' => 0.0, 'max' => 1.0, 'type' => 'float'],
-        'extractedText' => ['max' => AssetAnalysisRecord::EXTRACTED_TEXT_MAX_LENGTH, 'type' => 'string'],
     ];
 
     protected function getFieldValidationRules(): array

@@ -249,7 +249,7 @@ class SearchController extends Controller
                     self::formatConfidence($analysis?->nsfwScore),
                     $analysis?->nsfwScore !== null ? ($analysis->nsfwScore >= 0.5 ? 'Yes' : 'No') : '',
                     $nsfwCategories,
-                    $analysis?->extractedText ?? '',
+                    is_array($analysis?->extractedTextAi) ? implode(' | ', $analysis->extractedTextAi) : '',
                     $analysis?->focalPointX ?? '',
                     $analysis?->focalPointY ?? '',
                     self::formatConfidence($analysis?->focalPointConfidence),
@@ -306,13 +306,12 @@ class SearchController extends Controller
     }
 
     /**
-     * Flatten a JSON-decoded array column to a CSV-friendly string.
-     * Yii2 auto-decodes JSON columns, so $value is always array|null.
-     * Elements may be scalar ("violence") or nested ({"category":"violence","score":0.8}).
+     * Format a 0-1 confidence/score value as a percentage string for CSV output.
+     * Accepts string because PDO returns DECIMAL columns as strings.
      */
-    private static function formatConfidence(?float $value): string
+    private static function formatConfidence(float|string|null $value): string
     {
-        return $value !== null ? round($value * 100) . '%' : '';
+        return $value !== null && $value !== '' ? round((float) $value * 100) . '%' : '';
     }
 
     private static function flattenJsonColumn(?array $value): string
