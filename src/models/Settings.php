@@ -31,7 +31,7 @@ class Settings extends Model
     public bool $requireReviewBeforeApply = true;
 
     // Volume Settings
-    public array $enabledVolumes = ['*'];
+    public array $enabledVolumes = [];
 
     // Semantic Search
     public bool $enableSemanticSearch = false;
@@ -169,14 +169,14 @@ class Settings extends Model
     }
 
     /**
-     * Get IDs of volumes enabled for Lens processing, or null if all volumes are enabled.
+     * Get IDs of volumes explicitly enabled for Lens processing.
      *
-     * @return int[]|null null means no volume filter (all volumes enabled)
+     * @return int[] empty array means no volume is enabled and Lens analyzes nothing
      */
-    public function getEnabledVolumeIds(): ?array
+    public function getEnabledVolumeIds(): array
     {
-        if (empty($this->enabledVolumes) || in_array('*', $this->enabledVolumes, true)) {
-            return null;
+        if (empty($this->enabledVolumes)) {
+            return [];
         }
 
         $ids = [];

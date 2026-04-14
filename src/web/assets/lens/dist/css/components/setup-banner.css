@@ -124,10 +124,23 @@
 .lens-setup-banner__item-action {
   flex-shrink: 0;
   padding-left: 30px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 @media (min-width: 768px) {
   .lens-setup-banner__item-action {
     padding-left: 0;
   }
+}
+
+.lens-setup-banner__item-docs {
+  font-size: 12px;
+  color: var(--medium-text-color);
+  text-decoration: underline;
+}
+
+.lens-setup-banner__item-docs:hover {
+  color: var(--text-color);
 }

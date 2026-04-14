@@ -137,15 +137,30 @@
         }) }}
     {% endif %}
 
-    {{ forms.checkboxSelectField({
-        label: 'Volumes to Process'|t('lens'),
-        instructions: 'Limit analysis to specific volumes. Leave empty to process all volumes. Exclude volumes that contain non-photo assets like icons, PDFs, or design files.'|t('lens'),
-        id: 'enabledVolumes',
-        name: 'settings[enabledVolumes]',
-        values: settings.enabledVolumes,
-        options: volumeOptions,
-        errors: settings.getErrors('enabledVolumes'),
-    }) }}
+    {% if volumeOptions is empty %}
+        {{ forms.field({
+            label: 'Volumes to Process'|t('lens'),
+            instructions: 'Select the volumes Lens should analyze. Unchecked volumes are ignored. If no volume is selected, Lens does not analyze any asset. Leave a volume unchecked when its images do not need AI metadata, for example UI icon sets or images not shown on the public site.'|t('lens'),
+        }, include('lens/_components/inline-notice', {
+            type: 'error',
+            title: 'No asset volumes found'|t('lens'),
+            message: 'Lens needs at least one Craft asset volume to analyze. Create one before selecting volumes to process.'|t('lens'),
+            cta: {
+                label: 'Create a Volume'|t('lens'),
+                url: 'settings/assets',
+            },
+        })) }}
+    {% else %}
+        {{ forms.checkboxSelectField({
+            label: 'Volumes to Process'|t('lens'),
+            instructions: 'Select the volumes Lens should analyze. Unchecked volumes are ignored. If no volume is selected, Lens does not analyze any asset. Leave a volume unchecked when its images do not need AI metadata, for example UI icon sets or images not shown on the public site.'|t('lens'),
+            id: 'enabledVolumes',
+            name: 'settings[enabledVolumes]',
+            values: settings.enabledVolumes,
+            options: volumeOptions,
+            errors: settings.getErrors('enabledVolumes'),
+        }) }}
+    {% endif %}
 
     <hr>
 

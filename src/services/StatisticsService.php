@@ -122,11 +122,11 @@ class StatisticsService extends Component
     }
 
     /**
-     * Get IDs of volumes enabled for Lens processing, or null if all volumes are enabled.
+     * Get IDs of volumes explicitly enabled for Lens processing.
      *
-     * @return int[]|null null means no volume filter (all volumes enabled)
+     * @return int[] empty array means no volume is enabled
      */
-    private function getEnabledVolumeIds(): ?array
+    private function getEnabledVolumeIds(): array
     {
         return Plugin::getInstance()->getSettings()->getEnabledVolumeIds();
     }

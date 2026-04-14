@@ -593,20 +593,7 @@ class AssetAnalysisService extends Component
 
     private function isVolumeEnabled(int $volumeId): bool
     {
-        $settings = $this->getSettings();
-        $enabledVolumes = $settings->enabledVolumes;
-
-        if ($enabledVolumes === ['*'] || in_array('*', $enabledVolumes, true)) {
-            return true;
-        }
-
-        $volume = Craft::$app->getVolumes()->getVolumeById($volumeId);
-
-        if ($volume === null) {
-            return false;
-        }
-
-        return in_array($volume->uid, $enabledVolumes, true);
+        return in_array($volumeId, $this->getSettings()->getEnabledVolumeIds(), true);
     }
 
     private function computePerceptualHash(Asset $asset, AssetAnalysisRecord $record): void

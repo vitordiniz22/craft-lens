@@ -84,10 +84,24 @@
 
 .lens-inline-notice__action {
   margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .lens-inline-notice__action .btn.small {
   font-size: 12px;
+}
+
+.lens-inline-notice__docs {
+  font-size: 12px;
+  color: var(--medium-text-color);
+  text-decoration: underline;
+}
+
+.lens-inline-notice__docs:hover {
+  color: var(--text-color);
 }
 
 .lens-inline-notice__dismiss {

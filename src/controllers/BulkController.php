@@ -34,16 +34,12 @@ class BulkController extends Controller
         $volumeId = $volumeId ? (int) $volumeId : null;
 
         $settings = Plugin::getInstance()->getSettings();
-        $enabledVolumes = $settings->enabledVolumes;
         $allVolumes = Craft::$app->getVolumes()->getAllVolumes();
-
-        if (in_array('*', $enabledVolumes, true)) {
-            $volumes = $allVolumes;
-        } else {
-            $volumes = array_filter($allVolumes, fn($v) => in_array($v->uid, $enabledVolumes, true));
-        }
-
-        $enabledVolumeIds = array_values(array_map(fn($v) => $v->id, $volumes));
+        $enabledVolumeIds = $settings->getEnabledVolumeIds();
+        $volumes = array_values(array_filter(
+            $allVolumes,
+            fn($v) => in_array($v->id, $enabledVolumeIds, true)
+        ));
 
         if ($volumeId !== null && !in_array($volumeId, $enabledVolumeIds, true)) {
             $volumeId = null;

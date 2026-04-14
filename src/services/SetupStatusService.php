@@ -22,12 +22,14 @@ class SetupStatusService extends Component
     public const CATEGORY_VOLUMES = 'volumes';
     public const CATEGORY_FIELD_LAYOUT = 'field_layout';
 
+    private const DOCS_BASE_URL = 'https://github.com/vitordiniz22/craft-lens/wiki/';
+
     private ?array $cachedStatus = null;
 
     /**
      * Get all setup status checks.
      *
-     * @return array<array{key: string, category: string, severity: string, message: string, actionLabel: string, actionUrl: string, isResolved: bool}>
+     * @return array<array{key: string, category: string, severity: string, message: string, actionLabel: string, actionUrl: string, docsUrl: string, isResolved: bool}>
      */
     public function getSetupStatus(): array
     {
@@ -37,9 +39,15 @@ class SetupStatusService extends Component
 
         $this->cachedStatus = [
             $this->checkAiProviderConfigured(),
-            $this->checkVolumesEnabled(),
-            $this->checkAnalysisPanelConfigured(),
         ];
+
+        if (!empty(Craft::$app->getVolumes()->getAllVolumes())) {
+            $this->cachedStatus[] = $this->checkVolumesEnabled();
+        }
+
+        if ($this->hasEnabledVolumes()) {
+            $this->cachedStatus[] = $this->checkAnalysisPanelConfigured();
+        }
 
         if (Plugin::getInstance()->getIsPro()) {
             $this->cachedStatus[] = $this->checkSemanticSearchEnabled();
@@ -55,7 +63,7 @@ class SetupStatusService extends Component
     /**
      * Get only critical issues that block core functionality.
      *
-     * @return array<array{key: string, category: string, severity: string, message: string, actionLabel: string, actionUrl: string, isResolved: bool}>
+     * @return array<array{key: string, category: string, severity: string, message: string, actionLabel: string, actionUrl: string, docsUrl: string, isResolved: bool}>
      */
     public function getCriticalIssues(): array
     {
@@ -68,7 +76,7 @@ class SetupStatusService extends Component
     /**
      * Get warnings (non-blocking issues).
      *
-     * @return array<array{key: string, category: string, severity: string, message: string, actionLabel: string, actionUrl: string, isResolved: bool}>
+     * @return array<array{key: string, category: string, severity: string, message: string, actionLabel: string, actionUrl: string, docsUrl: string, isResolved: bool}>
      */
     public function getWarnings(): array
     {
@@ -81,7 +89,7 @@ class SetupStatusService extends Component
     /**
      * Get all unresolved issues (any severity).
      *
-     * @return array<array{key: string, category: string, severity: string, message: string, actionLabel: string, actionUrl: string, isResolved: bool}>
+     * @return array<array{key: string, category: string, severity: string, message: string, actionLabel: string, actionUrl: string, docsUrl: string, isResolved: bool}>
      */
     public function getUnresolvedIssues(): array
     {
@@ -176,17 +184,18 @@ class SetupStatusService extends Component
      */
     public function isAnalysisPanelConfigured(): bool
     {
-        $settings = $this->getSettings();
-        $enabledVolumeUids = $settings->enabledVolumes ?? [];
+        $enabledVolumeIds = $this->getSettings()->getEnabledVolumeIds();
 
-        if (empty($enabledVolumeUids)) {
+        if (empty($enabledVolumeIds)) {
             return false;
         }
 
-        $allVolumesEnabled = in_array('*', $enabledVolumeUids, true);
+        $volumesService = Craft::$app->getVolumes();
 
-        foreach (Craft::$app->getVolumes()->getAllVolumes() as $volume) {
-            if (!$allVolumesEnabled && !in_array($volume->uid, $enabledVolumeUids, true)) {
+        foreach ($enabledVolumeIds as $volumeId) {
+            $volume = $volumesService->getVolumeById($volumeId);
+
+            if ($volume === null) {
                 continue;
             }
 
@@ -209,12 +218,11 @@ class SetupStatusService extends Component
     }
 
     /**
-     * Check if at least one volume is enabled.
+     * Check if the user has explicitly enabled at least one live Craft volume.
      */
     public function hasEnabledVolumes(): bool
     {
-        $settings = $this->getSettings();
-        return !empty($settings->enabledVolumes);
+        return !empty($this->getSettings()->getEnabledVolumeIds());
     }
 
     /**
@@ -236,6 +244,7 @@ class SetupStatusService extends Component
             'message' => Craft::t('lens', 'Add your AI provider API key. Lens uses it to analyze images and generate metadata.'),
             'actionLabel' => Craft::t('lens', 'Configure API Key'),
             'actionUrl' => 'lens/settings#provider',
+            'docsUrl' => self::DOCS_BASE_URL . 'Getting-Started#configuring-your-ai-provider',
             'isResolved' => $isResolved,
         ];
     }
@@ -251,6 +260,7 @@ class SetupStatusService extends Component
             'message' => Craft::t('lens', 'Enable at least one asset volume so Lens knows which images to process.'),
             'actionLabel' => Craft::t('lens', 'Configure Volumes'),
             'actionUrl' => 'lens/settings#volumes',
+            'docsUrl' => self::DOCS_BASE_URL . 'Getting-Started#enabling-asset-volumes',
             'isResolved' => $isResolved,
         ];
     }
@@ -266,6 +276,7 @@ class SetupStatusService extends Component
             'message' => Craft::t('lens', 'Add the Lens Analysis element to a volume\'s field layout to see AI results directly on asset pages.'),
             'actionLabel' => Craft::t('lens', 'Add to Field Layout'),
             'actionUrl' => 'settings/assets',
+            'docsUrl' => self::DOCS_BASE_URL . 'Getting-Started#adding-the-analysis-panel',
             'isResolved' => $isResolved,
         ];
     }
@@ -281,6 +292,7 @@ class SetupStatusService extends Component
             'message' => Craft::t('lens', 'Turn on semantic search to replace the native asset selector search with Lens, so queries match against AI descriptions, tags, and extracted text.'),
             'actionLabel' => Craft::t('lens', 'Go to Settings'),
             'actionUrl' => 'lens/settings',
+            'docsUrl' => self::DOCS_BASE_URL . 'Getting-Started#enabling-semantic-search',
             'isResolved' => $isResolved,
         ];
     }
@@ -301,6 +313,7 @@ class SetupStatusService extends Component
                 ? Craft::t('lens', 'Bulk Process')
                 : Craft::t('lens', 'Go to Assets'),
             'actionUrl' => $isPro ? 'lens/bulk' : 'assets',
+            'docsUrl' => self::DOCS_BASE_URL . 'Getting-Started#analyzing-your-first-image',
             'isResolved' => $isResolved,
         ];
     }

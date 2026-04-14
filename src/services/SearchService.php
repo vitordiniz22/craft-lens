@@ -320,12 +320,14 @@ class SearchService extends Component
             ->status(null)
             ->limit(self::NATIVE_SEARCH_LIMIT);
 
-        // Respect plugin volume settings.
+        // Respect plugin volume settings: no enabled volumes means nothing to return.
         $volumeIds = Plugin::getInstance()->getSettings()->getEnabledVolumeIds();
 
-        if ($volumeIds !== null && !empty($volumeIds)) {
-            $assetQuery->volumeId($volumeIds);
+        if (empty($volumeIds)) {
+            return [];
         }
+
+        $assetQuery->volumeId($volumeIds);
 
         return array_map('intval', $assetQuery->ids());
     }
@@ -749,15 +751,11 @@ class SearchService extends Component
 
     /**
      * Restrict results to assets belonging to volumes enabled in plugin settings.
-     * When all volumes are enabled (the default), no filter is applied.
+     * No enabled volumes means no results.
      */
     private function applyVolumeFilter(Query $query): void
     {
         $volumeIds = Plugin::getInstance()->getSettings()->getEnabledVolumeIds();
-
-        if ($volumeIds === null) {
-            return;
-        }
 
         if (empty($volumeIds)) {
             $query->andWhere('1 = 0');

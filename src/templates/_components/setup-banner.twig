@@ -50,6 +50,11 @@
                     <span class="lens-setup-banner__item-text">{{ check.message }}</span>
                 </div>
                 <div class="lens-setup-banner__item-action">
+                    {% if check.docsUrl ?? false %}
+                        <a href="{{ check.docsUrl }}" target="_blank" rel="noopener" class="lens-setup-banner__item-docs">
+                            {{ 'Learn more'|t('lens') }}
+                        </a>
+                    {% endif %}
                     <a href="{{ cpUrl(check.actionUrl) }}" class="btn small {{ check.severity == 'critical' ? 'submit' }}">
                         {{ check.actionLabel }}
                     </a>

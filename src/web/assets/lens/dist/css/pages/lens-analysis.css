@@ -538,6 +538,7 @@
 
 /* Hide editing controls when toggle present but NOT in edit mode */
 [data-lens-edit-mode="toggle"]:not(.lens-is-editing) .lens-tag-remove,
+[data-lens-edit-mode="toggle"]:not(.lens-is-editing) craft-tooltip:has(.lens-tag-remove),
 [data-lens-edit-mode="toggle"]:not(.lens-is-editing) [data-lens-target="tag-input-wrapper"],
 [data-lens-edit-mode="toggle"]:not(.lens-is-editing) [data-lens-target="color-add-row"] {
     display: none;

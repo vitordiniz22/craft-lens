@@ -17,6 +17,8 @@
  #   - cta: (optional) Object with 'label' and 'url' for call-to-action button
  #       - cta.small: (optional) Whether button is small, defaults to true
  #       - cta.submit: (optional) Whether button uses submit (red) style, defaults to true for error type
+ #   - docsUrl: (optional) External documentation URL. Renders a secondary "Learn more" text link after the CTA; opens in a new tab.
+ #   - docsLabel: (optional) Override text for the docs link, defaults to "Learn more"
  #   - dismissible: (optional) Whether notice can be dismissed, defaults to false
  #   - dismissKey: (optional) Unique key for storing dismissed state in localStorage
  #   - attr: (optional) Additional HTML attributes as key/value pairs for the wrapper div
@@ -58,11 +60,18 @@
     {% endblock %}
 
     {% block action %}
-        {% if cta ?? false %}
+        {% if (cta ?? false) or (docsUrl ?? false) %}
             <div class="lens-inline-notice__action">
-                <a href="{{ cpUrl(cta.url) }}" class="btn{{ (cta.small ?? true) ? ' small' : '' }}{{ (cta.submit ?? (type == 'error')) ? ' submit' : '' }}">
-                    {{ cta.label }}
-                </a>
+                {% if docsUrl ?? false %}
+                    <a href="{{ docsUrl }}" target="_blank" rel="noopener" class="lens-inline-notice__docs">
+                        {{ docsLabel ?? 'Learn more'|t('lens') }}
+                    </a>
+                {% endif %}
+                {% if cta ?? false %}
+                    <a href="{{ cpUrl(cta.url) }}" class="btn{{ (cta.small ?? true) ? ' small' : '' }}{{ (cta.submit ?? (type == 'error')) ? ' submit' : '' }}">
+                        {{ cta.label }}
+                    </a>
+                {% endif %}
             </div>
         {% endif %}
     {% endblock %}
