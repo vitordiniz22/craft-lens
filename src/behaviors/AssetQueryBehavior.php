@@ -13,6 +13,7 @@ use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\helpers\ImageMetricsAnalyzer;
 use vitordiniz22\craftlens\migrations\Install;
+use vitordiniz22\craftlens\Plugin;
 use yii\base\Behavior;
 use yii\db\Query;
 
@@ -63,6 +64,9 @@ class AssetQueryBehavior extends Behavior
      */
     public function lensStatus(string|array|null $value): AssetQuery
     {
+        if (!Plugin::getInstance()->getIsPro()) {
+            return $this->owner;
+        }
         $this->lensStatus = $value;
         return $this->owner;
     }
@@ -99,6 +103,9 @@ class AssetQueryBehavior extends Behavior
      */
     public function lensTag(?string $value): AssetQuery
     {
+        if (!Plugin::getInstance()->getIsPro()) {
+            return $this->owner;
+        }
         $this->lensTag = $value;
         return $this->owner;
     }
@@ -108,6 +115,9 @@ class AssetQueryBehavior extends Behavior
      */
     public function lensColor(?string $value): AssetQuery
     {
+        if (!Plugin::getInstance()->getIsPro()) {
+            return $this->owner;
+        }
         $this->lensColor = $value;
         return $this->owner;
     }
@@ -175,6 +185,9 @@ class AssetQueryBehavior extends Behavior
      */
     public function lensStockProvider(string|array|null $value): AssetQuery
     {
+        if (!Plugin::getInstance()->getIsPro()) {
+            return $this->owner;
+        }
         $this->lensStockProvider = $value;
         return $this->owner;
     }
@@ -184,6 +197,9 @@ class AssetQueryBehavior extends Behavior
      */
     public function lensHasDuplicates(?bool $value): AssetQuery
     {
+        if (!Plugin::getInstance()->getIsPro()) {
+            return $this->owner;
+        }
         $this->lensHasDuplicates = $value;
         return $this->owner;
     }
@@ -193,6 +209,9 @@ class AssetQueryBehavior extends Behavior
      */
     public function lensTextSearch(?string $value): AssetQuery
     {
+        if (!Plugin::getInstance()->getIsPro()) {
+            return $this->owner;
+        }
         $this->lensTextSearch = $value;
         return $this->owner;
     }
@@ -274,6 +293,9 @@ class AssetQueryBehavior extends Behavior
      */
     public function lensHasTextInImage(?bool $value): AssetQuery
     {
+        if (!Plugin::getInstance()->getIsPro()) {
+            return $this->owner;
+        }
         $this->lensHasTextInImage = $value;
         return $this->owner;
     }
@@ -619,16 +641,14 @@ class AssetQueryBehavior extends Behavior
     private function applyDetectedBrandFilter(): void
     {
         $this->ensureJoined();
-        $brand = $this->lensDetectedBrand ?? '';
-        $escapedBrand = Db::escapeForLike($brand);
-        $escapedBrand = str_replace('"', '\\"', $escapedBrand);
 
-        $this->owner->subQuery->andWhere([
-            'like',
-            'lens.detectedBrands',
-            '%"brand":"' . $escapedBrand . '"%',
-            false,
-        ]);
+        // Structural JSON match on the $[*].brand path. Works regardless of
+        // how the database canonicalizes JSON whitespace on storage (MySQL 8
+        // adds spaces after colons; MariaDB preserves verbatim).
+        $this->owner->subQuery->andWhere(
+            "JSON_SEARCH([[lens.detectedBrands]], 'one', :lensBrand, NULL, '$[*].brand') IS NOT NULL",
+            [':lensBrand' => $this->lensDetectedBrand],
+        );
     }
 
     private function applyStockProviderFilter(): void
@@ -639,22 +659,20 @@ class AssetQueryBehavior extends Behavior
             ? $this->lensStockProvider
             : [$this->lensStockProvider];
 
-        $conditions = ['or'];
+        $placeholders = [];
+        $params = [];
 
-        foreach ($providers as $provider) {
-            $provider = strtolower($provider);
-            $escapedProvider = Db::escapeForLike($provider);
-            $escapedProvider = str_replace('"', '\\"', $escapedProvider);
-
-            $conditions[] = [
-                'like',
-                'LOWER(lens.watermarkDetails)',
-                '%"stockprovider":"' . $escapedProvider . '"%',
-                false,
-            ];
+        foreach ($providers as $i => $provider) {
+            $placeholder = ':lensStockProvider' . $i;
+            $placeholders[] = $placeholder;
+            $params[$placeholder] = strtolower($provider);
         }
 
-        $this->owner->subQuery->andWhere($conditions);
+        $in = implode(', ', $placeholders);
+        $this->owner->subQuery->andWhere(
+            "LOWER(JSON_UNQUOTE(JSON_EXTRACT([[lens.watermarkDetails]], '$.stockProvider'))) IN ({$in})",
+            $params,
+        );
     }
 
     private function applyHasDuplicatesFilter(): void
@@ -957,23 +975,21 @@ class AssetQueryBehavior extends Behavior
     }
 
     /**
-     * Presence filter for OCR text. extractedTextAi is a JSON array column:
-     * MySQL stores an empty array as the literal string '[]', so "has text"
-     * means "not NULL and not '[]'".
+     * Presence filter for OCR text. extractedTextAi is a JSON array column.
+     * "Has text" means the array is non-empty; "no text" means NULL or empty.
+     * JSON_LENGTH returns NULL on NULL input and 0 on '[]', expressing the
+     * intent without depending on the column's text-form representation.
      */
     private function applyHasTextInImageFilter(): void
     {
         $this->ensureJoined();
 
         if ($this->lensHasTextInImage) {
-            $this->owner->subQuery->andWhere(['not', ['lens.extractedTextAi' => null]]);
-            $this->owner->subQuery->andWhere(['!=', 'lens.extractedTextAi', '[]']);
+            $this->owner->subQuery->andWhere('JSON_LENGTH([[lens.extractedTextAi]]) > 0');
         } else {
-            $this->owner->subQuery->andWhere([
-                'or',
-                ['lens.extractedTextAi' => null],
-                ['lens.extractedTextAi' => '[]'],
-            ]);
+            $this->owner->subQuery->andWhere(
+                '[[lens.extractedTextAi]] IS NULL OR JSON_LENGTH([[lens.extractedTextAi]]) = 0',
+            );
         }
     }
 }

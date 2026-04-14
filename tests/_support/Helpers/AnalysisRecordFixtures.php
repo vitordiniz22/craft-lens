@@ -9,6 +9,7 @@ use craft\fs\Local;
 use craft\helpers\StringHelper;
 use craft\models\Volume;
 use vitordiniz22\craftlens\jobs\BulkAnalyzeAssetsJob;
+use vitordiniz22\craftlens\migrations\Install;
 use vitordiniz22\craftlens\records\AssetAnalysisRecord;
 use yii\db\Query;
 
@@ -26,6 +27,9 @@ trait AnalysisRecordFixtures
 
     /** @var int[] IDs of volumes created via createTestVolume(). */
     protected array $createdVolumeIds = [];
+
+    /** @var array{volumeId:int, folderId:int}|null Cached behavior-test volume and root folder. */
+    protected ?array $behaviorTestVolume = null;
 
     /**
      * Create an AssetAnalysisRecord along with the minimal elements and
@@ -108,11 +112,18 @@ trait AnalysisRecordFixtures
         $db->createCommand('SET FOREIGN_KEY_CHECKS=0')->execute();
 
         try {
-            $db->createCommand()
-                ->delete('{{%lens_asset_analyses}}')
-                ->execute();
+            // Truncate lens child tables first so leftover rows from prior runs
+            // never interfere with EXISTS-based filters in other tests.
+            $db->createCommand()->delete(Install::TABLE_ASSET_TAGS)->execute();
+            $db->createCommand()->delete(Install::TABLE_ASSET_COLORS)->execute();
+            $db->createCommand()->delete(Install::TABLE_DUPLICATE_GROUPS)->execute();
+            $db->createCommand()->delete(Install::TABLE_ASSET_ANALYSES)->execute();
 
             if (!empty($this->createdElementIds)) {
+                $db->createCommand()
+                    ->delete('{{%assets}}', ['id' => $this->createdElementIds])
+                    ->execute();
+
                 $db->createCommand()
                     ->delete('{{%elements_sites}}', ['elementId' => $this->createdElementIds])
                     ->execute();
@@ -134,6 +145,312 @@ trait AnalysisRecordFixtures
             }
             $this->createdVolumeIds = [];
         }
+
+        $this->behaviorTestVolume = null;
+    }
+
+    /**
+     * Lazy-create a volume for AssetQueryBehavior integration tests and return
+     * its id plus its root-folder id. Uses raw SQL inserts so the rows live
+     * entirely inside the test's DB transaction (rolled back at end of test)
+     * and never touch project config. Going through Craft's Volumes service
+     * accumulates stale volume entries in project config across tests which
+     * eventually breaks Craft's test bootstrap.
+     *
+     * @return array{volumeId:int, folderId:int}
+     */
+    protected function ensureTestAssetVolume(): array
+    {
+        if ($this->behaviorTestVolume !== null) {
+            return $this->behaviorTestVolume;
+        }
+
+        $db = Craft::$app->getDb();
+        $now = date('Y-m-d H:i:s');
+
+        $db->createCommand()->insert('{{%volumes}}', [
+            'name' => 'Lens Test',
+            'handle' => 'lenstest',
+            'fs' => 'lenstestfs',
+            'titleTranslationMethod' => 'site',
+            'altTranslationMethod' => 'site',
+            'sortOrder' => 9999,
+            'dateCreated' => $now,
+            'dateUpdated' => $now,
+            'uid' => StringHelper::UUID(),
+        ])->execute();
+        $volumeId = (int) $db->getLastInsertID();
+
+        $db->createCommand()->insert('{{%volumefolders}}', [
+            'parentId' => null,
+            'volumeId' => $volumeId,
+            'name' => 'Lens Test',
+            'path' => '',
+            'dateCreated' => $now,
+            'dateUpdated' => $now,
+            'uid' => StringHelper::UUID(),
+        ])->execute();
+        $folderId = (int) $db->getLastInsertID();
+
+        $this->behaviorTestVolume = ['volumeId' => $volumeId, 'folderId' => $folderId];
+        return $this->behaviorTestVolume;
+    }
+
+    /**
+     * Create a full asset fixture: elements + elements_sites + assets + lens_asset_analyses.
+     * Returns the analysis record (which carries assetId equal to the element id).
+     *
+     * FK checks are disabled during insert because we bypass Craft's element
+     * persistence to keep fixtures fast and deterministic.
+     *
+     * @param array<string, mixed> $analysisOverrides Extra fields for the AssetAnalysisRecord.
+     * @param array<string, mixed> $assetOverrides Extra fields for the assets row (size, focalPoint, width, height, kind).
+     */
+    protected function createAssetFixture(
+        string $filename,
+        array $analysisOverrides = [],
+        array $assetOverrides = [],
+        string $analysisStatus = 'completed',
+    ): AssetAnalysisRecord {
+        $volume = $this->ensureTestAssetVolume();
+        $db = Craft::$app->getDb();
+        $now = date('Y-m-d H:i:s');
+
+        $db->createCommand('SET FOREIGN_KEY_CHECKS=0')->execute();
+
+        try {
+            $db->createCommand()->insert('{{%elements}}', [
+                'type' => 'craft\\elements\\Asset',
+                'enabled' => true,
+                'dateCreated' => $now,
+                'dateUpdated' => $now,
+                'uid' => StringHelper::UUID(),
+            ])->execute();
+
+            $elementId = (int) $db->getLastInsertID();
+            $this->createdElementIds[] = $elementId;
+
+            $primarySite = Craft::$app->getSites()->getPrimarySite();
+            $db->createCommand()->insert('{{%elements_sites}}', [
+                'elementId' => $elementId,
+                'siteId' => $primarySite->id,
+                'slug' => 'lens-fixture-' . $elementId,
+                'uri' => null,
+                'enabled' => true,
+                'dateCreated' => $now,
+                'dateUpdated' => $now,
+                'uid' => StringHelper::UUID(),
+            ])->execute();
+
+            $assetRow = array_merge([
+                'id' => $elementId,
+                'volumeId' => $volume['volumeId'],
+                'folderId' => $volume['folderId'],
+                'uploaderId' => null,
+                'filename' => $filename,
+                'mimeType' => 'image/jpeg',
+                'kind' => 'image',
+                'alt' => null,
+                'width' => 640,
+                'height' => 480,
+                'size' => 50_000,
+                'focalPoint' => null,
+                'deletedWithVolume' => false,
+                'dateModified' => $now,
+                'dateCreated' => $now,
+                'dateUpdated' => $now,
+            ], $assetOverrides);
+
+            $db->createCommand()->insert('{{%assets}}', $assetRow)->execute();
+
+            // Extract JSON-column overrides and apply them via raw UPDATE
+            // after save(). ActiveRecord's JSON auto-serialization doesn't
+            // produce the text form the behavior's LIKE patterns expect, so
+            // we write the literal JSON bytes ourselves.
+            $jsonColumns = ['detectedBrands', 'watermarkDetails', 'nsfwCategories', 'extractedTextAi'];
+            $jsonOverrides = [];
+            foreach ($jsonColumns as $col) {
+                if (array_key_exists($col, $analysisOverrides)) {
+                    $jsonOverrides[$col] = $analysisOverrides[$col];
+                    unset($analysisOverrides[$col]);
+                }
+            }
+
+            $record = new AssetAnalysisRecord();
+            $record->assetId = $elementId;
+            $record->status = $analysisStatus;
+
+            foreach ($analysisOverrides as $key => $value) {
+                $record->{$key} = $value;
+            }
+
+            $record->save(false);
+
+            if (!empty($jsonOverrides)) {
+                // Raw parameterized UPDATE. Bind the pre-encoded JSON string as
+                // a plain PDO string param so Yii doesn't re-serialize the value
+                // for the `json` column type (which silently double-encodes).
+                $table = Install::TABLE_ASSET_ANALYSES;
+                foreach ($jsonOverrides as $col => $value) {
+                    $json = $value === null ? null : json_encode($value);
+                    $sql = 'UPDATE ' . $db->quoteTableName($table)
+                        . ' SET ' . $db->quoteColumnName($col) . ' = :val'
+                        . ' WHERE ' . $db->quoteColumnName('id') . ' = :id';
+                    $db->createCommand($sql, [':val' => $json, ':id' => $record->id])->execute();
+                }
+
+                $record->refresh();
+            }
+
+            return $record;
+        } finally {
+            $db->createCommand('SET FOREIGN_KEY_CHECKS=1')->execute();
+        }
+    }
+
+    /**
+     * Create an asset fixture without any analysis record. Used to exercise
+     * lensStatus('untagged') which relies on LEFT JOIN and matches assets
+     * with no lens row at all.
+     *
+     * @param array<string, mixed> $assetOverrides
+     */
+    protected function createAssetWithoutAnalysis(string $filename, array $assetOverrides = []): int
+    {
+        $volume = $this->ensureTestAssetVolume();
+        $db = Craft::$app->getDb();
+        $now = date('Y-m-d H:i:s');
+
+        $db->createCommand('SET FOREIGN_KEY_CHECKS=0')->execute();
+
+        try {
+            $db->createCommand()->insert('{{%elements}}', [
+                'type' => 'craft\\elements\\Asset',
+                'enabled' => true,
+                'dateCreated' => $now,
+                'dateUpdated' => $now,
+                'uid' => StringHelper::UUID(),
+            ])->execute();
+
+            $elementId = (int) $db->getLastInsertID();
+            $this->createdElementIds[] = $elementId;
+
+            $primarySite = Craft::$app->getSites()->getPrimarySite();
+            $db->createCommand()->insert('{{%elements_sites}}', [
+                'elementId' => $elementId,
+                'siteId' => $primarySite->id,
+                'slug' => 'lens-fixture-' . $elementId,
+                'uri' => null,
+                'enabled' => true,
+                'dateCreated' => $now,
+                'dateUpdated' => $now,
+                'uid' => StringHelper::UUID(),
+            ])->execute();
+
+            $assetRow = array_merge([
+                'id' => $elementId,
+                'volumeId' => $volume['volumeId'],
+                'folderId' => $volume['folderId'],
+                'uploaderId' => null,
+                'filename' => $filename,
+                'mimeType' => 'image/jpeg',
+                'kind' => 'image',
+                'alt' => null,
+                'width' => 640,
+                'height' => 480,
+                'size' => 50_000,
+                'focalPoint' => null,
+                'deletedWithVolume' => false,
+                'dateModified' => $now,
+                'dateCreated' => $now,
+                'dateUpdated' => $now,
+            ], $assetOverrides);
+
+            $db->createCommand()->insert('{{%assets}}', $assetRow)->execute();
+
+            return $elementId;
+        } finally {
+            $db->createCommand('SET FOREIGN_KEY_CHECKS=1')->execute();
+        }
+    }
+
+    /**
+     * Insert a lens_asset_tags row.
+     */
+    protected function createTagRow(
+        int $analysisId,
+        int $assetId,
+        string $tag,
+        float $confidence = 0.9,
+        bool $isAi = true,
+    ): int {
+        $now = date('Y-m-d H:i:s');
+        Craft::$app->getDb()->createCommand()->insert(Install::TABLE_ASSET_TAGS, [
+            'assetId' => $assetId,
+            'analysisId' => $analysisId,
+            'tag' => $tag,
+            'tagNormalized' => strtolower($tag),
+            'confidence' => $confidence,
+            'isAi' => $isAi,
+            'dateCreated' => $now,
+            'dateUpdated' => $now,
+            'uid' => StringHelper::UUID(),
+        ])->execute();
+
+        return (int) Craft::$app->getDb()->getLastInsertID();
+    }
+
+    /**
+     * Insert a lens_asset_colors row.
+     */
+    protected function createColorRow(
+        int $analysisId,
+        int $assetId,
+        string $hex,
+        ?float $percentage = 0.5,
+        bool $isAutoGenerated = true,
+    ): int {
+        $now = date('Y-m-d H:i:s');
+        Craft::$app->getDb()->createCommand()->insert(Install::TABLE_ASSET_COLORS, [
+            'assetId' => $assetId,
+            'analysisId' => $analysisId,
+            'hex' => $hex,
+            'percentage' => $percentage,
+            'isAutoGenerated' => $isAutoGenerated,
+            'dateCreated' => $now,
+            'dateUpdated' => $now,
+            'uid' => StringHelper::UUID(),
+        ])->execute();
+
+        return (int) Craft::$app->getDb()->getLastInsertID();
+    }
+
+    /**
+     * Insert a lens_duplicate_groups row. resolution=null means unresolved
+     * (the only state that makes lensHasDuplicates(true) match).
+     */
+    protected function createDuplicateGroup(
+        int $canonicalAssetId,
+        int $duplicateAssetId,
+        ?string $resolution = null,
+        int $hammingDistance = 0,
+        float $similarity = 0.99,
+    ): int {
+        $now = date('Y-m-d H:i:s');
+        Craft::$app->getDb()->createCommand()->insert(Install::TABLE_DUPLICATE_GROUPS, [
+            'canonicalAssetId' => $canonicalAssetId,
+            'duplicateAssetId' => $duplicateAssetId,
+            'hammingDistance' => $hammingDistance,
+            'similarity' => $similarity,
+            'resolution' => $resolution,
+            'resolvedAt' => $resolution === null ? null : $now,
+            'resolvedBy' => null,
+            'dateCreated' => $now,
+            'dateUpdated' => $now,
+            'uid' => StringHelper::UUID(),
+        ])->execute();
+
+        return (int) Craft::$app->getDb()->getLastInsertID();
     }
 
     /**
