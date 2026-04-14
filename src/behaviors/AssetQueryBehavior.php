@@ -7,10 +7,10 @@ namespace vitordiniz22\craftlens\behaviors;
 use Craft;
 use craft\elements\db\AssetQuery;
 use craft\helpers\Db;
+use vitordiniz22\craftlens\conditions\FileTooLargeConditionRule;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\Logger;
-use vitordiniz22\craftlens\helpers\ImageQualityChecker;
 use vitordiniz22\craftlens\helpers\ImageMetricsAnalyzer;
 use vitordiniz22\craftlens\migrations\Install;
 use yii\base\Behavior;
@@ -52,7 +52,6 @@ class AssetQueryBehavior extends Behavior
     public ?bool $lensTooBright = null;
     public ?bool $lensLowContrast = null;
     public ?bool $lensTooLarge = null;
-    public ?array $lensWebReadinessIssues = null;
     public ?bool $lensHasTextInImage = null;
     /** @var array[] Raw WHERE conditions requiring the lens join, used by complex condition rules */
     public array $lensRawWhereConditions = [];
@@ -271,17 +270,6 @@ class AssetQueryBehavior extends Behavior
     }
 
     /**
-     * Filters assets by web readiness issues.
-     *
-     * @param string[]|null $value
-     */
-    public function lensWebReadinessIssues(?array $value): AssetQuery
-    {
-        $this->lensWebReadinessIssues = $value;
-        return $this->owner;
-    }
-
-    /**
      * Filters assets that contain embedded text (OCR).
      */
     public function lensHasTextInImage(?bool $value): AssetQuery
@@ -389,10 +377,10 @@ class AssetQueryBehavior extends Behavior
         }
     }
 
-    public function lensApplyWebReadinessFilter(): void
+    public function lensApplyTooLargeFilter(): void
     {
-        if ($this->lensWebReadinessIssues !== null && !empty($this->lensWebReadinessIssues) && $this->owner->subQuery !== null) {
-            $this->safeApplyFilter(fn() => $this->applyWebReadinessFilter(), 'WebReadinessFilter', 'lensWebReadinessIssues');
+        if ($this->lensTooLarge !== null && $this->owner->subQuery !== null) {
+            $this->safeApplyFilter(fn() => $this->applyTooLargeFilter(), 'TooLargeFilter', 'lensTooLarge');
         }
     }
 
@@ -542,10 +530,6 @@ class AssetQueryBehavior extends Behavior
 
         if ($this->lensTooLarge !== null) {
             $this->applyTooLargeFilter();
-        }
-
-        if ($this->lensWebReadinessIssues !== null && !empty($this->lensWebReadinessIssues)) {
-            $this->applyWebReadinessFilter();
         }
 
         if ($this->lensHasTextInImage !== null) {
@@ -741,7 +725,6 @@ class AssetQueryBehavior extends Behavior
             || $this->lensTooBright !== null
             || $this->lensLowContrast !== null
             || $this->lensTooLarge !== null
-            || $this->lensWebReadinessIssues !== null
             || $this->lensHasTextInImage !== null
             || !empty($this->lensRawWhereConditions);
     }
@@ -793,7 +776,6 @@ class AssetQueryBehavior extends Behavior
         $this->lensTooBright = null;
         $this->lensLowContrast = null;
         $this->lensTooLarge = null;
-        $this->lensWebReadinessIssues = null;
         $this->lensHasTextInImage = null;
         $this->lensRawWhereConditions = [];
     }
@@ -964,41 +946,7 @@ class AssetQueryBehavior extends Behavior
     private function applyTooLargeFilter(): void
     {
         if ($this->lensTooLarge) {
-            $this->owner->subQuery->andWhere(['>=', 'assets.size', ImageQualityChecker::FILE_SIZE_WARNING]);
-        }
-    }
-
-    private function applyWebReadinessFilter(): void
-    {
-        $this->ensureJoined();
-        $conditions = ['or'];
-
-        foreach ($this->lensWebReadinessIssues as $issue) {
-            match ($issue) {
-                'fileTooLarge' => $conditions[] = ['>=', 'assets.size', ImageQualityChecker::FILE_SIZE_WARNING],
-                'resolutionTooSmall' => $conditions[] = [
-                    'and',
-                    ['>', 'assets.width', 0],
-                    ['<', 'assets.width', ImageQualityChecker::MIN_WIDTH_RECOMMENDED],
-                    ['not like', 'assets.filename', '%.svg', false],
-                ],
-                'resolutionOversized' => $conditions[] = [
-                    'and',
-                    ['>', 'assets.width', 0],
-                    ['>', 'assets.width', ImageQualityChecker::MAX_WIDTH_RECOMMENDED],
-                    ['not like', 'assets.filename', '%.svg', false],
-                ],
-                'unsupportedFormat' => $conditions[] = [
-                    'or',
-                    ['like', 'assets.filename', '%.tif', false],
-                    ['like', 'assets.filename', '%.tiff', false],
-                ],
-                default => null,
-            };
-        }
-
-        if (count($conditions) > 1) {
-            $this->owner->subQuery->andWhere($conditions);
+            $this->owner->subQuery->andWhere(['>=', 'assets.size', FileTooLargeConditionRule::FILE_SIZE_WARNING]);
         }
     }
 

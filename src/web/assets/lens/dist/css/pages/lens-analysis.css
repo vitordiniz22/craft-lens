@@ -623,7 +623,7 @@
 }
 
 
-/* Web Readiness — icon colors per status */
+/* Quality-metric row icon colors per status */
 .lens-readiness-icon {
     display: inline-flex;
     align-items: center;

@@ -58,12 +58,11 @@ Choose your AI provider (**OpenAI**, **Google Gemini**, or **Anthropic Claude**)
 - **Stock photo detection** to identify which assets came from stock providers
 - **OCR** extracts text directly from images, fully searchable
 
-[[Image: Analysis panel in the asset editor. Show a real asset with all sections visible: suggested title and alt text with a confidence badge, semantic tags displayed as chips, the 6-color palette with hex values and percentages, quality metrics with verdicts, people detection showing "Individual", and a web readiness check. Pick a visually interesting photo so the analysis results are compelling.]]
+[[Image: Analysis panel in the asset editor. Show a real asset with all sections visible: suggested title and alt text with a confidence badge, semantic tags displayed as chips, the 6-color palette with hex values and percentages, quality metrics with verdicts, and people detection showing "Individual". Pick a visually interesting photo so the analysis results are compelling.]]
 
 ### Quality & Assessment
 
 - **Image quality analysis** covering sharpness, brightness, contrast, JPEG compression quality, and color profile detection via Imagick
-- **Web readiness** flags oversized files, low resolutions, and unsupported formats so you can fix them before they slow down your site
 - **Text-in-image detection** flags images with embedded text as an accessibility reminder
 - **Focal point detection** automatically sets the focal point on the primary subject so Craft's image transforms crop around what matters
 
@@ -98,7 +97,7 @@ Available on the [Craft Plugin Store](https://plugins.craftcms.com/lens).
 - **PHP** 8.2 or later
 - **MySQL** 8.0+, **MariaDB** 10.6+, or **PostgreSQL** 14+
 - An API key from one of: [OpenAI](https://platform.openai.com/), [Google AI](https://ai.google.dev/), or [Anthropic](https://www.anthropic.com/)
-- **Imagick PHP extension** (recommended) enables local quality analysis (sharpness, brightness, contrast, JPEG quality, color profile detection). Without it, the Quality section is hidden and only Web Readiness checks are shown.
+- **Imagick PHP extension** (recommended) enables local quality analysis (sharpness, brightness, contrast, JPEG quality, color profile detection). Without it, the Quality section is hidden.
 
 ## Installation
 

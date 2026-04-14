@@ -6,12 +6,12 @@ namespace vitordiniz22\craftlens\services;
 
 use Craft;
 use craft\elements\Asset;
+use vitordiniz22\craftlens\conditions\FileTooLargeConditionRule;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\enums\QuickFilter;
-use vitordiniz22\craftlens\helpers\ImageQualityChecker;
-use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\helpers\ImageMetricsAnalyzer;
+use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\migrations\Install;
 use vitordiniz22\craftlens\Plugin;
 use yii\base\Component;
@@ -291,7 +291,7 @@ class SearchService extends Component
             'hasWatermark', 'watermarkType', 'containsBrandLogo',
             'hasFocalPoint',
             'missingAltText', 'unprocessed',
-            'qualityIssues', 'webReadinessIssues', 'hasTextInImage',
+            'qualityIssues', 'hasTextInImage',
         ];
 
         foreach ($lensFilterKeys as $key) {
@@ -697,31 +697,7 @@ class SearchService extends Component
         }
 
         if (!empty($filters['isTooLarge'])) {
-            $query->andWhere(['>=', 'assets.size', ImageQualityChecker::FILE_SIZE_WARNING]);
-        }
-
-        if (!empty($filters['isResolutionTooSmall'])) {
-            $query->andWhere([
-                'and',
-                ['>', 'assets.width', 0],
-                ['<', 'assets.width', ImageQualityChecker::MIN_WIDTH_RECOMMENDED],
-            ]);
-        }
-
-        if (!empty($filters['isResolutionOversized'])) {
-            $query->andWhere([
-                'and',
-                ['>', 'assets.width', 0],
-                ['>', 'assets.width', ImageQualityChecker::MAX_WIDTH_RECOMMENDED],
-            ]);
-        }
-
-        if (!empty($filters['isUnsupportedFormat'])) {
-            $query->andWhere([
-                'or',
-                ['like', 'assets.filename', '%.tif', false],
-                ['like', 'assets.filename', '%.tiff', false],
-            ]);
+            $query->andWhere(['>=', 'assets.size', FileTooLargeConditionRule::FILE_SIZE_WARNING]);
         }
     }
 

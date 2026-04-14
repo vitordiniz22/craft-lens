@@ -1,15 +1,13 @@
 {#
  # Image Assessment Section
  # Row-based layout: icon + label + optional value + verdict badge per check.
- # Quality metrics (Imagick) and Web Readiness checks shown as separate groups.
  # Also: text-in-image accessibility notice and focal point with Apply button.
  #
- # Expected variables: analysis, asset (optional), fieldState, webReadiness, qualityMetrics
+ # Expected variables: analysis, asset (optional), fieldState, qualityMetrics
  #}
 {% from 'lens/_components/analysis/_confidence-badge' import confidenceBadge %}
 
 {% set fieldState = fieldState ?? 'readonly' %}
-{% set webReadiness = webReadiness ?? {issues: [], checks: {}} %}
 {% set qualityMetrics = qualityMetrics ?? {} %}
 
 {# ── Quality Metrics (Imagick-based) ──────────────────── #}
@@ -18,17 +16,6 @@
     <div class="lens-quality-metrics">
         {% for key, metric in qualityMetrics %}
             {% include 'lens/_components/analysis/_quality-metric-row' with {item: metric} only %}
-        {% endfor %}
-    </div>
-{% endif %}
-
-{# ── Web Readiness ────────────────────────────────────── #}
-{% set wrChecks = webReadiness.checks ?? {} %}
-{% if wrChecks|length %}
-    <span class="lens-field-label">{{ 'Web Readiness'|t('lens') }}</span>
-    <div class="lens-quality-metrics">
-        {% for key, check in wrChecks %}
-            {% include 'lens/_components/analysis/_quality-metric-row' with {item: check} only %}
         {% endfor %}
     </div>
 {% endif %}

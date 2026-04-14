@@ -7,10 +7,10 @@ namespace vitordiniz22\craftlens\services;
 use Craft;
 use craft\elements\Asset;
 use DateTime;
+use vitordiniz22\craftlens\conditions\FileTooLargeConditionRule;
 use vitordiniz22\craftlens\enums\AiProvider;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\helpers\ImageMetricsAnalyzer;
-use vitordiniz22\craftlens\helpers\ImageQualityChecker;
 use vitordiniz22\craftlens\migrations\Install;
 use vitordiniz22\craftlens\Plugin;
 use vitordiniz22\craftlens\records\AssetAnalysisRecord;
@@ -735,7 +735,7 @@ class StatisticsService extends Component
             ->from(Install::TABLE_ASSET_ANALYSES . ' lens')
             ->innerJoin('{{%assets}} assets', '[[assets.id]] = [[lens.assetId]]')
             ->where(['in', 'lens.status', AnalysisStatus::processedValues()])
-            ->andWhere(['>=', 'assets.size', ImageQualityChecker::FILE_SIZE_WARNING]);
+            ->andWhere(['>=', 'assets.size', FileTooLargeConditionRule::FILE_SIZE_WARNING]);
 
         if ($volumeIds !== null) {
             if (empty($volumeIds)) {

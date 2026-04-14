@@ -285,7 +285,7 @@ class AssetQueryBehaviorDefensiveTest extends Unit
             'ContainsBrandLogoFilter' => ['lensApplyContainsBrandLogoFilter', 'lensContainsBrandLogo', true, null],
             'StockProviderFilter' => ['lensApplyStockProviderFilter', 'lensStockProvider', 'shutterstock', null],
             'HasFocalPointFilter' => ['lensApplyHasFocalPointFilter', 'lensHasFocalPoint', true, null],
-            'WebReadinessFilter' => ['lensApplyWebReadinessFilter', 'lensWebReadinessIssues', ['fileTooLarge'], []],
+            'TooLargeFilter' => ['lensApplyTooLargeFilter', 'lensTooLarge', true, null],
             'HasTextInImageFilter' => ['lensApplyHasTextInImageFilter', 'lensHasTextInImage', true, null],
             'RawWhereConditions' => ['lensApplyRawWhereConditions', 'lensRawWhereConditions', [['lens.status' => 'completed']], []],
         ];

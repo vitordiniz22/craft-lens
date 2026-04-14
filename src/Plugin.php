@@ -35,6 +35,7 @@ use vitordiniz22\craftlens\helpers\FieldLayoutHelper;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\conditions\ContainsBrandLogoConditionRule;
 use vitordiniz22\craftlens\conditions\ContainsPeopleConditionRule;
+use vitordiniz22\craftlens\conditions\FileTooLargeConditionRule;
 use vitordiniz22\craftlens\conditions\HasFocalPointConditionRule;
 use vitordiniz22\craftlens\conditions\HasTextInImageConditionRule;
 use vitordiniz22\craftlens\conditions\LensStatusConditionRule;
@@ -42,7 +43,6 @@ use vitordiniz22\craftlens\conditions\NsfwFlaggedConditionRule;
 use vitordiniz22\craftlens\conditions\StockProviderConditionRule;
 use vitordiniz22\craftlens\conditions\WatermarkFlaggedConditionRule;
 use vitordiniz22\craftlens\conditions\WatermarkTypeConditionRule;
-use vitordiniz22\craftlens\conditions\WebReadinessConditionRule;
 use vitordiniz22\craftlens\fieldlayoutelements\LensAnalysisElement;
 use vitordiniz22\craftlens\models\Settings;
 use vitordiniz22\craftlens\services\AiProviderService;
@@ -435,7 +435,7 @@ class Plugin extends BasePlugin
                 $event->conditionRules[] = WatermarkFlaggedConditionRule::class;
                 $event->conditionRules[] = ContainsBrandLogoConditionRule::class;
                 $event->conditionRules[] = WatermarkTypeConditionRule::class;
-                $event->conditionRules[] = WebReadinessConditionRule::class;
+                $event->conditionRules[] = FileTooLargeConditionRule::class;
 
                 if ($this->getIsPro()) {
                     $event->conditionRules[] = LensStatusConditionRule::class;

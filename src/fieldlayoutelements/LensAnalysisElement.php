@@ -11,7 +11,6 @@ use craft\fieldlayoutelements\BaseUiElement;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\AssetTitleHelper;
 use vitordiniz22\craftlens\helpers\FieldLayoutHelper;
-use vitordiniz22\craftlens\helpers\ImageQualityChecker;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\helpers\MultisiteHelper;
 use vitordiniz22\craftlens\helpers\ImageMetricsAnalyzer;
@@ -132,7 +131,6 @@ class LensAnalysisElement extends BaseUiElement
                     'isTitleTranslatable' => MultisiteHelper::isTitleTranslatable($element->getVolume()->id),
                     'currentSiteId' => $element->siteId,
                     'primarySiteId' => Craft::$app->getSites()->getPrimarySite()->id,
-                    'webReadiness' => ImageQualityChecker::assess($element),
                     'qualityMetrics' => $analysis ? ImageMetricsAnalyzer::assessFromRecord(
                         $analysis->sharpnessScore !== null ? (float) $analysis->sharpnessScore : null,
                         $analysis->exposureScore !== null ? (float) $analysis->exposureScore : null,
