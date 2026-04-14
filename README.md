@@ -94,7 +94,7 @@ Choose your AI provider (**OpenAI GPT**, **Google Gemini**, or **Anthropic Claud
 
 Lens is available in two editions. **Lite** is free and includes AI analysis for every image (alt text, titles, descriptions, colors, focal points, people and content detection), auto-processing on upload, the analysis panel, multisite translations, 24 asset query methods, and 7 condition rules. **Pro** adds semantic tags, OCR text extraction, the Asset Browser, Review Queue, Bulk Processing, duplicate detection, enhanced asset search, and 3 additional condition rules.
 
-Available on the [Craft Plugin Store](https://plugins.craftcms.com/lens).
+Available on the <a href="https://plugins.craftcms.com/lens" target="_blank" rel="noopener">Craft Plugin Store</a>.
 
 ## Requirements
 
@@ -146,8 +146,9 @@ Full documentation is available on the [GitHub Wiki](https://github.com/vitordin
 
 ## Support
 
-- **Documentation**: [GitHub Wiki](https://github.com/vitordiniz22/craft-lens/wiki)
-- **Issues**: [GitHub Issues](https://github.com/vitordiniz22/craft-lens/issues)
+- **Bugs**: Report via [GitHub Issues](https://github.com/vitordiniz22/craft-lens/issues). Include your Craft version, PHP version, the AI provider you're using, and clear reproduction steps.
+- **Feature requests**: Also via GitHub Issues. Describe the use case so it can be prioritized against other work.
+- **Security issues**: Please do not file public issues for security concerns. Use GitHub's private [security advisory](https://github.com/vitordiniz22/craft-lens/security/advisories/new) instead.
 
 ## License
 
