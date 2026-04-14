@@ -92,6 +92,19 @@
 
                 <div class="lens-section">
                     <div class="lens-section-header">
+                        <span class="lens-section-header__title">{{ 'Focal Point'|t('lens') }}</span>
+                        <p class="lens-section-header__intro">{{ 'AI-suggested focus point for cropping and asset transforms.'|t('lens') }}</p>
+                    </div>
+                    <div class="lens-section-body">
+                        {% include 'lens/_components/analysis/focal-point-section' with {
+                            analysis: analysis,
+                            fieldState: 'editing'
+                        } %}
+                    </div>
+                </div>
+
+                <div class="lens-section">
+                    <div class="lens-section-header">
                         <span class="lens-section-header__title">{{ 'Image Assessment'|t('lens') }}</span>
                         <p class="lens-section-header__intro">{{ 'Technical checks to ensure your image is web-ready.'|t('lens') }}</p>
                     </div>

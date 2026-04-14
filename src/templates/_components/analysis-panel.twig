@@ -208,16 +208,34 @@
                 </div>
             {% endif %}
 
-            {# Section 3: Image Assessment #}
+            {# Section 3: Focal Point #}
             {% if (analysis.status not in [lens.status.pending, lens.status.failed] or isRepending) and (not isProcessing or isReprocessing) %}
+                <div class="lens-section">
+                    {% include 'lens/_components/analysis/_section-header' with {
+                        title: 'Focal Point'|t('lens'),
+                        intro: 'AI-suggested focus point for cropping and asset transforms.'|t('lens')
+                    } only %}
+                    <div class="lens-section-body">
+                        {% include 'lens/_components/analysis/focal-point-section' with {
+                            analysis: analysis,
+                            asset: asset,
+                            fieldState: fieldState
+                        } %}
+                    </div>
+                </div>
+            {% endif %}
+
+            {# Section 4: Image Assessment #}
+            {% if (analysis.status not in [lens.status.pending, lens.status.failed] or isRepending) and (not isProcessing or isReprocessing) %}
+                {% set wrStatus = (webReadiness ?? {}).overallStatus ?? 'pass' %}
                 {% set hasQualityWarning = false %}
                 {% set hasQualityError = false %}
                 {% for metric in (qualityMetrics ?? []) %}
                     {% if metric.status == 'error' %}{% set hasQualityError = true %}{% endif %}
                     {% if metric.status == 'warning' %}{% set hasQualityWarning = true %}{% endif %}
                 {% endfor %}
-                {% set qualityBadge = hasQualityError ? 'error'
-                    : (hasQualityWarning ? 'warning' : null) %}
+                {% set qualityBadge = (wrStatus == 'error' or hasQualityError) ? 'error'
+                    : ((wrStatus == 'warning' or hasQualityWarning) ? 'warning' : null) %}
                 <div class="lens-section">
                     {% include 'lens/_components/analysis/_section-header' with {
                         title: 'Image Assessment'|t('lens'),
@@ -228,13 +246,14 @@
                         {% include 'lens/_components/analysis/quality-section' with {
                             analysis: analysis, asset: asset,
                             fieldState: fieldState,
+                            webReadiness: webReadiness ?? {issues: [], checks: {}},
                             qualityMetrics: qualityMetrics ?? {}
                         } %}
                     </div>
                 </div>
             {% endif %}
 
-            {# Section 4: Content Safety #}
+            {# Section 5: Content Safety #}
             {% if (analysis.status not in [lens.status.pending, lens.status.failed] or isRepending) and (not isProcessing or isReprocessing) %}
                 {% set safetyBadge = (analysis.nsfwScore is defined and analysis.nsfwScore >= 0.5) ? 'error'
                     : ((analysis.nsfwScore is defined and analysis.nsfwScore >= 0.2) ? 'warning' : null) %}
@@ -253,7 +272,7 @@
                 </div>
             {% endif %}
 
-            {# Section 5: Extracted Text #}
+            {# Section 6: Extracted Text #}
             {% if lens.isPro and (analysis.status not in [lens.status.pending, lens.status.failed] or isRepending) and (not isProcessing or isReprocessing) %}
                 <div class="lens-section">
                     {% include 'lens/_components/analysis/_section-header' with {

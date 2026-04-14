@@ -1,13 +1,13 @@
 {#
  # Image Assessment Section
  # Row-based layout: icon + label + optional value + verdict badge per check.
- # Also: text-in-image accessibility notice and focal point with Apply button.
+ # Quality metrics (Imagick), Web Readiness, and Accessibility shown as separate groups.
  #
- # Expected variables: analysis, asset (optional), fieldState, qualityMetrics
+ # Expected variables: analysis, asset (optional), fieldState, webReadiness, qualityMetrics
  #}
-{% from 'lens/_components/analysis/_confidence-badge' import confidenceBadge %}
 
 {% set fieldState = fieldState ?? 'readonly' %}
+{% set webReadiness = webReadiness ?? {issues: [], checks: {}} %}
 {% set qualityMetrics = qualityMetrics ?? {} %}
 
 {# ── Quality Metrics (Imagick-based) ──────────────────── #}
@@ -20,127 +20,27 @@
     </div>
 {% endif %}
 
-{# ── Text in Image — Accessibility ────────── #}
-{% if lens.isPro and analysis.extractedTextAi is defined and analysis.extractedTextAi|length > 0 %}
-    <div class="lens-assessment-notice lens-assessment-notice--info">
-        <span class="lens-assessment-icon">{{ iconSvg('triangle-exclamation')|attr({width: 12, height: 12, fill: 'currentColor'}) }}</span>
-        <span>{{ 'This image contains embedded text. Ensure this text is also available as HTML on the page for screen reader accessibility.'|t('lens') }}</span>
+{# ── Web Readiness ────────────────────────────────────── #}
+{% set wrChecks = webReadiness.checks ?? {} %}
+{% if wrChecks|length %}
+    <span class="lens-field-label">{{ 'Web Readiness'|t('lens') }}</span>
+    <div class="lens-quality-metrics">
+        {% for key, check in wrChecks %}
+            {% include 'lens/_components/analysis/_quality-metric-row' with {item: check} only %}
+        {% endfor %}
     </div>
 {% endif %}
 
-{# ── Focal Point ──────────────────────────────────────── #}
-{% if analysis.focalPointX is not null and analysis.focalPointY is not null %}
-    {% if fieldState == 'unlocked' and asset is defined %}
-        {% set currentFp = asset.getFocalPoint() %}
-        {% set fpAlreadyApplied = currentFp and (currentFp.x|round(4) == analysis.focalPointX|round(4)) and (currentFp.y|round(4) == analysis.focalPointY|round(4)) %}
-    {% endif %}
-    {% set fpEdited = analysis.focalPointXAi is not null
-        and (analysis.focalPointX|round(4) != analysis.focalPointXAi|round(4)
-        or analysis.focalPointY|round(4) != analysis.focalPointYAi|round(4)) %}
-
-    <div class="lens-accent-bar">
-        <div class="lens-field-header" data-lens-target="field-header">
-            {% if fpEdited %}
-                {% include 'lens/_components/analysis/_tooltip-lock' only %}
-            {% endif %}
-            <span class="lens-field-label">{{ 'Focal Point'|t('lens') }}</span>
-            {% if not fpEdited and analysis.focalPointConfidence and not (hideConfidence ?? false) %}
-                {{ confidenceBadge(analysis.focalPointConfidence) }}
-            {% endif %}
-        </div>
-
-        {% if fieldState == 'editing' %}
-            {% set fpMatchesAsset = analysis.assetHasFocalPoint is defined and analysis.assetHasFocalPoint
-                and analysis.assetFocalPoint
-                and (analysis.focalPointX|round(4) == analysis.assetFocalPoint.x|round(4))
-                and (analysis.focalPointY|round(4) == analysis.assetFocalPoint.y|round(4)) %}
-            {% set fpMatchesAi = analysis.focalPointXAi is not null
-                and (analysis.focalPointX|round(4) == analysis.focalPointXAi|round(4))
-                and (analysis.focalPointY|round(4) == analysis.focalPointYAi|round(4)) %}
-            {% set aiMatchesAsset = analysis.assetHasFocalPoint is defined and analysis.assetHasFocalPoint
-                and analysis.assetFocalPoint
-                and analysis.focalPointXAi is not null
-                and (analysis.focalPointXAi|round(4) == analysis.assetFocalPoint.x|round(4))
-                and (analysis.focalPointYAi|round(4) == analysis.assetFocalPoint.y|round(4)) %}
-            {% set showRevert = analysis.assetHasFocalPoint is defined and analysis.assetHasFocalPoint
-                and analysis.assetFocalPoint
-                and not fpMatchesAsset
-                and not aiMatchesAsset %}
-            <div class="lens-field-display lens-field-display--inline">
-                <p data-lens-target="focal-display-text">{{ 'X: {x}, Y: {y}'|t('lens', {
-                    x: (analysis.focalPointX * 100)|round ~ '%',
-                    y: (analysis.focalPointY * 100)|round ~ '%'
-                }) }}</p>
-                {% if analysis.assetHasFocalPoint is defined and analysis.assetHasFocalPoint and analysis.assetFocalPoint %}
-                    <button type="button" class="lens-revert-trigger lens-revert-trigger--original"
-                            data-lens-action="focal-use-current"
-                            data-lens-target="focal-revert-original"
-                            data-lens-asset-focal-x="{{ analysis.assetFocalPoint.x }}"
-                            data-lens-asset-focal-y="{{ analysis.assetFocalPoint.y }}"
-                            {% if not showRevert %}hidden{% endif %}>
-                        {{ 'Revert to original'|t('lens') }}
-                    </button>
-                {% endif %}
-            </div>
-        {% else %}
-            <div class="lens-ai-suggestion-inline">
-                {% include 'lens/_components/analysis/_tooltip-ai' only %}
-                <span data-lens-target="focal-display-text">{{ 'X: {x}, Y: {y}'|t('lens', {
-                    x: (analysis.focalPointX * 100)|round ~ '%',
-                    y: (analysis.focalPointY * 100)|round ~ '%'
-                }) }}</span>
-                {% if fieldState == 'unlocked' and asset is defined %}
-                    {% if fpAlreadyApplied %}
-                        <span class="lens-applied-indicator">
-                            <span class="status on"></span>
-                            <span class="smalltext">{{ 'Applied'|t('lens') }}</span>
-                        </span>
-                    {% else %}
-                        <button type="button" class="lens-revert-trigger"
-                                data-lens-action="apply-focal-point"
-                                data-lens-asset-id="{{ asset.id }}"
-                                data-lens-focal-x="{{ analysis.focalPointX }}"
-                                data-lens-focal-y="{{ analysis.focalPointY }}">
-                            {{ 'Apply to Asset'|t('lens') }}
-                        </button>
-                    {% endif %}
-                {% endif %}
-            </div>
-        {% endif %}
-
-        {# AI suggestion + revert (review editing mode only) #}
-        {% if fieldState == 'editing' and analysis.focalPointXAi is not null %}
-            {% set fpAiDiffers = analysis.focalPointXAi|round(4) != analysis.focalPointX|round(4)
-                or analysis.focalPointYAi|round(4) != analysis.focalPointY|round(4) %}
-
-            <div class="lens-ai-suggestion-inline" data-lens-target="focal-ai-suggestion"
-                 {% if not fpAiDiffers %}hidden{% endif %}>
-                {% include 'lens/_components/analysis/_tooltip-ai' only %}
-                <span data-lens-target="focal-ai-text">
-                    {{ 'AI suggested: X: {x}, Y: {y}'|t('lens', {
-                        x: (analysis.focalPointXAi * 100)|round ~ '%',
-                        y: (analysis.focalPointYAi * 100)|round ~ '%'
-                    }) }}
-                </span>
-                <span class="lens-ai-suggestion-actions">
-                    <button type="button" class="lens-revert-trigger"
-                            data-lens-action="focal-revert"
-                            data-lens-focal-x-ai="{{ analysis.focalPointXAi }}"
-                            data-lens-focal-y-ai="{{ analysis.focalPointYAi }}">
-                        {{ 'Revert to AI'|t('lens') }}
-                    </button>
-                </span>
-            </div>
-        {% endif %}
-
-    </div>
-{% else %}
-    <div class="lens-accent-bar">
-        <div class="lens-field-header" data-lens-target="field-header">
-            <span class="lens-field-label">{{ 'Focal Point'|t('lens') }}</span>
-        </div>
-        <div class="lens-field-display">
-            <p class="light">{{ 'No focal point suggested'|t('lens') }}</p>
-        </div>
+{# ── Accessibility ─────────────────────────────────────── #}
+{% if lens.isPro and analysis.extractedTextAi is defined and analysis.extractedTextAi|length > 0 %}
+    <span class="lens-field-label">{{ 'Accessibility'|t('lens') }}</span>
+    <div class="lens-quality-metrics">
+        {% include 'lens/_components/analysis/_quality-metric-row' with {item: {
+            status: 'warning',
+            icon: 'file-lines',
+            label: 'Embedded Text'|t('lens'),
+            verdict: 'Detected'|t('lens'),
+            recommendation: 'Ensure this text is also available as HTML on the page for screen reader accessibility.'|t('lens'),
+        }} only %}
     </div>
 {% endif %}

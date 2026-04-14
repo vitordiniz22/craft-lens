@@ -635,26 +635,6 @@
 .lens-readiness-icon--error { color: var(--red-500); }
 .lens-readiness-icon--info { color: var(--blue-500, #3b82f6); }
 
-.lens-assessment-notice {
-    display: flex;
-    align-items: flex-start;
-    gap: 6px;
-    font-size: 12px;
-    line-height: 1.4;
-    padding: 8px 10px;
-    border-radius: 4px;
-    margin-top: 4px;
-}
-
-.lens-assessment-notice--info {
-    background: var(--amber-050, #fffbeb);
-    color: var(--amber-700, #92400e);
-}
-
-.lens-assessment-notice--info .lens-assessment-icon {
-    color: var(--amber-500);
-}
-
 /* ==========================================================================
    Content Safety & Detection Sections
    ========================================================================== */
