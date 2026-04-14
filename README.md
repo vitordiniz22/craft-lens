@@ -9,18 +9,10 @@
 </p>
 
 <p align="center">
-  <a href="https://craftcms.com">
-    <img src="https://img.shields.io/badge/Craft_CMS-5.0+-red.svg" alt="Craft CMS 5.0+">
-  </a>
-  <a href="https://php.net">
-    <img src="https://img.shields.io/badge/PHP-8.2+-blue.svg" alt="PHP 8.2+">
-  </a>
-  <a href="#license">
-    <img src="https://img.shields.io/badge/License-Craft-green.svg" alt="License">
-  </a>
-  <a href="https://github.com/vitordiniz22/craft-lens/actions/workflows/tests.yml">
-    <img src="https://github.com/vitordiniz22/craft-lens/actions/workflows/tests.yml/badge.svg" alt="Tests">
-  </a>
+  <a href="https://craftcms.com"><img src="https://img.shields.io/badge/Craft_CMS-5.0+-red.svg" alt="Craft CMS 5.0+"></a>
+  <a href="https://php.net"><img src="https://img.shields.io/badge/PHP-8.2+-blue.svg" alt="PHP 8.2+"></a>
+  <a href="#license"><img src="https://img.shields.io/badge/License-Craft-green.svg" alt="License"></a>
+  <a href="https://github.com/vitordiniz22/craft-lens/actions/workflows/tests.yml"><img src="https://github.com/vitordiniz22/craft-lens/actions/workflows/tests.yml/badge.svg" alt="Tests"></a>
 </p>
 
 ---
