@@ -1,0 +1,209 @@
+<?php
+
+declare(strict_types=1);
+
+namespace vitordiniz22\craftlenstests\integration\twig;
+
+use Codeception\Test\Unit;
+use Craft;
+use craft\elements\Asset;
+use vitordiniz22\craftlens\enums\AnalysisStatus;
+use vitordiniz22\craftlens\Plugin;
+use vitordiniz22\craftlens\services\SetupStatusService;
+use vitordiniz22\craftlens\twig\LensTwigExtension;
+use vitordiniz22\craftlens\twig\LensTwigGlobal;
+
+/**
+ * Verifies the `lens` global is reachable and usable from Twig.
+ *
+ * Every Twig-layer call pattern found in `src/templates/**` is rendered
+ * through `renderString` here. Direct PHP method calls in other test files
+ * would NOT catch a getter rename that breaks templates (e.g. renaming
+ * `getIsPro()` to `isProEdition()` leaves unit tests green but breaks
+ * every `{% if lens.isPro %}` in the CP).
+ */
+class LensTwigExtensionTest extends Unit
+{
+    private string $originalEdition;
+
+    private bool $originalRequireReview;
+
+    private string $originalOpenaiApiKey;
+
+    protected function _before(): void
+    {
+        parent::_before();
+        $plugin = Plugin::getInstance();
+        $settings = $plugin->getSettings();
+
+        $this->originalEdition = $plugin->edition;
+        $this->originalRequireReview = $settings->requireReviewBeforeApply;
+        $this->originalOpenaiApiKey = $settings->openaiApiKey;
+
+        $plugin->set('setupStatus', SetupStatusService::class);
+    }
+
+    protected function _after(): void
+    {
+        $plugin = Plugin::getInstance();
+        $settings = $plugin->getSettings();
+
+        $plugin->edition = $this->originalEdition;
+        $settings->requireReviewBeforeApply = $this->originalRequireReview;
+        $settings->openaiApiKey = $this->originalOpenaiApiKey;
+
+        $plugin->set('setupStatus', SetupStatusService::class);
+        parent::_after();
+    }
+
+    // -- Extension registration --
+
+    public function testGetGlobalsExposesLensKey(): void
+    {
+        $globals = (new LensTwigExtension())->getGlobals();
+
+        $this->assertArrayHasKey('lens', $globals);
+        $this->assertInstanceOf(LensTwigGlobal::class, $globals['lens']);
+    }
+
+    // -- status.* keys (used in `header.twig` switches, asset-card.twig `in` tests) --
+
+    public function testAllStatusKeysResolveInTwig(): void
+    {
+        $template = <<<'TWIG'
+{{ lens.status.pending }}|{{ lens.status.processing }}|{{ lens.status.completed }}|{{ lens.status.failed }}|{{ lens.status.pendingReview }}|{{ lens.status.approved }}|{{ lens.status.rejected }}
+TWIG;
+
+        $output = Craft::$app->view->renderString($template);
+
+        $this->assertSame(
+            sprintf(
+                '%s|%s|%s|%s|%s|%s|%s',
+                AnalysisStatus::Pending->value,
+                AnalysisStatus::Processing->value,
+                AnalysisStatus::Completed->value,
+                AnalysisStatus::Failed->value,
+                AnalysisStatus::PendingReview->value,
+                AnalysisStatus::Approved->value,
+                AnalysisStatus::Rejected->value,
+            ),
+            $output,
+        );
+    }
+
+    // -- statusLabel inside a |map filter (used in _search/index.twig) --
+
+    public function testStatusLabelRendersInsideMapFilter(): void
+    {
+        $output = Craft::$app->view->renderString(
+            "{{ ['pending_review', 'failed']|map(s => lens.statusLabel(s))|join(',') }}"
+        );
+
+        $this->assertSame(
+            sprintf('%s,%s', AnalysisStatus::PendingReview->label(), AnalysisStatus::Failed->label()),
+            $output,
+        );
+    }
+
+    // -- isPro / isLite via Twig magic getter (`getIsPro` -> `lens.isPro`) --
+
+    public function testIsProRendersExactlyWhenProEdition(): void
+    {
+        Plugin::getInstance()->edition = Plugin::EDITION_PRO;
+
+        $output = Craft::$app->view->renderString('{{ lens.isPro ? "pro" : "lite" }}');
+
+        $this->assertSame('pro', $output);
+    }
+
+    public function testIsProRendersExactlyWhenLiteEdition(): void
+    {
+        Plugin::getInstance()->edition = Plugin::EDITION_LITE;
+
+        $output = Craft::$app->view->renderString('{{ lens.isPro ? "pro" : "lite" }}');
+
+        $this->assertSame('lite', $output);
+    }
+
+    // -- isReviewActive via Twig (used in 13+ template sites) --
+
+    public function testIsReviewActiveRendersTrueWhenProWithSetting(): void
+    {
+        $plugin = Plugin::getInstance();
+        $plugin->edition = Plugin::EDITION_PRO;
+        $plugin->getSettings()->requireReviewBeforeApply = true;
+
+        $output = Craft::$app->view->renderString('{{ lens.isReviewActive ? "on" : "off" }}');
+
+        $this->assertSame('on', $output);
+    }
+
+    public function testIsReviewActiveRendersFalseWhenLite(): void
+    {
+        $plugin = Plugin::getInstance();
+        $plugin->edition = Plugin::EDITION_LITE;
+        $plugin->getSettings()->requireReviewBeforeApply = true;
+
+        $output = Craft::$app->view->renderString('{{ lens.isReviewActive ? "on" : "off" }}');
+
+        $this->assertSame('off', $output);
+    }
+
+    // -- isAutoGeneratedTitle(asset) — argument passing via Twig (asset-card.twig) --
+
+    public function testIsAutoGeneratedTitleRendersWithAssetArgument(): void
+    {
+        $asset = new Asset();
+        $asset->filename = 'sunset-beach.jpg';
+        $asset->title = 'Sunset Beach';
+
+        $output = Craft::$app->view->renderString(
+            '{{ lens.isAutoGeneratedTitle(asset) ? "auto" : "user" }}',
+            ['asset' => $asset],
+        );
+
+        $this->assertSame('auto', $output);
+    }
+
+    public function testIsAutoGeneratedTitleRendersFalseForEditedTitle(): void
+    {
+        $asset = new Asset();
+        $asset->filename = 'IMG_4472.jpg';
+        $asset->title = 'Family holiday';
+
+        $output = Craft::$app->view->renderString(
+            '{{ lens.isAutoGeneratedTitle(asset) ? "auto" : "user" }}',
+            ['asset' => $asset],
+        );
+
+        $this->assertSame('user', $output);
+    }
+
+    // -- hasCriticalIssues / getCriticalIssues iteration (analysis-panel.twig) --
+
+    public function testHasCriticalIssuesRendersWhenAiKeyMissing(): void
+    {
+        $settings = Plugin::getInstance()->getSettings();
+        $settings->openaiApiKey = '';
+        Plugin::getInstance()->set('setupStatus', SetupStatusService::class);
+
+        $output = Craft::$app->view->renderString('{{ lens.hasCriticalIssues() ? "yes" : "no" }}');
+
+        $this->assertSame('yes', $output);
+    }
+
+    public function testGetCriticalIssuesIteratesAsArrayOfArraysInTwig(): void
+    {
+        $settings = Plugin::getInstance()->getSettings();
+        $settings->openaiApiKey = '';
+        Plugin::getInstance()->set('setupStatus', SetupStatusService::class);
+
+        $template = <<<'TWIG'
+{% for issue in lens.getCriticalIssues() %}{{ issue.key }}:{{ issue.severity }};{% endfor %}
+TWIG;
+
+        $output = Craft::$app->view->renderString($template);
+
+        $this->assertStringContainsString('ai_provider_api_key:critical', $output);
+    }
+}
