@@ -15,8 +15,6 @@
   <a href="https://github.com/vitordiniz22/craft-lens/actions/workflows/tests.yml"><img src="https://github.com/vitordiniz22/craft-lens/actions/workflows/tests.yml/badge.svg" alt="Tests"></a>
 </p>
 
----
-
 Lens uses AI to analyze the images in your asset library, generating alt text, titles, descriptions, semantic tags, color palettes, focal points, and more. It detects faces, flags NSFW content, spots watermarks, identifies brands, extracts text via OCR, and finds duplicate images across your library.
 
 Choose your AI provider (**OpenAI GPT**, **Google Gemini**, or **Anthropic Claude**) and turn your asset library from bare-bones metadata into an organized, accessible, and fully searchable media system. All generated metadata is instantly searchable, and fully editable when you need to refine it.
