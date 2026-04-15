@@ -4,16 +4,17 @@ declare(strict_types=1);
 
 namespace vitordiniz22\craftlenstests\integration\services;
 
-use Craft;
 use Codeception\Test\Unit;
-use craft\helpers\StringHelper;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\Plugin;
 use vitordiniz22\craftlens\records\AssetAnalysisRecord;
 use vitordiniz22\craftlens\services\AnalysisCancellationService;
+use vitordiniz22\craftlenstests\_support\Helpers\AnalysisRecordFixtures;
 
 class CancelAnalysisFlowTest extends Unit
 {
+    use AnalysisRecordFixtures;
+
     private AnalysisCancellationService $service;
 
     protected function _before(): void
@@ -118,42 +119,4 @@ class CancelAnalysisFlowTest extends Unit
         $this->assertNotNull(AssetAnalysisRecord::findOne(['assetId' => $record->assetId]));
     }
 
-    private function createAnalysisRecord(string $status): AssetAnalysisRecord
-    {
-        $db = Craft::$app->getDb();
-        $db->createCommand('SET FOREIGN_KEY_CHECKS=0')->execute();
-
-        try {
-            $db->createCommand()->insert('{{%elements}}', [
-                'type' => 'craft\\elements\\Asset',
-                'enabled' => true,
-                'dateCreated' => date('Y-m-d H:i:s'),
-                'dateUpdated' => date('Y-m-d H:i:s'),
-                'uid' => StringHelper::UUID(),
-            ])->execute();
-
-            $elementId = (int) $db->getLastInsertID();
-
-            $primarySite = Craft::$app->getSites()->getPrimarySite();
-            $db->createCommand()->insert('{{%elements_sites}}', [
-                'elementId' => $elementId,
-                'siteId' => $primarySite->id,
-                'slug' => 'test-asset-' . $elementId,
-                'uri' => null,
-                'enabled' => true,
-                'dateCreated' => date('Y-m-d H:i:s'),
-                'dateUpdated' => date('Y-m-d H:i:s'),
-                'uid' => StringHelper::UUID(),
-            ])->execute();
-
-            $record = new AssetAnalysisRecord();
-            $record->assetId = $elementId;
-            $record->status = $status;
-            $record->save(false);
-
-            return $record;
-        } finally {
-            $db->createCommand('SET FOREIGN_KEY_CHECKS=1')->execute();
-        }
-    }
 }

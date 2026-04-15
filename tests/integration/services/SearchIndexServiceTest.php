@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace vitordiniz22\craftlenstests\integration\services;
 
-use Craft;
 use Codeception\Test\Unit;
 use vitordiniz22\craftlens\migrations\Install;
 use vitordiniz22\craftlens\Plugin;
 use vitordiniz22\craftlens\records\AssetAnalysisRecord;
 use vitordiniz22\craftlens\services\SearchIndexService;
+use vitordiniz22\craftlenstests\_support\Helpers\AnalysisRecordFixtures;
 
 /**
  * Integration tests for SearchIndexService.
@@ -24,12 +24,20 @@ use vitordiniz22\craftlens\services\SearchIndexService;
  */
 class SearchIndexServiceTest extends Unit
 {
+    use AnalysisRecordFixtures;
+
     private SearchIndexService $service;
 
     protected function _before(): void
     {
         parent::_before();
         $this->service = Plugin::getInstance()->searchIndex;
+    }
+
+    protected function _after(): void
+    {
+        $this->cleanupAnalysisRecords();
+        parent::_after();
     }
 
     public function testPluginIsInstalled(): void
@@ -92,68 +100,29 @@ class SearchIndexServiceTest extends Unit
     }
 
     /**
-     * Creates a minimal element record and an AssetAnalysisRecord for testing.
-     *
-     * The lens_asset_analyses table has a FK to elements.id, so we must insert
-     * a valid element first. We temporarily disable FK checks to keep the test
-     * setup minimal (no full Volume/Filesystem/Asset setup required).
+     * Creates an AssetAnalysisRecord with search-relevant fields populated.
+     * Wraps the shared fixture and adds content defaults specific to search tests.
      */
     private function createTestAnalysisRecord(array $fields): AssetAnalysisRecord
     {
-        $db = Craft::$app->getDb();
+        $overrides = [
+            'provider' => 'test',
+            'providerModel' => 'test-model',
+            'altText' => $fields['altText'] ?? '',
+            'altTextAi' => $fields['altText'] ?? '',
+            'suggestedTitle' => $fields['suggestedTitle'] ?? '',
+            'suggestedTitleAi' => $fields['suggestedTitle'] ?? '',
+            'longDescription' => $fields['longDescription'] ?? '',
+            'longDescriptionAi' => $fields['longDescription'] ?? '',
+            'altTextConfidence' => 0.95,
+            'titleConfidence' => 0.90,
+            'longDescriptionConfidence' => 0.85,
+        ];
 
-        // Disable FK checks so we can insert a minimal element row
-        $db->createCommand('SET FOREIGN_KEY_CHECKS=0')->execute();
-
-        try {
-            // Insert a minimal element record
-            $db->createCommand()->insert('{{%elements}}', [
-                'type' => 'craft\\elements\\Asset',
-                'enabled' => true,
-                'dateCreated' => date('Y-m-d H:i:s'),
-                'dateUpdated' => date('Y-m-d H:i:s'),
-                'uid' => \craft\helpers\StringHelper::UUID(),
-            ])->execute();
-
-            $elementId = (int) $db->getLastInsertID();
-
-            // Insert elements_sites row (required for element queries)
-            $primarySite = Craft::$app->getSites()->getPrimarySite();
-            $db->createCommand()->insert('{{%elements_sites}}', [
-                'elementId' => $elementId,
-                'siteId' => $primarySite->id,
-                'slug' => 'test-asset-' . $elementId,
-                'uri' => null,
-                'enabled' => true,
-                'dateCreated' => date('Y-m-d H:i:s'),
-                'dateUpdated' => date('Y-m-d H:i:s'),
-                'uid' => \craft\helpers\StringHelper::UUID(),
-            ])->execute();
-
-            // Create the analysis record
-            $record = new AssetAnalysisRecord();
-            $record->assetId = $elementId;
-            $record->status = 'completed';
-            $record->provider = 'test';
-            $record->providerModel = 'test-model';
-            $record->altText = $fields['altText'] ?? '';
-            $record->altTextAi = $fields['altText'] ?? '';
-            $record->suggestedTitle = $fields['suggestedTitle'] ?? '';
-            $record->suggestedTitleAi = $fields['suggestedTitle'] ?? '';
-            $record->longDescription = $fields['longDescription'] ?? '';
-            $record->longDescriptionAi = $fields['longDescription'] ?? '';
-            $record->extractedText = $fields['extractedText'] ?? null;
-            $record->extractedTextAi = $fields['extractedText'] ?? null;
-            $record->altTextConfidence = 0.95;
-            $record->titleConfidence = 0.90;
-            $record->longDescriptionConfidence = 0.85;
-
-            $saved = $record->save(false);
-            $this->assertTrue($saved, 'AssetAnalysisRecord should save successfully');
-
-            return $record;
-        } finally {
-            $db->createCommand('SET FOREIGN_KEY_CHECKS=1')->execute();
+        if (array_key_exists('extractedTextAi', $fields)) {
+            $overrides['extractedTextAi'] = $fields['extractedTextAi'];
         }
+
+        return $this->createAnalysisRecord('completed', $overrides);
     }
 }

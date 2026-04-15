@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace vitordiniz22\craftlenstests\unit\services;
 
-use Craft;
 use Codeception\Test\Unit;
-use craft\helpers\StringHelper;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\exceptions\AnalysisCancelledException;
 use vitordiniz22\craftlens\Plugin;
 use vitordiniz22\craftlens\records\AssetAnalysisRecord;
 use vitordiniz22\craftlens\services\AnalysisCancellationService;
+use vitordiniz22\craftlenstests\_support\Helpers\AnalysisRecordFixtures;
 
 /**
  * Unit tests for AnalysisCancellationService.
@@ -21,12 +20,20 @@ use vitordiniz22\craftlens\services\AnalysisCancellationService;
  */
 class AnalysisCancellationServiceTest extends Unit
 {
+    use AnalysisRecordFixtures;
+
     private AnalysisCancellationService $service;
 
     protected function _before(): void
     {
         parent::_before();
         $this->service = Plugin::getInstance()->analysisCancellation;
+    }
+
+    protected function _after(): void
+    {
+        $this->cleanupAnalysisRecords();
+        parent::_after();
     }
 
     // -- cancel(): first-time analysis --
@@ -142,44 +149,4 @@ class AnalysisCancellationServiceTest extends Unit
         $this->service->assertNotCancelled($record->assetId);
     }
 
-    // -- Helpers --
-
-    private function createAnalysisRecord(string $status): AssetAnalysisRecord
-    {
-        $db = Craft::$app->getDb();
-        $db->createCommand('SET FOREIGN_KEY_CHECKS=0')->execute();
-
-        try {
-            $db->createCommand()->insert('{{%elements}}', [
-                'type' => 'craft\\elements\\Asset',
-                'enabled' => true,
-                'dateCreated' => date('Y-m-d H:i:s'),
-                'dateUpdated' => date('Y-m-d H:i:s'),
-                'uid' => StringHelper::UUID(),
-            ])->execute();
-
-            $elementId = (int) $db->getLastInsertID();
-
-            $primarySite = Craft::$app->getSites()->getPrimarySite();
-            $db->createCommand()->insert('{{%elements_sites}}', [
-                'elementId' => $elementId,
-                'siteId' => $primarySite->id,
-                'slug' => 'test-asset-' . $elementId,
-                'uri' => null,
-                'enabled' => true,
-                'dateCreated' => date('Y-m-d H:i:s'),
-                'dateUpdated' => date('Y-m-d H:i:s'),
-                'uid' => StringHelper::UUID(),
-            ])->execute();
-
-            $record = new AssetAnalysisRecord();
-            $record->assetId = $elementId;
-            $record->status = $status;
-            $record->save(false);
-
-            return $record;
-        } finally {
-            $db->createCommand('SET FOREIGN_KEY_CHECKS=1')->execute();
-        }
-    }
 }
