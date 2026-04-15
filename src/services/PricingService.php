@@ -17,7 +17,7 @@ class PricingService extends Component
 {
     /**
      * OpenAI pricing per 1M tokens.
-     * @see https://openai.com/pricing
+     * Verified against https://openai.com/api/pricing/ on 2026-04-15 (standard tier).
      */
     private const OPENAI_PRICING = [
         'gpt-5.4' => [
@@ -25,8 +25,8 @@ class PricingService extends Component
             'output' => 15.00,
         ],
         'gpt-5.4-mini' => [
-            'input' => 0.25,
-            'output' => 2.00,
+            'input' => 0.75,
+            'output' => 4.50,
         ],
         'gpt-5.4-nano' => [
             'input' => 0.20,
@@ -36,7 +36,12 @@ class PricingService extends Component
 
     /**
      * Gemini pricing per 1M tokens.
-     * @see https://ai.google.dev/pricing
+     * Verified against https://ai.google.dev/pricing on 2026-04-15 (paid tier).
+     *
+     * Note: gemini-2.5-pro uses the ≤200k-token tier rates. Vendor also charges
+     * $2.50 input / $15.00 output for prompts >200k tokens, but Lens image-analysis
+     * prompts are far below that threshold, so the single-rate approximation is
+     * used to keep the pricing table flat.
      */
     private const GEMINI_PRICING = [
         'gemini-2.5-flash' => [
@@ -49,7 +54,7 @@ class PricingService extends Component
         ],
         'gemini-2.5-pro' => [
             'input' => 1.25,
-            'output' => 5.00,
+            'output' => 10.00,
         ],
     ];
 
