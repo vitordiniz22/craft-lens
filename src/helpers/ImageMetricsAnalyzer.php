@@ -308,7 +308,8 @@ class ImageMetricsAnalyzer
     {
         if (class_exists('ImagickKernel')) {
             $matrix = array_chunk($kernel, $size);
-            $kernelObj = \ImagickKernel::fromMatrix($matrix);
+            $center = intdiv($size, 2);
+            $kernelObj = \ImagickKernel::fromMatrix($matrix, [$center, $center]);
             $image->convolveImage($kernelObj);
         } else {
             $image->convolveImage($kernel);
