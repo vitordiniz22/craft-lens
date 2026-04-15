@@ -466,6 +466,8 @@ class AssetAnalysisService extends Component
             if ($localMetrics !== null) {
                 $record->sharpnessScore = $localMetrics['raw']['sharpnessScore'];
                 $record->exposureScore = $localMetrics['raw']['exposureScore'];
+                $record->shadowClipRatio = $localMetrics['raw']['shadowClipRatio'];
+                $record->highlightClipRatio = $localMetrics['raw']['highlightClipRatio'];
                 $record->noiseScore = $localMetrics['raw']['contrastScore'];
                 $record->compressionQuality = $localMetrics['raw']['compressionQuality'];
                 $record->colorProfile = $localMetrics['raw']['colorProfile'];

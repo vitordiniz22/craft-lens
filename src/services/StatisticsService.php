@@ -692,12 +692,20 @@ class StatisticsService extends Component
                     [':blur' => ImageMetricsAnalyzer::SHARPNESS_BLURRY]
                 ),
                 new Expression(
-                    'SUM(CASE WHEN [[exposureScore]] IS NOT NULL AND [[exposureScore]] < :dark THEN 1 ELSE 0 END) as tooDark',
-                    [':dark' => ImageMetricsAnalyzer::BRIGHTNESS_DARK]
+                    'SUM(CASE WHEN [[exposureScore]] IS NOT NULL AND [[noiseScore]] IS NOT NULL AND [[exposureScore]] < :dark AND [[shadowClipRatio]] > :shadowClip AND [[noiseScore]] < :narrow THEN 1 ELSE 0 END) as tooDark',
+                    [
+                        ':dark' => ImageMetricsAnalyzer::BRIGHTNESS_DARK_MEDIAN,
+                        ':shadowClip' => ImageMetricsAnalyzer::SHADOW_CLIP_RATIO,
+                        ':narrow' => ImageMetricsAnalyzer::CONTRAST_LOW,
+                    ]
                 ),
                 new Expression(
-                    'SUM(CASE WHEN [[exposureScore]] IS NOT NULL AND [[exposureScore]] > :bright THEN 1 ELSE 0 END) as tooBright',
-                    [':bright' => ImageMetricsAnalyzer::BRIGHTNESS_BRIGHT]
+                    'SUM(CASE WHEN [[exposureScore]] IS NOT NULL AND [[noiseScore]] IS NOT NULL AND [[exposureScore]] > :bright AND [[highlightClipRatio]] > :highlightClip AND [[noiseScore]] < :narrow THEN 1 ELSE 0 END) as tooBright',
+                    [
+                        ':bright' => ImageMetricsAnalyzer::BRIGHTNESS_BRIGHT_MEDIAN,
+                        ':highlightClip' => ImageMetricsAnalyzer::HIGHLIGHT_CLIP_RATIO,
+                        ':narrow' => ImageMetricsAnalyzer::CONTRAST_LOW,
+                    ]
                 ),
                 new Expression(
                     'SUM(CASE WHEN [[noiseScore]] IS NOT NULL AND [[noiseScore]] < :contrast THEN 1 ELSE 0 END) as lowContrast',

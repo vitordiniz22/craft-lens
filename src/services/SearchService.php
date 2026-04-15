@@ -637,13 +637,19 @@ class SearchService extends Component
                 ],
                 'tooDark' => $conditions[] = [
                     'and',
-                    ['<', 'lens.exposureScore', ImageMetricsAnalyzer::BRIGHTNESS_DARK],
+                    ['<', 'lens.exposureScore', ImageMetricsAnalyzer::BRIGHTNESS_DARK_MEDIAN],
+                    ['>', 'lens.shadowClipRatio', ImageMetricsAnalyzer::SHADOW_CLIP_RATIO],
+                    ['<', 'lens.noiseScore', ImageMetricsAnalyzer::CONTRAST_LOW],
                     ['not', ['lens.exposureScore' => null]],
+                    ['not', ['lens.noiseScore' => null]],
                 ],
                 'tooBright' => $conditions[] = [
                     'and',
-                    ['>', 'lens.exposureScore', ImageMetricsAnalyzer::BRIGHTNESS_BRIGHT],
+                    ['>', 'lens.exposureScore', ImageMetricsAnalyzer::BRIGHTNESS_BRIGHT_MEDIAN],
+                    ['>', 'lens.highlightClipRatio', ImageMetricsAnalyzer::HIGHLIGHT_CLIP_RATIO],
+                    ['<', 'lens.noiseScore', ImageMetricsAnalyzer::CONTRAST_LOW],
                     ['not', ['lens.exposureScore' => null]],
+                    ['not', ['lens.noiseScore' => null]],
                 ],
                 'lowContrast' => $conditions[] = [
                     'and',
@@ -675,16 +681,22 @@ class SearchService extends Component
         if (!empty($filters['isTooDark'])) {
             $query->andWhere([
                 'and',
-                ['<', 'lens.exposureScore', ImageMetricsAnalyzer::BRIGHTNESS_DARK],
+                ['<', 'lens.exposureScore', ImageMetricsAnalyzer::BRIGHTNESS_DARK_MEDIAN],
+                ['>', 'lens.shadowClipRatio', ImageMetricsAnalyzer::SHADOW_CLIP_RATIO],
+                ['<', 'lens.noiseScore', ImageMetricsAnalyzer::CONTRAST_LOW],
                 ['not', ['lens.exposureScore' => null]],
+                ['not', ['lens.noiseScore' => null]],
             ]);
         }
 
         if (!empty($filters['isTooBright'])) {
             $query->andWhere([
                 'and',
-                ['>', 'lens.exposureScore', ImageMetricsAnalyzer::BRIGHTNESS_BRIGHT],
+                ['>', 'lens.exposureScore', ImageMetricsAnalyzer::BRIGHTNESS_BRIGHT_MEDIAN],
+                ['>', 'lens.highlightClipRatio', ImageMetricsAnalyzer::HIGHLIGHT_CLIP_RATIO],
+                ['<', 'lens.noiseScore', ImageMetricsAnalyzer::CONTRAST_LOW],
                 ['not', ['lens.exposureScore' => null]],
+                ['not', ['lens.noiseScore' => null]],
             ]);
         }
 

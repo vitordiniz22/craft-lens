@@ -137,6 +137,8 @@ class LensAnalysisElement extends BaseUiElement
                         $analysis->noiseScore !== null ? (float) $analysis->noiseScore : null,
                         $analysis->compressionQuality !== null ? (int) $analysis->compressionQuality : null,
                         $analysis->colorProfile,
+                        $analysis->shadowClipRatio !== null ? (float) $analysis->shadowClipRatio : null,
+                        $analysis->highlightClipRatio !== null ? (float) $analysis->highlightClipRatio : null,
                     ) : [],
                 ]
             );
