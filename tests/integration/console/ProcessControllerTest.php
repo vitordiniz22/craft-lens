@@ -228,6 +228,173 @@ class ProcessControllerTest extends Unit
     }
 
     // ---------------------------------------------------------------------
+    // actionAll
+    // ---------------------------------------------------------------------
+
+    public function testActionAllQueuesJobWithDefaults(): void
+    {
+        [$exitCode, $stdout, $stderr] = $this->capture(fn () => $this->controller->actionAll());
+
+        $this->assertSame(ExitCode::OK, $exitCode);
+        $this->assertSame('', $stderr);
+        $this->assertStringContainsString('Queuing all unprocessed assets for analysis...', $stdout);
+        $this->assertStringContainsString('Done!', $stdout);
+        $this->assertStringContainsString('php craft queue/run', $stdout);
+
+        $this->assertSame(1, $this->countBulkAnalyzeJobs());
+        $this->assertSame(
+            ['volumeId' => null, 'reprocess' => false],
+            $this->readLatestBulkAnalyzeJobPayload(),
+        );
+    }
+
+    public function testActionAllWithReprocessFlag(): void
+    {
+        $this->controller->reprocess = true;
+
+        $exitCode = $this->controller->actionAll();
+
+        $this->assertSame(ExitCode::OK, $exitCode);
+        $this->assertSame(1, $this->countBulkAnalyzeJobs());
+        $this->assertSame(
+            ['volumeId' => null, 'reprocess' => true],
+            $this->readLatestBulkAnalyzeJobPayload(),
+        );
+    }
+
+    public function testActionAllViaConsoleRoute(): void
+    {
+        Craft::$app->runAction('lens/process');
+
+        $this->assertSame(1, $this->countBulkAnalyzeJobs());
+        $this->assertSame(
+            ['volumeId' => null, 'reprocess' => false],
+            $this->readLatestBulkAnalyzeJobPayload(),
+        );
+    }
+
+    public function testActionAllViaConsoleRouteWithReprocess(): void
+    {
+        Craft::$app->runAction('lens/process', ['reprocess' => true]);
+
+        $this->assertSame(1, $this->countBulkAnalyzeJobs());
+        $this->assertSame(
+            ['volumeId' => null, 'reprocess' => true],
+            $this->readLatestBulkAnalyzeJobPayload(),
+        );
+    }
+
+    // ---------------------------------------------------------------------
+    // actionVolume
+    // ---------------------------------------------------------------------
+
+    public function testActionVolumeValidHandleQueuesScopedJob(): void
+    {
+        $volumeId = $this->createTestVolume('lenstest', 'Lens Test');
+
+        [$exitCode, $stdout, $stderr] = $this->capture(fn () => $this->controller->actionVolume('lenstest'));
+
+        $this->assertSame(ExitCode::OK, $exitCode);
+        $this->assertSame('', $stderr);
+        $this->assertStringContainsString('Queuing assets in volume:', $stdout);
+        $this->assertStringContainsString('Lens Test', $stdout);
+        $this->assertStringContainsString('Done!', $stdout);
+        $this->assertStringContainsString('php craft queue/run', $stdout);
+
+        $this->assertSame(1, $this->countBulkAnalyzeJobs());
+        $this->assertSame(
+            ['volumeId' => $volumeId, 'reprocess' => false],
+            $this->readLatestBulkAnalyzeJobPayload(),
+        );
+    }
+
+    public function testActionVolumeWithReprocessFlag(): void
+    {
+        $volumeId = $this->createTestVolume('lenstest', 'Lens Test');
+        $this->controller->reprocess = true;
+
+        $exitCode = $this->controller->actionVolume('lenstest');
+
+        $this->assertSame(ExitCode::OK, $exitCode);
+        $this->assertSame(
+            ['volumeId' => $volumeId, 'reprocess' => true],
+            $this->readLatestBulkAnalyzeJobPayload(),
+        );
+    }
+
+    public function testActionVolumeUnknownHandleReturnsError(): void
+    {
+        [$exitCode, $stdout, $stderr] = $this->capture(fn () => $this->controller->actionVolume('does-not-exist'));
+
+        $this->assertSame(ExitCode::UNSPECIFIED_ERROR, $exitCode);
+        $this->assertSame('', $stdout);
+        $this->assertStringContainsString('Volume not found: does-not-exist', $stderr);
+        $this->assertSame(0, $this->countBulkAnalyzeJobs());
+    }
+
+    public function testActionVolumeEmptyStringHandleReturnsError(): void
+    {
+        [$exitCode, $stdout, $stderr] = $this->capture(fn () => $this->controller->actionVolume(''));
+
+        $this->assertSame(ExitCode::UNSPECIFIED_ERROR, $exitCode);
+        $this->assertStringContainsString('Volume not found:', $stderr);
+        $this->assertSame(0, $this->countBulkAnalyzeJobs());
+    }
+
+    // ---------------------------------------------------------------------
+    // --reprocess flag & options() / cross-action
+    // ---------------------------------------------------------------------
+
+    /**
+     * @dataProvider actionIdsProvider
+     */
+    public function testOptionsRegistersReprocessForEveryAction(string $actionId): void
+    {
+        $options = $this->controller->options($actionId);
+
+        $this->assertContains('reprocess', $options, "--reprocess must be exposed for action '{$actionId}'");
+        $this->assertContains('color', $options, "Parent Yii options must be preserved for action '{$actionId}' (color)");
+        $this->assertContains('interactive', $options, "Parent Yii options must be preserved for action '{$actionId}' (interactive)");
+    }
+
+    /**
+     * @return array<string, array{0: string}>
+     */
+    public static function actionIdsProvider(): array
+    {
+        return [
+            'all' => ['all'],
+            'volume' => ['volume'],
+            'retry-failed' => ['retry-failed'],
+        ];
+    }
+
+    public function testSequentialCallsQueueIndependentPayloads(): void
+    {
+        $volumeId = $this->createTestVolume('lenstest', 'Lens Test');
+
+        $this->controller->reprocess = false;
+        $this->controller->actionAll();
+
+        $this->controller->actionVolume('lenstest');
+
+        $this->controller->reprocess = true;
+        $this->controller->actionAll();
+
+        $this->assertSame(3, $this->countBulkAnalyzeJobs());
+
+        $payloads = $this->readAllBulkAnalyzeJobPayloads();
+        $this->assertSame(
+            [
+                ['volumeId' => null,      'reprocess' => false],
+                ['volumeId' => $volumeId, 'reprocess' => false],
+                ['volumeId' => null,      'reprocess' => true],
+            ],
+            $payloads,
+        );
+    }
+
+    // ---------------------------------------------------------------------
     // Service return-shape contract
     // ---------------------------------------------------------------------
 

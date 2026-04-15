@@ -5,8 +5,12 @@ declare(strict_types=1);
 namespace vitordiniz22\craftlenstests\_support\Helpers;
 
 use Craft;
+use craft\fs\Local;
 use craft\helpers\StringHelper;
+use craft\models\Volume;
+use vitordiniz22\craftlens\jobs\BulkAnalyzeAssetsJob;
 use vitordiniz22\craftlens\records\AssetAnalysisRecord;
+use yii\db\Query;
 
 /**
  * Shared fixture helpers for integration tests that need to create
@@ -19,6 +23,9 @@ trait AnalysisRecordFixtures
 {
     /** @var int[] IDs of elements created via createAnalysisRecord(). */
     protected array $createdElementIds = [];
+
+    /** @var int[] IDs of volumes created via createTestVolume(). */
+    protected array $createdVolumeIds = [];
 
     /**
      * Create an AssetAnalysisRecord along with the minimal elements and
@@ -119,5 +126,89 @@ trait AnalysisRecordFixtures
         } finally {
             $db->createCommand('SET FOREIGN_KEY_CHECKS=1')->execute();
         }
+
+        if (!empty($this->createdVolumeIds)) {
+            $volumesService = Craft::$app->getVolumes();
+            foreach ($this->createdVolumeIds as $volumeId) {
+                $volumesService->deleteVolumeById($volumeId);
+            }
+            $this->createdVolumeIds = [];
+        }
+    }
+
+    /**
+     * Create a test volume backed by a local filesystem rooted in the system
+     * temp directory. Idempotent: the backing filesystem is reused across calls.
+     * Returns the created volume's ID.
+     */
+    protected function createTestVolume(string $handle = 'lenstest', string $name = 'Lens Test'): int
+    {
+        $fsService = Craft::$app->getFs();
+        $fsHandle = 'lenstestfs';
+
+        if ($fsService->getFilesystemByHandle($fsHandle) === null) {
+            $fs = $fsService->createFilesystem([
+                'type' => Local::class,
+                'name' => 'Lens Test FS',
+                'handle' => $fsHandle,
+                'settings' => ['path' => sys_get_temp_dir() . '/lens-test-volume'],
+            ]);
+            $fsService->saveFilesystem($fs);
+        }
+
+        $volume = new Volume([
+            'name' => $name,
+            'handle' => $handle,
+            'fs' => $fsHandle,
+        ]);
+
+        Craft::$app->getVolumes()->saveVolume($volume);
+
+        $this->createdVolumeIds[] = $volume->id;
+        return $volume->id;
+    }
+
+    /**
+     * Read the most-recently-queued BulkAnalyzeAssetsJob and return its public
+     * properties. Returns null if no matching job is queued.
+     *
+     * @return array{volumeId: ?int, reprocess: bool}|null
+     */
+    protected function readLatestBulkAnalyzeJobPayload(): ?array
+    {
+        $row = (new Query())
+            ->select(['job'])
+            ->from('{{%queue}}')
+            ->where(['like', 'job', BulkAnalyzeAssetsJob::class])
+            ->orderBy(['id' => SORT_DESC])
+            ->one(Craft::$app->getDb());
+
+        if ($row === null) {
+            return null;
+        }
+
+        $job = Craft::$app->getQueue()->serializer->unserialize($row['job']);
+        return ['volumeId' => $job->volumeId, 'reprocess' => $job->reprocess];
+    }
+
+    /**
+     * Read all queued BulkAnalyzeAssetsJob payloads in insertion order (oldest first).
+     *
+     * @return list<array{volumeId: ?int, reprocess: bool}>
+     */
+    protected function readAllBulkAnalyzeJobPayloads(): array
+    {
+        $rows = (new Query())
+            ->select(['job'])
+            ->from('{{%queue}}')
+            ->where(['like', 'job', BulkAnalyzeAssetsJob::class])
+            ->orderBy(['id' => SORT_ASC])
+            ->all(Craft::$app->getDb());
+
+        $serializer = Craft::$app->getQueue()->serializer;
+        return array_map(static function (array $row) use ($serializer): array {
+            $job = $serializer->unserialize($row['job']);
+            return ['volumeId' => $job->volumeId, 'reprocess' => $job->reprocess];
+        }, $rows);
     }
 }
