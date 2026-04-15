@@ -193,13 +193,6 @@
         },
 
         /**
-         * Storage keys for localStorage
-         */
-        STORAGE: {
-            DISMISSED_NOTICES: 'lens_dismissed_notices'
-        },
-
-        /**
          * Focal point configuration
          */
         FOCAL_POINT: {

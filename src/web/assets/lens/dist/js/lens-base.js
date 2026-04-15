@@ -4,7 +4,6 @@
  *
  * Note: This file has been refactored as part of the architectural improvements.
  * - Utilities moved to: core/lens-utils.js
- * - Dismissible notices moved to: components/lens-dismissible-notices.js
  * - Services in: services/
  * - Components in: components/
  * - Page controllers in: pages/

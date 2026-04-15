@@ -9,7 +9,7 @@ use craft\web\assets\cp\CpAsset;
 
 /**
  * Base asset bundle for the Lens plugin.
- * Loads shared utilities, dismissible notices, and all CSS.
+ * Loads shared utilities and all CSS.
  */
 class LensAsset extends AssetBundle
 {
@@ -56,7 +56,6 @@ class LensAsset extends AssetBundle
             'js/services/lens-people-detection-service.js',
             'js/services/lens-taxonomy-service.js',
             'js/services/lens-asset-processing-service.js',
-            'js/components/lens-dismissible-notices.js',
         ];
 
         parent::init();

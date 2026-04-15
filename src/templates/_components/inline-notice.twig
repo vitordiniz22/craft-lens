@@ -19,8 +19,6 @@
  #       - cta.submit: (optional) Whether button uses submit (red) style, defaults to true for error type
  #   - docsUrl: (optional) External documentation URL. Renders a secondary "Learn more" text link after the CTA; opens in a new tab.
  #   - docsLabel: (optional) Override text for the docs link, defaults to "Learn more"
- #   - dismissible: (optional) Whether notice can be dismissed, defaults to false
- #   - dismissKey: (optional) Unique key for storing dismissed state in localStorage
  #   - attr: (optional) Additional HTML attributes as key/value pairs for the wrapper div
  #}
 
@@ -38,8 +36,7 @@
 
 {% set resolvedIcon = icon is defined ? icon : (iconMap[type] ?? false) %}
 
-<div class="lens-inline-notice lens-inline-notice--{{ type }}{% if dismissible ?? false %} lens-inline-notice--dismissible{% endif %}"
-     {% if dismissible ?? false %}data-lens-dismissible="{{ dismissKey ?? '' }}"{% endif %}
+<div class="lens-inline-notice lens-inline-notice--{{ type }}"
      {% for key, value in (attr ?? {}) %}{{ key }}="{{ value }}"{% endfor %}>
 
     {% block header %}
@@ -76,9 +73,4 @@
         {% endif %}
     {% endblock %}
 
-    {% if dismissible ?? false %}
-        <button type="button" class="lens-inline-notice__dismiss" data-lens-dismiss>
-            {{ iconSvg('xmark') }}
-        </button>
-    {% endif %}
 </div>
