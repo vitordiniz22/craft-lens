@@ -1,5 +1,12 @@
 # Release Notes for Lens
 
+## 1.0.0-beta.1 - 2026-04-17
+
+- Onboarding overhaul: explicit volume opt-in, dashboard checklist with locked prerequisites and severity-tinted lock icons, per-asset volume-not-enabled panel state, reprocess-controller guard
+- Image-quality rework: histogram-based too-dark/too-bright verdict with shadow/highlight clipping, removed overallQualityScore aggregate and Low Quality filter, replaced Web Readiness umbrella with standalone File Too Large rule
+- OCR as regions: extractedTextAi stores an array of region objects instead of a single flattened string
+- Various UI and stability fixes
+
 ## 1.0.0-alpha.3 - 2026-04-13
 
 - Cancel in-flight analyses from the asset page or Queue Manager with checkpoint-based cancellation
