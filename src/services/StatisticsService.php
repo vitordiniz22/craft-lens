@@ -239,36 +239,6 @@ class StatisticsService extends Component
     }
 
     /**
-     * Get percentage of all images in enabled volumes that have at least one tag,
-     * regardless of analysis status.
-     *
-     * @return array{percentage: float, withTags: int, total: int}
-     */
-    public function getTaggedPercentage(): array
-    {
-        $volumeIds = $this->getEnabledVolumeIds();
-        $total = $this->getTotalImageCount($volumeIds);
-
-        if ($total === 0) {
-            return $this->buildCoverageResult(0, 0, 'withTags');
-        }
-
-        $query = (new Query())
-            ->select(['COUNT(DISTINCT [[tags.analysisId]])'])
-            ->from(Install::TABLE_ASSET_TAGS . ' tags')
-            ->innerJoin(Install::TABLE_ASSET_ANALYSES . ' lens', '[[tags.analysisId]] = [[lens.id]]');
-        if ($volumeIds !== null) {
-            if (empty($volumeIds)) {
-                return $this->buildCoverageResult(0, $total, 'withTags');
-            }
-            $query->andWhere(['in', '[[lens.assetId]]', $this->buildVolumeSubquery($volumeIds)]);
-        }
-        $withTags = (int) $query->scalar();
-
-        return $this->buildCoverageResult($withTags, $total, 'withTags');
-    }
-
-    /**
      * Get focal point coverage using Craft's native focalPoint field.
      *
      * Counts all images in enabled volumes with an explicitly set focal point,

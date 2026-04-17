@@ -79,7 +79,6 @@ class DashboardController extends Controller
                 // Section 3: Metadata Coverage
                 'overviewStats' => $overviewStats,
                 'altTextCoverage' => $stats->getAltTextCoverage(),
-                'taggedPercentage' => $stats->getTaggedPercentage(),
                 'focalPointCoverage' => $stats->getFocalPointCoverage(),
 
                 // Section 4: Quick Insights

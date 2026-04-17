@@ -62,19 +62,6 @@
             linkText: 'View missing'|t('lens'),
         } only %}
 
-        {# Tag Coverage #}
-        {% if lens.isPro %}
-            {% set tagMissing = taggedPercentage.total - taggedPercentage.withTags %}
-            {% include 'lens/_dashboard/_coverage-metric' with {
-                label: 'Tags'|t('lens'),
-                percentage: taggedPercentage.percentage,
-                covered: taggedPercentage.withTags,
-                total: taggedPercentage.total,
-                linkUrl: tagMissing > 0 ? cpUrl('lens/search', {unprocessed: 1}) : null,
-                linkText: 'View missing'|t('lens'),
-            } only %}
-        {% endif %}
-
         {# Focal Point Coverage #}
         {% set fpMissing = focalPointCoverage.total - focalPointCoverage.withFocalPoint %}
         {% include 'lens/_dashboard/_coverage-metric' with {
