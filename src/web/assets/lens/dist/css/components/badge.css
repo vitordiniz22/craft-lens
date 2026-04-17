@@ -17,6 +17,7 @@
   white-space: nowrap;
 }
 
+
 /* Semantic color modifiers */
 .lens-badge--success {
   background: var(--bg-success);
@@ -38,12 +39,21 @@
   color: var(--blue-700);
 }
 
-.lens-badge--link {
+.lens-badge--link,
+.lens-badge--link:hover,
+.lens-badge--link:focus,
+.lens-badge--link:active {
   text-decoration: none;
 }
 
 .lens-badge--link:hover {
   filter: brightness(0.9);
+}
+
+.lens-badge > craft-tooltip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
 }
 
 .lens-badge--duplicate {

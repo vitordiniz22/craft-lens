@@ -63,17 +63,19 @@
         {% if analysis %}
             {% if (similarity ?? null) is not null %}
                 <span class="lens-duplicate-badge">
-                    <span class="lens-badge lens-badge--small lens-badge--duplicate" title="{{ 'Similarity'|t('lens') }}">
+                    <span class="lens-badge lens-badge--small lens-badge--duplicate">
                         {{ iconSvg('clone')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
                         {{ (similarity * 100)|round }}% {{ 'match'|t('lens') }}
                     </span>
                 </span>
             {% elseif dupCount > 0 %}
-                <a href="{{ cpUrl('lens/search', {similarTo: asset.id}) }}" class="lens-duplicate-badge" title="{{ '{count} duplicate(s) — click to compare'|t('lens', {count: dupCount}) }}">
-                    <span class="lens-badge lens-badge--small lens-badge--duplicate">
-                        {{ iconSvg('copy')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
-                        {{ dupCount }} {{ dupCount == 1 ? 'duplicate'|t('lens') : 'duplicates'|t('lens') }}
-                    </span>
+                <a href="{{ cpUrl('lens/search', {similarTo: asset.id}) }}" class="lens-duplicate-badge">
+                    <craft-tooltip self-managed text="{{ 'Compare duplicates'|t('lens') }}" placement="bottom">
+                        <span class="lens-badge lens-badge--small lens-badge--duplicate">
+                            {{ iconSvg('copy')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
+                            {{ dupCount }} {{ dupCount == 1 ? 'duplicate'|t('lens') : 'duplicates'|t('lens') }}
+                        </span>
+                    </craft-tooltip>
                 </a>
             {% endif %}
         {% endif %}
@@ -83,9 +85,11 @@
         {% if showReviewBadge or showFailedBadge or isUnprocessed %}
             <div class="lens-result-overlay">
                 {% if showReviewBadge %}
-                    <a href="{{ cpUrl('lens/review/' ~ analysis.id) }}" class="lens-badge lens-badge--small lens-badge--info lens-badge--link" title="{{ 'Pending Review'|t('lens') }}">
-                        {{ iconSvg('eye')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
-                        {{ 'Review'|t('lens') }}
+                    <a href="{{ cpUrl('lens/review/' ~ analysis.id) }}" class="lens-badge lens-badge--small lens-badge--info lens-badge--link">
+                        <craft-tooltip self-managed text="{{ 'Open review queue'|t('lens') }}" placement="bottom">
+                            {{ iconSvg('eye')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
+                            {{ 'Review'|t('lens') }}
+                        </craft-tooltip>
                     </a>
                 {% elseif showFailedBadge %}
                     <span class="lens-badge lens-badge--small lens-badge--error">
@@ -93,7 +97,7 @@
                         {{ 'Failed'|t('lens') }}
                     </span>
                 {% else %}
-                    <span class="lens-badge lens-badge--small lens-badge--muted" title="{{ 'Not yet analyzed'|t('lens') }}">
+                    <span class="lens-badge lens-badge--small lens-badge--muted">
                         {{ iconSvg('circle-exclamation')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
                         {{ 'Unprocessed'|t('lens') }}
                     </span>
