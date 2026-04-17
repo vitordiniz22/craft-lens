@@ -56,6 +56,10 @@
     <a href="{{ linkUrl }}" class="lens-result-preview" data-lens-target="result-link">
         {% include 'lens/_components/_asset-preview' with {asset: asset} only %}
 
+        {# Failed is intentionally omitted: it has its own red badge in the branch below. #}
+        {% set unprocessedStatuses = [lens.status.pending, lens.status.rejected] %}
+        {% set isUnprocessed = (not analysis) or (analysis.status in unprocessedStatuses) %}
+
         {% if analysis %}
             {% if (similarity ?? null) is not null %}
                 <span class="lens-duplicate-badge">
@@ -72,26 +76,28 @@
                     </span>
                 </a>
             {% endif %}
+        {% endif %}
+
+        {% set showReviewBadge = analysis and analysis.status == lens.status.pendingReview and lens.isReviewActive %}
+        {% set showFailedBadge = analysis and analysis.status == lens.status.failed %}
+        {% if showReviewBadge or showFailedBadge or isUnprocessed %}
             <div class="lens-result-overlay">
-                {% if analysis.status == lens.status.pendingReview and lens.isReviewActive %}
+                {% if showReviewBadge %}
                     <a href="{{ cpUrl('lens/review/' ~ analysis.id) }}" class="lens-badge lens-badge--small lens-badge--info lens-badge--link" title="{{ 'Pending Review'|t('lens') }}">
                         {{ iconSvg('eye')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
                         {{ 'Review'|t('lens') }}
                     </a>
-                {% endif %}
-                {% if analysis.status == lens.status.failed %}
+                {% elseif showFailedBadge %}
                     <span class="lens-badge lens-badge--small lens-badge--error">
                         {{ iconSvg('circle-xmark')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
                         {{ 'Failed'|t('lens') }}
                     </span>
+                {% else %}
+                    <span class="lens-badge lens-badge--small lens-badge--muted" title="{{ 'Not yet analyzed'|t('lens') }}">
+                        {{ iconSvg('circle-exclamation')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
+                        {{ 'Unprocessed'|t('lens') }}
+                    </span>
                 {% endif %}
-            </div>
-        {% else %}
-            <div class="lens-result-overlay">
-                <span class="lens-badge lens-badge--small lens-badge--muted" title="{{ 'Not yet analyzed'|t('lens') }}">
-                    {{ iconSvg('circle-exclamation')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
-                    {{ 'Unprocessed'|t('lens') }}
-                </span>
             </div>
         {% endif %}
     </a>

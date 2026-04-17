@@ -54,7 +54,7 @@ class BulkAnalyzeAssetsJob extends BaseBatchedJob
         // Skip already-processed assets unless reprocessing
         if (!$this->reprocess && AssetAnalysisRecord::find()
             ->where(['assetId' => $item->id])
-            ->andWhere(['in', 'status', AnalysisStatus::shouldNotReprocessValues()])
+            ->andWhere(['not in', 'status', AnalysisStatus::unprocessedStatuses()])
             ->exists()
         ) {
             return;

@@ -733,26 +733,23 @@ class StatisticsService extends Component
     }
 
     /**
-     * Count analyzed image assets with file size >= warning threshold (1MB).
+     * Count image assets in enabled volumes whose file size is at or above the
+     * warning threshold (1MB), regardless of analysis status. File size is a
+     * library fact, so this mirrors the browser's File Too Large filter.
      */
     public function getFileTooLargeCount(): int
     {
         $volumeIds = $this->getEnabledVolumeIds();
 
-        $query = (new Query())
-            ->from(Install::TABLE_ASSET_ANALYSES . ' lens')
-            ->innerJoin('{{%assets}} assets', '[[assets.id]] = [[lens.assetId]]')
-            ->where(['in', 'lens.status', AnalysisStatus::processedValues()])
-            ->andWhere(['>=', 'assets.size', FileTooLargeConditionRule::FILE_SIZE_WARNING]);
-
-        if ($volumeIds !== null) {
-            if (empty($volumeIds)) {
-                return 0;
-            }
-            $query->andWhere(['in', 'assets.volumeId', $volumeIds]);
+        if (empty($volumeIds)) {
+            return 0;
         }
 
-        return (int) $query->count();
+        return (int) Asset::find()
+            ->kind(Asset::KIND_IMAGE)
+            ->volumeId($volumeIds)
+            ->andWhere(['>=', 'assets.size', FileTooLargeConditionRule::FILE_SIZE_WARNING])
+            ->count();
     }
 
     /**

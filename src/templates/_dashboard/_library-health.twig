@@ -70,7 +70,7 @@
                 percentage: taggedPercentage.percentage,
                 covered: taggedPercentage.withTags,
                 total: taggedPercentage.total,
-                linkUrl: tagMissing > 0 ? cpUrl('lens/search', {quickFilter: 'untagged'}) : null,
+                linkUrl: tagMissing > 0 ? cpUrl('lens/search', {unprocessed: 1}) : null,
                 linkText: 'View missing'|t('lens'),
             } only %}
         {% endif %}

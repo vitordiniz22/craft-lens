@@ -6,7 +6,6 @@ namespace vitordiniz22\craftlens\enums;
 
 enum QuickFilter: string
 {
-    case Untagged = 'untagged';
     case LowConfidence = 'low-confidence';
     case NeedsReview = 'needs-review';
     case WithPeople = 'with-people';
@@ -18,7 +17,6 @@ enum QuickFilter: string
     public function label(): string
     {
         return match ($this) {
-            self::Untagged => 'Untagged',
             self::LowConfidence => 'Low Confidence',
             self::NeedsReview => 'Needs Review',
             self::WithPeople => 'With People',
@@ -32,7 +30,6 @@ enum QuickFilter: string
     public function icon(): string
     {
         return match ($this) {
-            self::Untagged => 'tag',
             self::LowConfidence => 'alert',
             self::NeedsReview => 'eye',
             self::WithPeople => 'users',
@@ -51,7 +48,6 @@ enum QuickFilter: string
     public function applyToFilters(array $filters): array
     {
         return match ($this) {
-            self::Untagged => [...$filters, 'noTags' => true],
             self::LowConfidence => [...$filters, 'confidenceMax' => 0.7],
             self::NeedsReview => [...$filters, 'status' => [AnalysisStatus::PendingReview->value]],
             self::WithPeople => [...$filters, 'containsPeople' => true],

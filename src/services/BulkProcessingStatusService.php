@@ -509,10 +509,9 @@ class BulkProcessingStatusService extends Component
 
     private function getUnprocessedCount(null|int|array $volumeId = null): int
     {
-        // "Unprocessed" = no analysis record at all.
-        // Excludes Failed/Pending — those have their own counts and actions.
-        $processedSubQuery = AssetAnalysisRecord::find()
-            ->select('assetId');
+        $handledAssetIds = AssetAnalysisRecord::find()
+            ->select('assetId')
+            ->where(['not in', 'status', AnalysisStatus::unprocessedStatuses()]);
 
         $query = Asset::find()->kind(Asset::KIND_IMAGE);
 
@@ -520,7 +519,7 @@ class BulkProcessingStatusService extends Component
             $query->volumeId($volumeId);
         }
 
-        $query->andWhere(['not in', 'elements.id', $processedSubQuery]);
+        $query->andWhere(['not in', 'elements.id', $handledAssetIds]);
 
         return (int) $query->count();
     }

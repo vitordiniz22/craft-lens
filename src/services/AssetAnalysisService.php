@@ -221,7 +221,7 @@ class AssetAnalysisService extends Component
 
         $existing = $this->getAnalysis($asset->id);
 
-        if ($existing !== null && in_array($existing->status, AnalysisStatus::shouldNotReprocessValues(), true)) {
+        if ($existing !== null && !in_array($existing->status, AnalysisStatus::unprocessedStatuses(), true)) {
             return false;
         }
 
@@ -359,17 +359,18 @@ class AssetAnalysisService extends Component
     }
 
     /**
-     * Get count of unprocessed assets.
+     * Get count of unprocessed assets: images with no analysis record, or with
+     * a status in AnalysisStatus::unprocessedStatuses().
      */
     public function getUnprocessedCount(): int
     {
-        $processedSubQuery = AssetAnalysisRecord::find()
+        $handledSubQuery = AssetAnalysisRecord::find()
             ->select('assetId')
-            ->where(['in', 'status', AnalysisStatus::shouldNotReprocessValues()]);
+            ->where(['not in', 'status', AnalysisStatus::unprocessedStatuses()]);
 
         return (int) Asset::find()
             ->kind(Asset::KIND_IMAGE)
-            ->andWhere(['not in', 'elements.id', $processedSubQuery])
+            ->andWhere(['not in', 'elements.id', $handledSubQuery])
             ->count();
     }
 

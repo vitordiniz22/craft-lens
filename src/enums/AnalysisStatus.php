@@ -73,18 +73,29 @@ enum AnalysisStatus: string
     }
 
     /**
-     * Statuses where an asset should not be re-queued for analysis.
+     * Statuses where the asset still needs analysis work.
+     *
+     * This is the positive match set used by unprocessed counts and the browser
+     * filter: `status IN unprocessedStatuses()` means "unprocessed." Assets with
+     * no analysis record are also unprocessed, handled at each call site.
      *
      * @return string[]
      */
-    public static function shouldNotReprocessValues(): array
+    public static function unprocessedStatuses(): array
     {
         return [
-            self::Processing->value,
-            self::Completed->value,
-            self::Approved->value,
-            self::PendingReview->value,
+            self::Pending->value,
+            self::Failed->value,
+            self::Rejected->value,
         ];
+    }
+
+    /**
+     * Whether an asset in this status should be picked up by analysis.
+     */
+    public function needsProcessing(): bool
+    {
+        return in_array($this, [self::Pending, self::Failed, self::Rejected], true);
     }
 
     /**

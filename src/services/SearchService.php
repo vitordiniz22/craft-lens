@@ -245,7 +245,6 @@ class SearchService extends Component
         $this->applyNsfwFilter($query, $filters);
         $this->applyDateFilter($query, $filters);
         $this->applyColorFilter($query, $filters);
-        $this->applyNoTagsFilter($query, $filters);
         $this->applyDuplicatesFilter($query, $filters);
         $this->applyWatermarkFilter($query, $filters);
         $this->applyBrandLogoFilter($query, $filters);
@@ -287,7 +286,7 @@ class SearchService extends Component
             'confidenceMin', 'confidenceMax',
             'nsfwScoreMin', 'nsfwScoreMax', 'nsfwFlagged',
             'processedFrom', 'processedTo',
-            'color', 'noTags', 'hasDuplicates',
+            'color', 'hasDuplicates',
             'hasWatermark', 'watermarkType', 'containsBrandLogo',
             'hasFocalPoint',
             'missingAltText', 'unprocessed',
@@ -487,23 +486,6 @@ class SearchService extends Component
     }
 
     /**
-     * Apply "no tags" filter for untagged assets.
-     * Shows analyzed assets (any non-failed status) that have no AI tags.
-     */
-    private function applyNoTagsFilter(Query $query, array $filters): void
-    {
-        if (empty($filters['noTags'])) {
-            return;
-        }
-
-        $subQuery = (new Query())
-            ->select(['assetId'])
-            ->from(Install::TABLE_ASSET_TAGS);
-
-        $query->andWhere(['not in', 'assets.id', $subQuery]);
-    }
-
-    /**
      * Filter assets by whether they have unresolved duplicates.
      */
     private function applyDuplicatesFilter(Query $query, array $filters): void
@@ -596,10 +578,10 @@ class SearchService extends Component
     }
 
     /**
-     * Filter to assets that have not been successfully processed.
-     * Mirrors BulkProcessingStatusService::getUnprocessedCount(): assets that are
-     * NOT in (completed, approved, pending_review, processing).
-     * LEFT JOIN is active so NULL lens.assetId (no record) is included.
+     * Filter to assets the bulk analysis job will pick up: no analysis row, or
+     * a status in AnalysisStatus::unprocessedStatuses(). LEFT JOIN is active so
+     * NULL lens.assetId (no record) is included. Failed is a subset: it's
+     * counted here but keeps its own badge and dashboard tile.
      */
     private function applyUnprocessedFilter(Query $query, array $filters): void
     {
@@ -609,11 +591,7 @@ class SearchService extends Component
 
         $query->andWhere(['or',
             ['lens.assetId' => null],
-            ['in', 'lens.status', [
-                AnalysisStatus::Pending->value,
-                AnalysisStatus::Failed->value,
-                AnalysisStatus::Rejected->value,
-            ]],
+            ['in', 'lens.status', AnalysisStatus::unprocessedStatuses()],
         ]);
     }
 
