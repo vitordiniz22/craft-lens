@@ -29,7 +29,7 @@ class SetupStatusService extends Component
     /**
      * Get all setup status checks.
      *
-     * @return array<array{key: string, category: string, severity: string, message: string, actionLabel: string, actionUrl: string, docsUrl: string, isResolved: bool}>
+     * @return array<array{key: string, category: string, severity: string, message: string, actionLabel: string, actionUrl: string, docsUrl: string, isResolved: bool, prerequisites: string[]}>
      */
     public function getSetupStatus(): array
     {
@@ -39,23 +39,15 @@ class SetupStatusService extends Component
 
         $this->cachedStatus = [
             $this->checkAiProviderConfigured(),
+            $this->checkVolumesEnabled(),
+            $this->checkAnalysisPanelConfigured(),
         ];
-
-        if (!empty(Craft::$app->getVolumes()->getAllVolumes())) {
-            $this->cachedStatus[] = $this->checkVolumesEnabled();
-        }
-
-        if ($this->hasEnabledVolumes()) {
-            $this->cachedStatus[] = $this->checkAnalysisPanelConfigured();
-        }
 
         if (Plugin::getInstance()->getIsPro()) {
             $this->cachedStatus[] = $this->checkSemanticSearchEnabled();
         }
 
-        if ($this->isAiProviderConfigured() && $this->hasEnabledVolumes()) {
-            $this->cachedStatus[] = $this->checkFirstAnalysis();
-        }
+        $this->cachedStatus[] = $this->checkFirstAnalysis();
 
         return $this->cachedStatus;
     }
@@ -63,7 +55,7 @@ class SetupStatusService extends Component
     /**
      * Get only critical issues that block core functionality.
      *
-     * @return array<array{key: string, category: string, severity: string, message: string, actionLabel: string, actionUrl: string, docsUrl: string, isResolved: bool}>
+     * @return array<array{key: string, category: string, severity: string, message: string, actionLabel: string, actionUrl: string, docsUrl: string, isResolved: bool, prerequisites: string[]}>
      */
     public function getCriticalIssues(): array
     {
@@ -76,7 +68,7 @@ class SetupStatusService extends Component
     /**
      * Get warnings (non-blocking issues).
      *
-     * @return array<array{key: string, category: string, severity: string, message: string, actionLabel: string, actionUrl: string, docsUrl: string, isResolved: bool}>
+     * @return array<array{key: string, category: string, severity: string, message: string, actionLabel: string, actionUrl: string, docsUrl: string, isResolved: bool, prerequisites: string[]}>
      */
     public function getWarnings(): array
     {
@@ -89,7 +81,7 @@ class SetupStatusService extends Component
     /**
      * Get all unresolved issues (any severity).
      *
-     * @return array<array{key: string, category: string, severity: string, message: string, actionLabel: string, actionUrl: string, docsUrl: string, isResolved: bool}>
+     * @return array<array{key: string, category: string, severity: string, message: string, actionLabel: string, actionUrl: string, docsUrl: string, isResolved: bool, prerequisites: string[]}>
      */
     public function getUnresolvedIssues(): array
     {
@@ -246,22 +238,27 @@ class SetupStatusService extends Component
             'actionUrl' => 'lens/settings#provider',
             'docsUrl' => self::DOCS_BASE_URL . 'Getting-Started#configuring-your-ai-provider',
             'isResolved' => $isResolved,
+            'prerequisites' => [],
         ];
     }
 
     private function checkVolumesEnabled(): array
     {
         $isResolved = $this->hasEnabledVolumes();
+        $hasCraftVolumes = !empty(Craft::$app->getVolumes()->getAllVolumes());
 
         return [
             'key' => 'volumes_enabled',
             'category' => self::CATEGORY_VOLUMES,
             'severity' => SetupSeverity::Critical->value,
             'message' => Craft::t('lens', 'Enable at least one asset volume so Lens knows which images to process.'),
-            'actionLabel' => Craft::t('lens', 'Configure Volumes'),
-            'actionUrl' => 'lens/settings#volumes',
+            'actionLabel' => $hasCraftVolumes
+                ? Craft::t('lens', 'Configure Volumes')
+                : Craft::t('lens', 'Create a Volume'),
+            'actionUrl' => $hasCraftVolumes ? 'lens/settings#volumes' : 'settings/assets',
             'docsUrl' => self::DOCS_BASE_URL . 'Getting-Started#enabling-asset-volumes',
             'isResolved' => $isResolved,
+            'prerequisites' => [],
         ];
     }
 
@@ -278,6 +275,7 @@ class SetupStatusService extends Component
             'actionUrl' => 'settings/assets',
             'docsUrl' => self::DOCS_BASE_URL . 'Getting-Started#adding-the-analysis-panel',
             'isResolved' => $isResolved,
+            'prerequisites' => ['volumes_enabled'],
         ];
     }
 
@@ -294,6 +292,7 @@ class SetupStatusService extends Component
             'actionUrl' => 'lens/settings',
             'docsUrl' => self::DOCS_BASE_URL . 'Getting-Started#enabling-semantic-search',
             'isResolved' => $isResolved,
+            'prerequisites' => ['ai_provider_api_key', 'volumes_enabled'],
         ];
     }
 
@@ -315,6 +314,7 @@ class SetupStatusService extends Component
             'actionUrl' => $isPro ? 'lens/bulk' : 'assets',
             'docsUrl' => self::DOCS_BASE_URL . 'Getting-Started#analyzing-your-first-image',
             'isResolved' => $isResolved,
+            'prerequisites' => ['ai_provider_api_key', 'volumes_enabled'],
         ];
     }
 

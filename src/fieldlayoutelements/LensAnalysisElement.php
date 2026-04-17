@@ -65,8 +65,16 @@ class LensAnalysisElement extends BaseUiElement
             Craft::$app->getView()->registerAssetBundle(LensAssetActionsAsset::class);
 
             $plugin = Plugin::getInstance();
-            $analysis = $plugin->assetAnalysis->getAnalysis($element->id);
             $settings = $plugin->getSettings();
+
+            if (!$settings->isVolumeEnabled($element->getVolume()->id)) {
+                return Craft::$app->view->renderTemplate(
+                    'lens/_components/analysis-panel-volume-disabled.twig',
+                    ['asset' => $element],
+                );
+            }
+
+            $analysis = $plugin->assetAnalysis->getAnalysis($element->id);
             $tags = [];
             $colors = [];
             $similarImages = [];

@@ -63,6 +63,17 @@ class AnalysisController extends Controller
 
         $asset = $this->getRequiredAsset();
 
+        if (!Plugin::getInstance()->getSettings()->isVolumeEnabled($asset->getVolume()->id)) {
+            if ($this->request->getAcceptsJson()) {
+                return $this->asJson([
+                    'success' => false,
+                    'error' => Craft::t('lens', 'This volume is not enabled for Lens.'),
+                ]);
+            }
+
+            throw new BadRequestHttpException('This volume is not enabled for Lens.');
+        }
+
         Plugin::getInstance()->assetAnalysis->reprocessAsset($asset);
 
         Logger::info(LogCategory::AssetProcessing, 'Asset queued for reprocessing', assetId: $asset->id);

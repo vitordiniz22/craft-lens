@@ -521,6 +521,10 @@ class Plugin extends BasePlugin
                     return;
                 }
 
+                if (!$this->getSettings()->isVolumeEnabled($asset->volumeId)) {
+                    return;
+                }
+
                 if (FieldLayoutHelper::hasAnalysisElement($asset)) {
                     return;
                 }

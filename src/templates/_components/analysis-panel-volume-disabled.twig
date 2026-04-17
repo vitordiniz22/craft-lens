@@ -1,0 +1,19 @@
+{#
+ # Rendered in place of the full analysis panel when the asset's volume is
+ # not enabled in Lens settings. No action buttons are shown because analysis
+ # cannot run against a disabled volume; the CTA points the user to the
+ # settings page where the volume can be opted in.
+ #}
+<div class="lens-analysis-panel lens-analysis-panel--volume-disabled">
+    {% include 'lens/_components/analysis/header' with {analysis: null, asset: asset, static: true} %}
+
+    {% include 'lens/_components/inline-notice' with {
+        type: 'warning',
+        title: 'Volume not enabled for Lens'|t('lens'),
+        message: 'Assets in this volume are not analyzed by Lens. Enable the volume in Lens settings to start generating AI descriptions, tags, and more.'|t('lens'),
+        cta: {
+            label: 'Go to Lens Settings'|t('lens'),
+            url: 'lens/settings#volumes',
+        },
+    } %}
+</div>

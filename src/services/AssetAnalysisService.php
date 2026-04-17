@@ -215,7 +215,7 @@ class AssetAnalysisService extends Component
             return false;
         }
 
-        if (!$this->isVolumeEnabled($asset->volumeId)) {
+        if (!$this->getSettings()->isVolumeEnabled($asset->volumeId)) {
             return false;
         }
 
@@ -351,7 +351,7 @@ class AssetAnalysisService extends Component
             return false;
         }
 
-        if (!$this->isVolumeEnabled($asset->volumeId)) {
+        if (!$this->getSettings()->isVolumeEnabled($asset->volumeId)) {
             return false;
         }
 
@@ -591,11 +591,6 @@ class AssetAnalysisService extends Component
         return $requireReview
             ? AnalysisStatus::PendingReview->value
             : AnalysisStatus::Completed->value;
-    }
-
-    private function isVolumeEnabled(int $volumeId): bool
-    {
-        return in_array($volumeId, $this->getSettings()->getEnabledVolumeIds(), true);
     }
 
     private function computePerceptualHash(Asset $asset, AssetAnalysisRecord $record): void

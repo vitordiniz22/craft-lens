@@ -189,4 +189,12 @@ class Settings extends Model
 
         return $ids;
     }
+
+    /**
+     * Check whether a given volume is enabled for Lens processing.
+     */
+    public function isVolumeEnabled(int $volumeId): bool
+    {
+        return in_array($volumeId, $this->getEnabledVolumeIds(), true);
+    }
 }

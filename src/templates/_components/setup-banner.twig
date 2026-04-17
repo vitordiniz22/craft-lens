@@ -14,6 +14,18 @@
 {% set hasWarning = unresolvedChecks|filter(c => c.severity == 'warning')|length > 0 %}
 {% set hasInfo = unresolvedChecks|filter(c => c.severity == 'info')|length > 0 %}
 
+{# Build a lookup of unresolved keys so we can resolve which steps are blocked by outstanding prerequisites. #}
+{% set unresolvedKeys = [] %}
+{% for c in unresolvedChecks %}
+    {% set unresolvedKeys = unresolvedKeys|merge([c.key]) %}
+{% endfor %}
+
+{# Friendly labels for prerequisite keys that appear in the "Requires: ..." sub-copy. #}
+{% set prereqLabels = {
+    'ai_provider_api_key': 'an AI provider API key'|t('lens'),
+    'volumes_enabled': 'an enabled asset volume'|t('lens'),
+} %}
+
 {% if unresolvedChecks|length > 0 %}
 <div class="lens-setup-banner {{ hasCritical ? '' : (hasWarning ? 'lens-setup-banner--warning' : (hasInfo ? 'lens-setup-banner--info' : '')) }}">
     <div class="lens-setup-banner__header">
@@ -34,10 +46,16 @@
     <div class="lens-setup-banner__checklist">
         {# Show unresolved items first #}
         {% for check in unresolvedChecks %}
-            <div class="lens-setup-banner__item">
+            {% set unmetPrereqs = (check.prerequisites ?? [])|filter(k => k in unresolvedKeys) %}
+            {% set isLocked = unmetPrereqs|length > 0 %}
+            {% set unmetPrereqLabels = unmetPrereqs|map(k => prereqLabels[k] ?? k) %}
+
+            <div class="lens-setup-banner__item {{ isLocked ? 'lens-setup-banner__item--locked' }}">
                 <div class="lens-setup-banner__item-content">
                     <div class="lens-setup-banner__item-status">
-                        {% if check.severity == 'critical' %}
+                        {% if isLocked %}
+                            <span class="lens-setup-banner__item-lock lens-setup-banner__item-lock--{{ check.severity }}" aria-hidden="true">{{ iconSvg('lock') }}</span>
+                        {% elseif check.severity == 'critical' %}
                             <span class="status off"></span>
                         {% elseif check.severity == 'warning' %}
                             <span class="status pending"></span>
@@ -47,7 +65,14 @@
                             <span class="status"></span>
                         {% endif %}
                     </div>
-                    <span class="lens-setup-banner__item-text">{{ check.message }}</span>
+                    <div class="lens-setup-banner__item-body">
+                        <span class="lens-setup-banner__item-text">{{ check.message }}</span>
+                        {% if isLocked %}
+                            <p class="lens-setup-banner__item-requirements">
+                                {{ 'Requires {list}'|t('lens', { list: unmetPrereqLabels|join(', ') }) }}
+                            </p>
+                        {% endif %}
+                    </div>
                 </div>
                 <div class="lens-setup-banner__item-action">
                     {% if check.docsUrl ?? false %}
@@ -55,9 +80,15 @@
                             {{ 'Learn more'|t('lens') }}
                         </a>
                     {% endif %}
-                    <a href="{{ cpUrl(check.actionUrl) }}" class="btn small {{ check.severity == 'critical' ? 'submit' }}">
-                        {{ check.actionLabel }}
-                    </a>
+                    {% if isLocked %}
+                        <button type="button" class="btn small disabled" disabled aria-disabled="true">
+                            {{ check.actionLabel }}
+                        </button>
+                    {% else %}
+                        <a href="{{ cpUrl(check.actionUrl) }}" class="btn small {{ check.severity == 'critical' ? 'submit' }}">
+                            {{ check.actionLabel }}
+                        </a>
+                    {% endif %}
                 </div>
             </div>
         {% endfor %}
