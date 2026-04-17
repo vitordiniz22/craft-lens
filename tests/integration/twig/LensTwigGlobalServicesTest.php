@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace vitordiniz22\craftlenstests\integration\twig;
 
 use Codeception\Test\Unit;
+use Craft;
 use vitordiniz22\craftlens\enums\DuplicateResolution;
 use vitordiniz22\craftlens\Plugin;
 use vitordiniz22\craftlens\records\AssetColorRecord;
@@ -35,6 +36,10 @@ class LensTwigGlobalServicesTest extends Unit
 
     private string $originalOpenaiApiKey;
 
+    private array $originalEnabledVolumes;
+
+    private bool $originalEnableSemanticSearch;
+
     protected function _before(): void
     {
         parent::_before();
@@ -47,6 +52,8 @@ class LensTwigGlobalServicesTest extends Unit
         $this->originalRequireReview = $settings->requireReviewBeforeApply;
         $this->originalAiProvider = $settings->aiProvider;
         $this->originalOpenaiApiKey = $settings->openaiApiKey;
+        $this->originalEnabledVolumes = $settings->enabledVolumes;
+        $this->originalEnableSemanticSearch = $settings->enableSemanticSearch;
 
         // SetupStatusService caches per-instance. Reset BEFORE the test so
         // mutations we make during arrange-phase aren't masked by a cached
@@ -63,6 +70,8 @@ class LensTwigGlobalServicesTest extends Unit
         $settings->requireReviewBeforeApply = $this->originalRequireReview;
         $settings->aiProvider = $this->originalAiProvider;
         $settings->openaiApiKey = $this->originalOpenaiApiKey;
+        $settings->enabledVolumes = $this->originalEnabledVolumes;
+        $settings->enableSemanticSearch = $this->originalEnableSemanticSearch;
 
         $plugin->set('setupStatus', SetupStatusService::class);
 
@@ -199,12 +208,22 @@ class LensTwigGlobalServicesTest extends Unit
 
     public function testHasCriticalIssuesFalseWhenAiConfiguredAndNoOtherCriticalIssues(): void
     {
-        // AI configured clears the only critical check in a fresh test env
-        // (the volume check is only added once a volume exists).
         $this->configureValidAiKey();
+        $this->configureEnabledVolume();
 
         $this->assertFalse($this->global->hasCriticalIssues());
         $this->assertSame([], array_values($this->global->getCriticalIssues()));
+
+        // Lock in that both critical checks ran and resolved — not just absent.
+        $byKey = array_column($this->global->getSetupStatus(), null, 'key');
+        $this->assertArrayHasKey('ai_provider_api_key', $byKey);
+        $this->assertArrayHasKey('volumes_enabled', $byKey);
+        $this->assertTrue($byKey['ai_provider_api_key']['isResolved']);
+        $this->assertTrue($byKey['volumes_enabled']['isResolved']);
+
+        // Independent predicate paths (not routed through getCriticalIssues).
+        $this->assertTrue($this->global->isFeatureAvailable('analysis'));
+        $this->assertSame([], $this->global->getFeatureRequirements('analysis'));
     }
 
     // -- isFeatureAvailable() / getFeatureRequirements() --
@@ -243,6 +262,98 @@ class LensTwigGlobalServicesTest extends Unit
     public function testGetFeatureRequirementsEmptyForUnknownFeature(): void
     {
         $this->assertSame([], $this->global->getFeatureRequirements('something-unknown'));
+    }
+
+    // -- analysis_panel_added warning --
+
+    public function testAnalysisPanelWarningUnresolvedWhenVolumeHasNoPanel(): void
+    {
+        $this->configureValidAiKey();
+        $this->configureEnabledVolume();
+
+        $byKey = array_column($this->global->getSetupStatus(), null, 'key');
+
+        $this->assertArrayHasKey('analysis_panel_added', $byKey);
+        $this->assertSame('warning', $byKey['analysis_panel_added']['severity']);
+        $this->assertFalse($byKey['analysis_panel_added']['isResolved']);
+
+        // Warning severity must not leak into critical set.
+        $this->assertFalse($this->global->hasCriticalIssues());
+    }
+
+    public function testAnalysisPanelWarningResolvedWhenPanelAttached(): void
+    {
+        $this->configureValidAiKey();
+        $volumeId = $this->configureEnabledVolume();
+        $this->attachLensAnalysisElementToVolume($volumeId);
+        Plugin::getInstance()->set('setupStatus', SetupStatusService::class);
+
+        $byKey = array_column($this->global->getSetupStatus(), null, 'key');
+
+        $this->assertArrayHasKey('analysis_panel_added', $byKey);
+        $this->assertTrue($byKey['analysis_panel_added']['isResolved']);
+    }
+
+    // -- semantic_search_enabled info (Pro only) --
+
+    public function testSemanticSearchInfoUnresolvedWhenSettingOff(): void
+    {
+        $plugin = Plugin::getInstance();
+        $plugin->edition = Plugin::EDITION_PRO;
+        $plugin->getSettings()->enableSemanticSearch = false;
+        $plugin->set('setupStatus', SetupStatusService::class);
+
+        $byKey = array_column($this->global->getSetupStatus(), null, 'key');
+
+        $this->assertArrayHasKey('semantic_search_enabled', $byKey);
+        $this->assertSame('info', $byKey['semantic_search_enabled']['severity']);
+        $this->assertFalse($byKey['semantic_search_enabled']['isResolved']);
+    }
+
+    public function testSemanticSearchInfoResolvedWhenSettingOn(): void
+    {
+        $plugin = Plugin::getInstance();
+        $plugin->edition = Plugin::EDITION_PRO;
+        $plugin->getSettings()->enableSemanticSearch = true;
+        $plugin->set('setupStatus', SetupStatusService::class);
+
+        $byKey = array_column($this->global->getSetupStatus(), null, 'key');
+
+        $this->assertArrayHasKey('semantic_search_enabled', $byKey);
+        $this->assertTrue($byKey['semantic_search_enabled']['isResolved']);
+    }
+
+    public function testSemanticSearchEntryAbsentOnLiteEdition(): void
+    {
+        $plugin = Plugin::getInstance();
+        $plugin->edition = Plugin::EDITION_LITE;
+        $plugin->set('setupStatus', SetupStatusService::class);
+
+        $keys = array_column($this->global->getSetupStatus(), 'key');
+
+        $this->assertNotContains('semantic_search_enabled', $keys);
+    }
+
+    // -- first_analysis_complete info --
+
+    public function testFirstAnalysisInfoUnresolvedWhenNoAnalyzedRecords(): void
+    {
+        $byKey = array_column($this->global->getSetupStatus(), null, 'key');
+
+        $this->assertArrayHasKey('first_analysis_complete', $byKey);
+        $this->assertSame('info', $byKey['first_analysis_complete']['severity']);
+        $this->assertFalse($byKey['first_analysis_complete']['isResolved']);
+    }
+
+    public function testFirstAnalysisInfoResolvedAfterCompletedAnalysis(): void
+    {
+        $this->createAnalysisRecord('completed');
+        Plugin::getInstance()->set('setupStatus', SetupStatusService::class);
+
+        $byKey = array_column($this->global->getSetupStatus(), null, 'key');
+
+        $this->assertArrayHasKey('first_analysis_complete', $byKey);
+        $this->assertTrue($byKey['first_analysis_complete']['isResolved']);
     }
 
     // -- getDuplicateCount() --
@@ -342,6 +453,18 @@ class LensTwigGlobalServicesTest extends Unit
         $settings->aiProvider = 'openai';
         $settings->openaiApiKey = 'sk-test-fake-key-for-integration-tests';
         Plugin::getInstance()->set('setupStatus', SetupStatusService::class);
+    }
+
+    private function configureEnabledVolume(): int
+    {
+        $volumeId = $this->createTestVolume(handle: 'lenscritical', name: 'Lens Critical Test');
+        $volume = Craft::$app->getVolumes()->getVolumeById($volumeId);
+
+        $settings = Plugin::getInstance()->getSettings();
+        $settings->enabledVolumes = [$volume->uid];
+        Plugin::getInstance()->set('setupStatus', SetupStatusService::class);
+
+        return $volumeId;
     }
 
     private function insertTag(int $assetId, int $analysisId, string $tag, float $confidence, bool $isAi = true): void

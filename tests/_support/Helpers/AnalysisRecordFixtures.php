@@ -7,7 +7,10 @@ namespace vitordiniz22\craftlenstests\_support\Helpers;
 use Craft;
 use craft\fs\Local;
 use craft\helpers\StringHelper;
+use craft\models\FieldLayout;
+use craft\models\FieldLayoutTab;
 use craft\models\Volume;
+use vitordiniz22\craftlens\fieldlayoutelements\LensAnalysisElement;
 use vitordiniz22\craftlens\jobs\BulkAnalyzeAssetsJob;
 use vitordiniz22\craftlens\migrations\Install;
 use vitordiniz22\craftlens\records\AssetAnalysisRecord;
@@ -483,6 +486,31 @@ trait AnalysisRecordFixtures
 
         $this->createdVolumeIds[] = $volume->id;
         return $volume->id;
+    }
+
+    /**
+     * Attach a LensAnalysisElement to the given volume's field layout so
+     * SetupStatusService::isAnalysisPanelConfigured() returns true for it.
+     */
+    protected function attachLensAnalysisElementToVolume(int $volumeId): void
+    {
+        $volume = Craft::$app->getVolumes()->getVolumeById($volumeId);
+
+        if ($volume === null) {
+            throw new \RuntimeException("Volume {$volumeId} not found");
+        }
+
+        $fieldLayout = $volume->getFieldLayout() ?? new FieldLayout(['type' => Volume::class]);
+
+        $tab = new FieldLayoutTab(['name' => 'Lens', 'layout' => $fieldLayout]);
+        $tab->setElements([new LensAnalysisElement()]);
+
+        $fieldLayout->setTabs(array_merge($fieldLayout->getTabs(), [$tab]));
+
+        Craft::$app->getFields()->saveLayout($fieldLayout);
+
+        $volume->setFieldLayout($fieldLayout);
+        Craft::$app->getVolumes()->saveVolume($volume);
     }
 
     /**
