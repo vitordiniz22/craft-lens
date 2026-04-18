@@ -426,14 +426,15 @@ abstract class BaseAiProvider implements AiProviderInterface
     }
 
     private const MAX_RETRIES = 2;
-    private const RETRYABLE_STATUS_CODES = [429, 502, 503];
+    private const RETRYABLE_STATUS_CODES = [429, 500, 502, 503, 504];
     private const MAX_RETRY_AFTER_SECONDS = 30;
 
     /**
      * Execute an HTTP request with standardized Guzzle error handling and retry logic.
      *
-     * Retries on transient errors (429, 502, 503) with exponential backoff.
-     * For 429 responses, respects the Retry-After header when present.
+     * Retries on transient errors (429, 500, 502, 503, 504 and connection/timeout
+     * failures) with exponential backoff. For 429 responses, respects the
+     * Retry-After header when present.
      *
      * @param callable(int): array $request Receives start time (hrtime), returns parsed response body
      * @throws AnalysisException
@@ -450,6 +451,22 @@ abstract class BaseAiProvider implements AiProviderInterface
             } catch (ConnectException $e) {
                 $elapsed = (int) ((hrtime(true) - $startTime) / 1_000_000);
                 $sanitizedMessage = $this->sanitizeErrorMessage($e->getMessage());
+
+                if ($attempt < self::MAX_RETRIES) {
+                    $delay = (int) (2 ** ($attempt + 1)); // 2s, 4s
+                    Logger::apiCall(
+                        provider: $this->getName(),
+                        message: 'Connection failed, attempt ' . ($attempt + 1) . '/' . (self::MAX_RETRIES + 1) . " - retrying in {$delay}s: {$sanitizedMessage}",
+                        assetId: $assetId,
+                        responseTimeMs: $elapsed,
+                        httpStatusCode: null,
+                        level: LogLevel::Warning->value,
+                    );
+                    $lastException = $e;
+                    sleep($delay);
+                    continue;
+                }
+
                 Logger::apiCall(
                     provider: $this->getName(),
                     message: 'Connection failed: ' . $sanitizedMessage,
