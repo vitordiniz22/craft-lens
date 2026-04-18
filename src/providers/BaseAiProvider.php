@@ -32,7 +32,7 @@ abstract class BaseAiProvider implements AiProviderInterface
     public function __construct()
     {
         $this->client = Craft::createGuzzleClient([
-            'timeout' => 120,
+            'timeout' => 45,
             'connect_timeout' => 10,
         ]);
     }

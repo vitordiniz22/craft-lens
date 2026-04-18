@@ -28,7 +28,7 @@
     <div class="lens-stat-strip__cell">
         <div class="lens-stat-strip__icon">{{ iconSvg('clock')|attr({width: 16, height: 16, fill: 'currentColor'}) }}</div>
         <div class="lens-stat-strip__value">
-            {% if progress.etaFormatted is defined and progress.etaFormatted %}
+            {% if progress.etaFormatted is not null %}
                 ~{{ progress.etaFormatted }}
             {% else %}
                 —
@@ -39,9 +39,9 @@
     <div class="lens-stat-strip__cell">
         <div class="lens-stat-strip__icon">{{ iconSvg('gauge-high')|attr({width: 16, height: 16, fill: 'currentColor'}) }}</div>
         <div class="lens-stat-strip__value">
-            {% if progress.rate is defined and progress.rate %}
+            {% if progress.rate is defined and progress.rate is not null and progress.rate > 0 %}
                 {% if progress.rate >= 1 %}
-                    {{ progress.rate }}/{{ 'sec'|t('lens') }}
+                    {{ progress.rate|number_format(1) }}/{{ 'sec'|t('lens') }}
                 {% else %}
                     {{ '1 every {seconds}s'|t('lens', {seconds: (1 / progress.rate)|round}) }}
                 {% endif %}

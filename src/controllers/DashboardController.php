@@ -30,15 +30,14 @@ class DashboardController extends Controller
         $stats = $bulkStatus->getStats();
 
         $total = $stats['totalImages'];
-        $unprocessed = $stats['unprocessed'];
-        $processed = max(0, $total - $unprocessed);
-        $percentComplete = $total > 0 ? min(100, round(($processed / $total) * 100)) : 0;
+        $completed = $stats['analyzed'];
+        $percentComplete = $total > 0 ? min(100, round(($completed / $total) * 100)) : 0;
 
         return $this->asJson([
             'success' => true,
             'processing' => $stats['processing'] ?? 0,
             'total' => number_format($total),
-            'completed' => number_format($processed),
+            'completed' => number_format($completed),
             'percentComplete' => $percentComplete,
         ]);
     }
@@ -93,10 +92,7 @@ class DashboardController extends Controller
                 'lastMonthUsage' => $stats->getLastMonthUsageSummary(),
                 'monthlyHistory' => $stats->getMonthlyUsageHistory(3),
                 'allTimeUsage' => $stats->getAllTimeUsage(),
-                'costProjection' => $stats->getCostProjection(
-                    $overviewStats['unprocessed'],
-                    $overviewStats['avgCostPerAsset'],
-                ),
+                'costProjection' => $stats->getCostProjection($overviewStats['unprocessed']),
                 'tokenUsage' => $stats->getTokenUsage(),
                 'providerBreakdown' => $stats->getProviderBreakdown(),
                 'currentModel' => $plugin->getSettings()->getCurrentModel(),

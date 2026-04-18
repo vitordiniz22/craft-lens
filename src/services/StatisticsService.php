@@ -31,23 +31,12 @@ class StatisticsService extends Component
     public function getOverviewStats(): array
     {
         $analyzedStatuses = AnalysisStatus::analyzedValues();
-        $processedStatuses = AnalysisStatus::processedValues();
 
         $result = AssetAnalysisRecord::find()
             ->select([
-                'COUNT(*) as total',
                 new Expression(
                     'SUM(CASE WHEN status IN (:analyzed1, :analyzed2, :analyzed3) THEN 1 ELSE 0 END) as analyzed',
                     [':analyzed1' => $analyzedStatuses[0], ':analyzed2' => $analyzedStatuses[1], ':analyzed3' => $analyzedStatuses[2]]
-                ),
-                new Expression(
-                    'SUM(CASE WHEN status IN (:proc1, :proc2, :proc3, :proc4) THEN 1 ELSE 0 END) as processed',
-                    [
-                        ':proc1' => $processedStatuses[0],
-                        ':proc2' => $processedStatuses[1],
-                        ':proc3' => $processedStatuses[2],
-                        ':proc4' => $processedStatuses[3],
-                    ]
                 ),
                 new Expression(
                     'SUM(CASE WHEN status = :approved THEN 1 ELSE 0 END) as approved',
@@ -71,7 +60,6 @@ class StatisticsService extends Component
             ->one();
 
         $analyzed = (int) ($result['analyzed'] ?? 0);
-        $processed = (int) ($result['processed'] ?? 0);
         $totalCost = (float) ($result['totalCost'] ?? 0.0);
 
         return [
@@ -83,7 +71,6 @@ class StatisticsService extends Component
             'rejected' => (int) ($result['rejected'] ?? 0),
             'failed' => (int) ($result['failed'] ?? 0),
             'totalCost' => $totalCost,
-            'avgCostPerAsset' => $processed > 0 ? round($totalCost / $processed, 4) : 0.0,
         ];
     }
 
@@ -168,16 +155,6 @@ class StatisticsService extends Component
     public function getTotalCost(): float
     {
         return (float) (AssetAnalysisRecord::find()->sum('actualCost') ?? 0.0);
-    }
-
-    /**
-     * Get average cost per asset.
-     */
-    public function getAverageCostPerAsset(): float
-    {
-        return (float) (AssetAnalysisRecord::find()
-            ->where(['not', ['actualCost' => null]])
-            ->average('actualCost') ?? 0.0);
     }
 
     /**
@@ -484,18 +461,21 @@ class StatisticsService extends Component
     }
 
     /**
-     * Get cost projection for remaining unprocessed assets.
+     * Cost projection for remaining unprocessed assets. Returns the per-asset
+     * estimate from the PricingService model table and the total for the
+     * given count.
      *
-     * @return array{remainingAssets: int, estimatedCost: float}
+     * @return array{remainingAssets: int, estimatedCost: float, avgCostPerAsset: float}
      */
-    public function getCostProjection(?int $remainingAssets = null, ?float $avgCost = null): array
+    public function getCostProjection(?int $remainingAssets = null): array
     {
         $remainingAssets ??= $this->getUnprocessedCount();
-        $avgCost ??= $this->getAverageCostPerAsset();
+        $avgCost = Plugin::getInstance()->pricing->estimateCostPerAssetForCurrentProvider();
 
         return [
             'remainingAssets' => $remainingAssets,
             'estimatedCost' => $remainingAssets * $avgCost,
+            'avgCostPerAsset' => $avgCost,
         ];
     }
 

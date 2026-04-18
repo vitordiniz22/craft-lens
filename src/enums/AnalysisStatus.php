@@ -91,6 +91,24 @@ enum AnalysisStatus: string
     }
 
     /**
+     * Statuses where the asset has finished the processing pipeline, whether
+     * successfully or not. Used by bulk progress tracking to distinguish
+     * "done" assets from those still Pending or Processing.
+     *
+     * @return string[]
+     */
+    public static function terminalValues(): array
+    {
+        return [
+            self::Completed->value,
+            self::PendingReview->value,
+            self::Approved->value,
+            self::Failed->value,
+            self::Rejected->value,
+        ];
+    }
+
+    /**
      * Whether an asset in this status should be picked up by analysis.
      */
     public function needsProcessing(): bool

@@ -1,7 +1,11 @@
 {% set isConfigError = failureReasons is defined and failureReasons.hasConfigError %}
 {% set hasFailed = (stats.failed ?? 0) > 0 %}
 {% set hasUnprocessed = (stats.unprocessed ?? 0) > 0 %}
-{% set paneModifier = isConfigError ? 'lens-bulk-pane--warning' : (hasFailed ? 'lens-bulk-pane--warning' : 'lens-bulk-pane--success') %}
+{% set initialCount = session.initialUnprocessed ?? 0 %}
+{% set sessionFailed = failureReasons is defined and failureReasons.totalFailed is defined ? failureReasons.totalFailed : 0 %}
+{% set analyzedThisRun = max(0, initialCount > 0 ? initialCount - sessionFailed : stats.analyzed) %}
+{% set allFailed = hasFailed and initialCount > 0 and analyzedThisRun == 0 %}
+{% set paneModifier = isConfigError or hasFailed ? 'lens-bulk-pane--warning' : 'lens-bulk-pane--success' %}
 
 {% if isConfigError %}
     {# Configuration error: show error with CTA to settings + retry action #}
@@ -33,16 +37,23 @@
     </div>
 {% else %}
     {# Normal completion #}
-    {% set initialCount = session.initialUnprocessed ?? 0 %}
-    {% set sessionFailed = failureReasons is defined and failureReasons.totalFailed is defined ? failureReasons.totalFailed : 0 %}
-    {% set analyzedThisRun = max(0, initialCount > 0 ? initialCount - sessionFailed : stats.analyzed) %}
-
     <div class="pane {{ paneModifier }}">
 
-        {# Header — centered badge + title #}
+        {# Header: icon and title reflect the run outcome (all success,
+           partial failure, or total failure). #}
         <div class="lens-complete-header{% if hasFailed %} lens-complete-header--warning{% endif %}">
-            <span class="lens-complete-icon">{{ iconSvg('check') }}</span>
-            <h2>{{ 'Processing Complete'|t('lens') }}</h2>
+            <span class="lens-complete-icon">
+                {{ iconSvg(allFailed ? 'triangle-exclamation' : (hasFailed ? 'circle-exclamation' : 'check')) }}
+            </span>
+            <h2>
+                {% if allFailed %}
+                    {{ 'Processing Failed'|t('lens') }}
+                {% elseif hasFailed %}
+                    {{ 'Processing Completed with Errors'|t('lens') }}
+                {% else %}
+                    {{ 'Processing Complete'|t('lens') }}
+                {% endif %}
+            </h2>
         </div>
 
         {# Hero result #}
@@ -95,23 +106,24 @@
             {% if groups|length == 1 %}
                 {% set group = groups[0] %}
 
-                <div class="lens-inline-notice lens-inline-notice--warning" data-lens-target="error-groups">
-                    <div class="lens-inline-notice__header">
-                        <span class="lens-inline-notice__icon">{{ iconSvg('triangle-exclamation') }}</span>
-                        <h4 class="lens-inline-notice__title">{{ 'Attention needed'|t('lens') }}</h4>
-                    </div>
-
-                    <div class="lens-inline-notice__content">
-                        {{ group.message }}
-                    </div>
-
-                    {% if group.assets|length > 0 %}
-                        {% include 'lens/_bulk/_error-asset-list' with {
-                            assets: group.assets,
-                            hasMore: group.hasMore,
-                        } only %}
-                    {% endif %}
-                </div>
+                {% embed 'lens/_components/inline-notice' with {
+                    type: allFailed ? 'error' : 'warning',
+                    title: allFailed ? 'Analysis Failed'|t('lens') : 'Some analyses failed'|t('lens'),
+                    attr: {'data-lens-target': 'error-groups'},
+                    group: group,
+                } only %}
+                    {% block body %}
+                        <div class="lens-inline-notice__content">
+                            {{ group.message }}
+                        </div>
+                        {% if group.assets|length > 0 %}
+                            {% include 'lens/_bulk/_error-asset-list' with {
+                                assets: group.assets,
+                                hasMore: group.hasMore,
+                            } only %}
+                        {% endif %}
+                    {% endblock %}
+                {% endembed %}
             {% else %}
                 <div class="lens-error-groups" data-lens-target="error-groups">
                     <div class="lens-error-groups-header">

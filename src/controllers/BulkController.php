@@ -46,10 +46,17 @@ class BulkController extends Controller
         }
 
         $statusService = Plugin::getInstance()->bulkProcessingStatus;
+        $session = $statusService->getSessionData();
+
+        // After actionProcess redirects back here without the volumeId query
+        // param, fall back to the session's scope so stats match the session.
+        if ($volumeId === null && $session !== null && !empty($session['volumeId'])) {
+            $volumeId = (int) $session['volumeId'];
+        }
+
         $statsVolumeScope = $volumeId ?? (count($volumes) < count($allVolumes) ? $enabledVolumeIds : null);
         $stats = $statusService->getStats($statsVolumeScope);
         $state = $statusService->determineState($stats);
-        $session = $statusService->getSessionData();
 
         $templateVars = [
             'stats' => $stats,
@@ -61,8 +68,9 @@ class BulkController extends Controller
 
         if ($state === 'ready') {
             $actionableCount = $stats['unprocessed'] + $stats['failed'];
-            $templateVars['estimatedCost'] = $statusService->getEstimatedCost($actionableCount);
-            $templateVars['costPerImage'] = $actionableCount > 0 ? $templateVars['estimatedCost'] / $actionableCount : 0;
+            $projection = Plugin::getInstance()->statistics->getCostProjection($actionableCount);
+            $templateVars['estimatedCost'] = $projection['estimatedCost'];
+            $templateVars['costPerImage'] = $projection['avgCostPerAsset'];
 
             try {
                 $templateVars['modelName'] = $this->getProviderModelName();
@@ -218,19 +226,23 @@ class BulkController extends Controller
         $transaction = Craft::$app->getDb()->beginTransaction();
 
         try {
-            // Reset status to pending
             AssetAnalysisRecord::updateAll(
                 ['status' => AnalysisStatus::Pending->value],
                 ['status' => AnalysisStatus::Failed->value]
             );
 
-            // Start session tracking — pass retry count so progress tracks Pending assets
-            $statusService = Plugin::getInstance()->bulkProcessingStatus;
-            $statusService->startSession(null, count($failedAssetIds));
+            $retriedIds = array_map('intval', $failedAssetIds);
 
-            // Queue for reprocessing — assets were already reset to Pending above,
-            // so loadData() will pick them up automatically
-            Queue::push(new BulkAnalyzeAssetsJob());
+            // Retry-scoped session: total and progress are based strictly on
+            // these IDs, so other unprocessed assets in the library are not
+            // swept in. If the user cancels, cancelProcessing restores these
+            // to Failed so the retry can be re-initiated.
+            $statusService = Plugin::getInstance()->bulkProcessingStatus;
+            $statusService->startSession(null, $retriedIds);
+
+            // Queue job scoped to the same IDs so Craft's queue progress
+            // matches the Lens session counter (N/N retried, not N/total).
+            Queue::push(new BulkAnalyzeAssetsJob(['assetIds' => $retriedIds]));
 
             $transaction->commit();
         } catch (\Throwable $e) {

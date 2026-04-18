@@ -27,11 +27,6 @@ class BulkProcessingStatusService extends Component
      */
     private const COMPLETE_STATE_DURATION = 300;
 
-    /**
-     * Default token estimates for cost calculation when no historical data exists.
-     */
-    private const DEFAULT_INPUT_TOKENS = 1500;
-    private const DEFAULT_OUTPUT_TOKENS = 500;
     private const SESSION_TTL = 3600;
 
     /**
@@ -95,45 +90,46 @@ class BulkProcessingStatusService extends Component
     }
 
     /**
-     * Estimate the cost for processing unprocessed assets.
-     * Always uses current provider settings for accurate estimates.
-     */
-    public function getEstimatedCost(int $unprocessedCount): float
-    {
-        if ($unprocessedCount === 0) {
-            return 0.0;
-        }
-
-        // Always estimate based on current provider settings
-        // This ensures the estimate reflects the user's current configuration
-        return $this->estimateCostFromTokens($unprocessedCount);
-    }
-
-    /**
-     * Start a new processing session.
+     * Start a new processing session. Two modes:
+     *   - Bulk (default): scopes to $volumeId and counts all currently unprocessed
+     *     image assets within that scope.
+     *   - Retry: if $retriedFailedAssetIds is non-empty, scopes strictly to those
+     *     asset IDs. On cancel, cancelProcessing restores these IDs to Failed
+     *     so the retry can be re-initiated.
      *
-     * @param int|null $volumeId Scope to a specific volume
-     * @param int $additionalCount Extra assets being re-queued (e.g. retried failures reset to Pending)
+     * @param int|null $volumeId Scope to a specific volume (bulk mode only)
+     * @param int[] $retriedFailedAssetIds Asset IDs being retried after previous failure
      */
-    public function startSession(?int $volumeId = null, int $additionalCount = 0): void
+    public function startSession(?int $volumeId = null, array $retriedFailedAssetIds = []): void
     {
-        $cacheKey = $this->getSessionCacheKey();
-        $unprocessedCount = $this->getUnprocessedCount($volumeId);
-        $initialCount = $unprocessedCount + $additionalCount;
+        $isRetry = !empty($retriedFailedAssetIds);
+        $initialCount = $isRetry
+            ? count($retriedFailedAssetIds)
+            : $this->getUnprocessedCount($volumeId);
+
+        // Snapshot how many assets in scope were already in a terminal state
+        // (Completed, PendingReview, Approved, Failed, Rejected). Progress is
+        // computed as (currentTerminal - initialTerminal), so the counter
+        // advances only when a session asset actually finishes.
+        $initialTerminalCount = $isRetry
+            ? 0
+            : $this->countByStatus(AnalysisStatus::terminalValues(), $volumeId);
 
         Logger::info(LogCategory::JobStarted, 'Bulk processing session started', context: [
             'volumeId' => $volumeId,
             'initialUnprocessed' => $initialCount,
-            'additionalCount' => $additionalCount,
+            'initialTerminalCount' => $initialTerminalCount,
+            'isRetry' => $isRetry,
         ]);
 
-        Craft::$app->getCache()->set($cacheKey, [
+        Craft::$app->getCache()->set($this->getSessionCacheKey(), [
             'startedAt' => time(),
             'volumeId' => $volumeId,
             'initialUnprocessed' => $initialCount,
-            'includesPending' => $additionalCount > 0,
+            'initialTerminalCount' => $initialTerminalCount,
+            'retriedFailedAssetIds' => $retriedFailedAssetIds,
             'completedAt' => null,
-        ], self::SESSION_TTL); // 1 hour TTL
+        ], self::SESSION_TTL);
     }
 
     /**
@@ -272,29 +268,46 @@ class BulkProcessingStatusService extends Component
      */
     public function getProgress(?array $session, array $stats): array
     {
-        $initialUnprocessed = $session['initialUnprocessed'] ?? $stats['unprocessed'];
-        $includesPending = $session['includesPending'] ?? false;
+        $retriedIds = $session['retriedFailedAssetIds'] ?? [];
 
-        // For retry sessions, "remaining" includes Pending + Processing assets
-        // (they have records but haven't reached a final status yet).
-        // For normal sessions, "remaining" is truly unprocessed assets (no record).
-        if ($includesPending) {
-            $pendingCount = $this->countByStatus(
-                [AnalysisStatus::Pending->value],
-                $session['volumeId'] ?? null
-            );
-            $remaining = $stats['unprocessed'] + $pendingCount + ($stats['processing'] ?? 0);
+        if (!empty($retriedIds)) {
+            // Retry session: total and remaining are strictly the retried IDs.
+            // "Remaining" = retried assets still in Pending or Processing; once
+            // they reach any terminal status (Completed, Failed, etc.) they
+            // count as done for this session.
+            $initialUnprocessed = count($retriedIds);
+            $remaining = (int) AssetAnalysisRecord::find()
+                ->where(['in', 'assetId', $retriedIds])
+                ->andWhere(['in', 'status', [
+                    AnalysisStatus::Pending->value,
+                    AnalysisStatus::Processing->value,
+                ]])
+                ->count();
+            $completed = max(0, $initialUnprocessed - $remaining);
         } else {
-            $remaining = $stats['unprocessed'];
+            // Bulk session: completed = assets that reached a terminal state
+            // since this session started. Mid-flight (Processing) assets are
+            // still "remaining" until they actually finish.
+            $initialUnprocessed = $session['initialUnprocessed'] ?? $stats['unprocessed'];
+            $initialTerminalCount = $session['initialTerminalCount'] ?? 0;
+            $volumeId = $session['volumeId'] ?? null;
+
+            $currentTerminalCount = $this->countByStatus(
+                AnalysisStatus::terminalValues(),
+                $volumeId,
+            );
+
+            $completed = max(0, min(
+                $initialUnprocessed,
+                $currentTerminalCount - $initialTerminalCount,
+            ));
+            $remaining = max(0, $initialUnprocessed - $completed);
         }
 
         $total = max($initialUnprocessed, 1);
-        $completed = max(0, $initialUnprocessed - $remaining);
         $percentComplete = ($completed / $total) * 100;
 
-        // Calculate rate and ETA
-        $elapsed = time() - ($session['startedAt'] ?? time());
-        $rate = ($elapsed > 10 && $completed > 0) ? $completed / $elapsed : null;
+        $rate = $this->recordProgressSample($session, $completed);
         $etaSeconds = ($rate !== null && $rate > 0 && $remaining > 0)
             ? (int) ($remaining / $rate)
             : null;
@@ -304,7 +317,7 @@ class BulkProcessingStatusService extends Component
         if ($session !== null && isset($session['startedAt'])) {
             $sessionFailed = (int) AssetAnalysisRecord::find()
                 ->where(['status' => AnalysisStatus::Failed->value])
-                ->andWhere(['>=', 'processedAt', date('Y-m-d H:i:s', $session['startedAt'])])
+                ->andWhere(['>=', 'processedAt', gmdate('Y-m-d H:i:s', $session['startedAt'])])
                 ->count();
         }
 
@@ -314,10 +327,39 @@ class BulkProcessingStatusService extends Component
             'failed' => $sessionFailed,
             'remaining' => $remaining,
             'percentComplete' => round($percentComplete, 1),
-            'rate' => $rate !== null ? round($rate, 1) : null,
+            'rate' => $rate,
             'etaSeconds' => $etaSeconds,
             'etaFormatted' => $etaSeconds !== null ? self::formatDuration($etaSeconds) : null,
         ];
+    }
+
+    /**
+     * Recompute the rate only when a new asset has completed since the last
+     * poll. Between completions the stored rate is returned unchanged, so the
+     * ETA stays constant between events and drops by one asset's worth of time
+     * when a completion lands. Returns null before the first completion.
+     *
+     * The session is written back on every poll so its 1-hour TTL refreshes
+     * even during slow stretches with no completions.
+     */
+    private function recordProgressSample(?array $session, int $completed): ?float
+    {
+        if ($session === null) {
+            return null;
+        }
+
+        $lastCompleted = $session['lastRecordedCompleted'] ?? 0;
+        $elapsed = time() - ($session['startedAt'] ?? time());
+        $hasNewCompletion = $completed > $lastCompleted && $elapsed > 0;
+
+        if ($hasNewCompletion) {
+            $session['lastRecordedCompleted'] = $completed;
+            $session['lastRecordedRate'] = $completed / $elapsed;
+        }
+
+        Craft::$app->getCache()->set($this->getSessionCacheKey(), $session, self::SESSION_TTL);
+
+        return $session['lastRecordedRate'] ?? null;
     }
 
     /**
@@ -391,7 +433,7 @@ class BulkProcessingStatusService extends Component
     private function getSessionCost(int $startedAt): float
     {
         return (float) (AssetAnalysisRecord::find()
-            ->where(['>=', 'processedAt', date('Y-m-d H:i:s', $startedAt)])
+            ->where(['>=', 'processedAt', gmdate('Y-m-d H:i:s', $startedAt)])
             ->sum('actualCost') ?? 0.0);
     }
 
@@ -469,24 +511,6 @@ class BulkProcessingStatusService extends Component
         return 'lens_bulk_session_' . $userId;
     }
 
-    /**
-     * Estimate cost based on default token usage and current provider.
-     */
-    private function estimateCostFromTokens(int $assetCount): float
-    {
-        try {
-            $costPerAsset = Plugin::getInstance()->pricing->calculateCostForCurrentProvider(
-                self::DEFAULT_INPUT_TOKENS,
-                self::DEFAULT_OUTPUT_TOKENS
-            );
-        } catch (\Throwable $e) {
-            Logger::warning(LogCategory::JobStatus, 'Cost estimation failed, using fallback', exception: $e);
-            $costPerAsset = 0.001;
-        }
-
-        return $costPerAsset * $assetCount;
-    }
-
     // =========================================================================
     // Count Methods
     // =========================================================================
@@ -559,8 +583,15 @@ class BulkProcessingStatusService extends Component
      */
     public function cancelProcessing(): int
     {
-        // Always clear the session first — even if queue cleanup fails,
-        // the running job checks for session existence and will stop.
+        // Read retriedFailedAssetIds before clearing the session. They're
+        // used below to restore Failed status on assets the session flipped
+        // to Pending.
+        $session = $this->getSessionData();
+        $retriedFailedAssetIds = $session['retriedFailedAssetIds'] ?? [];
+
+        // Clear the session first. Any still-running job checks for session
+        // existence on each iteration and will stop on its own, so session
+        // removal is the authoritative "cancelled" signal.
         Craft::$app->getCache()->delete($this->getSessionCacheKey());
         Craft::$app->getCache()->delete($this->getSessionCacheKey() . '_previous_state');
 
@@ -584,8 +615,23 @@ class BulkProcessingStatusService extends Component
                 $cancelled = count($jobIds);
             }
 
-            // Delete incomplete analysis records so assets become truly unprocessed
-            // and will be picked up by the next bulk run.
+            // Restore retried-but-not-finished failures back to Failed so the
+            // user can retry again. Assets that already re-analyzed to a
+            // terminal status (Completed, PendingReview, etc.) are skipped.
+            if (!empty($retriedFailedAssetIds)) {
+                AssetAnalysisRecord::updateAll(
+                    ['status' => AnalysisStatus::Failed->value],
+                    [
+                        'and',
+                        ['in', 'assetId', $retriedFailedAssetIds],
+                        ['in', 'status', [AnalysisStatus::Pending->value, AnalysisStatus::Processing->value]],
+                    ]
+                );
+            }
+
+            // Delete any remaining Processing records (these are non-retried
+            // assets that were mid-flight when cancelled) so they become truly
+            // unprocessed and will be picked up by the next bulk run.
             AssetAnalysisRecord::deleteAll(
                 ['status' => AnalysisStatus::Processing->value]
             );
@@ -626,7 +672,7 @@ class BulkProcessingStatusService extends Component
             ->where(['status' => AnalysisStatus::Failed->value]);
 
         if ($session !== null && isset($session['startedAt'])) {
-            $query->andWhere(['>=', 'processedAt', date('Y-m-d H:i:s', $session['startedAt'])]);
+            $query->andWhere(['>=', 'processedAt', gmdate('Y-m-d H:i:s', $session['startedAt'])]);
         }
 
         $failedAnalysisIds = $query->column();
