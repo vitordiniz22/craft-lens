@@ -137,4 +137,9 @@ class LensTwigGlobal
         $plugin = Plugin::getInstance();
         return $plugin->getIsPro() && $plugin->getSettings()->requireReviewBeforeApply;
     }
+
+    public function getPendingReviewCount(): int
+    {
+        return Plugin::getInstance()->review->getPendingReviewCount();
+    }
 }

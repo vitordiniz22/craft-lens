@@ -55,23 +55,6 @@
   letter-spacing: 0.5px;
 }
 
-.lens-coverage-bar__legend {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-  margin-top: 8px;
-  flex-wrap: wrap;
-}
-
-.lens-coverage-bar__legend a {
-  text-decoration: none;
-}
-
-.lens-coverage-bar__legend a:hover {
-  opacity: 0.8;
-}
-
-
 /* =========================================================================
    State-specific Pane Borders
    ========================================================================= */
@@ -286,13 +269,10 @@
 
 
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .lens-complete-actions {
     flex-direction: column;
-  }
-
-  .lens-coverage-bar__legend {
-    gap: 4px;
+    align-items: center;
   }
 }
 

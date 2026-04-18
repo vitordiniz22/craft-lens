@@ -32,16 +32,28 @@
         <div class="lens-progress">
             <div class="lens-progress__fill" style="width: {{ analyzedPercent }}%"></div>
         </div>
-        {% if (not lens.isReviewActive or stats.pendingReview == 0) and stats.unprocessed == 0 and stats.failed == 0 %}
-            <div class="lens-coverage-bar__legend">
-                <span class="lens-badge lens-badge--small lens-badge--success">
-                    {{ 'All analyzed'|t('lens') }}
-                </span>
-            </div>
-        {% endif %}
     </div>
 
-    {% if stats.unprocessed == 0 and stats.failed == 0 %}
+    {% if stats.totalImages == 0 %}
+        {% set selectedVolume = selectedVolumeId ? volumes|filter(v => v.id == selectedVolumeId)|first : null %}
+        {% set emptyDescription = selectedVolume
+            ? 'There are no images in {volume} yet. Upload images to this volume to get started.'|t('lens', {volume: selectedVolume.name})
+            : 'There are no images in your library yet. Upload images to get started.'|t('lens')
+        %}
+
+        <hr>
+
+        {% include 'lens/_components/empty-state' with {
+            heading: 'No Images Found'|t('lens'),
+            description: emptyDescription,
+        } only %}
+
+        {% if lens.pendingReviewCount > 0 and lens.isReviewActive %}
+            <div class="lens-complete-actions">
+                <a href="{{ _reviewUrl }}" class="btn">{{ 'Review Assets'|t('lens') }}</a>
+            </div>
+        {% endif %}
+    {% elseif stats.unprocessed == 0 and stats.failed == 0 %}
         {% set selectedVolume = selectedVolumeId ? volumes|filter(v => v.id == selectedVolumeId)|first : null %}
         {% set doneDescription = selectedVolume
             ? 'Every image in {volume} has been analyzed.'|t('lens', {volume: selectedVolume.name})
@@ -51,14 +63,16 @@
             {% set doneDescription = doneDescription ~ ' ' ~ 'New uploads will be analyzed automatically.'|t('lens') %}
         {% endif %}
 
+        <hr>
+
         {% include 'lens/_components/empty-state' with {
             heading: 'All Assets Analyzed'|t('lens'),
             description: doneDescription,
         } only %}
 
-        {% if stats.pendingReview > 0 and lens.isReviewActive %}
+        {% if lens.pendingReviewCount > 0 and lens.isReviewActive %}
             <div class="lens-complete-actions">
-                <a href="{{ _reviewUrl }}" class="btn submit">{{ 'Review Assets'|t('lens') }}</a>
+                <a href="{{ _reviewUrl }}" class="btn">{{ 'Review Assets'|t('lens') }}</a>
             </div>
         {% endif %}
     {% else %}
@@ -124,7 +138,7 @@
                     </button>
                 </form>
             {% endif %}
-            {% if stats.pendingReview > 0 and lens.isReviewActive %}
+            {% if lens.pendingReviewCount > 0 and lens.isReviewActive %}
                 <a href="{{ _reviewUrl }}" class="btn">{{ 'Review Assets'|t('lens') }}</a>
             {% endif %}
         </div>
