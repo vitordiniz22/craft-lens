@@ -6,7 +6,6 @@ namespace vitordiniz22\craftlens\helpers;
 
 use craft\web\Request;
 use vitordiniz22\craftlens\enums\LogCategory;
-use vitordiniz22\craftlens\enums\QuickFilter;
 use vitordiniz22\craftlens\Plugin;
 
 /**
@@ -21,7 +20,7 @@ class FilterParser
         'confidenceMin', 'confidenceMax',
         'nsfwScoreMin', 'nsfwScoreMax',
         'processedFrom', 'processedTo',
-        'color', 'colorTolerance', 'hasDuplicates', 'quickFilter',
+        'color', 'colorTolerance', 'hasDuplicates',
         'hasWatermark', 'watermarkType', 'containsBrandLogo',
         'hasFocalPoint',
         'nsfwFlagged', 'missingAltText', 'unprocessed',
@@ -47,7 +46,6 @@ class FilterParser
         self::parseMissingAltText($request, $filters);
         self::parseEnumFilters($request, $filters);
         self::parseArrayFilters($request, $filters);
-        self::parseQuickFilter($request, $filters);
         self::parsePagination($request, $filters);
         self::parseNsfwFlagged($request, $filters);
         self::parseSimilarTo($request, $filters);
@@ -56,22 +54,10 @@ class FilterParser
     }
 
     /**
-     * Check if any filter is active, including quick filters.
-     */
-    public static function hasAnyFilters(array $filters): bool
-    {
-        return !empty(array_intersect_key($filters, array_flip(self::FILTER_KEYS)));
-    }
-
-    /**
-     * Check if manual (non-quick) filters are active — used for auto-opening the filter panel.
+     * Check if any filter is currently active.
      */
     public static function hasActiveFilters(array $filters): bool
     {
-        if (isset($filters['quickFilter'])) {
-            return false;
-        }
-
         return !empty(array_intersect_key($filters, array_flip(self::FILTER_KEYS)));
     }
 
@@ -126,7 +112,7 @@ class FilterParser
             'nsfwScore' => [
                 'min' => 'nsfwScoreMin',
                 'max' => 'nsfwScoreMax',
-                'transform' => fn($v) => max(0, min(100, (int) $v)) / 100,
+                'transform' => fn($v) => max(0.0, min(1.0, (float) $v)),
             ],
         ];
 
@@ -231,17 +217,6 @@ class FilterParser
                     $filters[$key] = $filtered;
                 }
             }
-        }
-    }
-
-    private static function parseQuickFilter(Request $request, array &$filters): void
-    {
-        $quickFilter = $request->getQueryParam('quickFilter');
-
-        if ($quickFilter !== null && QuickFilter::tryFrom($quickFilter) !== null) {
-            $plugin = Plugin::getInstance();
-            $filters = $plugin->search->applyQuickFilter($quickFilter, $filters);
-            $filters['quickFilter'] = $quickFilter;
         }
     }
 

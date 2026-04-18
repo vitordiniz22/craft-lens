@@ -10,7 +10,6 @@ use craft\web\Controller;
 use vitordiniz22\craftlens\controllers\traits\RequiresAiProviderTrait;
 use vitordiniz22\craftlens\controllers\traits\ValidatesIdsTrait;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
-use vitordiniz22\craftlens\enums\QuickFilter;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\FilterParser;
 use vitordiniz22\craftlens\helpers\Logger;
@@ -90,9 +89,8 @@ class SearchController extends Controller
             'limit' => $results['limit'],
             'filters' => $filters,
             'statusOptions' => $plugin->search->getStatusOptions(),
-            'quickFilters' => $plugin->search->getQuickFilters(),
-            'quickFilterDerivedParams' => QuickFilter::derivedParamsMap(),
-            'hasFilters' => FilterParser::hasAnyFilters($filters),
+            'quickFilters' => $plugin->search->getQuickFilters($filters),
+            'hasFilters' => FilterParser::hasActiveFilters($filters),
             'showFilterPanel' => false,
             'hasActiveFilters' => FilterParser::hasActiveFilters($filters),
             'analysisMap' => $analysisMap,

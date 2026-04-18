@@ -8,10 +8,9 @@ enum QuickFilter: string
 {
     case LowConfidence = 'low-confidence';
     case NeedsReview = 'needs-review';
+    case MissingAltText = 'missing-alt-text';
     case WithPeople = 'with-people';
-    case NsfwFlagged = 'nsfw-flagged';
-    case NsfwCaution = 'nsfw-caution';
-    case Recent7d = 'recent-7d';
+    case Nsfw = 'nsfw';
     case HasDuplicates = 'has-duplicates';
 
     public function label(): string
@@ -19,10 +18,9 @@ enum QuickFilter: string
         return match ($this) {
             self::LowConfidence => 'Low Confidence',
             self::NeedsReview => 'Needs Review',
+            self::MissingAltText => 'Missing Alt Text',
             self::WithPeople => 'With People',
-            self::NsfwFlagged => 'NSFW Flagged',
-            self::NsfwCaution => 'NSFW Caution',
-            self::Recent7d => 'Last 7 Days',
+            self::Nsfw => 'NSFW',
             self::HasDuplicates => 'Has Duplicates',
         };
     }
@@ -32,64 +30,48 @@ enum QuickFilter: string
         return match ($this) {
             self::LowConfidence => 'alert',
             self::NeedsReview => 'eye',
+            self::MissingAltText => 'universal-access',
             self::WithPeople => 'users',
-            self::NsfwFlagged, self::NsfwCaution => 'warning',
-            self::Recent7d => 'clock',
+            self::Nsfw => 'warning',
             self::HasDuplicates => 'copy',
         };
     }
 
     /**
-     * Apply this quick filter's parameters to a filters array.
+     * The raw filter params this preset represents. Used both for URL
+     * generation (clicking the button) and activation detection.
      *
-     * @param array<string, mixed> $filters
      * @return array<string, mixed>
      */
-    public function applyToFilters(array $filters): array
+    public function params(): array
     {
         return match ($this) {
-            self::LowConfidence => [...$filters, 'confidenceMax' => 0.7],
-            self::NeedsReview => [...$filters, 'status' => [AnalysisStatus::PendingReview->value]],
-            self::WithPeople => [...$filters, 'containsPeople' => true],
-            self::NsfwFlagged => [...$filters, 'nsfwScoreMin' => 0.5],
-            self::NsfwCaution => [...$filters, 'nsfwScoreMin' => 0.2, 'nsfwScoreMax' => 0.499],
-            self::Recent7d => [...$filters, 'processedFrom' => (new \DateTime())->modify('-7 days')],
-            self::HasDuplicates => [...$filters, 'hasDuplicates' => true],
+            self::LowConfidence => ['confidenceMax' => 0.7],
+            self::NeedsReview => ['status' => [AnalysisStatus::PendingReview->value]],
+            self::MissingAltText => ['missingAltText' => true],
+            self::WithPeople => ['containsPeople' => true],
+            self::Nsfw => ['nsfwScoreMin' => 0.5],
+            self::HasDuplicates => ['hasDuplicates' => true],
         };
     }
 
     /**
-     * The filter param key this quick filter implicitly sets, used to suppress
-     * its individual chip when the quick filter chip is already shown.
-     * Returns null when no individual chip corresponds to this quick filter.
-     */
-    public function derivedParam(): ?string
-    {
-        return match ($this) {
-            self::NeedsReview => 'status',
-            self::WithPeople => 'containsPeople',
-            self::Recent7d => 'processedFrom',
-            self::HasDuplicates => 'hasDuplicates',
-            default => null,
-        };
-    }
-
-    /**
-     * Builds a reverse map of [filterParam => quickFilterValue] for chip suppression.
+     * True when the given filters contain every param this preset sets with matching values.
      *
-     * @return array<string, string>
+     * @param array<string, mixed> $filters
      */
-    public static function derivedParamsMap(): array
+    public function matches(array $filters): bool
     {
-        $map = [];
+        foreach ($this->params() as $key => $value) {
+            if (!array_key_exists($key, $filters)) {
+                return false;
+            }
 
-        foreach (self::cases() as $case) {
-            $param = $case->derivedParam();
-            if ($param !== null) {
-                $map[$param] = $case->value;
+            if ($filters[$key] != $value) {
+                return false;
             }
         }
 
-        return $map;
+        return true;
     }
 }

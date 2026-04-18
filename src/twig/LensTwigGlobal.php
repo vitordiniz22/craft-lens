@@ -6,6 +6,7 @@ namespace vitordiniz22\craftlens\twig;
 
 use craft\elements\Asset;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
+use vitordiniz22\craftlens\enums\FilterField;
 use vitordiniz22\craftlens\helpers\AssetTitleHelper;
 use vitordiniz22\craftlens\Plugin;
 use vitordiniz22\craftlens\records\AssetAnalysisRecord;
@@ -58,6 +59,17 @@ class LensTwigGlobal
     public function statusLabel(string $value): string
     {
         return AnalysisStatus::tryFrom($value)?->label() ?? $value;
+    }
+
+    /**
+     * Get translated label for a filter field key.
+     * Usage: `lens.filterLabel('hasDuplicates')` → 'Duplicates'
+     */
+    public function filterLabel(string $key): string
+    {
+        $label = FilterField::tryFrom($key)?->label() ?? $key;
+
+        return \Craft::t('lens', $label);
     }
 
     public function getAnalysis(int $assetId): ?AssetAnalysisRecord

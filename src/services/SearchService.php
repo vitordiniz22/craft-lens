@@ -862,40 +862,33 @@ class SearchService extends Component
     /**
      * Get quick filter definitions for the UI.
      *
-     * @return array<string, array{key: string, label: string, icon: string}>
+     * Each entry includes the raw URL params the preset represents and whether
+     * it is currently active against the provided filters.
+     *
+     * @param array<string, mixed> $filters
+     * @return array<string, array{key: string, label: string, icon: string, params: array<string, mixed>, active: bool}>
      */
-    public function getQuickFilters(): array
+    public function getQuickFilters(array $filters = []): array
     {
         $isReviewActive = Plugin::getInstance()->getIsPro()
             && Plugin::getInstance()->getSettings()->requireReviewBeforeApply;
 
-        $filters = [];
+        $quickFilters = [];
 
         foreach (QuickFilter::cases() as $case) {
             if ($case === QuickFilter::NeedsReview && !$isReviewActive) {
                 continue;
             }
-            $filters[$case->value] = [
+
+            $quickFilters[$case->value] = [
                 'key' => $case->value,
                 'label' => Craft::t('lens', $case->label()),
                 'icon' => $case->icon(),
+                'params' => $case->params(),
+                'active' => $case->matches($filters),
             ];
         }
 
-        return $filters;
-    }
-
-    /**
-     * Apply a quick filter preset to the filters array.
-     */
-    public function applyQuickFilter(string $key, array $filters): array
-    {
-        $case = QuickFilter::tryFrom($key);
-
-        if ($case === null) {
-            return $filters;
-        }
-
-        return $case->applyToFilters($filters);
+        return $quickFilters;
     }
 }
