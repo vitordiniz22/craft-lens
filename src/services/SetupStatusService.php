@@ -8,6 +8,7 @@ use Craft;
 use vitordiniz22\craftlens\enums\AiProvider;
 use vitordiniz22\craftlens\enums\SetupSeverity;
 use vitordiniz22\craftlens\fieldlayoutelements\LensAnalysisElement;
+use vitordiniz22\craftlens\helpers\ImageMetricsAnalyzer;
 use vitordiniz22\craftlens\models\Settings;
 use vitordiniz22\craftlens\Plugin;
 use yii\base\Component;
@@ -21,6 +22,7 @@ class SetupStatusService extends Component
     public const CATEGORY_AI_PROVIDER = 'ai_provider';
     public const CATEGORY_VOLUMES = 'volumes';
     public const CATEGORY_FIELD_LAYOUT = 'field_layout';
+    public const CATEGORY_EXTENSIONS = 'extensions';
 
     private const DOCS_BASE_URL = 'https://github.com/vitordiniz22/craft-lens/wiki/';
 
@@ -41,6 +43,7 @@ class SetupStatusService extends Component
             $this->checkAiProviderConfigured(),
             $this->checkVolumesEnabled(),
             $this->checkAnalysisPanelConfigured(),
+            $this->checkImagickAvailable(ImageMetricsAnalyzer::isAvailable()),
         ];
 
         if (Plugin::getInstance()->getIsPro()) {
@@ -276,6 +279,21 @@ class SetupStatusService extends Component
             'docsUrl' => self::DOCS_BASE_URL . 'Getting-Started#adding-the-analysis-panel',
             'isResolved' => $isResolved,
             'prerequisites' => ['volumes_enabled'],
+        ];
+    }
+
+    private function checkImagickAvailable(bool $isResolved): array
+    {
+        return [
+            'key' => 'imagick_available',
+            'category' => self::CATEGORY_EXTENSIONS,
+            'severity' => SetupSeverity::Warning->value,
+            'message' => Craft::t('lens', 'Install the Imagick PHP extension to unlock local image quality checks (sharpness, exposure, contrast, compression, color profile). Lens still analyzes images without it, those metrics just stay hidden.'),
+            'actionLabel' => '',
+            'actionUrl' => '',
+            'docsUrl' => self::DOCS_BASE_URL . 'Getting-Started#enabling-imagick-recommended',
+            'isResolved' => $isResolved,
+            'prerequisites' => [],
         ];
     }
 

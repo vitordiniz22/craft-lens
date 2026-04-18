@@ -80,14 +80,16 @@
                             {{ 'Learn more'|t('lens') }}
                         </a>
                     {% endif %}
-                    {% if isLocked %}
-                        <button type="button" class="btn small disabled" disabled aria-disabled="true">
-                            {{ check.actionLabel }}
-                        </button>
-                    {% else %}
-                        <a href="{{ cpUrl(check.actionUrl) }}" class="btn small {{ check.severity == 'critical' ? 'submit' }}">
-                            {{ check.actionLabel }}
-                        </a>
+                    {% if check.actionUrl ?? false %}
+                        {% if isLocked %}
+                            <button type="button" class="btn small disabled" disabled aria-disabled="true">
+                                {{ check.actionLabel }}
+                            </button>
+                        {% else %}
+                            <a href="{{ cpUrl(check.actionUrl) }}" class="btn small {{ check.severity == 'critical' ? 'submit' }}">
+                                {{ check.actionLabel }}
+                            </a>
+                        {% endif %}
                     {% endif %}
                 </div>
             </div>
