@@ -373,16 +373,6 @@
     color: var(--text-color);
 }
 
-.lens-usage__projection--complete {
-    justify-content: center;
-    color: var(--success-color);
-    font-weight: 500;
-}
-
-.lens-usage__projection--complete [data-icon] {
-    margin-right: 4px;
-}
-
 
 /* ==========================================================================
    Responsive
