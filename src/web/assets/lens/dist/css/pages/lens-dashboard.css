@@ -240,12 +240,6 @@
    Section 5: Quick Insights
    ========================================================================== */
 
-.lens-insights__grid {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 24px;
-}
-
 .lens-insights__block {
     min-width: 0;
 }
@@ -253,11 +247,6 @@
 /* Intentional Craft CP override: adjust badge spacing within native Craft chips */
 .inline-chips .chip .badge {
     margin-left: 4px;
-}
-
-.lens-insights__colors {
-    display: flex;
-    gap: 8px;
 }
 
 /* ==========================================================================
@@ -394,10 +383,6 @@
 
     .lens-dashboard-welcome__stat-value {
         font-size: 20px;
-    }
-
-    .lens-insights__grid {
-        grid-template-columns: 1fr;
     }
 
     .lens-attention__cards {

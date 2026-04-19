@@ -81,8 +81,7 @@ class DashboardController extends Controller
                 'focalPointCoverage' => $stats->getFocalPointCoverage(),
 
                 // Section 4: Quick Insights
-                'topTags' => $stats->getTopTags(10),
-                'dominantColors' => $stats->getDominantColors(5),
+                'topTags' => $stats->getTopTags(25),
 
                 // Section 5: Recent Activity
                 'recentActivity' => $stats->getRecentActivity(10),
