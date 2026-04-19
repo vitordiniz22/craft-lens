@@ -22,7 +22,6 @@
 
         _shouldInit: function() {
             return document.querySelector('[data-lens-control="bulk-volume-select"]') !== null ||
-                   document.querySelector('[data-lens-action="toggle-error-group"]') !== null ||
                    document.querySelector('[data-lens-action="bulk-submit"]') !== null ||
                    document.querySelector('[data-lens-action="bulk-cancel"]') !== null;
         },
@@ -38,17 +37,6 @@
                 } else {
                     window.location.href = Craft.getCpUrl('lens/bulk', params);
                 }
-            });
-
-            DOM.delegate('[data-lens-action="toggle-error-group"]', 'click', function(e, btn) {
-                var group = btn.closest('[data-lens-target="error-group"]');
-                if (!group) return;
-                var detail = group.querySelector('[data-lens-target="error-group-detail"]');
-                if (!detail) return;
-                var isExpanded = !detail.hidden;
-                DOM.toggle(detail, !isExpanded);
-                group.classList.toggle('lens-error-group--expanded', !isExpanded);
-                btn.setAttribute('aria-expanded', String(!isExpanded));
             });
 
             // Cancel processing — confirm before submitting

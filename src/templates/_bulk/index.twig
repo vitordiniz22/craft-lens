@@ -4,8 +4,6 @@
 {% set selectedSubnavItem = 'bulk' %}
 
 {% block content %}
-    {% set isConfigError = state == 'complete' and failureReasons is defined and failureReasons.hasConfigError %}
-
     <div class="lens-bulk-page">
 
         {# Render only the current state #}

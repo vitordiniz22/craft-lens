@@ -71,6 +71,23 @@
     padding-left: 0;
 }
 
+.lens-data-table .--thumb img {
+    border-radius: var(--small-border-radius);
+    object-fit: cover;
+    background: var(--gray-100);
+    display: block;
+}
+
+.lens-data-table .--thumb a {
+    display: inline-block;
+    line-height: 0;
+    border-radius: var(--small-border-radius);
+}
+
+.lens-data-table .--thumb a:hover {
+    opacity: 0.85;
+}
+
 .lens-data-table .--nowrap {
     white-space: nowrap;
 }

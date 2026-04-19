@@ -1,200 +1,208 @@
-{% set isConfigError = failureReasons is defined and failureReasons.hasConfigError %}
 {% set hasFailed = (stats.failed ?? 0) > 0 %}
 {% set hasUnprocessed = (stats.unprocessed ?? 0) > 0 %}
+{% set hasNonFailedRemaining = (stats.unprocessed ?? 0) - (stats.failed ?? 0) > 0 %}
 {% set initialCount = session.initialUnprocessed ?? 0 %}
 {% set sessionFailed = failureReasons is defined and failureReasons.totalFailed is defined ? failureReasons.totalFailed : 0 %}
 {% set analyzedThisRun = max(0, initialCount > 0 ? initialCount - sessionFailed : stats.analyzed) %}
 {% set allFailed = hasFailed and initialCount > 0 and analyzedThisRun == 0 %}
-{% set paneModifier = isConfigError or hasFailed ? 'lens-bulk-pane--warning' : 'lens-bulk-pane--success' %}
+{% set paneModifier = hasFailed ? 'lens-bulk-pane--error' : 'lens-bulk-pane--success' %}
+{% set groups = failureReasons is defined ? failureReasons.groups : [] %}
+{% set soloGroup = groups|length == 1 %}
 
-{% if isConfigError %}
-    {# Configuration error: show error with CTA to settings + retry action #}
-    <div class="pane {{ paneModifier }}">
-        {% include 'lens/_components/inline-notice' with {
-            type: 'error',
-            title: 'Processing failed'|t('lens'),
-            message: failureReasons.configErrorMessage,
-            cta: {
-                label: 'Go to Settings'|t('lens'),
-                url: 'lens/settings',
-                small: false,
-            },
-        } only %}
+<div class="pane {{ paneModifier }}">
 
-        <div class="lens-complete-actions">
+    {# Header: icon and title reflect the run outcome (all success,
+       partial failure, or total failure). #}
+    <div class="lens-complete-header{% if hasFailed %} lens-complete-header--error{% endif %}">
+        <span class="lens-complete-icon">
+            {{ iconSvg(hasFailed ? 'circle-exclamation' : 'check') }}
+        </span>
+        <h2>
+            {% if allFailed %}
+                {{ 'Processing Failed'|t('lens') }}
+            {% elseif hasFailed %}
+                {{ 'Processing Completed with Errors'|t('lens') }}
+            {% else %}
+                {{ 'Processing Complete'|t('lens') }}
+            {% endif %}
+        </h2>
+    </div>
+
+    {# Hero result #}
+    <div class="lens-complete-hero">
+        <span class="lens-complete-hero__value{% if hasFailed %} lens-complete-hero__value--error{% endif %}">
+            {% if hasFailed %}
+                {{ analyzedThisRun|number_format }} / {{ initialCount|number_format }}
+            {% else %}
+                {{ analyzedThisRun|number_format }}
+            {% endif %}
+        </span>
+        <span class="lens-complete-hero__label">
+            {% if analyzedThisRun == 0 and hasFailed %}
+                {{ 'all images failed'|t('lens') }}
+            {% elseif hasFailed %}
+                {{ 'images analyzed successfully'|t('lens') }}
+            {% else %}
+                {{ 'images analyzed'|t('lens') }}
+            {% endif %}
+        </span>
+    </div>
+
+    {# Stats row #}
+    <div class="lens-stat-strip">
+        <div class="lens-stat-strip__cell">
+            <div class="lens-stat-strip__icon">{{ iconSvg('clock')|attr({width: 16, height: 16, fill: 'currentColor'}) }}</div>
+            <div class="lens-stat-strip__value">{{ session.durationFormatted ?? '—' }}</div>
+            <div class="lens-stat-strip__label">{{ 'duration'|t('lens') }}</div>
+        </div>
+        {% if session and session.actualCost is defined %}
+            <div class="lens-stat-strip__cell">
+                <div class="lens-stat-strip__icon">{{ iconSvg('coins')|attr({width: 16, height: 16, fill: 'currentColor'}) }}</div>
+                <div class="lens-stat-strip__value">${{ session.actualCost|number_format(4) }}</div>
+                <div class="lens-stat-strip__label">{{ 'cost'|t('lens') }}</div>
+            </div>
+        {% endif %}
+        {% if modelName is defined and modelName %}
+            <div class="lens-stat-strip__cell">
+                <div class="lens-stat-strip__icon">{{ iconSvg('microchip')|attr({width: 16, height: 16, fill: 'currentColor'}) }}</div>
+                <div class="lens-stat-strip__value">{{ modelName }}</div>
+                <div class="lens-stat-strip__label">{{ 'model'|t('lens') }}</div>
+            </div>
+        {% endif %}
+    </div>
+
+    {# Error groups: unified renderer. Solo group is auto-expanded. #}
+    {% if groups|length > 0 %}
+        <hr class="lens-error-groups-divider">
+        <div class="lens-error-groups" data-lens-target="error-groups">
+            <div class="lens-error-groups-header">
+                <span class="lens-error-groups-icon">{{ iconSvg('circle-exclamation') }}</span>
+                <h4 class="lens-error-groups-title">
+                    {% if soloGroup %}
+                        {{ '{count, plural, one {# image failed} other {# images failed}}'|t('lens', {count: failureReasons.totalFailed}) }}
+                    {% else %}
+                        {{ '{count, plural, one {# image failed} other {# images failed}} for {groups} different reasons'|t('lens', {count: failureReasons.totalFailed, groups: groups|length}) }}
+                    {% endif %}
+                </h4>
+            </div>
+
+            {% for group in groups %}
+                {% set isExpanded = soloGroup or not group.showsAssets %}
+                <div class="lens-expander{% if isExpanded %} lens-expander--expanded{% endif %}" data-lens-target="expander">
+                    {% if isExpanded %}
+                        <div class="lens-expander__header lens-expander__header--static">
+                            {% if group.showsAssets %}
+                                <span class="lens-badge lens-badge--error">{{ group.count }}</span>
+                            {% endif %}
+                            <span class="lens-expander__label">{{ group.label }}</span>
+                        </div>
+                    {% else %}
+                        <button type="button" class="lens-expander__header" data-lens-action="toggle-expander" aria-expanded="false">
+                            <span class="lens-expander__toggle">{{ iconSvg('chevron-right') }}</span>
+                            <span class="lens-badge lens-badge--error">{{ group.count }}</span>
+                            <span class="lens-expander__label">{{ group.label }}</span>
+                        </button>
+                    {% endif %}
+
+                    <div class="lens-expander__content" data-lens-target="expander-content"{% if not isExpanded %} hidden{% endif %}>
+                        <p class="lens-error-message">{{ group.message }}</p>
+
+                        {% if group.showsAssets and group.assets|length > 0 %}
+                            <div class="lens-data-table-wrap">
+                                <table class="lens-data-table">
+                                    <thead>
+                                        <tr>
+                                            <th class="--thumb" scope="col"><span class="visually-hidden">{{ 'Preview'|t('lens') }}</span></th>
+                                            <th scope="col">{{ 'File'|t('lens') }}</th>
+                                            <th class="--numeric" scope="col">{{ 'Dimensions'|t('lens') }}</th>
+                                            <th class="--numeric" scope="col">{{ 'Size'|t('lens') }}</th>
+                                            <th class="--nowrap" scope="col">{{ 'Volume'|t('lens') }}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for asset in group.assets %}
+                                            <tr>
+                                                <td class="--thumb">
+                                                    {% if asset.editUrl and asset.thumbUrl %}
+                                                        <a href="{{ asset.editUrl }}" target="_blank" rel="noopener" aria-label="{{ asset.filename }}">
+                                                            <img src="{{ asset.thumbUrl }}" width="36" height="36" loading="lazy" alt="">
+                                                        </a>
+                                                    {% elseif asset.thumbUrl %}
+                                                        <img src="{{ asset.thumbUrl }}" width="36" height="36" loading="lazy" alt="">
+                                                    {% endif %}
+                                                </td>
+                                                <td class="--truncate">
+                                                    {% if asset.editUrl %}
+                                                        <a href="{{ asset.editUrl }}" target="_blank" rel="noopener" title="{{ asset.filename }}">{{ asset.filename }}</a>
+                                                    {% else %}
+                                                        <em class="--light">{{ 'Asset unavailable (ID: {id})'|t('lens', {id: asset.id}) }}</em>
+                                                    {% endif %}
+                                                </td>
+                                                <td class="--numeric --muted">{{ asset.dimensions ?: '—' }}</td>
+                                                <td class="--numeric --muted">{{ asset.size ? asset.size|filesize : '—' }}</td>
+                                                <td class="--nowrap --muted">{{ asset.volume ?: '—' }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                    {% if group.hasMore > 0 %}
+                                        <tfoot>
+                                            <tr>
+                                                <td class="--light --more" colspan="5">{{ 'and {count} more'|t('lens', {count: group.hasMore}) }}</td>
+                                            </tr>
+                                        </tfoot>
+                                    {% endif %}
+                                </table>
+                            </div>
+                        {% endif %}
+
+                        {% if group.isConfigError %}
+                            <div class="lens-error-cta">
+                                <a href="{{ cpUrl('lens/settings') }}" class="btn submit small">{{ 'Go to Settings'|t('lens') }}</a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {# Action buttons #}
+    <div class="lens-complete-actions">
+        {% if lens.pendingReviewCount > 0 and lens.isReviewActive %}
+            <a href="{{ cpUrl('lens/review') }}" class="btn submit">
+                {{ 'Review Assets'|t('lens') }}
+            </a>
+        {% endif %}
+
+        {% if hasNonFailedRemaining %}
+            <form method="post" class="lens-bulk-inline-form">
+                {{ csrfInput() }}
+                {{ actionInput('lens/bulk/process') }}
+                {% if selectedVolumeId is defined and selectedVolumeId %}
+                    <input type="hidden" name="volumeId" value="{{ selectedVolumeId }}">
+                {% endif %}
+                <button type="submit" class="btn{{ (not lens.isReviewActive or lens.pendingReviewCount == 0) ? ' submit' : '' }}" data-lens-action="bulk-submit">
+                    {{ 'Process Remaining'|t('lens') }}
+                </button>
+            </form>
+        {% endif %}
+
+        {% if hasFailed %}
             <form method="post" class="lens-bulk-inline-form">
                 {{ csrfInput() }}
                 {{ actionInput('lens/bulk/retry-failed') }}
-                <button type="submit" class="btn submit" data-lens-action="bulk-submit">
-                    {{ 'Retry'|t('lens') }}
+                <button type="submit" class="btn{{ (not lens.isReviewActive or lens.pendingReviewCount == 0) and not hasUnprocessed ? ' submit' : '' }}" data-lens-action="bulk-submit">
+                    {{ 'Retry {count} Failed'|t('lens', {count: stats.failed|number_format}) }}
                 </button>
             </form>
-
-            <a href="{{ cpUrl('lens/bulk/dismiss') }}" class="btn">
-                {{ 'Start Over'|t('lens') }}
-            </a>
-        </div>
-    </div>
-{% else %}
-    {# Normal completion #}
-    <div class="pane {{ paneModifier }}">
-
-        {# Header: icon and title reflect the run outcome (all success,
-           partial failure, or total failure). #}
-        <div class="lens-complete-header{% if hasFailed %} lens-complete-header--warning{% endif %}">
-            <span class="lens-complete-icon">
-                {{ iconSvg(allFailed ? 'triangle-exclamation' : (hasFailed ? 'circle-exclamation' : 'check')) }}
-            </span>
-            <h2>
-                {% if allFailed %}
-                    {{ 'Processing Failed'|t('lens') }}
-                {% elseif hasFailed %}
-                    {{ 'Processing Completed with Errors'|t('lens') }}
-                {% else %}
-                    {{ 'Processing Complete'|t('lens') }}
-                {% endif %}
-            </h2>
-        </div>
-
-        {# Hero result #}
-        <div class="lens-complete-hero">
-            <span class="lens-complete-hero__value{% if hasFailed %} lens-complete-hero__value--warning{% endif %}">
-                {% if hasFailed %}
-                    {{ analyzedThisRun|number_format }} / {{ initialCount|number_format }}
-                {% else %}
-                    {{ analyzedThisRun|number_format }}
-                {% endif %}
-            </span>
-            <span class="lens-complete-hero__label">
-                {% if analyzedThisRun == 0 and hasFailed %}
-                    {{ 'all images failed'|t('lens') }}
-                {% elseif hasFailed %}
-                    {{ 'images analyzed successfully'|t('lens') }}
-                {% else %}
-                    {{ 'images analyzed'|t('lens') }}
-                {% endif %}
-            </span>
-        </div>
-
-        {# Stats row #}
-        <div class="lens-stat-strip">
-            <div class="lens-stat-strip__cell">
-                <div class="lens-stat-strip__icon">{{ iconSvg('clock')|attr({width: 16, height: 16, fill: 'currentColor'}) }}</div>
-                <div class="lens-stat-strip__value">{{ session.durationFormatted ?? '—' }}</div>
-                <div class="lens-stat-strip__label">{{ 'duration'|t('lens') }}</div>
-            </div>
-            {% if session and session.actualCost is defined and session.actualCost > 0 %}
-                <div class="lens-stat-strip__cell">
-                    <div class="lens-stat-strip__icon">{{ iconSvg('coins')|attr({width: 16, height: 16, fill: 'currentColor'}) }}</div>
-                    <div class="lens-stat-strip__value">${{ session.actualCost|number_format(4) }}</div>
-                    <div class="lens-stat-strip__label">{{ 'cost'|t('lens') }}</div>
-                </div>
-            {% endif %}
-            {% if modelName is defined and modelName %}
-                <div class="lens-stat-strip__cell">
-                    <div class="lens-stat-strip__icon">{{ iconSvg('microchip')|attr({width: 16, height: 16, fill: 'currentColor'}) }}</div>
-                    <div class="lens-stat-strip__value">{{ modelName }}</div>
-                    <div class="lens-stat-strip__label">{{ 'model'|t('lens') }}</div>
-                </div>
-            {% endif %}
-        </div>
-
-        {# Error groups #}
-        {% if failureReasons is defined and failureReasons.groups|length > 0 %}
-            {% set groups = failureReasons.groups %}
-
-            {% if groups|length == 1 %}
-                {% set group = groups[0] %}
-
-                {% embed 'lens/_components/inline-notice' with {
-                    type: allFailed ? 'error' : 'warning',
-                    title: allFailed ? 'Analysis Failed'|t('lens') : 'Some analyses failed'|t('lens'),
-                    attr: {'data-lens-target': 'error-groups'},
-                    group: group,
-                } only %}
-                    {% block body %}
-                        <div class="lens-inline-notice__content">
-                            {{ group.message }}
-                        </div>
-                        {% if group.assets|length > 0 %}
-                            {% include 'lens/_bulk/_error-asset-list' with {
-                                assets: group.assets,
-                                hasMore: group.hasMore,
-                            } only %}
-                        {% endif %}
-                    {% endblock %}
-                {% endembed %}
-            {% else %}
-                <div class="lens-error-groups" data-lens-target="error-groups">
-                    <div class="lens-error-groups-header">
-                        <span class="lens-inline-notice__icon">{{ iconSvg('triangle-exclamation') }}</span>
-                        <h4 class="lens-inline-notice__title">{{ '{count} errors across {groups} error types'|t('lens', {count: failureReasons.totalFailed, groups: groups|length}) }}</h4>
-                    </div>
-
-                    {% for group in groups %}
-                        <div class="lens-error-group" data-lens-target="error-group">
-                            <button type="button" class="lens-error-group-header" data-lens-action="toggle-error-group" aria-expanded="false">
-                                <span class="lens-error-group-toggle">{{ iconSvg('chevron-right') }}</span>
-                                <span class="lens-error-group-count">{{ group.count }}</span>
-                                <span class="lens-error-group-message">{{ group.message }}</span>
-                            </button>
-
-                            <div class="lens-error-group-detail" data-lens-target="error-group-detail" hidden>
-                                {% if group.assets|length > 0 %}
-                                    {% include 'lens/_bulk/_error-asset-list' with {
-                                        assets: group.assets,
-                                        hasMore: group.hasMore,
-                                    } only %}
-                                {% else %}
-                                    <div class="lens-error-no-assets">
-                                        {{ 'Asset details unavailable.'|t('lens') }}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                    {% endfor %}
-                </div>
-            {% endif %}
         {% endif %}
 
-        {# Action buttons #}
-        <div class="lens-complete-actions">
-            {% if lens.pendingReviewCount > 0 and lens.isReviewActive %}
-                <a href="{{ cpUrl('lens/review') }}" class="btn submit">
-                    {{ 'Review Assets'|t('lens') }}
-                </a>
-            {% endif %}
+        {% if (not lens.isReviewActive or lens.pendingReviewCount == 0) and not hasUnprocessed and not hasFailed %}
+            <a href="{{ cpUrl('lens') }}" class="btn submit">
+                {{ 'Back to Dashboard'|t('lens') }}
+            </a>
+        {% endif %}
 
-            {% if hasUnprocessed %}
-                <form method="post" class="lens-bulk-inline-form">
-                    {{ csrfInput() }}
-                    {{ actionInput('lens/bulk/process') }}
-                    {% if selectedVolumeId is defined and selectedVolumeId %}
-                        <input type="hidden" name="volumeId" value="{{ selectedVolumeId }}">
-                    {% endif %}
-                    <button type="submit" class="btn{{ (not lens.isReviewActive or lens.pendingReviewCount == 0) ? ' submit' : '' }}" data-lens-action="bulk-submit">
-                        {{ 'Process Remaining'|t('lens') }}
-                    </button>
-                </form>
-            {% endif %}
-
-            {% if hasFailed %}
-                <form method="post" class="lens-bulk-inline-form">
-                    {{ csrfInput() }}
-                    {{ actionInput('lens/bulk/retry-failed') }}
-                    <button type="submit" class="btn{{ (not lens.isReviewActive or lens.pendingReviewCount == 0) and not hasUnprocessed ? ' submit' : '' }}" data-lens-action="bulk-submit">
-                        {{ 'Retry {count} Failed'|t('lens', {count: stats.failed|number_format}) }}
-                    </button>
-                </form>
-            {% endif %}
-
-            {% if (not lens.isReviewActive or lens.pendingReviewCount == 0) and not hasUnprocessed and not hasFailed %}
-                <a href="{{ cpUrl('lens') }}" class="btn submit">
-                    {{ 'Back to Dashboard'|t('lens') }}
-                </a>
-            {% endif %}
-
-            <a href="{{ cpUrl('lens/bulk/dismiss') }}" class="btn">{{ 'Back to Overview'|t('lens') }}</a>
-        </div>
+        <a href="{{ cpUrl('lens/bulk/dismiss') }}" class="btn">{{ 'Back to Overview'|t('lens') }}</a>
     </div>
-{% endif %}
+</div>

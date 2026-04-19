@@ -731,30 +731,20 @@ abstract class BaseAiProvider implements AiProviderInterface
             }
 
             if ($statusCode === 400 || $statusCode === 401 || $statusCode === 403) {
-                throw new ConfigurationException(
-                    "Your {$this->getDisplayName()} API key is invalid. Please check your credentials in the plugin settings."
-                );
+                throw ConfigurationException::apiKeyInvalidForProvider($this->getDisplayName());
             }
 
             if ($statusCode === 429) {
-                throw new ConfigurationException(
-                    "{$this->getDisplayName()} rate limit exceeded. Please wait a moment and try again."
-                );
+                throw ConfigurationException::rateLimitExceededForProvider($this->getDisplayName());
             }
 
             if ($statusCode !== null && $statusCode >= 500) {
-                throw new ConfigurationException(
-                    "{$this->getDisplayName()} is experiencing issues (HTTP {$statusCode}). Please try again later."
-                );
+                throw ConfigurationException::providerUnavailable($this->getDisplayName(), $statusCode);
             }
 
-            throw new ConfigurationException(
-                "Could not connect to {$this->getDisplayName()}. Please check your internet connection and plugin settings."
-            );
+            throw ConfigurationException::connectionFailed($this->getDisplayName());
         } catch (GuzzleException $e) {
-            throw new ConfigurationException(
-                "Could not connect to {$this->getDisplayName()}. Please check your internet connection and try again."
-            );
+            throw ConfigurationException::connectionFailed($this->getDisplayName());
         }
     }
 }

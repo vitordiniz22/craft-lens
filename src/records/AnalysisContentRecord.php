@@ -17,6 +17,7 @@ use yii\db\ActiveQueryInterface;
  * @property int $id
  * @property int $analysisId
  * @property string|null $errorMessage Error message if analysis failed
+ * @property string|null $errorCode Stable error code (ErrorCode enum value) for grouping
  * @property \DateTime $dateCreated
  * @property \DateTime $dateUpdated
  * @property string $uid

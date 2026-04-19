@@ -11,11 +11,12 @@
                 {% for activity in recentActivity %}
                     <tr>
                         <td class="--thumb">
-                            {% if activity.thumbnailUrl %}
-                                <img src="{{ activity.thumbnailUrl }}"
-                                     alt=""
-                                     class="lens-activity__thumb-img"
-                                     loading="lazy">
+                            {% if activity.thumbnailUrl and activity.assetUrl %}
+                                <a href="{{ activity.assetUrl }}" aria-label="{{ activity.assetTitle }}">
+                                    <img src="{{ activity.thumbnailUrl }}" width="28" height="28" alt="" loading="lazy">
+                                </a>
+                            {% elseif activity.thumbnailUrl %}
+                                <img src="{{ activity.thumbnailUrl }}" width="28" height="28" alt="" loading="lazy">
                             {% else %}
                                 <div class="lens-activity__thumb-placeholder" data-icon="image"></div>
                             {% endif %}

@@ -7,6 +7,7 @@ namespace vitordiniz22\craftlens\services;
 use Craft;
 use craft\elements\Asset;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
+use vitordiniz22\craftlens\enums\ErrorCode;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\jobs\AnalyzeAssetJob;
@@ -659,8 +660,7 @@ class BulkProcessingStatusService extends Component
     /**
      * Get all error groups from failed analyses with asset details.
      *
-     * Returns error messages grouped by distinct message, each with a count
-     * and a list of affected assets (capped at MAX_ASSETS_PER_GROUP).
+     * Groups by stable ErrorCode. Rows with a null errorCode bucket into ErrorCode::Unknown.
      *
      * @return array{groups: array, totalFailed: int}
      */
@@ -678,108 +678,108 @@ class BulkProcessingStatusService extends Component
         $failedAnalysisIds = $query->column();
 
         if (empty($failedAnalysisIds)) {
-            return ['groups' => [], 'totalFailed' => 0, 'hasConfigError' => false];
-        }
-
-        $errorGroups = (new Query())
-            ->select(['errorMessage', 'COUNT(*) as cnt'])
-            ->from(Install::TABLE_ANALYSIS_CONTENT)
-            ->where(['in', 'analysisId', $failedAnalysisIds])
-            ->andWhere(['not', ['errorMessage' => null]])
-            ->groupBy(['errorMessage'])
-            ->orderBy(['cnt' => SORT_DESC])
-            ->all();
-
-        if (empty($errorGroups)) {
-            return ['groups' => [], 'totalFailed' => 0, 'hasConfigError' => false];
+            return ['groups' => [], 'totalFailed' => 0];
         }
 
         $failedDetails = (new Query())
-            ->select(['a.assetId', 'c.errorMessage'])
+            ->select(['a.assetId', 'c.errorCode'])
             ->from([Install::TABLE_ASSET_ANALYSES . ' a'])
             ->innerJoin(Install::TABLE_ANALYSIS_CONTENT . ' c', 'c.[[analysisId]] = a.[[id]]')
             ->where(['in', 'a.id', $failedAnalysisIds])
-            ->andWhere(['not', ['c.errorMessage' => null]])
             ->limit(5000)
             ->all();
 
-        $assetIdsByMessage = [];
+        if (empty($failedDetails)) {
+            return ['groups' => [], 'totalFailed' => 0];
+        }
+
+        $assetIdsByCode = [];
+        $countByCode = [];
 
         foreach ($failedDetails as $row) {
-            $assetIdsByMessage[$row['errorMessage']][] = (int) $row['assetId'];
+            $codeValue = $row['errorCode'] ?? null;
+            $code = ErrorCode::fromValueOrUnknown($codeValue);
+            $codeKey = $code->value;
+
+            $assetIdsByCode[$codeKey] ??= [];
+            $assetIdsByCode[$codeKey][] = (int) $row['assetId'];
+            $countByCode[$codeKey] = ($countByCode[$codeKey] ?? 0) + 1;
         }
+
+        arsort($countByCode);
 
         $allAssetIds = array_unique(array_column($failedDetails, 'assetId'));
         $assets = !empty($allAssetIds)
             ? Asset::find()->id($allAssetIds)->status(null)->indexBy('id')->all()
             : [];
+
         $totalFailed = 0;
         $groups = [];
 
-        foreach ($errorGroups as $eg) {
-            $message = $eg['errorMessage'];
-            $count = (int) $eg['cnt'];
+        foreach ($countByCode as $codeKey => $count) {
+            $code = ErrorCode::from($codeKey);
             $totalFailed += $count;
 
-            $groupAssetIds = $assetIdsByMessage[$message] ?? [];
+            $groupAssetIds = $assetIdsByCode[$codeKey] ?? [];
             $assetList = [];
 
             foreach (array_slice($groupAssetIds, 0, self::MAX_ASSETS_PER_GROUP) as $assetId) {
                 $asset = $assets[$assetId] ?? null;
 
                 if ($asset !== null) {
+                    $volume = $asset->getVolume();
+                    $thumbUrl = null;
+                    if ($asset->kind === Asset::KIND_IMAGE) {
+                        try {
+                            $thumbUrl = Craft::$app->getAssets()->getThumbUrl($asset, 96, 96, false);
+                        } catch (\Throwable) {
+                            $thumbUrl = null;
+                        }
+                    }
+
+                    $dimensions = null;
+                    if ($asset->width && $asset->height) {
+                        $dimensions = $asset->width . '×' . $asset->height;
+                    }
+
                     $assetList[] = [
                         'id' => $asset->id,
                         'filename' => $asset->filename,
                         'editUrl' => $asset->getCpEditUrl(),
+                        'size' => $asset->size !== null ? (int) $asset->size : null,
+                        'volume' => $volume?->name,
+                        'dimensions' => $dimensions,
+                        'thumbUrl' => $thumbUrl,
                     ];
                 } else {
                     $assetList[] = [
                         'id' => $assetId,
                         'filename' => null,
                         'editUrl' => null,
+                        'size' => null,
+                        'volume' => null,
+                        'dimensions' => null,
+                        'thumbUrl' => null,
                     ];
                 }
             }
 
             $groups[] = [
-                'message' => $message,
+                'code' => $code->value,
+                'label' => $code->label(),
+                'message' => $code->groupMessage(),
+                'isConfigError' => $code->isConfigError(),
+                'showsAssets' => $code->showsAssets(),
                 'count' => $count,
                 'assets' => $assetList,
                 'hasMore' => max(0, $count - self::MAX_ASSETS_PER_GROUP),
             ];
         }
 
-        $hasConfigError = false;
-        $configErrorMessage = null;
-
-        foreach ($groups as $group) {
-            if ($this->isConfigurationError($group['message'])) {
-                $hasConfigError = true;
-                $configErrorMessage = $group['message'];
-                break;
-            }
-        }
-
         return [
             'groups' => $groups,
             'totalFailed' => $totalFailed,
-            'hasConfigError' => $hasConfigError,
-            'configErrorMessage' => $configErrorMessage,
         ];
-    }
-
-    /**
-     * Check whether an error message indicates a configuration problem.
-     */
-    private function isConfigurationError(string $message): bool
-    {
-        $lower = strtolower($message);
-
-        return str_contains($lower, 'not configured')
-            || str_contains($lower, 'is invalid')
-            || str_contains($lower, 'api key')
-            || str_contains($lower, 'unauthorized');
     }
 
     /**

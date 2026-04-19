@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace vitordiniz22\craftlens\exceptions;
 
 use Exception;
+use vitordiniz22\craftlens\enums\ErrorCode;
 
 /**
  * Exception thrown when image analysis fails.
@@ -17,6 +18,7 @@ class AnalysisException extends Exception
         public readonly ?int $assetId = null,
         public readonly ?int $statusCode = null,
         public readonly ?string $userMessage = null,
+        public readonly ?ErrorCode $errorCode = null,
         int $code = 0,
         ?\Throwable $previous = null,
     ) {
@@ -39,6 +41,7 @@ class AnalysisException extends Exception
             assetId: $assetId,
             statusCode: $statusCode,
             userMessage: self::buildUserMessage($provider, $message, $statusCode),
+            errorCode: self::codeFor($statusCode, $message),
         );
     }
 
@@ -72,6 +75,36 @@ class AnalysisException extends Exception
         return "Unexpected error from {$provider}. Try again or check the logs.";
     }
 
+    /**
+     * Map an HTTP status and/or raw message to a stable ErrorCode.
+     */
+    private static function codeFor(?int $statusCode, string $message): ErrorCode
+    {
+        if ($statusCode !== null) {
+            return match ($statusCode) {
+                401 => ErrorCode::InvalidApiKey,
+                403 => ErrorCode::AccessDenied,
+                404 => ErrorCode::ModelNotFound,
+                413 => ErrorCode::FileTooLarge,
+                429 => ErrorCode::RateLimit,
+                500, 502, 503 => ErrorCode::ProviderUnavailable,
+                default => ErrorCode::Unknown,
+            };
+        }
+
+        $lower = strtolower($message);
+
+        if (str_contains($lower, 'timed out') || str_contains($lower, 'timeout')) {
+            return ErrorCode::Timeout;
+        }
+
+        if (str_contains($lower, 'connection failed') || str_contains($lower, 'could not resolve') || str_contains($lower, 'connection refused')) {
+            return ErrorCode::ConnectionFailed;
+        }
+
+        return ErrorCode::Unknown;
+    }
+
     public static function invalidResponse(string $provider, ?int $assetId = null, ?string $detail = null): self
     {
         $message = "Invalid response from {$provider}";
@@ -84,6 +117,7 @@ class AnalysisException extends Exception
             provider: $provider,
             assetId: $assetId,
             userMessage: "{$provider} returned an unreadable response. Try again. If this keeps happening, try a different model or provider.",
+            errorCode: ErrorCode::InvalidResponse,
         );
     }
 
@@ -92,6 +126,8 @@ class AnalysisException extends Exception
         return new self(
             message: "Asset {$assetId} is not readable or does not exist",
             assetId: $assetId,
+            userMessage: "The asset could not be read from storage. The file may be missing or corrupted.",
+            errorCode: ErrorCode::AssetNotReadable,
         );
     }
 
@@ -114,8 +150,9 @@ class AnalysisException extends Exception
             message: $technicalMessage,
             provider: $providerName,
             assetId: $assetId,
-            statusCode: 413, // HTTP 413 Payload Too Large
-            userMessage: $userMessage
+            statusCode: 413,
+            userMessage: $userMessage,
+            errorCode: ErrorCode::FileTooLarge,
         );
     }
 }

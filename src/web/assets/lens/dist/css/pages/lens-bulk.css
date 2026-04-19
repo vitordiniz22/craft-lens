@@ -62,6 +62,7 @@
 .lens-bulk-pane--processing { border-top: 3px solid var(--link-color); }
 .lens-bulk-pane--success    { border-top: 3px solid var(--success-color); }
 .lens-bulk-pane--warning    { border-top: 3px solid var(--warning-color); }
+.lens-bulk-pane--error      { border-top: 3px solid var(--error-color); }
 
 
 /* =========================================================================
@@ -224,14 +225,14 @@
   font-weight: 600;
 }
 
-/* Warning variant — failures occurred */
-.lens-complete-header--warning .lens-complete-icon {
-  background: color-mix(in srgb, var(--warning-color) 12%, transparent);
-  color: var(--warning-color);
+/* Error variant — failures occurred */
+.lens-complete-header--error .lens-complete-icon {
+  background: color-mix(in srgb, var(--error-color) 12%, transparent);
+  color: var(--error-color);
 }
 
-.lens-complete-header--warning h2 {
-  color: var(--warning-color);
+.lens-complete-header--error h2 {
+  color: var(--error-color);
 }
 
 /* Hero result — the key outcome number */
@@ -249,8 +250,8 @@
   letter-spacing: -0.02em;
 }
 
-.lens-complete-hero__value--warning {
-  color: var(--warning-color);
+.lens-complete-hero__value--error {
+  color: var(--error-color);
 }
 
 .lens-complete-hero__label {
@@ -281,129 +282,58 @@
    Error Groups (Bulk Completion)
    ========================================================================= */
 
+.lens-error-groups-divider {
+  margin: 30px 0 20px;
+  border: 0;
+  border-top: 1px solid var(--hairline-color);
+}
+
 .lens-error-groups {
-  margin-top: 16px;
+  margin-top: 0;
 }
 
 .lens-error-groups-header {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 12px;
-  color: var(--fg-warning);
+  margin-bottom: 20px;
+  color: var(--fg-error, var(--error-color));
 }
 
-.lens-error-groups-header .lens-notice-title {
-  color: var(--text-color);
-}
-
-.lens-error-group {
-  border: 1px solid var(--hairline-color);
-  border-radius: var(--medium-border-radius);
-  margin-bottom: 8px;
-  overflow: hidden;
-}
-
-.lens-error-group-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 10px 12px;
-  background: var(--gray-050);
-  border: none;
-  cursor: pointer;
-  text-align: left;
-  font-size: 13px;
-  color: var(--text-color);
-  line-height: 1.4;
-}
-
-.lens-error-group-header:hover {
-  background: var(--gray-100);
-}
-
-.lens-error-group-toggle {
+.lens-error-groups-icon {
   display: inline-flex;
   align-items: center;
-  width: 14px;
-  height: 14px;
   flex-shrink: 0;
-  transition: transform 0.15s ease;
 }
 
-.lens-error-group-toggle svg {
-  width: 12px;
-  height: 12px;
-  fill: var(--medium-text-color);
+.lens-error-groups-icon svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
 }
 
-.lens-error-group--expanded .lens-error-group-toggle {
-  transform: rotate(90deg);
-}
-
-.lens-error-group-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 22px;
-  height: 20px;
-  padding: 0 6px;
-  border-radius: 10px;
-  background: var(--warning-color);
-  color: #fff;
-  font-size: 11px;
+.lens-error-groups-title {
+  margin: 0;
+  font-size: 14px;
   font-weight: 600;
-  flex-shrink: 0;
-}
-
-.lens-error-group-message {
-  flex: 1;
-  word-break: break-word;
-}
-
-.lens-error-group-detail {
-  padding: 8px 12px 12px;
-  border-top: 1px solid var(--hairline-color);
-}
-
-.lens-error-asset-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.lens-error-asset {
-  font-size: 13px;
-  padding: 4px 0;
-}
-
-.lens-error-asset-link {
   color: var(--text-color);
-  text-decoration: underline;
-  text-decoration-color: var(--medium-text-color);
-  text-underline-offset: 2px;
 }
 
-.lens-error-asset-link:hover {
-  text-decoration-color: var(--text-color);
-}
-
-.lens-error-asset-deleted {
-  color: var(--light-text-color);
-  font-style: italic;
-}
-
-.lens-error-asset-more {
-  font-size: 12px;
-  color: var(--medium-text-color);
-  padding: 4px 0;
-  font-style: italic;
-}
-
-.lens-error-no-assets {
+.lens-error-message {
+  margin: 0 0 10px;
   font-size: 13px;
-  color: var(--light-text-color);
-  font-style: italic;
-  padding: 4px 0;
+  color: var(--medium-text-color);
+  line-height: 1.5;
+}
+
+.lens-data-table .--more {
+  text-align: center;
+  border-top: 1px solid var(--hairline-color);
+  border-bottom: none;
+}
+
+.lens-error-cta {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
 }

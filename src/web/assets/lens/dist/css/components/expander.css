@@ -1,0 +1,88 @@
+/**
+ * Expander Component
+ * Reusable collapsible group with an optional static (non-toggling) header variant.
+ *
+ * Markup:
+ *   <div class="lens-expander [lens-expander--expanded]" data-lens-target="expander">
+ *     <button class="lens-expander__header" data-lens-action="toggle-expander" aria-expanded="false">
+ *       <span class="lens-expander__toggle">{{ iconSvg('chevron-right') }}</span>
+ *       <span class="lens-expander__label">…</span>
+ *     </button>
+ *     <div class="lens-expander__content" data-lens-target="expander-content" hidden>…</div>
+ *   </div>
+ *
+ * For content that should always be visible (no toggle), render a static header:
+ *   <div class="lens-expander lens-expander--expanded">
+ *     <div class="lens-expander__header lens-expander__header--static">…</div>
+ *     <div class="lens-expander__content">…</div>
+ *   </div>
+ */
+
+.lens-expander {
+  border: 1px solid var(--hairline-color);
+  border-radius: var(--medium-border-radius);
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.lens-expander__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--gray-050);
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-size: 13px;
+  color: var(--text-color);
+  line-height: 1.4;
+}
+
+.lens-expander__header:hover {
+  background: var(--gray-100);
+}
+
+.lens-expander__header--static,
+.lens-expander__header--static:hover {
+  cursor: default;
+  background: transparent;
+}
+
+.lens-expander__toggle {
+  display: inline-flex;
+  align-items: center;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.lens-expander__toggle svg {
+  width: 12px;
+  height: 12px;
+  fill: var(--medium-text-color);
+}
+
+.lens-expander--expanded .lens-expander__toggle {
+  transform: rotate(90deg);
+}
+
+.lens-expander__label {
+  flex: 1;
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.lens-expander__content {
+  padding: 10px 12px 12px;
+  border-top: 1px solid var(--hairline-color);
+}
+
+/* When the header is static there's no clickable separator above the content;
+   drop the top border to avoid the doubled-line look. */
+.lens-expander:has(> .lens-expander__header--static) .lens-expander__content {
+  border-top: none;
+  padding-top: 0;
+}

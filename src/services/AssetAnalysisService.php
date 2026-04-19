@@ -12,6 +12,7 @@ use craft\helpers\Queue;
 use vitordiniz22\craftlens\dto\AnalysisResult;
 use vitordiniz22\craftlens\enums\AiProvider;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
+use vitordiniz22\craftlens\enums\ErrorCode;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\enums\WatermarkType;
 use vitordiniz22\craftlens\exceptions\AnalysisCancelledException;
@@ -102,7 +103,7 @@ class AssetAnalysisService extends Component
             $record->processedAt = DateTimeHelper::now();
 
             if ($record->id && AssetAnalysisRecord::find()->where(['id' => $record->id])->exists() && $record->save()) {
-                $this->getContentStorage()->saveErrorMessage($record, $e->getMessage());
+                $this->getContentStorage()->saveErrorMessage($record, $e->getMessage(), $e->errorCode ?? ErrorCode::Unknown);
             }
 
             Logger::error(
@@ -120,7 +121,7 @@ class AssetAnalysisService extends Component
                 assetId: $asset->id,
             );
         } catch (AnalysisException $e) {
-            $this->handleAnalysisFailure($record, $previousStatus, $hadExistingData, $e->getUserMessage());
+            $this->handleAnalysisFailure($record, $previousStatus, $hadExistingData, $e->getUserMessage(), $e->errorCode ?? ErrorCode::Unknown);
 
             Logger::error(
                 LogCategory::AssetProcessing,
@@ -134,7 +135,7 @@ class AssetAnalysisService extends Component
             );
         } catch (\Throwable $e) {
             $userMessage = "Analysis failed due to an unexpected error. Please try again later or contact support.";
-            $this->handleAnalysisFailure($record, $previousStatus, $hadExistingData, $userMessage);
+            $this->handleAnalysisFailure($record, $previousStatus, $hadExistingData, $userMessage, ErrorCode::Unknown);
 
             Logger::error(
                 LogCategory::AssetProcessing,
@@ -158,6 +159,7 @@ class AssetAnalysisService extends Component
         ?string $previousStatus,
         bool $hadExistingData,
         string $errorMessage,
+        ?ErrorCode $errorCode = null,
     ): void {
         if ($record->id && !AssetAnalysisRecord::find()->where(['id' => $record->id])->exists()) {
             Logger::warning(LogCategory::AssetProcessing, 'Analysis record deleted during processing, skipping failure handling', assetId: $record->assetId);
@@ -180,7 +182,7 @@ class AssetAnalysisService extends Component
             return;
         }
 
-        $this->getContentStorage()->saveErrorMessage($record, $errorMessage);
+        $this->getContentStorage()->saveErrorMessage($record, $errorMessage, $errorCode ?? ErrorCode::Unknown);
     }
 
     public function getAnalysis(int $assetId): ?AssetAnalysisRecord

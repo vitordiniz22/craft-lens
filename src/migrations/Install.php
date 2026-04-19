@@ -136,6 +136,7 @@ class Install extends Migration
             'id' => $this->primaryKey(),
             'analysisId' => $this->integer()->notNull(),
             'errorMessage' => $this->text()->null(),
+            'errorCode' => $this->string(50)->null(),
             'dateCreated' => $this->dateTime()->notNull(),
             'dateUpdated' => $this->dateTime()->notNull(),
             'uid' => $this->uid(),

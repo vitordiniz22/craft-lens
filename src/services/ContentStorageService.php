@@ -6,6 +6,7 @@ namespace vitordiniz22\craftlens\services;
 
 use craft\helpers\DateTimeHelper;
 use craft\helpers\StringHelper;
+use vitordiniz22\craftlens\enums\ErrorCode;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\records\AnalysisContentRecord;
@@ -40,10 +41,12 @@ class ContentStorageService extends Component
     public function saveAnalysisContent(
         AssetAnalysisRecord $analysisRecord,
         ?string $errorMessage = null,
+        ?ErrorCode $errorCode = null,
     ): AnalysisContentRecord {
         $record = $this->getOrCreateContentRecord($analysisRecord->id);
 
         $record->errorMessage = $errorMessage;
+        $record->errorCode = $errorCode?->value;
         $record->dateUpdated = DateTimeHelper::now();
 
         if (!$record->save()) {
@@ -60,11 +63,15 @@ class ContentStorageService extends Component
     /**
      * Save error message to analysis content.
      */
-    public function saveErrorMessage(AssetAnalysisRecord $analysisRecord, string $errorMessage): ?AnalysisContentRecord
-    {
+    public function saveErrorMessage(
+        AssetAnalysisRecord $analysisRecord,
+        string $errorMessage,
+        ?ErrorCode $errorCode = null,
+    ): ?AnalysisContentRecord {
         $record = $this->getOrCreateContentRecord($analysisRecord->id);
 
         $record->errorMessage = $errorMessage;
+        $record->errorCode = $errorCode?->value;
         $record->dateUpdated = DateTimeHelper::now();
 
         try {

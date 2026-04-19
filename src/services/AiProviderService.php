@@ -65,7 +65,7 @@ class AiProviderService extends Component
     public function getProvider(string $name): AiProviderInterface
     {
         if (!isset($this->providers[$name])) {
-            throw new ConfigurationException("AI provider '{$name}' is not registered");
+            throw ConfigurationException::providerNotRegistered($name);
         }
 
         return $this->providers[$name];
