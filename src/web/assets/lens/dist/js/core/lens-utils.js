@@ -40,23 +40,23 @@
          * Centralized to keep Twig and JS in sync
          * @param {boolean} containsPeople - Whether people are detected
          * @param {number} faceCount - Number of visible faces
-         * @returns {string} Formatted text (e.g., "People present, no visible faces")
+         * @returns {string} Formatted text (e.g., "People, no visible faces")
          */
         formatPeopleDetectionText: function(containsPeople, faceCount) {
             if (!containsPeople) {
-                return Craft.t('lens', 'No people present');
+                return Craft.t('lens', 'No people');
             }
 
             if (faceCount === 0) {
-                return Craft.t('lens', 'People present, no visible faces');
+                return Craft.t('lens', 'People, no visible faces');
             } else if (faceCount === 1) {
-                return Craft.t('lens', 'Individual (1 person)');
+                return Craft.t('lens', '1 person');
             } else if (faceCount === 2) {
-                return Craft.t('lens', 'Duo (2 people)');
+                return Craft.t('lens', '2 people');
             } else if (faceCount >= 3 && faceCount <= 5) {
-                return Craft.t('lens', 'Small group (3-5 people)');
+                return Craft.t('lens', '3-5 people');
             } else if (faceCount >= 6) {
-                return Craft.t('lens', 'Large group (6+ people)');
+                return Craft.t('lens', '6+ people');
             }
 
             return '';

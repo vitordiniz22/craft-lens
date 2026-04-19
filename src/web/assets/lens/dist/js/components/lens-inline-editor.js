@@ -485,7 +485,7 @@
             if (displayText) {
                 displayText.textContent = fields.containsPeople
                     ? window.Lens.services.PeopleDetection.formatText(fields.containsPeople, fields.faceCount)
-                    : Craft.t('lens', 'Clear');
+                    : Craft.t('lens', 'No people');
             }
         },
 

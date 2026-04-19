@@ -10,17 +10,17 @@
 {# Macro for consistent text generation (matches JS utility: Lens.utils.formatPeopleDetectionText) #}
 {% macro peopleDetectionText(containsPeople, faceCount) %}
     {%- if not containsPeople -%}
-        {{ 'No people present'|t('lens') }}
+        {{ 'No people'|t('lens') }}
     {%- elseif faceCount == 0 -%}
-        {{ 'People present, no visible faces'|t('lens') }}
+        {{ 'People, no visible faces'|t('lens') }}
     {%- elseif faceCount == 1 -%}
-        {{ 'Individual (1 person)'|t('lens') }}
+        {{ '1 person'|t('lens') }}
     {%- elseif faceCount == 2 -%}
-        {{ 'Duo (2 people)'|t('lens') }}
+        {{ '2 people'|t('lens') }}
     {%- elseif faceCount >= 3 and faceCount <= 5 -%}
-        {{ 'Small group (3-5 people)'|t('lens') }}
+        {{ '3-5 people'|t('lens') }}
     {%- elseif faceCount >= 6 -%}
-        {{ 'Large group (6+ people)'|t('lens') }}
+        {{ '6+ people'|t('lens') }}
     {%- endif -%}
 {% endmacro %}
 
@@ -29,7 +29,7 @@
     {%- if hasPeople and faceCount > 0 -%}
         {{ 'Identifiable faces detected. Model releases may be required for commercial use.'|t('lens') }}
     {%- elseif hasPeople -%}
-        {{ 'People detected without visible faces. Model releases may still apply.'|t('lens') }}
+        {{ 'People visible, but no faces identifiable. Usually safe to use without a release.'|t('lens') }}
     {%- endif -%}
 {% endmacro %}
 
@@ -38,37 +38,37 @@
     <label class="lens-radio-option">
         <input type="radio" name="people-{{ analysis.id }}" value="none" data-lens-control="{{ controlName }}"
                {% if not analysis.containsPeople %}checked{% endif %}>
-        <span>{{ 'No people present'|t('lens') }}</span>
+        <span>{{ 'No people'|t('lens') }}</span>
     </label>
 
     <label class="lens-radio-option">
         <input type="radio" name="people-{{ analysis.id }}" value="no-faces" data-lens-control="{{ controlName }}"
                {% if analysis.containsPeople and analysis.faceCount == 0 %}checked{% endif %}>
-        <span>{{ 'People present, no visible faces'|t('lens') }}</span>
+        <span>{{ 'People, no visible faces'|t('lens') }}</span>
     </label>
 
     <label class="lens-radio-option">
         <input type="radio" name="people-{{ analysis.id }}" value="1" data-lens-control="{{ controlName }}"
                {% if analysis.containsPeople and analysis.faceCount == 1 %}checked{% endif %}>
-        <span>{{ 'Individual (1 person)'|t('lens') }}</span>
+        <span>{{ '1 person'|t('lens') }}</span>
     </label>
 
     <label class="lens-radio-option">
         <input type="radio" name="people-{{ analysis.id }}" value="2" data-lens-control="{{ controlName }}"
                {% if analysis.containsPeople and analysis.faceCount == 2 %}checked{% endif %}>
-        <span>{{ 'Duo (2 people)'|t('lens') }}</span>
+        <span>{{ '2 people'|t('lens') }}</span>
     </label>
 
     <label class="lens-radio-option">
         <input type="radio" name="people-{{ analysis.id }}" value="3-5" data-lens-control="{{ controlName }}"
                {% if analysis.containsPeople and analysis.faceCount >= 3 and analysis.faceCount <= 5 %}checked{% endif %}>
-        <span>{{ 'Small group (3-5 people)'|t('lens') }}</span>
+        <span>{{ '3-5 people'|t('lens') }}</span>
     </label>
 
     <label class="lens-radio-option">
         <input type="radio" name="people-{{ analysis.id }}" value="6+" data-lens-control="{{ controlName }}"
                {% if analysis.containsPeople and analysis.faceCount >= 6 %}checked{% endif %}>
-        <span>{{ 'Large group (6+ people)'|t('lens') }}</span>
+        <span>{{ '6+ people'|t('lens') }}</span>
     </label>
 {% endmacro %}
 
@@ -104,7 +104,7 @@
         {% else %}
             <span class="lens-detection-badge lens-detection-badge--clear">
                 {{ iconSvg('check')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
-                {{ 'Clear'|t('lens') }}
+                {{ 'No people'|t('lens') }}
             </span>
         {% endif %}
     </div>
@@ -155,7 +155,7 @@
                 <span data-lens-target="people-display-text">{{ _self.peopleDetectionText(analysis.containsPeople, analysis.faceCount) }}</span>
             {% else %}
                 {{ iconSvg('check')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
-                <span data-lens-target="people-display-text">{{ 'Clear'|t('lens') }}</span>
+                <span data-lens-target="people-display-text">{{ 'No people'|t('lens') }}</span>
             {% endif %}
         </span>
     </div>
