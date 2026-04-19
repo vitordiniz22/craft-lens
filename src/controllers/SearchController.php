@@ -100,6 +100,7 @@ class SearchController extends Controller
             'similarityMap' => $similarityMap,
             'similarToAsset' => $similarToAsset,
             'clusterMap' => $clusterMap,
+            'assetBrowserLayout' => $plugin->userSettings->getAssetBrowserLayout()->value,
         ]);
     }
 

@@ -62,6 +62,7 @@ use vitordiniz22\craftlens\services\SetupStatusService;
 use vitordiniz22\craftlens\services\SiteContentService;
 use vitordiniz22\craftlens\services\StatisticsService;
 use vitordiniz22\craftlens\services\TagAggregationService;
+use vitordiniz22\craftlens\services\UserSettingsService;
 use vitordiniz22\craftlens\twig\LensTwigExtension;
 use vitordiniz22\craftlens\web\assets\lens\LensAsset;
 use vitordiniz22\craftlens\web\assets\lens\LensAssetActionsAsset;
@@ -95,6 +96,7 @@ use yii\web\Response;
  * @property-read BulkProcessingStatusService $bulkProcessingStatus
  * @property-read LogService $log
  * @property-read SearchIndexService $searchIndex
+ * @property-read UserSettingsService $userSettings
  * @property-read bool $isPro
  * @property-read bool $isLite
  * @author Vitor Diniz <vitordiniz22@gmail.com>
@@ -194,6 +196,7 @@ class Plugin extends BasePlugin
                 'log' => LogService::class,
                 'searchIndex' => SearchIndexService::class,
                 'analysisCancellation' => AnalysisCancellationService::class,
+                'userSettings' => UserSettingsService::class,
             ],
         ];
     }

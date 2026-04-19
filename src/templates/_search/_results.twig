@@ -1,4 +1,7 @@
 {# Search Results #}
+{% set layout = assetBrowserLayout ?? 'default' %}
+{% set isMini = (layout == 'mini') %}
+{% set gridClass = 'lens-results-grid' ~ (isMini ? ' is-mini' : '') %}
 {% if total > 0 %}
     <div class="lens-results-bar">
         <p class="light lens-results-count" aria-live="polite" aria-atomic="true">
@@ -8,6 +11,18 @@
                 total: total
             }) }}
         </p>
+        <div class="btngroup" data-lens-target="view-selector" role="group" aria-label="{{ 'Result view'|t('lens') }}">
+            <craft-tooltip text="{{ 'Show as cards'|t('lens') }}">
+                <button type="button" class="btn small{{ not isMini ? ' active' }}" data-lens-action="set-view" data-lens-value="default" aria-pressed="{{ not isMini ? 'true' : 'false' }}">
+                    {{ iconSvg('grid-2')|attr({width: 14, height: 14}) }}
+                </button>
+            </craft-tooltip>
+            <craft-tooltip text="{{ 'Show as mini cards'|t('lens') }}">
+                <button type="button" class="btn small{{ isMini ? ' active' }}" data-lens-action="set-view" data-lens-value="mini" aria-pressed="{{ isMini ? 'true' : 'false' }}">
+                    {{ iconSvg('table-cells')|attr({width: 14, height: 14}) }}
+                </button>
+            </craft-tooltip>
+        </div>
         <a href="{{ cpUrl('lens/search/export', filters ?? {}) }}" class="btn small" data-lens-action="export-csv">
             {{ iconSvg('download')|attr({width: 14, height: 14, class: 'lens-btn-icon'}) }}
             {{ 'Export CSV'|t('lens') }}
@@ -33,7 +48,7 @@
                         {{ '{count} similar assets'|t('lens', {count: clusterAssets|length}) }}
                     </span>
                 </div>
-                <div class="lens-results-grid">
+                <div class="{{ gridClass }}" data-lens-target="results-grid">
                     {% for asset in clusterAssets %}
                         {% set analysis = analysisMap[asset.id] ?? null %}
 
@@ -52,7 +67,7 @@
             </div>
         {% endfor %}
     {% else %}
-        <div class="lens-results-grid">
+        <div class="{{ gridClass }}" data-lens-target="results-grid">
             {% for asset in assets %}
                 {% set analysis = analysisMap[asset.id] ?? null %}
 

@@ -21,6 +21,7 @@ class Install extends Migration
     public const TABLE_ANALYSIS_SITE_CONTENT = '{{%lens_analysis_site_content}}';
     public const TABLE_LOGS = '{{%lens_logs}}';
     public const TABLE_SEARCH_INDEX = '{{%lens_search_index}}';
+    public const TABLE_USER_SETTINGS = '{{%lens_user_settings}}';
 
     public function safeUp(): bool
     {
@@ -32,6 +33,7 @@ class Install extends Migration
 
     public function safeDown(): bool
     {
+        $this->dropTableIfExists(self::TABLE_USER_SETTINGS);
         $this->dropTableIfExists(self::TABLE_SEARCH_INDEX);
         $this->dropTableIfExists(self::TABLE_ANALYSIS_SITE_CONTENT);
         $this->dropTableIfExists(self::TABLE_ANALYSIS_CONTENT);
@@ -231,6 +233,17 @@ class Install extends Migration
             ]);
         }
 
+        // Generic user-scoped key/value settings (asset browser layout, etc.)
+        $this->createTable(self::TABLE_USER_SETTINGS, [
+            'id' => $this->primaryKey(),
+            'userId' => $this->integer()->notNull(),
+            'settingKey' => $this->string(100)->notNull(),
+            'settingValue' => $this->string(255)->null(),
+            'dateCreated' => $this->dateTime()->notNull(),
+            'dateUpdated' => $this->dateTime()->notNull(),
+            'uid' => $this->uid(),
+        ]);
+
         // Full-text search index (pre-stemmed tokens with BM25 scoring data)
         $this->createTable(self::TABLE_SEARCH_INDEX, [
             'id' => $this->primaryKey(),
@@ -298,6 +311,9 @@ class Install extends Migration
             $this->createIndex(null, self::TABLE_LOGS, ['dateCreated']);
             $this->createIndex(null, self::TABLE_LOGS, ['level', 'category', 'dateCreated']);
         }
+
+        // User settings indexes — one row per (user, key)
+        $this->createIndex(null, self::TABLE_USER_SETTINGS, ['userId', 'settingKey'], true);
 
         // Search index indexes — token is the primary lookup column
         $this->createIndex(null, self::TABLE_SEARCH_INDEX, ['token']);
@@ -436,6 +452,17 @@ class Install extends Migration
                 'CASCADE'
             );
         }
+
+        // User settings foreign key — drop a user's preferences when the user is deleted
+        $this->addForeignKey(
+            null,
+            self::TABLE_USER_SETTINGS,
+            ['userId'],
+            Table::USERS,
+            ['id'],
+            'CASCADE',
+            'CASCADE'
+        );
 
         // Search index foreign keys
         $this->addForeignKey(

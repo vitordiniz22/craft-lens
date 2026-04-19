@@ -135,6 +135,34 @@
     gap: 16px;
 }
 
+/* View selector spacing inside results bar */
+.lens-results-bar .btngroup[data-lens-target="view-selector"] {
+    margin-left: auto;
+    margin-right: 12px;
+}
+
+/* Mini card view: thumbnail on left, info on right, multi-column grid */
+.lens-results-grid.is-mini {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+}
+
+.lens-results-grid.is-mini .lens-asset-card {
+    display: grid;
+    grid-template-columns: 96px 1fr;
+    align-items: stretch;
+}
+
+.lens-results-grid.is-mini .lens-result-preview {
+    aspect-ratio: 1/1;
+    width: 96px;
+    height: 96px;
+}
+
+.lens-results-grid.is-mini .lens-result-info {
+    padding: 8px 12px;
+    min-width: 0;
+}
+
 /* Image preview container (4:3 aspect ratio) */
 .lens-result-preview {
     display: block;

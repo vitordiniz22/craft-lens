@@ -24,11 +24,38 @@
             this.initFormCleanup();
             this.initSearchEnterKey();
             this.initPresetButtonGroups();
+            this.initViewSelector();
             this.initColorInput();
 
             this.initDatePickers();
             this.initKeyboardNavigation();
             this._initialized = true;
+        },
+
+        initViewSelector: function () {
+            DOM.delegate('[data-lens-action="set-view"]', 'click', function (e, btn) {
+                var layout = btn.dataset.lensValue;
+                var isMini = layout === 'mini';
+
+                document.querySelectorAll('[data-lens-target="results-grid"]').forEach(function (grid) {
+                    grid.classList.toggle('is-mini', isMini);
+                });
+
+                var group = btn.closest('[data-lens-target="view-selector"]');
+                if (group) {
+                    group.querySelectorAll('[data-lens-action="set-view"]').forEach(function (sibling) {
+                        var active = sibling === btn;
+                        sibling.classList.toggle('active', active);
+                        sibling.setAttribute('aria-pressed', active ? 'true' : 'false');
+                    });
+                }
+
+                Craft.sendActionRequest('POST', 'lens/user-settings/set-asset-browser-layout', {
+                    data: { layout: layout }
+                }).catch(function () {
+                    Craft.cp.displayError(Craft.t('lens', 'Could not save view preference.'));
+                });
+            });
         },
 
         initFilterToggle: function () {
