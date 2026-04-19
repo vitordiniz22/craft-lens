@@ -16,7 +16,9 @@ use vitordiniz22\craftlens\models\Settings;
 use vitordiniz22\craftlens\enums\LogLevel;
 use vitordiniz22\craftlens\exceptions\AnalysisException;
 use vitordiniz22\craftlens\exceptions\ConfigurationException;
+use vitordiniz22\craftlens\helpers\ImagePreprocessor;
 use vitordiniz22\craftlens\helpers\Logger;
+use vitordiniz22\craftlens\helpers\PreprocessResult;
 use vitordiniz22\craftlens\helpers\ResponseNormalizer;
 
 /**
@@ -27,6 +29,17 @@ use vitordiniz22\craftlens\helpers\ResponseNormalizer;
  */
 abstract class BaseAiProvider implements AiProviderInterface
 {
+    /**
+     * Hard ceiling on raw asset size before preprocessing is attempted.
+     *
+     * Decoding a large JPEG into raw pixels allocates roughly 10x the file
+     * size in RAM (a 30 MB photo becomes ~150-300 MB of pixel buffer inside
+     * Imagick). We cap the input here to protect queue worker memory,
+     * independent of whatever size the provider itself would accept after
+     * preprocessing.
+     */
+    public const DECODE_CEILING_BYTES = 30 * 1024 * 1024;
+
     protected Client $client;
 
     public function __construct()
@@ -395,33 +408,74 @@ abstract class BaseAiProvider implements AiProviderInterface
         $fileSize = $asset->size;
         $maxSize = $this->getMaxFileSizeBytes();
 
-        if ($fileSize !== null && $fileSize > $maxSize) {
+        // Decode-cost guard: refuse anything over DECODE_CEILING_BYTES before
+        // attempting to decode it. The post-preprocess check below is the
+        // authoritative size cap for the provider itself.
+        if ($fileSize !== null && $fileSize > self::DECODE_CEILING_BYTES) {
             throw AnalysisException::fileTooLarge(
                 providerName: $this->getDisplayName(),
                 assetId: $asset->id,
                 fileSize: $fileSize,
-                maxSize: $maxSize
+                maxSize: self::DECODE_CEILING_BYTES,
             );
         }
 
-        $stream = $asset->getStream();
+        $result = ImagePreprocessor::preprocess($asset);
 
-        if ($stream === null) {
+        if ($result->bytes === '') {
             throw AnalysisException::assetNotReadable($asset->id);
         }
 
-        try {
-            $contents = stream_get_contents($stream);
+        $this->logPreprocessingOutcome($asset, $result);
 
-            if ($contents === false) {
-                throw AnalysisException::assetNotReadable($asset->id);
-            }
+        // Authoritative cap check: only enforce when preprocessing ran. If
+        // preprocessing was skipped or failed, the provider gets the original
+        // bytes and may surface its own size error. This preserves the
+        // safety-net contract that preprocessing failures never block analysis.
+        if ($result->wasProcessed && strlen($result->bytes) > $maxSize) {
+            throw AnalysisException::fileTooLarge(
+                providerName: $this->getDisplayName(),
+                assetId: $asset->id,
+                fileSize: strlen($result->bytes),
+                maxSize: $maxSize,
+            );
+        }
 
-            $mimeType = $asset->getMimeType() ?? 'image/jpeg';
+        return [
+            'base64' => base64_encode($result->bytes),
+            'mimeType' => $result->mimeType,
+        ];
+    }
 
-            return ['base64' => base64_encode($contents), 'mimeType' => $mimeType];
-        } finally {
-            fclose($stream);
+    private function logPreprocessingOutcome(Asset $asset, PreprocessResult $result): void
+    {
+        if ($result->wasProcessed) {
+            $originalBytes = $result->originalBytes ?? 0;
+            Logger::info(
+                LogCategory::AssetProcessing,
+                'Image preprocessed for AI upload',
+                $asset->id,
+                [
+                    'originalBytes' => $originalBytes,
+                    'processedBytes' => $result->processedBytes,
+                    'originalDimensions' => "{$result->originalWidth}x{$result->originalHeight}",
+                    'processedDimensions' => "{$result->processedWidth}x{$result->processedHeight}",
+                    'mimeType' => $result->mimeType,
+                    'reductionRatio' => $originalBytes > 0
+                        ? round(($result->processedBytes ?? 0) / $originalBytes, 3)
+                        : null,
+                ],
+            );
+            return;
+        }
+
+        if ($result->reason !== null) {
+            Logger::info(
+                LogCategory::AssetProcessing,
+                "Image preprocessing skipped: {$result->reason}",
+                $asset->id,
+                ['mimeType' => $result->mimeType],
+            );
         }
     }
 

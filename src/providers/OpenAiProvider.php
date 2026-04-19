@@ -80,7 +80,7 @@ class OpenAiProvider extends BaseAiProvider
                             'type' => 'image_url',
                             'image_url' => [
                                 'url' => "data:{$imageData['mimeType']};base64,{$imageData['base64']}",
-                                'detail' => 'low',
+                                'detail' => 'high',
                             ],
                         ],
                     ],

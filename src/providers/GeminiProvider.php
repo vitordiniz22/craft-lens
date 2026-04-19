@@ -89,6 +89,7 @@ class GeminiProvider extends BaseAiProvider
             'generationConfig' => [
                 'temperature' => 0.1,
                 'responseMimeType' => 'application/json',
+                'mediaResolution' => 'MEDIA_RESOLUTION_HIGH',
             ],
         ];
 
