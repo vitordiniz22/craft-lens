@@ -23,10 +23,6 @@
                 </button>
             </craft-tooltip>
         </div>
-        <a href="{{ cpUrl('lens/search/export', filters ?? {}) }}" class="btn small" data-lens-action="export-csv">
-            {{ iconSvg('download')|attr({width: 14, height: 14, class: 'lens-btn-icon'}) }}
-            {{ 'Export CSV'|t('lens') }}
-        </a>
     </div>
 
     {% set isDuplicateView = (clusterMap is defined and clusterMap|length) %}

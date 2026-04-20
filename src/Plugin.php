@@ -25,6 +25,7 @@ use craft\log\MonologTarget;
 use craft\models\FieldLayout;
 use craft\services\Assets;
 use craft\services\Gc;
+use craft\services\Search as SearchService_Craft;
 use craft\web\UrlManager;
 use craft\web\View;
 use Psr\Log\LogLevel;
@@ -54,6 +55,7 @@ use vitordiniz22\craftlens\services\ColorAggregationService;
 use vitordiniz22\craftlens\services\ContentStorageService;
 use vitordiniz22\craftlens\services\DuplicateDetectionService;
 use vitordiniz22\craftlens\services\LogService;
+use vitordiniz22\craftlens\services\NativeSearchEnhancementService;
 use vitordiniz22\craftlens\services\PricingService;
 use vitordiniz22\craftlens\services\ReviewService;
 use vitordiniz22\craftlens\services\SearchIndexService;
@@ -91,6 +93,7 @@ use yii\web\Response;
  * @property-read StatisticsService $statistics
  * @property-read DuplicateDetectionService $duplicateDetection
  * @property-read SearchService $search
+ * @property-read NativeSearchEnhancementService $nativeSearchEnhancement
  * @property-read SetupStatusService $setupStatus
  * @property-read SiteContentService $siteContent
  * @property-read BulkProcessingStatusService $bulkProcessingStatus
@@ -191,6 +194,7 @@ class Plugin extends BasePlugin
                 'statistics' => StatisticsService::class,
                 'duplicateDetection' => DuplicateDetectionService::class,
                 'search' => SearchService::class,
+                'nativeSearchEnhancement' => NativeSearchEnhancementService::class,
                 'setupStatus' => SetupStatusService::class,
                 'siteContent' => SiteContentService::class,
                 'log' => LogService::class,
@@ -468,41 +472,39 @@ class Plugin extends BasePlugin
             Asset::class,
             Element::EVENT_REGISTER_SOURCES,
             function(RegisterElementSourcesEvent $event) {
-                if ($event->context !== 'index' || $this->getIsPro()) {
-                    return;
-                }
-
                 $iconPath = $this->getBasePath() . '/icon-mask.svg';
 
-                $sourceDefinitions = [
-                    'not-analysed' => ['Not Analysed', ['lensStatus' => 'untagged', 'kind' => 'image']],
-                    'failed' => ['Failed Analyses', ['lensStatus' => 'failed', 'kind' => 'image']],
-                    'missing-alt-text' => ['Missing Alt Text', ['hasAlt' => false, 'kind' => 'image']],
-                    'nsfw-flagged' => ['NSFW Flagged', ['lensNsfwFlagged' => true, 'kind' => 'image']],
-                    'blurry' => ['Blurry', ['lensBlurry' => true, 'kind' => 'image']],
-                    'too-dark' => ['Too Dark', ['lensTooDark' => true, 'kind' => 'image']],
-                    'too-bright' => ['Too Bright', ['lensTooBright' => true, 'kind' => 'image']],
-                    'low-contrast' => ['Low Contrast', ['lensLowContrast' => true, 'kind' => 'image']],
-                    'file-too-large' => ['File Too Large', ['lensTooLarge' => true, 'kind' => 'image']],
-                    'missing-focal-point' => ['Missing Focal Point', ['lensHasFocalPoint' => false, 'kind' => 'image']],
-                    'contains-people' => ['Contains People', ['lensContainsPeople' => true, 'kind' => 'image']],
-                    'has-watermark' => ['Has Watermark', ['lensHasWatermark' => true, 'kind' => 'image']],
-                    'has-brand-logo' => ['Has Brand Logo', ['lensContainsBrandLogo' => true, 'kind' => 'image']],
-                ];
-
-                foreach ($sourceDefinitions as $key => [$label, $criteria]) {
-                    $event->sources[] = [
-                        'key' => "lens:{$key}",
-                        'label' => Craft::t('lens', $label),
-                        'criteria' => $criteria,
-                        'hasThumbs' => true,
-                        'defaultSort' => ['dateCreated', 'desc'],
-                        'iconMask' => $iconPath,
+                if ($event->context === 'index' && !$this->getIsPro()) {
+                    $sourceDefinitions = [
+                        'not-analysed' => ['Not Analysed', ['lensStatus' => 'untagged', 'kind' => 'image']],
+                        'failed' => ['Failed Analyses', ['lensStatus' => 'failed', 'kind' => 'image']],
+                        'missing-alt-text' => ['Missing Alt Text', ['hasAlt' => false, 'kind' => 'image']],
+                        'nsfw-flagged' => ['NSFW Flagged', ['lensNsfwFlagged' => true, 'kind' => 'image']],
+                        'blurry' => ['Blurry', ['lensBlurry' => true, 'kind' => 'image']],
+                        'too-dark' => ['Too Dark', ['lensTooDark' => true, 'kind' => 'image']],
+                        'too-bright' => ['Too Bright', ['lensTooBright' => true, 'kind' => 'image']],
+                        'low-contrast' => ['Low Contrast', ['lensLowContrast' => true, 'kind' => 'image']],
+                        'file-too-large' => ['File Too Large', ['lensTooLarge' => true, 'kind' => 'image']],
+                        'missing-focal-point' => ['Missing Focal Point', ['lensHasFocalPoint' => false, 'kind' => 'image']],
+                        'contains-people' => ['Contains People', ['lensContainsPeople' => true, 'kind' => 'image']],
+                        'has-watermark' => ['Has Watermark', ['lensHasWatermark' => true, 'kind' => 'image']],
+                        'has-brand-logo' => ['Has Brand Logo', ['lensContainsBrandLogo' => true, 'kind' => 'image']],
                     ];
+
+                    foreach ($sourceDefinitions as $key => [$label, $criteria]) {
+                        $event->sources[] = [
+                            'key' => "lens:{$key}",
+                            'label' => Craft::t('lens', $label),
+                            'criteria' => $criteria,
+                            'hasThumbs' => true,
+                            'defaultSort' => ['dateCreated', 'desc'],
+                            'iconMask' => $iconPath,
+                        ];
+                    }
                 }
+
             }
         );
-
     }
 
     private function registerAssetSidebarHandler(): void
@@ -594,10 +596,8 @@ class Plugin extends BasePlugin
                 $event->rules['lens/bulk/cancel'] = 'lens/bulk/cancel';
                 $event->rules['lens/bulk/progress'] = 'lens/bulk/progress';
                 $event->rules['lens/bulk/dismiss'] = 'lens/bulk/dismiss';
-                $event->rules['lens/semantic-search/search'] = 'lens/semantic-search/search';
                 $event->rules['lens/search'] = 'lens/search/index';
                 $event->rules['lens/search/resolve-duplicate'] = 'lens/search/resolve-duplicate';
-                $event->rules['lens/search/export'] = 'lens/search/export';
                 $event->rules['lens/search/provider-models'] = 'lens/search/provider-models';
                 $event->rules['lens/logs'] = 'lens/log/index';
                 $event->rules['lens/logs/retry'] = 'lens/log/retry';
@@ -628,13 +628,15 @@ class Plugin extends BasePlugin
 
     private function registerSemanticSearch(): void
     {
-        if (!$this->getIsPro()) {
+        if (!$this->getIsPro() || !$this->getSettings()->enableSemanticSearch) {
             return;
         }
 
-        if (!$this->getSettings()->enableSemanticSearch) {
-            return;
-        }
+        Event::on(
+            SearchService_Craft::class,
+            SearchService_Craft::EVENT_AFTER_SEARCH,
+            [$this->nativeSearchEnhancement, 'mergeScores'],
+        );
 
         Event::on(
             View::class,

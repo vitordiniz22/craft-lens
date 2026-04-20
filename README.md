@@ -34,7 +34,7 @@ Choose your AI provider (**OpenAI GPT**, **Google Gemini**, or **Anthropic Claud
 - **Smart search** across all image metadata (AI-generated or edited) with relevance ranking, typo tolerance, and support for 14 languages
 - **20+ filters** to find assets by tag, color, people, quality, NSFW status, watermarks, brands, and more
 - **Duplicate detection** surfaces visually similar images so you stop re-uploading the same file, and lets you find images similar to any specific asset on demand
-- **Asset Browser** to explore your entire library with quick filter presets and CSV export
+- **Asset Browser** to explore your entire library with quick filter presets
 - **Enhanced Asset Search** replaces native search in asset selector modals, so you can find assets by their metadata instead of just filenames
 
 [[Image: Asset Browser. Show the search page with a query like "outdoor" entered, 2-3 active filter chips (e.g. "Contains People", a color filter), the quick filter buttons visible, and a grid of 8-12 matching asset thumbnails. The filter panel should be expanded to show the variety of available filters.]]

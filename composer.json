@@ -81,8 +81,7 @@
           "AI-powered semantic search in the native asset picker",
           "Full dashboard with usage stats, insights, and attention alerts",
           "Custom condition rules for stock photos and text-in-image filtering",
-          "Edit AI-generated tags, colors, and extracted text per asset",
-          "CSV export and CLI tools for advanced workflows"
+          "Edit AI-generated tags, colors, and extracted text per asset"
         ]
       }
     ]

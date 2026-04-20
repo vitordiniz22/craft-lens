@@ -9,14 +9,8 @@ use craft\elements\Asset;
 use craft\web\Controller;
 use vitordiniz22\craftlens\controllers\traits\RequiresAiProviderTrait;
 use vitordiniz22\craftlens\controllers\traits\ValidatesIdsTrait;
-use vitordiniz22\craftlens\enums\AnalysisStatus;
-use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\FilterParser;
-use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\Plugin;
-use vitordiniz22\craftlens\records\AssetAnalysisRecord;
-use vitordiniz22\craftlens\records\AssetColorRecord;
-use vitordiniz22\craftlens\records\AssetTagRecord;
 use yii\web\BadRequestHttpException;
 use yii\web\Response;
 
@@ -27,8 +21,6 @@ class SearchController extends Controller
 {
     use RequiresAiProviderTrait;
     use ValidatesIdsTrait;
-
-    private const EXPORT_ROW_LIMIT = 10000;
 
     protected array|int|bool $allowAnonymous = false;
 
@@ -104,178 +96,6 @@ class SearchController extends Controller
     }
 
     /**
-     * Export search results as CSV.
-     */
-    public function actionExport(): Response
-    {
-        $this->requireCpRequest();
-        $this->requirePermission('accessPlugin-lens');
-        Plugin::getInstance()->requireProEdition();
-
-        $plugin = Plugin::getInstance();
-        $request = Craft::$app->getRequest();
-
-        $filters = FilterParser::fromRequest($request);
-        unset($filters['offset']);
-        $filters['limit'] = self::EXPORT_ROW_LIMIT;
-
-        try {
-            $results = $plugin->search->search($filters);
-        } catch (\Throwable $e) {
-            Logger::error(LogCategory::AssetProcessing, 'CSV export query failed', exception: $e);
-            throw $e;
-        }
-
-        if (count($results['assets']) >= self::EXPORT_ROW_LIMIT) {
-            Logger::warning(LogCategory::AssetProcessing, 'CSV export hit row limit', context: ['limit' => self::EXPORT_ROW_LIMIT]);
-        }
-
-        $assetIds = array_map(fn($asset) => $asset->id, $results['assets']);
-
-        if (!empty($assetIds)) {
-            $results['assets'] = Asset::find()->id($assetIds)->siteId(Craft::$app->getSites()->getPrimarySite()->id)->with('volume')->all();
-        }
-
-        $output = fopen('php://temp', 'r+');
-
-        try {
-            fputcsv($output, [
-                'Asset ID',
-                'Title',
-                'Filename',
-                'URL',
-                'Alt Text',
-                'Alt Text Confidence',
-                'Suggested Title',
-                'Title Confidence',
-                'Long Description',
-                'Long Description Confidence',
-                'Tags',
-                'Colors',
-                'Status',
-                'Contains People',
-                'Face Count',
-                'Has Watermark',
-                'Watermark Type',
-                'Contains Brand Logo',
-                'Detected Brands',
-                'Sharpness Score',
-                'Exposure Score',
-                'Noise Score',
-                'NSFW Score',
-                'NSFW Flagged',
-                'NSFW Categories',
-                'Extracted Text',
-                'Focal Point X',
-                'Focal Point Y',
-                'Focal Point Confidence',
-                'Provider',
-                'Model',
-                'Input Tokens',
-                'Output Tokens',
-                'Cost',
-                'Processed At',
-            ]);
-
-            $analysisMap = !empty($assetIds)
-                ? AssetAnalysisRecord::find()->where(['assetId' => $assetIds])->indexBy('assetId')->all()
-                : [];
-
-            $analysisIds = array_map(fn($a) => $a->id, $analysisMap);
-
-            $tagsByAnalysis = [];
-            $colorsByAnalysis = [];
-
-            if (!empty($analysisIds)) {
-                foreach (AssetTagRecord::find()->where(['analysisId' => $analysisIds])->all() as $tag) {
-                    $tagsByAnalysis[$tag->analysisId][] = $tag->tag;
-                }
-
-                foreach (AssetColorRecord::find()->where(['analysisId' => $analysisIds])->orderBy(['percentage' => SORT_DESC])->all() as $color) {
-                    $colorsByAnalysis[$color->analysisId][] = $color->hex . ($color->percentage !== null ? ' (' . round($color->percentage * 100) . '%)' : '');
-                }
-            }
-
-            foreach ($results['assets'] as $asset) {
-                $analysis = $analysisMap[$asset->id] ?? null;
-
-                if ($analysis === null && !empty($assetIds) && $asset->kind === Asset::KIND_IMAGE) {
-                    Logger::warning(
-                        LogCategory::AssetProcessing,
-                        'Image asset missing from analysis map during CSV export',
-                        assetId: $asset->id
-                    );
-                }
-
-                $tags = '';
-                $colors = '';
-                $detectedBrands = '';
-                $nsfwCategories = '';
-
-                if ($analysis !== null) {
-                    $tags = implode(', ', $tagsByAnalysis[$analysis->id] ?? []);
-                    $colors = implode(', ', $colorsByAnalysis[$analysis->id] ?? []);
-                    $detectedBrands = self::flattenJsonColumn($analysis->detectedBrands);
-                    $nsfwCategories = self::flattenJsonColumn($analysis->nsfwCategories);
-                }
-
-                fputcsv($output, [
-                    $asset->id,
-                    $asset->title,
-                    $asset->filename,
-                    $asset->getUrl(),
-                    $analysis?->altText ?? '',
-                    self::formatConfidence($analysis?->altTextConfidence),
-                    $analysis?->suggestedTitle ?? '',
-                    self::formatConfidence($analysis?->titleConfidence),
-                    $analysis?->longDescription ?? '',
-                    self::formatConfidence($analysis?->longDescriptionConfidence),
-                    $tags,
-                    $colors,
-                    $analysis ? AnalysisStatus::from($analysis->status)->label() : '',
-                    $analysis !== null ? ($analysis->containsPeople ? 'Yes' : 'No') : '',
-                    $analysis?->faceCount ?? '',
-                    $analysis !== null ? ($analysis->hasWatermark ? 'Yes' : 'No') : '',
-                    $analysis?->watermarkType ?? '',
-                    $analysis !== null ? ($analysis->containsBrandLogo ? 'Yes' : 'No') : '',
-                    $detectedBrands,
-                    self::formatConfidence($analysis?->sharpnessScore),
-                    self::formatConfidence($analysis?->exposureScore),
-                    self::formatConfidence($analysis?->noiseScore),
-                    self::formatConfidence($analysis?->nsfwScore),
-                    $analysis?->nsfwScore !== null ? ($analysis->nsfwScore >= 0.5 ? 'Yes' : 'No') : '',
-                    $nsfwCategories,
-                    is_array($analysis?->extractedTextAi) ? implode(' | ', $analysis->extractedTextAi) : '',
-                    $analysis?->focalPointX ?? '',
-                    $analysis?->focalPointY ?? '',
-                    self::formatConfidence($analysis?->focalPointConfidence),
-                    $analysis?->provider ?? '',
-                    $analysis?->providerModel ?? '',
-                    $analysis?->inputTokens ?? '',
-                    $analysis?->outputTokens ?? '',
-                    $analysis?->actualCost !== null ? '$' . number_format((float) $analysis->actualCost, 4) : '',
-                    $analysis?->processedAt ?? '',
-                ]);
-            }
-
-            rewind($output);
-            $csv = stream_get_contents($output);
-        } finally {
-            fclose($output);
-        }
-
-        $response = Craft::$app->getResponse();
-        $response->format = Response::FORMAT_RAW;
-        $response->headers->set('Content-Type', 'text/csv; charset=utf-8');
-        $response->headers->set('Content-Disposition', 'attachment; filename="lens-export-' . date('Y-m-d-His') . '.csv"');
-        $response->data = $csv;
-
-        Logger::info(LogCategory::AssetProcessing, 'CSV export completed', context: ['rowCount' => count($results['assets'])]);
-
-        return $response;
-    }
-
-    /**
      * Return distinct provider models for the given provider as JSON. Powers
      * the dependent Model select in the filter dropdown.
      */
@@ -321,26 +141,5 @@ class SearchController extends Controller
         $success = Plugin::getInstance()->duplicateDetection->resolve($groupId, $resolution, $userId);
 
         return $this->asJson(['success' => $success]);
-    }
-
-    /**
-     * Format a 0-1 confidence/score value as a percentage string for CSV output.
-     * Accepts string because PDO returns DECIMAL columns as strings.
-     */
-    private static function formatConfidence(float|string|null $value): string
-    {
-        return $value !== null && $value !== '' ? round((float) $value * 100) . '%' : '';
-    }
-
-    private static function flattenJsonColumn(?array $value): string
-    {
-        if (empty($value)) {
-            return '';
-        }
-
-        return implode(', ', array_map(
-            fn($item) => is_scalar($item) ? (string) $item : json_encode($item),
-            $value,
-        ));
     }
 }
