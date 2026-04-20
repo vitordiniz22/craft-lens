@@ -10,8 +10,11 @@ use craft\helpers\Db;
 use vitordiniz22\craftlens\conditions\FileTooLargeConditionRule;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\enums\LogCategory;
+use vitordiniz22\craftlens\helpers\ColorSupport;
+use vitordiniz22\craftlens\helpers\DuplicateSupport;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\helpers\ImageMetricsAnalyzer;
+use vitordiniz22\craftlens\helpers\QualitySupport;
 use vitordiniz22\craftlens\migrations\Install;
 use vitordiniz22\craftlens\Plugin;
 use yii\base\Behavior;
@@ -118,6 +121,9 @@ class AssetQueryBehavior extends Behavior
         if (!Plugin::getInstance()->getIsPro()) {
             return $this->owner;
         }
+        if (!ColorSupport::isAvailable()) {
+            return $this->owner;
+        }
         $this->lensColor = $value;
         return $this->owner;
     }
@@ -200,6 +206,9 @@ class AssetQueryBehavior extends Behavior
         if (!Plugin::getInstance()->getIsPro()) {
             return $this->owner;
         }
+        if (!DuplicateSupport::isAvailable()) {
+            return $this->owner;
+        }
         $this->lensHasDuplicates = $value;
         return $this->owner;
     }
@@ -221,6 +230,9 @@ class AssetQueryBehavior extends Behavior
      */
     public function lensSharpnessBelow(?float $value): AssetQuery
     {
+        if (!QualitySupport::isAvailable()) {
+            return $this->owner;
+        }
         $this->lensSharpnessBelow = $value;
         return $this->owner;
     }
@@ -230,6 +242,9 @@ class AssetQueryBehavior extends Behavior
      */
     public function lensExposureIssues(?bool $value): AssetQuery
     {
+        if (!QualitySupport::isAvailable()) {
+            return $this->owner;
+        }
         $this->lensExposureIssues = $value;
         return $this->owner;
     }
@@ -248,6 +263,9 @@ class AssetQueryBehavior extends Behavior
      */
     public function lensBlurry(?bool $value): AssetQuery
     {
+        if (!QualitySupport::isAvailable()) {
+            return $this->owner;
+        }
         $this->lensBlurry = $value;
         return $this->owner;
     }
@@ -257,6 +275,9 @@ class AssetQueryBehavior extends Behavior
      */
     public function lensTooDark(?bool $value): AssetQuery
     {
+        if (!QualitySupport::isAvailable()) {
+            return $this->owner;
+        }
         $this->lensTooDark = $value;
         return $this->owner;
     }
@@ -266,6 +287,9 @@ class AssetQueryBehavior extends Behavior
      */
     public function lensTooBright(?bool $value): AssetQuery
     {
+        if (!QualitySupport::isAvailable()) {
+            return $this->owner;
+        }
         $this->lensTooBright = $value;
         return $this->owner;
     }
@@ -275,6 +299,9 @@ class AssetQueryBehavior extends Behavior
      */
     public function lensLowContrast(?bool $value): AssetQuery
     {
+        if (!QualitySupport::isAvailable()) {
+            return $this->owner;
+        }
         $this->lensLowContrast = $value;
         return $this->owner;
     }

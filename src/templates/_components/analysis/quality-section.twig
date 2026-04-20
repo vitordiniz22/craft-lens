@@ -11,7 +11,7 @@
 {% set qualityMetrics = qualityMetrics ?? {} %}
 
 {# ── Quality Metrics (Imagick-based) ──────────────────── #}
-{% if qualityMetrics|length %}
+{% if lens.hasQualitySupport and qualityMetrics|length %}
     <span class="lens-field-label">{{ 'Quality'|t('lens') }}</span>
     <div class="lens-quality-metrics">
         {% for key, metric in qualityMetrics %}

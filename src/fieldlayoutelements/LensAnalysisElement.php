@@ -15,6 +15,7 @@ use vitordiniz22\craftlens\helpers\ImageQualityChecker;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\helpers\MultisiteHelper;
 use vitordiniz22\craftlens\helpers\ImageMetricsAnalyzer;
+use vitordiniz22\craftlens\helpers\QualitySupport;
 use vitordiniz22\craftlens\Plugin;
 use vitordiniz22\craftlens\web\assets\lens\LensAssetActionsAsset;
 
@@ -141,7 +142,7 @@ class LensAnalysisElement extends BaseUiElement
                     'currentSiteId' => $element->siteId,
                     'primarySiteId' => Craft::$app->getSites()->getPrimarySite()->id,
                     'webReadiness' => ImageQualityChecker::assess($element),
-                    'qualityMetrics' => $analysis ? ImageMetricsAnalyzer::assessFromRecord(
+                    'qualityMetrics' => ($analysis && QualitySupport::isAvailable()) ? ImageMetricsAnalyzer::assessFromRecord(
                         $analysis->sharpnessScore !== null ? (float) $analysis->sharpnessScore : null,
                         $analysis->exposureScore !== null ? (float) $analysis->exposureScore : null,
                         $analysis->noiseScore !== null ? (float) $analysis->noiseScore : null,

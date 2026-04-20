@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace vitordiniz22\craftlens\helpers;
 
-use vitordiniz22\craftlens\enums\LogCategory;
-
 /**
  * Extracts dominant colors from an image using the median-cut algorithm.
  *
@@ -22,6 +20,10 @@ class DominantColorExtractor
     /**
      * Extract dominant colors from an image file.
      *
+     * Picks Imagick if available, otherwise GD. Both drivers produce the same
+     * output shape by feeding a downsampled, white-flattened pixel buffer into
+     * the shared median-cut pipeline.
+     *
      * @param string $imagePath Absolute path to the image file
      * @param int $count Number of colors to extract (default 6)
      * @return array<array{hex: string, percentage: float}> Sorted by percentage descending
@@ -33,15 +35,55 @@ class DominantColorExtractor
             throw new \RuntimeException("Image file not found or not readable: {$imagePath}");
         }
 
-        $source = self::loadImage($imagePath);
+        $pixels = match (ColorSupport::preferredDriver()) {
+            ColorSupport::DRIVER_IMAGICK => self::readPixelsImagick($imagePath),
+            ColorSupport::DRIVER_GD => self::readPixelsGd($imagePath),
+            default => throw new \RuntimeException('Neither Imagick nor GD is available for color extraction'),
+        };
+
+        return self::buildPalette($pixels, $count);
+    }
+
+    /**
+     * Run the shared median-cut pipeline on a flat RGB pixel buffer.
+     *
+     * @param array<array{0: int, 1: int, 2: int}> $pixels
+     * @return array<array{hex: string, percentage: float}>
+     */
+    private static function buildPalette(array $pixels, int $count): array
+    {
+        $clusters = self::medianCut($pixels, $count);
+        $totalPixels = count($pixels);
+        $colors = [];
+
+        foreach ($clusters as $cluster) {
+            $avg = self::averageColor($cluster);
+            $colors[] = [
+                'hex' => self::rgbToHex($avg[0], $avg[1], $avg[2]),
+                'percentage' => $totalPixels > 0 ? round(count($cluster) / $totalPixels, 4) : 0.0,
+            ];
+        }
+
+        usort($colors, fn(array $a, array $b) => $b['percentage'] <=> $a['percentage']);
+
+        return $colors;
+    }
+
+    /**
+     * Downsample to SAMPLE_SIZE×SAMPLE_SIZE using GD, flatten transparency to white,
+     * and return every pixel as an [R, G, B] triple.
+     *
+     * @return array<array{0: int, 1: int, 2: int}>
+     */
+    private static function readPixelsGd(string $imagePath): array
+    {
+        $source = self::loadImageGd($imagePath);
         $canvas = null;
 
         try {
             $srcW = imagesx($source);
             $srcH = imagesy($source);
 
-            // Create a white-filled canvas and composite the source onto it.
-            // This simultaneously downsamples and flattens transparency to white.
             $canvas = imagecreatetruecolor(self::SAMPLE_SIZE, self::SAMPLE_SIZE);
 
             if ($canvas === false) {
@@ -52,40 +94,66 @@ class DominantColorExtractor
             imagefill($canvas, 0, 0, $white);
             imagecopyresampled($canvas, $source, 0, 0, 0, 0, self::SAMPLE_SIZE, self::SAMPLE_SIZE, $srcW, $srcH);
 
-            // Collect all pixel RGB values
             $pixels = [];
 
             for ($y = 0; $y < self::SAMPLE_SIZE; $y++) {
                 for ($x = 0; $x < self::SAMPLE_SIZE; $x++) {
                     $rgb = imagecolorat($canvas, $x, $y);
                     $pixels[] = [
-                        ($rgb >> 16) & 0xFF, // R
-                        ($rgb >> 8) & 0xFF,  // G
-                        $rgb & 0xFF,         // B
+                        ($rgb >> 16) & 0xFF,
+                        ($rgb >> 8) & 0xFF,
+                        $rgb & 0xFF,
                     ];
                 }
             }
 
-            $clusters = self::medianCut($pixels, $count);
-            $totalPixels = count($pixels);
-            $colors = [];
-
-            foreach ($clusters as $cluster) {
-                $avg = self::averageColor($cluster);
-                $colors[] = [
-                    'hex' => self::rgbToHex($avg[0], $avg[1], $avg[2]),
-                    'percentage' => round(count($cluster) / $totalPixels, 4),
-                ];
-            }
-
-            usort($colors, fn(array $a, array $b) => $b['percentage'] <=> $a['percentage']);
-
-            return $colors;
+            return $pixels;
         } finally {
             imagedestroy($source);
 
             if ($canvas !== null) {
                 imagedestroy($canvas);
+            }
+        }
+    }
+
+    /**
+     * Downsample to SAMPLE_SIZE×SAMPLE_SIZE using Imagick, flatten transparency to white,
+     * and return every pixel as an [R, G, B] triple. Output shape matches readPixelsGd().
+     *
+     * @return array<array{0: int, 1: int, 2: int}>
+     */
+    private static function readPixelsImagick(string $imagePath): array
+    {
+        $img = null;
+
+        try {
+            $img = new \Imagick($imagePath);
+
+            // Flatten transparency onto a white background before resizing so
+            // translucent edges average toward white, matching the GD path.
+            $img->setImageBackgroundColor(new \ImagickPixel('white'));
+            $img->setImageAlphaChannel(\Imagick::ALPHACHANNEL_REMOVE);
+
+            // TRIANGLE ≈ bilinear, closest visual match to GD's imagecopyresampled.
+            $img->resizeImage(self::SAMPLE_SIZE, self::SAMPLE_SIZE, \Imagick::FILTER_TRIANGLE, 1);
+            $img->setImageColorspace(\Imagick::COLORSPACE_SRGB);
+
+            $raw = $img->exportImagePixels(0, 0, self::SAMPLE_SIZE, self::SAMPLE_SIZE, 'RGB', \Imagick::PIXEL_CHAR);
+
+            $pixels = [];
+            $total = count($raw);
+
+            for ($i = 0; $i < $total; $i += 3) {
+                $pixels[] = [$raw[$i], $raw[$i + 1], $raw[$i + 2]];
+            }
+
+            return $pixels;
+        } catch (\ImagickException $e) {
+            throw new \RuntimeException("Imagick failed to process image: {$e->getMessage()}", 0, $e);
+        } finally {
+            if ($img !== null) {
+                $img->clear();
             }
         }
     }
@@ -114,7 +182,7 @@ class DominantColorExtractor
                     continue;
                 }
 
-                [$channel, $range] = self::widestChannel($box);
+                [, $range] = self::widestChannel($box);
 
                 if ($range > $bestRange) {
                     $bestRange = $range;
@@ -224,7 +292,7 @@ class DominantColorExtractor
      *
      * @throws \RuntimeException If the image format is unsupported or cannot be loaded
      */
-    private static function loadImage(string $path): \GdImage
+    private static function loadImageGd(string $path): \GdImage
     {
         $finfo = new \finfo(FILEINFO_MIME_TYPE);
         $mimeType = $finfo->file($path);

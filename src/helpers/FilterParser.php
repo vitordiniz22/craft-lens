@@ -137,6 +137,10 @@ class FilterParser
 
     private static function parseColorFilters(Request $request, array &$filters): void
     {
+        if (!ColorSupport::isAvailable()) {
+            return;
+        }
+
         $color = $request->getQueryParam('color');
 
         if ($color !== null && trim($color) !== '') {
@@ -157,10 +161,14 @@ class FilterParser
     private static function parseBooleanFilters(Request $request, array &$filters): void
     {
         $booleanFilterKeys = [
-            'hasDuplicates', 'hasWatermark', 'containsBrandLogo',
+            'hasWatermark', 'containsBrandLogo',
             'hasFocalPoint', 'unprocessed', 'hasTextInImage',
             'missingAltText',
         ];
+
+        if (DuplicateSupport::isAvailable()) {
+            $booleanFilterKeys[] = 'hasDuplicates';
+        }
 
         foreach ($booleanFilterKeys as $key) {
             $value = $request->getQueryParam($key);
@@ -175,9 +183,12 @@ class FilterParser
     {
         $enumFilters = [
             'watermarkType' => array_column(WatermarkType::cases(), 'value'),
-            'qualityIssue' => ['blurry', 'tooDark', 'tooBright', 'lowContrast'],
             'fileSizePreset' => ['1', '5', '10', '25', '50'],
         ];
+
+        if (QualitySupport::isAvailable()) {
+            $enumFilters['qualityIssue'] = ['blurry', 'tooDark', 'tooBright', 'lowContrast'];
+        }
 
         foreach ($enumFilters as $key => $allowedValues) {
             $value = $request->getQueryParam($key);

@@ -23,8 +23,7 @@
 }
 
 .lens-dashboard-section--flush {
-    padding-left: 0;
-    padding-right: 0;
+    padding: 0;
 }
 
 .lens-dashboard-section__body {
@@ -39,8 +38,7 @@
     }
 
     .lens-dashboard-section--flush {
-        padding-left: 0;
-        padding-right: 0;
+        padding: 0;
     }
 
     .lens-dashboard-section__body {
@@ -378,7 +376,8 @@
     }
 
     .lens-attention__cards {
-        flex-direction: column;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
     }
 
     .lens-asset-card {
@@ -396,5 +395,11 @@
 
     .lens-actions__grid .lens-actions__form .btn {
         width: 100%;
+    }
+}
+
+@media (max-width: 500px) {
+    .lens-attention__cards {
+        grid-template-columns: 1fr;
     }
 }

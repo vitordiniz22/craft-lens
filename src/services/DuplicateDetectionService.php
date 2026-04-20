@@ -7,6 +7,7 @@ namespace vitordiniz22\craftlens\services;
 use Craft;
 use craft\helpers\DateTimeHelper;
 use vitordiniz22\craftlens\enums\LogCategory;
+use vitordiniz22\craftlens\helpers\DuplicateSupport;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\helpers\PerceptualHashHelper;
 use vitordiniz22\craftlens\migrations\Install;
@@ -216,6 +217,10 @@ class DuplicateDetectionService extends Component
      */
     public function getUnresolvedDuplicateCount(): int
     {
+        if (!DuplicateSupport::isAvailable()) {
+            return 0;
+        }
+
         $table = DuplicateGroupRecord::tableName();
 
         return (int) (new Query())
@@ -239,6 +244,10 @@ class DuplicateDetectionService extends Component
      */
     public function getUnresolvedDuplicateCountForAsset(int $assetId): int
     {
+        if (!DuplicateSupport::isAvailable()) {
+            return 0;
+        }
+
         return (int) DuplicateGroupRecord::find()
             ->where(['resolution' => null])
             ->andWhere([
@@ -354,6 +363,10 @@ class DuplicateDetectionService extends Component
      */
     public function getUnresolvedDuplicateCountsForAssets(array $assetIds): array
     {
+        if (!DuplicateSupport::isAvailable()) {
+            return [];
+        }
+
         if (empty($assetIds)) {
             return [];
         }
@@ -445,6 +458,10 @@ class DuplicateDetectionService extends Component
      */
     public function getSimilarAssetsForDisplay(int $assetId, int $limit = 3): array
     {
+        if (!DuplicateSupport::isAvailable()) {
+            return [];
+        }
+
         $duplicates = DuplicateGroupRecord::find()
             ->where(['and',
                 ['resolvedAt' => null],
@@ -507,6 +524,10 @@ class DuplicateDetectionService extends Component
      */
     public function getSimilarAssetIds(int $assetId): array
     {
+        if (!DuplicateSupport::isAvailable()) {
+            return [];
+        }
+
         $duplicates = DuplicateGroupRecord::find()
             ->select(['canonicalAssetId', 'duplicateAssetId'])
             ->where(['and',

@@ -6,6 +6,7 @@ namespace vitordiniz22\craftlens\services;
 
 use Craft;
 use vitordiniz22\craftlens\enums\LogCategory;
+use vitordiniz22\craftlens\helpers\ColorSupport;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\Plugin;
 use vitordiniz22\craftlens\records\AssetAnalysisRecord;
@@ -224,6 +225,10 @@ class AnalysisEditService extends Component
      */
     public function updateColors(int $analysisId, array $colors): array
     {
+        if (!ColorSupport::isAvailable()) {
+            throw new InvalidArgumentException('Color support is unavailable: install the Imagick or GD PHP extension.');
+        }
+
         $record = AssetAnalysisRecord::findOne($analysisId);
 
         if ($record === null) {

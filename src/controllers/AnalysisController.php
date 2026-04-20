@@ -9,6 +9,7 @@ use craft\elements\Asset;
 use craft\web\Controller;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\enums\LogCategory;
+use vitordiniz22\craftlens\helpers\ColorSupport;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\helpers\MultisiteHelper;
 use vitordiniz22\craftlens\controllers\traits\ValidatesIdsTrait;
@@ -424,6 +425,10 @@ class AnalysisController extends Controller
         $this->requireCpRequest();
         $this->requirePostRequest();
         $this->requirePermission('accessPlugin-lens');
+
+        if (!ColorSupport::isAvailable()) {
+            throw new BadRequestHttpException('Color support is unavailable: install the Imagick or GD PHP extension.');
+        }
 
         $analysisId = $this->requireValidId('analysisId', 'analysis ID');
         $colors = $this->request->getRequiredBodyParam('colors');

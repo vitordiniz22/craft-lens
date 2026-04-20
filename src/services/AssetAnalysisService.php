@@ -19,7 +19,9 @@ use vitordiniz22\craftlens\exceptions\AnalysisCancelledException;
 use vitordiniz22\craftlens\exceptions\AnalysisException;
 use vitordiniz22\craftlens\exceptions\ConfigurationException;
 use vitordiniz22\craftlens\helpers\AssetTitleHelper;
+use vitordiniz22\craftlens\helpers\ColorSupport;
 use vitordiniz22\craftlens\helpers\DominantColorExtractor;
+use vitordiniz22\craftlens\helpers\DuplicateSupport;
 use vitordiniz22\craftlens\helpers\ImageMetricsAnalyzer;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\helpers\MultisiteHelper;
@@ -414,27 +416,30 @@ class AssetAnalysisService extends Component
         // Local image quality analysis via Imagick (before AI to avoid holding temp file)
         $localMetrics = ImageMetricsAnalyzer::analyze($asset);
 
-        // Local dominant color extraction via GD (deterministic, pixel-accurate)
+        // Local dominant color extraction via Imagick or GD (deterministic, pixel-accurate).
+        // Skip entirely when neither extension is loaded — no temp file, no warning churn.
         $localColors = [];
 
-        try {
-            $colorTempPath = $asset->getCopyOfFile();
+        if (ColorSupport::isAvailable()) {
+            try {
+                $colorTempPath = $asset->getCopyOfFile();
 
-            if ($colorTempPath !== null && file_exists($colorTempPath)) {
-                try {
-                    $localColors = DominantColorExtractor::extract($colorTempPath);
-                } finally {
-                    if (file_exists($colorTempPath)) {
-                        unlink($colorTempPath);
+                if ($colorTempPath !== null && file_exists($colorTempPath)) {
+                    try {
+                        $localColors = DominantColorExtractor::extract($colorTempPath);
+                    } finally {
+                        if (file_exists($colorTempPath)) {
+                            unlink($colorTempPath);
+                        }
                     }
                 }
+            } catch (\Throwable $e) {
+                Logger::warning(
+                    LogCategory::AssetProcessing,
+                    'Local color extraction failed: ' . $e->getMessage(),
+                    assetId: $asset->id,
+                );
             }
-        } catch (\Throwable $e) {
-            Logger::warning(
-                LogCategory::AssetProcessing,
-                'Local color extraction failed: ' . $e->getMessage(),
-                assetId: $asset->id,
-            );
         }
 
         // Checkpoint 1: abort before expensive AI call if cancelled
@@ -599,6 +604,10 @@ class AssetAnalysisService extends Component
     private function computePerceptualHash(Asset $asset, AssetAnalysisRecord $record): void
     {
         if ($asset->kind !== Asset::KIND_IMAGE) {
+            return;
+        }
+
+        if (!DuplicateSupport::isAvailable()) {
             return;
         }
 

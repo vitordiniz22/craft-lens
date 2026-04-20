@@ -25,6 +25,10 @@ class PerceptualHashHelper
      */
     public static function compute(string $imagePath): string
     {
+        if (!DuplicateSupport::isAvailable()) {
+            throw new \RuntimeException('Perceptual hashing requires the GD PHP extension');
+        }
+
         if (!file_exists($imagePath) || !is_readable($imagePath)) {
             throw new \RuntimeException("Image file not found or not readable: {$imagePath}");
         }

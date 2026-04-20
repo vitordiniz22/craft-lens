@@ -63,6 +63,7 @@
     </div>
 
     {# Colors #}
+    {% if lens.hasColorSupport %}
     <div class="lens-editable-field{{ fieldState == 'editing' ? ' lens-is-editing' }}" data-lens-target="color-editor" data-lens-analysis-id="{{ analysis.id }}"{{ autoSave ? ' data-lens-auto-save="1"' }}{{ isInteractive ? ' data-lens-edit-mode="toggle"' }}>
         <div class="lens-field-header" data-lens-target="field-header">
             <span class="lens-field-label" data-lens-target="field-label">{{ 'Colors'|t('lens') }} ({{ analysisColors|length }})</span>
@@ -113,4 +114,5 @@
             </template>
         {% endif %}
     </div>
+    {% endif %}
 {% endif %}

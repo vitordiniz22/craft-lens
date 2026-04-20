@@ -10,8 +10,11 @@ use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\enums\QuickFilter;
 use vitordiniz22\craftlens\enums\WatermarkType;
+use vitordiniz22\craftlens\helpers\ColorSupport;
+use vitordiniz22\craftlens\helpers\DuplicateSupport;
 use vitordiniz22\craftlens\helpers\ImageMetricsAnalyzer;
 use vitordiniz22\craftlens\helpers\Logger;
+use vitordiniz22\craftlens\helpers\QualitySupport;
 use vitordiniz22\craftlens\migrations\Install;
 use vitordiniz22\craftlens\Plugin;
 use yii\base\Component;
@@ -52,6 +55,7 @@ class SearchService extends Component
      *     providerModel?: string,
      *     qualityIssue?: string,
      *     fileSizePreset?: string,
+     *     siteId?: int,
      *     offset?: int,
      *     limit?: int,
      * } $filters
@@ -61,6 +65,7 @@ class SearchService extends Component
     {
         $limit = $filters['limit'] ?? self::DEFAULT_LIMIT;
         $offset = $filters['offset'] ?? 0;
+        $siteId = $this->resolveSiteId($filters['siteId'] ?? null);
 
         // BM25 index path: resolve ranked IDs first when a text query is present.
         $rankedAssetIds = null;
@@ -84,7 +89,7 @@ class SearchService extends Component
             // Also query Craft's native search index to surface assets that
             // don't have Lens analysis (videos, documents, etc.) by their
             // title, filename, extension, or native alt text.
-            $craftNativeIds = $this->getCraftNativeSearchIds($rawQuery);
+            $craftNativeIds = $this->getCraftNativeSearchIds($rawQuery, $siteId);
 
             if ($rankedAssetIds !== null) {
                 $rankedAssetIds = array_values(array_unique(
@@ -172,11 +177,9 @@ class SearchService extends Component
 
         $paginatedIds = array_map('intval', $paginatedIds);
 
-        $primarySiteId = Craft::$app->getSites()->getPrimarySite()->id;
-
         $assets = Asset::find()
             ->id($paginatedIds)
-            ->siteId($primarySiteId)
+            ->siteId($siteId)
             ->fixedOrder()
             ->all();
 
@@ -265,6 +268,24 @@ class SearchService extends Component
     }
 
     /**
+     * Resolve the site ID to use for searches. Falls back to the primary site
+     * when no override is provided or when the requested site does not exist.
+     */
+    private function resolveSiteId(mixed $requested): int
+    {
+        $sitesService = Craft::$app->getSites();
+
+        if ($requested !== null && $requested !== '') {
+            $siteId = (int) $requested;
+            if ($siteId > 0 && $sitesService->getSiteById($siteId) !== null) {
+                return $siteId;
+            }
+        }
+
+        return $sitesService->getPrimarySite()->id;
+    }
+
+    /**
      * Parse search query into individual terms.
      *
      * @return string[]
@@ -314,13 +335,11 @@ class SearchService extends Component
      *
      * @return int[]
      */
-    private function getCraftNativeSearchIds(string $query): array
+    private function getCraftNativeSearchIds(string $query, int $siteId): array
     {
-        $primarySiteId = Craft::$app->getSites()->getPrimarySite()->id;
-
         $assetQuery = Asset::find()
             ->search($query)
-            ->siteId($primarySiteId)
+            ->siteId($siteId)
             ->status(null)
             ->limit(self::NATIVE_SEARCH_LIMIT);
 
@@ -457,6 +476,10 @@ class SearchService extends Component
             return;
         }
 
+        if (!ColorSupport::isAvailable()) {
+            return;
+        }
+
         $tolerance = $filters['colorTolerance'] ?? self::DEFAULT_COLOR_TOLERANCE;
         $matchingAssetIds = $this->findAssetsWithColorHex($filters['color'], $tolerance);
 
@@ -474,6 +497,10 @@ class SearchService extends Component
     private function applyDuplicatesFilter(Query $query, array $filters): void
     {
         if (!isset($filters['hasDuplicates'])) {
+            return;
+        }
+
+        if (!DuplicateSupport::isAvailable()) {
             return;
         }
 
@@ -587,6 +614,10 @@ class SearchService extends Component
         $issue = $filters['qualityIssue'] ?? null;
 
         if ($issue === null || $issue === '') {
+            return;
+        }
+
+        if (!QualitySupport::isAvailable()) {
             return;
         }
 
@@ -951,7 +982,7 @@ class SearchService extends Component
             ];
         };
 
-        return [
+        $registry = [
             'containsPeople' => ['label' => Craft::t('lens', 'People'), 'section' => 'content']
                 + $triState(Craft::t('lens', 'With people'), Craft::t('lens', 'Without people')),
             'faceCountPreset' => [
@@ -1042,6 +1073,20 @@ class SearchService extends Component
                 'params' => ['tags' => 'tags', 'operator' => 'tagOperator'],
             ],
         ];
+
+        if (!ColorSupport::isAvailable()) {
+            unset($registry['color']);
+        }
+
+        if (!QualitySupport::isAvailable()) {
+            unset($registry['qualityIssue']);
+        }
+
+        if (!DuplicateSupport::isAvailable()) {
+            unset($registry['hasDuplicates']);
+        }
+
+        return $registry;
     }
 
     /**

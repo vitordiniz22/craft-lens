@@ -7,6 +7,7 @@ namespace vitordiniz22\craftlens\console\controllers;
 use Craft;
 use craft\console\Controller;
 use craft\helpers\Console;
+use vitordiniz22\craftlens\helpers\ColorSupport;
 use vitordiniz22\craftlens\Plugin;
 use yii\console\ExitCode;
 
@@ -70,6 +71,11 @@ class StatsController extends Controller
     {
         $this->stdout("AI Color Statistics (Top {$limit})\n", Console::FG_CYAN);
         $this->stdout("====================\n\n");
+
+        if (!ColorSupport::isAvailable()) {
+            $this->stdout("Color support unavailable: install the Imagick or GD PHP extension.\n", Console::FG_YELLOW);
+            return ExitCode::OK;
+        }
 
         $colors = Plugin::getInstance()->colorAggregation->getColorCounts($limit);
 

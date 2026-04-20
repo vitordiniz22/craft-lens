@@ -10,7 +10,10 @@ use DateTime;
 use vitordiniz22\craftlens\conditions\FileTooLargeConditionRule;
 use vitordiniz22\craftlens\enums\AiProvider;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
+use vitordiniz22\craftlens\helpers\ColorSupport;
+use vitordiniz22\craftlens\helpers\DuplicateSupport;
 use vitordiniz22\craftlens\helpers\ImageMetricsAnalyzer;
+use vitordiniz22\craftlens\helpers\QualitySupport;
 use vitordiniz22\craftlens\migrations\Install;
 use vitordiniz22\craftlens\Plugin;
 use vitordiniz22\craftlens\records\AssetAnalysisRecord;
@@ -87,6 +90,10 @@ class StatisticsService extends Component
      */
     public function getDominantColors(int $limit = 5): array
     {
+        if (!ColorSupport::isAvailable()) {
+            return [];
+        }
+
         return Plugin::getInstance()->colorAggregation->getColorCounts($limit, $this->getEnabledVolumeIds());
     }
 
@@ -491,7 +498,9 @@ class StatisticsService extends Component
         $overview = $overviewStats ?? $this->getOverviewStats();
         $nsfwCount = $this->getNsfwFlaggedCount();
         $watermarkedCount = $this->getWatermarkedCount();
-        $duplicateCount = $plugin->duplicateDetection->getUnresolvedDuplicateCount();
+        $duplicateCount = DuplicateSupport::isAvailable()
+            ? $plugin->duplicateDetection->getUnresolvedDuplicateCount()
+            : 0;
         $fileTooLargeCount = $this->getFileTooLargeCount();
         $qualityIssues = $this->getQualityIssueCounts();
 
@@ -633,6 +642,10 @@ class StatisticsService extends Component
      */
     public function getQualityIssueCounts(): array
     {
+        if (!QualitySupport::isAvailable()) {
+            return ['blurry' => 0, 'tooDark' => 0, 'tooBright' => 0, 'lowContrast' => 0];
+        }
+
         $volumeIds = $this->getEnabledVolumeIds();
 
         $query = (new Query())

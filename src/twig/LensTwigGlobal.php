@@ -8,6 +8,9 @@ use craft\elements\Asset;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\enums\FilterField;
 use vitordiniz22\craftlens\helpers\AssetTitleHelper;
+use vitordiniz22\craftlens\helpers\ColorSupport;
+use vitordiniz22\craftlens\helpers\DuplicateSupport;
+use vitordiniz22\craftlens\helpers\QualitySupport;
 use vitordiniz22\craftlens\Plugin;
 use vitordiniz22\craftlens\records\AssetAnalysisRecord;
 
@@ -141,5 +144,20 @@ class LensTwigGlobal
     public function getPendingReviewCount(): int
     {
         return Plugin::getInstance()->review->getPendingReviewCount();
+    }
+
+    public function getHasColorSupport(): bool
+    {
+        return ColorSupport::isAvailable();
+    }
+
+    public function getHasQualitySupport(): bool
+    {
+        return QualitySupport::isAvailable();
+    }
+
+    public function getHasDuplicateSupport(): bool
+    {
+        return DuplicateSupport::isAvailable();
     }
 }

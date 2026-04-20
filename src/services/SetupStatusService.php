@@ -8,7 +8,8 @@ use Craft;
 use vitordiniz22\craftlens\enums\AiProvider;
 use vitordiniz22\craftlens\enums\SetupSeverity;
 use vitordiniz22\craftlens\fieldlayoutelements\LensAnalysisElement;
-use vitordiniz22\craftlens\helpers\ImageMetricsAnalyzer;
+use vitordiniz22\craftlens\helpers\DuplicateSupport;
+use vitordiniz22\craftlens\helpers\QualitySupport;
 use vitordiniz22\craftlens\models\Settings;
 use vitordiniz22\craftlens\Plugin;
 use yii\base\Component;
@@ -43,7 +44,8 @@ class SetupStatusService extends Component
             $this->checkAiProviderConfigured(),
             $this->checkVolumesEnabled(),
             $this->checkAnalysisPanelConfigured(),
-            $this->checkImagickAvailable(ImageMetricsAnalyzer::isAvailable()),
+            $this->checkImagickAvailable(QualitySupport::isAvailable()),
+            $this->checkGdAvailable(DuplicateSupport::isAvailable()),
         ];
 
         if (Plugin::getInstance()->getIsPro()) {
@@ -288,10 +290,25 @@ class SetupStatusService extends Component
             'key' => 'imagick_available',
             'category' => self::CATEGORY_EXTENSIONS,
             'severity' => SetupSeverity::Warning->value,
-            'message' => Craft::t('lens', 'Install the Imagick PHP extension to unlock local image quality checks (sharpness, exposure, contrast, compression, color profile). Lens still analyzes images without it, those metrics just stay hidden.'),
+            'message' => Craft::t('lens', 'Install the Imagick PHP extension to unlock local image quality checks (sharpness, exposure, contrast, compression, color profile). Without it, the quality section is hidden from the analysis panel, dashboard, and search filters.'),
             'actionLabel' => '',
             'actionUrl' => '',
             'docsUrl' => self::DOCS_BASE_URL . 'Getting-Started#enabling-imagick-recommended',
+            'isResolved' => $isResolved,
+            'prerequisites' => [],
+        ];
+    }
+
+    private function checkGdAvailable(bool $isResolved): array
+    {
+        return [
+            'key' => 'gd_available',
+            'category' => self::CATEGORY_EXTENSIONS,
+            'severity' => SetupSeverity::Warning->value,
+            'message' => Craft::t('lens', 'Install the GD PHP extension to unlock perceptual-hash duplicate detection and give color extraction a fallback when Imagick is unavailable. Without it, duplicate detection is disabled and related UI is hidden.'),
+            'actionLabel' => '',
+            'actionUrl' => '',
+            'docsUrl' => self::DOCS_BASE_URL . 'Getting-Started#enabling-gd-recommended',
             'isResolved' => $isResolved,
             'prerequisites' => [],
         ];
