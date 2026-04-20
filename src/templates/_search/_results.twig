@@ -56,11 +56,9 @@
                             asset: asset,
                             analysis: analysis,
                             tags: tagsMap[analysis.id ?? 0] ?? [],
-                            colors: colorsMap[analysis.id ?? 0] ?? [],
                             dupCount: dupCountsMap[asset.id] ?? 0,
                             linkUrl: asset.cpEditUrl,
                             showTags: true,
-                            showColors: true,
                         } only %}
                     {% endfor %}
                 </div>
@@ -75,12 +73,10 @@
                     asset: asset,
                     analysis: analysis,
                     tags: tagsMap[analysis.id ?? 0] ?? [],
-                    colors: colorsMap[analysis.id ?? 0] ?? [],
                     dupCount: (similarityMap is defined and similarityMap|length) ? 0 : (dupCountsMap[asset.id] ?? 0),
                     similarity: (similarityMap is defined) ? (similarityMap[asset.id] ?? null) : null,
                     linkUrl: asset.cpEditUrl,
                     showTags: true,
-                    showColors: true,
                 } only %}
             {% endfor %}
         </div>

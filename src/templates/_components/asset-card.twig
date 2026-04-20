@@ -5,11 +5,9 @@
  #   asset     - Craft Asset element
  #   analysis  - AssetAnalysisRecord or null (pre-loaded)
  #   tags      - array of tag records (pre-loaded), optional
- #   colors    - array of color records (pre-loaded), optional
  #   dupCount  - int (pre-loaded), optional
  #   linkUrl   - string (destination URL when card is clicked)
  #   showTags     - bool (default true)
- #   showColors   - bool (default true)
  #   showMeta     - bool (show confidence badge in browse/bulk cards, default false)
  #   avgConfidence - float (for browse/bulk mode confidence badge, optional)
  #   tagCount   - int (for browse/bulk mode tag count display, optional)
@@ -18,10 +16,8 @@
  #}
 
 {% set showTags = showTags ?? true %}
-{% set showColors = showColors ?? true %}
 {% set showMeta = showMeta ?? false %}
 {% set tags = tags ?? [] %}
-{% set colors = colors ?? [] %}
 {% set dupCount = dupCount ?? 0 %}
 {% set checkable = checkable ?? false %}
 {% set analysisId = analysisId ?? null %}
@@ -119,27 +115,16 @@
             <p class="lens-result-native-alt">{{ asset.alt|truncate(80) }}</p>
         {% endif %}
 
-        {% if analysis %}
-            {% if (showTags and tags|length) or (showColors and colors|length) %}
-                <div class="lens-result-meta">
-                    {% if showTags and tags|length %}
-                        <span class="lens-result-tags">
-                            {%- for tag in tags|slice(0, 3) -%}
-                                <a href="{{ cpUrl('lens/search', {tags: tag.tag}) }}">{{ tag.tag }}</a>
-                                {%- if not loop.last %}, {% endif -%}
-                            {%- endfor -%}
-                            {%- if tags|length > 3 %} <span class="light">+{{ tags|length - 3 }}</span>{% endif -%}
-                        </span>
-                    {% endif %}
-                    {% if showColors and colors|length %}
-                        <span class="lens-result-colors">
-                            {% for color in colors|slice(0, 5) %}
-                                <span class="lens-swatch lens-swatch--sm" style="background-color: {{ color.hex }}" title="{{ color.hex }}"></span>
-                            {% endfor %}
-                        </span>
-                    {% endif %}
-                </div>
-            {% endif %}
+        {% if analysis and showTags and tags|length %}
+            <div class="lens-result-meta">
+                <span class="lens-result-tags">
+                    {%- for tag in tags|slice(0, 3) -%}
+                        <a href="{{ cpUrl('lens/search', {tags: tag.tag}) }}">{{ tag.tag }}</a>
+                        {%- if not loop.last %}, {% endif -%}
+                    {%- endfor -%}
+                    {%- if tags|length > 3 %} <span class="light">+{{ tags|length - 3 }}</span>{% endif -%}
+                </span>
+            </div>
         {% endif %}
 
         {% if showMeta %}

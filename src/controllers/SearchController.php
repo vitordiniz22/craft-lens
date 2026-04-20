@@ -67,7 +67,6 @@ class SearchController extends Controller
         )));
 
         $tagsMap = $plugin->tagAggregation->getTagsForAnalyses($analysisIds);
-        $colorsMap = $plugin->colorAggregation->getColorsForAnalyses($analysisIds);
         $dupCountsMap = $plugin->duplicateDetection->getUnresolvedDuplicateCountsForAssets($assetIds);
 
         $similarityMap = [];
@@ -96,7 +95,6 @@ class SearchController extends Controller
             'hasActiveFilters' => FilterParser::hasActiveFilters($filters),
             'analysisMap' => $analysisMap,
             'tagsMap' => $tagsMap,
-            'colorsMap' => $colorsMap,
             'dupCountsMap' => $dupCountsMap,
             'similarityMap' => $similarityMap,
             'similarToAsset' => $similarToAsset,
