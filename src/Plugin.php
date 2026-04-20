@@ -474,7 +474,7 @@ class Plugin extends BasePlugin
             function(RegisterElementSourcesEvent $event) {
                 $iconPath = $this->getBasePath() . '/icon-mask.svg';
 
-                if ($event->context === 'index' && !$this->getIsPro()) {
+                if ($event->context === 'index') {
                     $sourceDefinitions = [
                         'not-analysed' => ['Not Analysed', ['lensStatus' => 'untagged', 'kind' => 'image']],
                         'failed' => ['Failed Analyses', ['lensStatus' => 'failed', 'kind' => 'image']],
