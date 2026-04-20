@@ -88,10 +88,11 @@ class SearchController extends Controller
             'offset' => $results['offset'],
             'limit' => $results['limit'],
             'filters' => $filters,
-            'statusOptions' => $plugin->search->getStatusOptions(),
-            'quickFilters' => $plugin->search->getQuickFilters($filters),
-            'hasFilters' => FilterParser::hasActiveFilters($filters),
-            'showFilterPanel' => false,
+            'filterRegistry' => $plugin->search->getFilterRegistry($filters),
+            'filterSectionLabels' => $plugin->search->getFilterSectionLabels(),
+            'activeFilterSnapshot' => $plugin->search->getActiveFilterSnapshot($filters),
+            'quickFilters' => $plugin->search->getQuickFilters($filters, $request->getQueryParams()),
+            'activeFilterCount' => $plugin->search->countActiveFilterChips($filters),
             'hasActiveFilters' => FilterParser::hasActiveFilters($filters),
             'analysisMap' => $analysisMap,
             'tagsMap' => $tagsMap,
@@ -274,6 +275,28 @@ class SearchController extends Controller
         Logger::info(LogCategory::AssetProcessing, 'CSV export completed', context: ['rowCount' => count($results['assets'])]);
 
         return $response;
+    }
+
+    /**
+     * Return distinct provider models for the given provider as JSON. Powers
+     * the dependent Model select in the filter dropdown.
+     */
+    public function actionProviderModels(): Response
+    {
+        $this->requireCpRequest();
+        $this->requireAcceptsJson();
+        $this->requirePermission('accessPlugin-lens');
+        Plugin::getInstance()->requireProEdition();
+
+        $provider = Craft::$app->getRequest()->getQueryParam('provider');
+
+        if (!is_string($provider) || trim($provider) === '') {
+            $provider = null;
+        }
+
+        $options = Plugin::getInstance()->search->getProviderModelOptions($provider);
+
+        return $this->asJson(['options' => $options]);
     }
 
     /**

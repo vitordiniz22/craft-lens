@@ -12,7 +12,10 @@ class LensSearchAsset extends AssetBundle
     {
         $this->sourcePath = __DIR__ . '/dist';
         $this->depends = [LensAsset::class];
-        $this->js = ['js/pages/lens-search-page.js'];
+        $this->js = [
+            'js/components/lens-filter-picker.js',
+            'js/pages/lens-search-page.js',
+        ];
 
         parent::init();
     }

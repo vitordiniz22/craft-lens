@@ -72,39 +72,6 @@
     vertical-align: -1px;
 }
 
-/* Filter panel */
-.lens-filter-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 20px 24px;
-}
-
-.lens-filter-grid .field {
-    margin: 0;
-}
-
-.lens-filter-display {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.lens-filter-tolerance {
-    margin-top: var(--s);
-}
-
-.lens-filter-tolerance .btngroup {
-    margin-top: 4px;
-}
-
-.lens-filter-actions {
-    display: flex;
-    gap: var(--s);
-    margin-top: 20px;
-    padding-top: 16px;
-    border-top: 1px solid var(--hairline-color);
-}
-
 /* Results section */
 .lens-search-results {
     margin-top: var(--xl);
@@ -302,81 +269,6 @@ a.lens-result-title--ai {
     display: flex;
     gap: 4px;
     flex-shrink: 0;
-}
-
-/* Active filter chips bar */
-.lens-filter-chips-bar {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-    font-size: 13px;
-}
-
-.lens-filter-chips-label {
-    flex-shrink: 0;
-    color: var(--medium-text-color);
-    font-size: 12px;
-}
-
-.lens-filter-chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    flex: 1;
-    min-width: 0;
-}
-
-.lens-filter-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 2px 4px 2px 8px;
-    background: color-mix(in srgb, var(--link-color) 10%, transparent);
-    border: 1px solid color-mix(in srgb, var(--link-color) 25%, transparent);
-    border-radius: 10px;
-    font-size: 11px;
-    color: var(--medium-dark-text-color);
-    white-space: nowrap;
-    line-height: 1.4;
-}
-
-.lens-filter-chip button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 16px;
-    height: 16px;
-    padding: 0;
-    background: none;
-    border: none;
-    border-radius: 50%;
-    color: color-mix(in srgb, var(--link-color) 60%, transparent);
-    cursor: pointer;
-    font-size: 13px;
-    line-height: 1;
-    flex-shrink: 0;
-}
-
-.lens-filter-chip button:hover {
-    background: color-mix(in srgb, var(--link-color) 20%, transparent);
-    color: var(--link-color);
-}
-
-.lens-filter-chip-swatch {
-    display: inline-block;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    border: 1px solid rgba(0, 0, 0, 0.15);
-    flex-shrink: 0;
-}
-
-.lens-filter-chips-clear {
-    flex-shrink: 0;
-    font-size: 11px;
-    color: var(--medium-text-color);
-    margin-left: auto;
 }
 
 /* Keyboard focus */

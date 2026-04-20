@@ -63,6 +63,28 @@
         },
 
         /**
+         * Strip every variant of a query param from a URL: the scalar form
+         * (`name`), the unindexed array form (`name[]`), and PHP's default
+         * indexed array form (`name[0]`, `name[1]`, …). Mutates the URL.
+         * Required because Craft's `cpUrl()` emits indexed keys, and any
+         * leftover indexed entries merge back into PHP's `$_GET` on the
+         * next request.
+         *
+         * @param {URL} url - URL whose searchParams will be mutated
+         * @param {string} name - The param name to remove, with no brackets
+         */
+        stripUrlParam: function(url, name) {
+            const prefix = name + '[';
+            const victims = [];
+            url.searchParams.forEach(function (_, paramName) {
+                if (paramName === name || paramName.indexOf(prefix) === 0) {
+                    victims.push(paramName);
+                }
+            });
+            victims.forEach(function (n) { url.searchParams.delete(n); });
+        },
+
+        /**
          * Safely reload the page, preventing multiple simultaneous reloads.
          * @param {number} [delay=0] - Optional delay in ms before reload
          */

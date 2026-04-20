@@ -14,19 +14,22 @@ namespace vitordiniz22\craftlens\enums;
 enum FilterField: string
 {
     case Query = 'query';
+    case Tags = 'tags';
+    case TagOperator = 'tagOperator';
     case ContainsPeople = 'containsPeople';
     case FaceCountPreset = 'faceCountPreset';
-    case QualityIssues = 'qualityIssues';
-    case IsTooLarge = 'isTooLarge';
-    case IsBlurry = 'isBlurry';
-    case IsTooDark = 'isTooDark';
+    case QualityIssue = 'qualityIssue';
+    case FileSizePreset = 'fileSizePreset';
     case HasTextInImage = 'hasTextInImage';
     case HasWatermark = 'hasWatermark';
+    case WatermarkType = 'watermarkType';
     case ContainsBrandLogo = 'containsBrandLogo';
     case Color = 'color';
     case Status = 'status';
-    case ConfidenceMax = 'confidenceMax';
+    case Provider = 'provider';
+    case ProviderModel = 'providerModel';
     case NsfwScoreMin = 'nsfwScoreMin';
+    case NsfwScoreMax = 'nsfwScoreMax';
     case ProcessedDate = 'processedDate';
     case HasDuplicates = 'hasDuplicates';
     case SimilarTo = 'similarTo';
@@ -38,19 +41,22 @@ enum FilterField: string
     {
         return match ($this) {
             self::Query => 'Search',
+            self::Tags => 'Tags',
+            self::TagOperator => 'Tag match',
             self::ContainsPeople => 'People',
             self::FaceCountPreset => 'Face Count',
-            self::QualityIssues => 'Quality Issues',
-            self::IsTooLarge => 'File Too Large',
-            self::IsBlurry => 'Blurry',
-            self::IsTooDark => 'Too Dark',
+            self::QualityIssue => 'Quality Issue',
+            self::FileSizePreset => 'File Size',
             self::HasTextInImage => 'Text in Image',
             self::HasWatermark => 'Watermark',
+            self::WatermarkType => 'Watermark Type',
             self::ContainsBrandLogo => 'Brand Logo',
             self::Color => 'Color',
             self::Status => 'Status',
-            self::ConfidenceMax => 'Confidence',
-            self::NsfwScoreMin => 'NSFW',
+            self::Provider => 'Provider',
+            self::ProviderModel => 'Model',
+            self::NsfwScoreMin => 'NSFW min',
+            self::NsfwScoreMax => 'NSFW max',
             self::ProcessedDate => 'Date Analyzed',
             self::HasDuplicates => 'Duplicates',
             self::SimilarTo => 'Similar to',

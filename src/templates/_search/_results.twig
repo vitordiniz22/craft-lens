@@ -94,7 +94,7 @@
         urlParams: filters,
     } only %}
 
-{% elseif hasFilters is defined and hasFilters %}
+{% elseif hasActiveFilters is defined and hasActiveFilters %}
     {% if similarToAsset ?? null %}
         {% include 'lens/_components/empty-state' with {
             heading: 'No Similar Assets'|t('lens'),

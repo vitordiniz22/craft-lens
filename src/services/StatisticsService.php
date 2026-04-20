@@ -564,7 +564,7 @@ class StatisticsService extends Component
                 'label' => Craft::t('lens', 'File Too Large'),
                 'count' => $fileTooLargeCount,
                 'url' => $isPro
-                    ? 'lens/search?isTooLarge=1'
+                    ? 'lens/search?fileSizePreset=1'
                     : 'assets?source=lens:file-too-large',
                 'color' => 'amber',
                 'icon' => 'file',
@@ -577,7 +577,7 @@ class StatisticsService extends Component
                 'label' => Craft::t('lens', 'Blurry'),
                 'count' => $qualityIssues['blurry'],
                 'url' => $isPro
-                    ? 'lens/search?isBlurry=1'
+                    ? 'lens/search?qualityIssue=blurry'
                     : 'assets?source=lens:blurry',
                 'color' => 'amber',
                 'icon' => 'eye',
@@ -590,7 +590,7 @@ class StatisticsService extends Component
                 'label' => Craft::t('lens', 'Too Dark'),
                 'count' => $qualityIssues['tooDark'],
                 'url' => $isPro
-                    ? 'lens/search?isTooDark=1'
+                    ? 'lens/search?qualityIssue=tooDark'
                     : 'assets?source=lens:too-dark',
                 'color' => 'amber',
                 'icon' => 'sun',
@@ -603,7 +603,7 @@ class StatisticsService extends Component
                 'label' => Craft::t('lens', 'Too Bright'),
                 'count' => $qualityIssues['tooBright'],
                 'url' => $isPro
-                    ? 'lens/search?qualityIssues[]=tooBright'
+                    ? 'lens/search?qualityIssue=tooBright'
                     : 'assets?source=lens:too-bright',
                 'color' => 'amber',
                 'icon' => 'sun',
@@ -616,7 +616,7 @@ class StatisticsService extends Component
                 'label' => Craft::t('lens', 'Low Contrast'),
                 'count' => $qualityIssues['lowContrast'],
                 'url' => $isPro
-                    ? 'lens/search?qualityIssues[]=lowContrast'
+                    ? 'lens/search?qualityIssue=lowContrast'
                     : 'assets?source=lens:low-contrast',
                 'color' => 'amber',
                 'icon' => 'circle-half-stroke',

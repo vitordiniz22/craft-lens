@@ -6,7 +6,7 @@ namespace vitordiniz22\craftlens\helpers;
 
 use craft\web\Request;
 use vitordiniz22\craftlens\enums\LogCategory;
-use vitordiniz22\craftlens\Plugin;
+use vitordiniz22\craftlens\enums\WatermarkType;
 
 /**
  * Parses and validates search filter parameters from HTTP requests.
@@ -17,7 +17,6 @@ class FilterParser
     private const FILTER_KEYS = [
         'query', 'tags', 'tagOperator', 'status', 'containsPeople',
         'faceCountPreset',
-        'confidenceMin', 'confidenceMax',
         'nsfwScoreMin', 'nsfwScoreMax',
         'processedFrom', 'processedTo',
         'color', 'colorTolerance', 'hasDuplicates',
@@ -25,7 +24,8 @@ class FilterParser
         'hasFocalPoint',
         'nsfwFlagged', 'missingAltText', 'unprocessed',
         'similarTo',
-        'qualityIssues', 'isTooLarge', 'isBlurry', 'isTooDark', 'hasTextInImage',
+        'qualityIssue', 'fileSizePreset', 'hasTextInImage',
+        'provider', 'providerModel',
     ];
 
     /**
@@ -43,9 +43,8 @@ class FilterParser
         self::parseDateFilters($request, $filters);
         self::parseColorFilters($request, $filters);
         self::parseBooleanFilters($request, $filters);
-        self::parseMissingAltText($request, $filters);
         self::parseEnumFilters($request, $filters);
-        self::parseArrayFilters($request, $filters);
+        self::parseStringFilters($request, $filters);
         self::parsePagination($request, $filters);
         self::parseNsfwFlagged($request, $filters);
         self::parseSimilarTo($request, $filters);
@@ -104,11 +103,6 @@ class FilterParser
     private static function parseRangeFilters(Request $request, array &$filters): void
     {
         $rangeFilters = [
-            'confidence' => [
-                'min' => 'confidenceMin',
-                'max' => 'confidenceMax',
-                'transform' => fn($v) => (float) $v,
-            ],
             'nsfwScore' => [
                 'min' => 'nsfwScoreMin',
                 'max' => 'nsfwScoreMax',
@@ -165,7 +159,7 @@ class FilterParser
         $booleanFilterKeys = [
             'hasDuplicates', 'hasWatermark', 'containsBrandLogo',
             'hasFocalPoint', 'unprocessed', 'hasTextInImage',
-            'isTooLarge', 'isBlurry', 'isTooDark',
+            'missingAltText',
         ];
 
         foreach ($booleanFilterKeys as $key) {
@@ -177,45 +171,44 @@ class FilterParser
         }
     }
 
-    private static function parseMissingAltText(Request $request, array &$filters): void
-    {
-        $value = $request->getQueryParam('missingAltText');
-
-        if ($value !== null && $value !== '') {
-            $filters['missingAltText'] = filter_var($value, FILTER_VALIDATE_BOOLEAN);
-        }
-    }
-
     private static function parseEnumFilters(Request $request, array &$filters): void
     {
         $enumFilters = [
-            'watermarkType' => ['stock', 'logo', 'text', 'copyright'],
+            'watermarkType' => array_column(WatermarkType::cases(), 'value'),
+            'qualityIssue' => ['blurry', 'tooDark', 'tooBright', 'lowContrast'],
+            'fileSizePreset' => ['1', '5', '10', '25', '50'],
         ];
 
         foreach ($enumFilters as $key => $allowedValues) {
             $value = $request->getQueryParam($key);
 
-            if ($value !== null && in_array($value, $allowedValues, true)) {
+            if ($value === null) {
+                continue;
+            }
+
+            if (is_array($value)) {
+                $filtered = array_values(array_unique(array_intersect($value, $allowedValues)));
+
+                if (!empty($filtered)) {
+                    $filters[$key] = $filtered;
+                }
+            } elseif (in_array($value, $allowedValues, true)) {
                 $filters[$key] = $value;
             }
         }
     }
 
-    private static function parseArrayFilters(Request $request, array &$filters): void
+    /**
+     * Pass-through string filters that require no validation beyond non-empty.
+     * Length-capped to keep the WHERE clause sensible.
+     */
+    private static function parseStringFilters(Request $request, array &$filters): void
     {
-        $arrayFilters = [
-            'qualityIssues' => ['blurry', 'tooDark', 'tooBright', 'lowContrast'],
-        ];
-
-        foreach ($arrayFilters as $key => $allowedValues) {
+        foreach (['provider', 'providerModel'] as $key) {
             $value = $request->getQueryParam($key);
 
-            if (is_array($value)) {
-                $filtered = array_values(array_intersect($value, $allowedValues));
-
-                if (!empty($filtered)) {
-                    $filters[$key] = $filtered;
-                }
+            if (is_string($value) && trim($value) !== '') {
+                $filters[$key] = mb_substr(trim($value), 0, 50);
             }
         }
     }
@@ -303,8 +296,8 @@ class FilterParser
                 $value = array_filter(explode(',', $value));
             }
 
-            if (!empty($value)) {
-                $filters[$paramName] = $value;
+            if (is_array($value) && !empty($value)) {
+                $filters[$paramName] = array_values(array_unique($value));
             }
         }
     }

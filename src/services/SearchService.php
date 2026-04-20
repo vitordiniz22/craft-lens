@@ -6,10 +6,10 @@ namespace vitordiniz22\craftlens\services;
 
 use Craft;
 use craft\elements\Asset;
-use vitordiniz22\craftlens\conditions\FileTooLargeConditionRule;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\enums\QuickFilter;
+use vitordiniz22\craftlens\enums\WatermarkType;
 use vitordiniz22\craftlens\helpers\ImageMetricsAnalyzer;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\migrations\Install;
@@ -22,9 +22,11 @@ use yii\db\Query;
  * Service for searching assets using Craft fields and Lens metadata.
  *
  * Search priority:
- * - Text search: Craft fields (title, native alt, mapped alt field) + extracted text from Lens
- * - Tag filtering: Craft Tag relations (if mapped) or Lens table JSON
- * - AI metadata (status, confidence, faces, NSFW): Always from Lens table
+ * - Text search: BM25 over Lens's indexed token table + Craft's native search index
+ *   (the latter surfaces non-image assets the Lens index doesn't cover).
+ * - Tag filtering: Lens's indexed tags table (`lens_asset_tags`).
+ * - AI metadata (status, people, NSFW, watermark, brand, quality, etc.):
+ *   always from the Lens analyses table.
  */
 class SearchService extends Component
 {
@@ -42,11 +44,14 @@ class SearchService extends Component
      *     tagOperator?: 'and'|'or',
      *     status?: string[],
      *     containsPeople?: bool,
-     *     faceCountMin?: int,
-     *     faceCountMax?: int,
-     *     confidenceMin?: float,
-     *     confidenceMax?: float,
+     *     faceCountPreset?: string,
+     *     nsfwScoreMin?: float,
+     *     nsfwScoreMax?: float,
      *     nsfwFlagged?: bool,
+     *     provider?: string,
+     *     providerModel?: string,
+     *     qualityIssue?: string,
+     *     fileSizePreset?: string,
      *     offset?: int,
      *     limit?: int,
      * } $filters
@@ -190,10 +195,6 @@ class SearchService extends Component
     }
 
     /**
-     * Build the base query for matching assets. Returns a grouped query
-     * selecting asset IDs that can be used for both counting and pagination.
-     */
-    /**
      * @return array{assets: list<never>, total: 0, offset: int, limit: int}
      */
     private function emptyResult(int $offset, int $limit): array
@@ -201,6 +202,10 @@ class SearchService extends Component
         return ['assets' => [], 'total' => 0, 'offset' => $offset, 'limit' => $limit];
     }
 
+    /**
+     * Build the base query for matching assets. Returns a grouped query
+     * selecting asset IDs that can be used for both counting and pagination.
+     */
     private function buildMatchingQuery(array $filters, ?array $rankedAssetIds = null, ?array $similarAssetIds = null, bool $hasTextQuery = false): Query
     {
         $query = (new Query())
@@ -241,7 +246,6 @@ class SearchService extends Component
         $this->applyTagFilters($query, $filters['tags'] ?? [], $filters['tagOperator'] ?? 'or');
         $this->applyStatusFilter($query, $filters['status'] ?? []);
         $this->applyPeopleFilter($query, $filters);
-        $this->applyConfidenceFilter($query, $filters);
         $this->applyNsfwFilter($query, $filters);
         $this->applyDateFilter($query, $filters);
         $this->applyColorFilter($query, $filters);
@@ -251,9 +255,10 @@ class SearchService extends Component
         $this->applyFocalPointFilter($query, $filters);
         $this->applyMissingAltTextFilter($query, $filters);
         $this->applyUnprocessedFilter($query, $filters);
-        $this->applyQualityIssuesFilter($query, $filters);
-        $this->applyStandaloneQualityFilters($query, $filters);
+        $this->applyQualityIssueFilter($query, $filters);
+        $this->applyFileSizeFilter($query, $filters);
         $this->applyHasTextInImageFilter($query, $filters);
+        $this->applyProviderFilter($query, $filters);
         $this->applyVolumeFilter($query);
 
         return $query;
@@ -283,14 +288,14 @@ class SearchService extends Component
     {
         $lensFilterKeys = [
             'tags', 'status', 'containsPeople', 'faceCountPreset',
-            'confidenceMin', 'confidenceMax',
             'nsfwScoreMin', 'nsfwScoreMax', 'nsfwFlagged',
             'processedFrom', 'processedTo',
             'color', 'hasDuplicates',
             'hasWatermark', 'watermarkType', 'containsBrandLogo',
             'hasFocalPoint',
             'missingAltText', 'unprocessed',
-            'qualityIssues', 'hasTextInImage',
+            'qualityIssue', 'fileSizePreset', 'hasTextInImage',
+            'provider', 'providerModel',
         ];
 
         foreach ($lensFilterKeys as $key) {
@@ -332,7 +337,8 @@ class SearchService extends Component
     }
 
     /**
-     * Apply tag filters using the Lens indexed tags table.
+     * Apply tag filters using the Lens indexed tags table. Operator 'and'
+     * requires every tag to be present on the asset; 'or' matches any.
      *
      * @param string[] $tags
      */
@@ -342,18 +348,9 @@ class SearchService extends Component
             return;
         }
 
-        $this->applyTagFiltersFromLensTable($query, $tags, $operator);
-    }
-
-    /**
-     * Apply tag filters using the indexed tags table.
-     */
-    private function applyTagFiltersFromLensTable(Query $query, array $tags, string $operator): void
-    {
         $normalizedTags = array_map('mb_strtolower', $tags);
 
         if ($operator === 'and') {
-            // All tags must be present
             foreach ($normalizedTags as $tag) {
                 $subQuery = (new Query())
                     ->select(['assetId'])
@@ -362,16 +359,16 @@ class SearchService extends Component
 
                 $query->andWhere(['assets.id' => $subQuery]);
             }
-        } else {
-            // Any tag (OR)
-            $subQuery = (new Query())
-                ->select(['assetId'])
-                ->distinct()
-                ->from(Install::TABLE_ASSET_TAGS)
-                ->where(['tagNormalized' => $normalizedTags]);
-
-            $query->andWhere(['assets.id' => $subQuery]);
+            return;
         }
+
+        $subQuery = (new Query())
+            ->select(['assetId'])
+            ->distinct()
+            ->from(Install::TABLE_ASSET_TAGS)
+            ->where(['tagNormalized' => $normalizedTags]);
+
+        $query->andWhere(['assets.id' => $subQuery]);
     }
 
     /**
@@ -414,20 +411,6 @@ class SearchService extends Component
                     $query->andWhere(['>=', 'lens.faceCount', 6]);
                     break;
             }
-        }
-    }
-
-    /**
-     * Apply confidence range filter.
-     */
-    private function applyConfidenceFilter(Query $query, array $filters): void
-    {
-        if (isset($filters['confidenceMin'])) {
-            $query->andWhere(['>=', 'lens.altTextConfidence', $filters['confidenceMin']]);
-        }
-
-        if (isset($filters['confidenceMax'])) {
-            $query->andWhere(['<=', 'lens.altTextConfidence', $filters['confidenceMax']]);
         }
     }
 
@@ -596,98 +579,80 @@ class SearchService extends Component
     }
 
     /**
-     * Filter assets by specific quality issues (blurry, tooDark, tooBright, lowContrast).
+     * Filter assets by a single quality issue. Accepts one of:
+     * blurry, tooDark, tooBright, lowContrast.
      */
-    private function applyQualityIssuesFilter(Query $query, array $filters): void
+    private function applyQualityIssueFilter(Query $query, array $filters): void
     {
-        if (empty($filters['qualityIssues'])) {
+        $issue = $filters['qualityIssue'] ?? null;
+
+        if ($issue === null || $issue === '') {
             return;
         }
 
-        $conditions = ['or'];
-
-        foreach ($filters['qualityIssues'] as $issue) {
-            match ($issue) {
-                'blurry' => $conditions[] = [
-                    'and',
-                    ['<', 'lens.sharpnessScore', ImageMetricsAnalyzer::SHARPNESS_BLURRY],
-                    ['not', ['lens.sharpnessScore' => null]],
-                ],
-                'tooDark' => $conditions[] = [
-                    'and',
-                    ['<', 'lens.exposureScore', ImageMetricsAnalyzer::BRIGHTNESS_DARK_MEDIAN],
-                    ['>', 'lens.shadowClipRatio', ImageMetricsAnalyzer::SHADOW_CLIP_RATIO],
-                    ['<', 'lens.noiseScore', ImageMetricsAnalyzer::CONTRAST_LOW],
-                    ['not', ['lens.exposureScore' => null]],
-                    ['not', ['lens.noiseScore' => null]],
-                ],
-                'tooBright' => $conditions[] = [
-                    'and',
-                    ['>', 'lens.exposureScore', ImageMetricsAnalyzer::BRIGHTNESS_BRIGHT_MEDIAN],
-                    ['>', 'lens.highlightClipRatio', ImageMetricsAnalyzer::HIGHLIGHT_CLIP_RATIO],
-                    ['<', 'lens.noiseScore', ImageMetricsAnalyzer::CONTRAST_LOW],
-                    ['not', ['lens.exposureScore' => null]],
-                    ['not', ['lens.noiseScore' => null]],
-                ],
-                'lowContrast' => $conditions[] = [
-                    'and',
-                    ['<', 'lens.noiseScore', ImageMetricsAnalyzer::CONTRAST_LOW],
-                    ['not', ['lens.noiseScore' => null]],
-                ],
-                default => null,
-            };
-        }
-
-        if (count($conditions) > 1) {
-            $query->andWhere($conditions);
-        }
-    }
-
-    /**
-     * Filter assets by standalone quality flags.
-     */
-    private function applyStandaloneQualityFilters(Query $query, array $filters): void
-    {
-        if (!empty($filters['isBlurry'])) {
-            $query->andWhere([
+        match ($issue) {
+            'blurry' => $query->andWhere([
                 'and',
                 ['<', 'lens.sharpnessScore', ImageMetricsAnalyzer::SHARPNESS_BLURRY],
                 ['not', ['lens.sharpnessScore' => null]],
-            ]);
-        }
-
-        if (!empty($filters['isTooDark'])) {
-            $query->andWhere([
+            ]),
+            'tooDark' => $query->andWhere([
                 'and',
                 ['<', 'lens.exposureScore', ImageMetricsAnalyzer::BRIGHTNESS_DARK_MEDIAN],
                 ['>', 'lens.shadowClipRatio', ImageMetricsAnalyzer::SHADOW_CLIP_RATIO],
                 ['<', 'lens.noiseScore', ImageMetricsAnalyzer::CONTRAST_LOW],
                 ['not', ['lens.exposureScore' => null]],
                 ['not', ['lens.noiseScore' => null]],
-            ]);
-        }
-
-        if (!empty($filters['isTooBright'])) {
-            $query->andWhere([
+            ]),
+            'tooBright' => $query->andWhere([
                 'and',
                 ['>', 'lens.exposureScore', ImageMetricsAnalyzer::BRIGHTNESS_BRIGHT_MEDIAN],
                 ['>', 'lens.highlightClipRatio', ImageMetricsAnalyzer::HIGHLIGHT_CLIP_RATIO],
                 ['<', 'lens.noiseScore', ImageMetricsAnalyzer::CONTRAST_LOW],
                 ['not', ['lens.exposureScore' => null]],
                 ['not', ['lens.noiseScore' => null]],
-            ]);
-        }
-
-        if (!empty($filters['isLowContrast'])) {
-            $query->andWhere([
+            ]),
+            'lowContrast' => $query->andWhere([
                 'and',
                 ['<', 'lens.noiseScore', ImageMetricsAnalyzer::CONTRAST_LOW],
                 ['not', ['lens.noiseScore' => null]],
-            ]);
+            ]),
+            default => null,
+        };
+    }
+
+    /**
+     * Filter assets by file size threshold in megabytes. The preset value is
+     * an integer N, matched as assets.size >= N * 1 MiB.
+     */
+    private function applyFileSizeFilter(Query $query, array $filters): void
+    {
+        $preset = $filters['fileSizePreset'] ?? null;
+
+        if ($preset === null || $preset === '') {
+            return;
         }
 
-        if (!empty($filters['isTooLarge'])) {
-            $query->andWhere(['>=', 'assets.size', FileTooLargeConditionRule::FILE_SIZE_WARNING]);
+        $megabytes = (int) $preset;
+
+        if ($megabytes <= 0) {
+            return;
+        }
+
+        $query->andWhere(['>=', 'assets.size', $megabytes * 1_048_576]);
+    }
+
+    /**
+     * Filter assets by AI provider and model (exact match).
+     */
+    private function applyProviderFilter(Query $query, array $filters): void
+    {
+        if (!empty($filters['provider'])) {
+            $query->andWhere(['lens.provider' => $filters['provider']]);
+        }
+
+        if (!empty($filters['providerModel'])) {
+            $query->andWhere(['lens.providerModel' => $filters['providerModel']]);
         }
     }
 
@@ -860,18 +825,291 @@ class SearchService extends Component
     }
 
     /**
+     * Distinct provider values present in the analyses table, sorted alphabetically.
+     *
+     * @return array<array{value: string, label: string}>
+     */
+    public function getProviderOptions(): array
+    {
+        $rows = (new Query())
+            ->select(['provider'])
+            ->distinct()
+            ->from(Install::TABLE_ASSET_ANALYSES)
+            ->where(['not', ['provider' => null]])
+            ->andWhere(['!=', 'provider', ''])
+            ->orderBy(['provider' => SORT_ASC])
+            ->column();
+
+        $providers = Plugin::getInstance()->aiProvider->getAllProviders();
+
+        return array_map(
+            function (string $name) use ($providers) {
+                $label = isset($providers[$name]) ? $providers[$name]->getDisplayName() : ucfirst($name);
+                return ['value' => $name, 'label' => $label];
+            },
+            $rows,
+        );
+    }
+
+    /**
+     * Distinct provider models, optionally narrowed to one provider. Used to
+     * populate the Model dropdown dependent on the Provider selection.
+     *
+     * @return array<array{value: string, label: string}>
+     */
+    public function getProviderModelOptions(?string $provider = null): array
+    {
+        $query = (new Query())
+            ->select(['providerModel'])
+            ->distinct()
+            ->from(Install::TABLE_ASSET_ANALYSES)
+            ->where(['not', ['providerModel' => null]])
+            ->andWhere(['!=', 'providerModel', '']);
+
+        if ($provider !== null && $provider !== '') {
+            $query->andWhere(['provider' => $provider]);
+        }
+
+        $rows = $query->orderBy(['providerModel' => SORT_ASC])->column();
+
+        return array_map(
+            fn(string $model) => ['value' => $model, 'label' => $model],
+            $rows,
+        );
+    }
+
+    /**
+     * Options for the watermark-type multi-select.
+     *
+     * @return array<array{value: string, label: string}>
+     */
+    public function getWatermarkTypeOptions(): array
+    {
+        $out = [];
+        foreach (WatermarkType::options() as $value => $label) {
+            $out[] = ['value' => $value, 'label' => $label];
+        }
+        return $out;
+    }
+
+    /**
+     * Options for the single-select quality issue filter.
+     *
+     * @return array<array{value: string, label: string}>
+     */
+    public function getQualityIssueOptions(): array
+    {
+        return [
+            ['value' => '', 'label' => Craft::t('lens', 'Any')],
+            ['value' => 'blurry', 'label' => Craft::t('lens', 'Blurry')],
+            ['value' => 'tooDark', 'label' => Craft::t('lens', 'Too dark')],
+            ['value' => 'tooBright', 'label' => Craft::t('lens', 'Too bright')],
+            ['value' => 'lowContrast', 'label' => Craft::t('lens', 'Low contrast')],
+        ];
+    }
+
+    /**
+     * Options for the file-size preset button group.
+     *
+     * @return array<array{value: string, label: string}>
+     */
+    public function getFileSizePresets(): array
+    {
+        return [
+            ['value' => '', 'label' => Craft::t('lens', 'Any')],
+            ['value' => '5', 'label' => Craft::t('lens', '> 5 MB')],
+            ['value' => '10', 'label' => Craft::t('lens', '> 10 MB')],
+            ['value' => '25', 'label' => Craft::t('lens', '> 25 MB')],
+            ['value' => '50', 'label' => Craft::t('lens', '> 50 MB')],
+        ];
+    }
+
+    /**
+     * Compose the filter registry consumed by the filter-picker JS.
+     *
+     * Groups every user-facing filter into one payload: section, label, popover
+     * type, and options (where applicable). The JS module renders the picker
+     * list and each value popover from this single shape — keeping the filter
+     * catalog in PHP so labels and sections stay in sync with `FilterField`
+     * and `QuickFilter`.
+     *
+     * @param array<string, mixed> $currentFilters The already-parsed filters
+     *        from `FilterParser::fromRequest`, used to pre-seed `providerModel`
+     *        options with the models of the currently selected provider.
+     * @return array<string, array{label: string, section: string, type: string, options?: array}>
+     */
+    public function getFilterRegistry(array $currentFilters = []): array
+    {
+        $triState = function (string $yesLabel, string $noLabel): array {
+            return [
+                'type' => 'tri-state',
+                'triStateLabels' => [
+                    'any' => Craft::t('lens', 'Any'),
+                    'yes' => $yesLabel,
+                    'no' => $noLabel,
+                ],
+            ];
+        };
+
+        return [
+            'containsPeople' => ['label' => Craft::t('lens', 'People'), 'section' => 'content']
+                + $triState(Craft::t('lens', 'With people'), Craft::t('lens', 'Without people')),
+            'faceCountPreset' => [
+                'label' => Craft::t('lens', 'Face count'),
+                'section' => 'content',
+                'type' => 'preset-buttons',
+                'options' => [
+                    ['value' => '0', 'label' => '0'],
+                    ['value' => '1', 'label' => '1'],
+                    ['value' => '2-5', 'label' => '2-5'],
+                    ['value' => '6+', 'label' => '6+'],
+                ],
+            ],
+            'hasTextInImage' => ['label' => Craft::t('lens', 'Text in image'), 'section' => 'content']
+                + $triState(Craft::t('lens', 'Contains text'), Craft::t('lens', 'No text')),
+            'hasWatermark' => ['label' => Craft::t('lens', 'Watermark'), 'section' => 'content']
+                + $triState(Craft::t('lens', 'Watermarked'), Craft::t('lens', 'Clean')),
+            'watermarkType' => [
+                'label' => Craft::t('lens', 'Watermark type'),
+                'section' => 'content',
+                'type' => 'multi-select',
+                'options' => $this->getWatermarkTypeOptions(),
+            ],
+            'containsBrandLogo' => ['label' => Craft::t('lens', 'Brand logo'), 'section' => 'content']
+                + $triState(Craft::t('lens', 'Has brand logo'), Craft::t('lens', 'No brand logo')),
+            'nsfwScore' => [
+                'label' => Craft::t('lens', 'NSFW score'),
+                'section' => 'content',
+                'type' => 'range',
+                'min' => 0,
+                'max' => 1,
+                'step' => 0.05,
+                'params' => ['min' => 'nsfwScoreMin', 'max' => 'nsfwScoreMax'],
+            ],
+            'qualityIssue' => [
+                'label' => Craft::t('lens', 'Quality issue'),
+                'section' => 'technical',
+                'type' => 'single-select',
+                'options' => $this->getQualityIssueOptions(),
+            ],
+            'fileSizePreset' => [
+                'label' => Craft::t('lens', 'File size'),
+                'section' => 'technical',
+                'type' => 'preset-buttons',
+                'options' => $this->getFileSizePresets(),
+            ],
+            'color' => [
+                'label' => Craft::t('lens', 'Color'),
+                'section' => 'technical',
+                'type' => 'color',
+                'params' => ['color' => 'color', 'tolerance' => 'colorTolerance'],
+                'tolerancePresets' => [
+                    ['value' => '10', 'label' => Craft::t('lens', 'Exact')],
+                    ['value' => '30', 'label' => Craft::t('lens', 'Close')],
+                    ['value' => '55', 'label' => Craft::t('lens', 'Broad')],
+                    ['value' => '80', 'label' => Craft::t('lens', 'Any')],
+                ],
+            ],
+            'hasFocalPoint' => ['label' => Craft::t('lens', 'Focal point'), 'section' => 'technical']
+                + $triState(Craft::t('lens', 'Focal point set'), Craft::t('lens', 'Not set')),
+            'status' => [
+                'label' => Craft::t('lens', 'Status'),
+                'section' => 'workflow',
+                'type' => 'multi-select',
+                'options' => $this->getStatusOptions(),
+            ],
+            'provider' => [
+                'label' => Craft::t('lens', 'Provider'),
+                'section' => 'workflow',
+                'type' => 'provider',
+                'options' => $this->getProviderOptions(),
+                'modelOptions' => $this->getProviderModelOptions($currentFilters['provider'] ?? null),
+                'modelsEndpoint' => 'lens/search/provider-models',
+                'params' => ['provider' => 'provider', 'model' => 'providerModel'],
+            ],
+            'processedDate' => [
+                'label' => Craft::t('lens', 'Date analyzed'),
+                'section' => 'workflow',
+                'type' => 'date-range',
+                'params' => ['from' => 'processedFrom', 'to' => 'processedTo'],
+            ],
+            'hasDuplicates' => ['label' => Craft::t('lens', 'Duplicates'), 'section' => 'workflow']
+                + $triState(Craft::t('lens', 'Has duplicates'), Craft::t('lens', 'Unique')),
+            'tags' => [
+                'label' => Craft::t('lens', 'Tags'),
+                'section' => 'tags',
+                'type' => 'tags',
+                'params' => ['tags' => 'tags', 'operator' => 'tagOperator'],
+            ],
+        ];
+    }
+
+    /**
+     * Flatten parsed filters to a JS-safe snapshot. `DateTime` instances
+     * become `Y-m-d` strings so the filter-picker can JSON-encode active
+     * values and rehydrate its popovers in edit mode.
+     *
+     * @param array<string, mixed> $filters
+     * @return array<string, mixed>
+     */
+    public function getActiveFilterSnapshot(array $filters): array
+    {
+        $snapshot = [];
+
+        foreach ($filters as $key => $value) {
+            if ($value instanceof \DateTimeInterface) {
+                $snapshot[$key] = $value->format('Y-m-d');
+                continue;
+            }
+
+            if (is_scalar($value) || is_array($value) || $value === null) {
+                $snapshot[$key] = $value;
+            }
+        }
+
+        return $snapshot;
+    }
+
+    /**
+     * Labels for filter-picker sections, in display order.
+     *
+     * @return array<string, string>
+     */
+    public function getFilterSectionLabels(): array
+    {
+        return [
+            'content' => Craft::t('lens', 'Content'),
+            'technical' => Craft::t('lens', 'Technical'),
+            'workflow' => Craft::t('lens', 'Workflow'),
+            'tags' => Craft::t('lens', 'Tags'),
+        ];
+    }
+
+    /**
      * Get quick filter definitions for the UI.
      *
      * Each entry includes the raw URL params the preset represents and whether
      * it is currently active against the provided filters.
      *
-     * @param array<string, mixed> $filters
-     * @return array<string, array{key: string, label: string, icon: string, params: array<string, mixed>, active: bool}>
+     * Each entry's `hrefParams` is the **merged** URL param set to navigate
+     * to on click — additive with any other filters currently applied.
+     * Clicking an active preset toggles its params off without touching the
+     * rest; clicking an inactive preset overlays its params on top of the
+     * current URL so presets compose with chips.
+     *
+     * @param array<string, mixed> $filters Parsed filter state (from `FilterParser`).
+     * @param array<string, mixed> $rawQueryParams Raw current-request query params,
+     *        used as the base for `hrefParams`.
+     * @return array<string, array{key: string, label: string, icon: string, params: array<string, mixed>, active: bool, hrefParams: array<string, mixed>}>
      */
-    public function getQuickFilters(array $filters = []): array
+    public function getQuickFilters(array $filters = [], array $rawQueryParams = []): array
     {
         $isReviewActive = Plugin::getInstance()->getIsPro()
             && Plugin::getInstance()->getSettings()->requireReviewBeforeApply;
+
+        // Drop pagination cursor and the similar-to anchor when navigating
+        // to a different curated view — neither survives a preset toggle.
+        unset($rawQueryParams['offset'], $rawQueryParams['p']);
 
         $quickFilters = [];
 
@@ -880,15 +1118,74 @@ class SearchService extends Component
                 continue;
             }
 
+            $presetParams = $case->params();
+            $active = $case->matches($filters);
+
+            if ($active) {
+                $hrefParams = array_diff_key($rawQueryParams, $presetParams);
+            } else {
+                $hrefParams = array_merge($rawQueryParams, $presetParams);
+            }
+
             $quickFilters[$case->value] = [
                 'key' => $case->value,
                 'label' => Craft::t('lens', $case->label()),
                 'icon' => $case->icon(),
-                'params' => $case->params(),
-                'active' => $case->matches($filters),
+                'params' => $presetParams,
+                'active' => $active,
+                'hrefParams' => $hrefParams,
             ];
         }
 
         return $quickFilters;
+    }
+
+    /**
+     * Count the distinct filter "chips" currently active. Grouped keys
+     * (provider/providerModel, nsfwScoreMin/Max, processedFrom/To) count
+     * as one chip each. Used to decide whether the "Clear all" affordance
+     * is worth showing — with a single chip, its own × already clears
+     * everything.
+     *
+     * @param array<string, mixed> $filters
+     */
+    public function countActiveFilterChips(array $filters): int
+    {
+        $groups = [
+            ['query'],
+            ['tags'],
+            ['containsPeople'],
+            ['faceCountPreset'],
+            ['qualityIssue'],
+            ['fileSizePreset'],
+            ['hasTextInImage'],
+            ['hasWatermark'],
+            ['watermarkType'],
+            ['containsBrandLogo'],
+            ['color'],
+            ['status'],
+            ['provider', 'providerModel'],
+            ['nsfwScoreMin', 'nsfwScoreMax'],
+            ['processedFrom', 'processedTo'],
+            ['hasDuplicates'],
+            ['similarTo'],
+            ['hasFocalPoint'],
+            ['missingAltText'],
+            ['unprocessed'],
+        ];
+
+        $count = 0;
+        foreach ($groups as $group) {
+            foreach ($group as $key) {
+                $value = $filters[$key] ?? null;
+                if ($value === null || $value === '' || $value === []) {
+                    continue;
+                }
+                $count++;
+                break;
+            }
+        }
+
+        return $count;
     }
 }

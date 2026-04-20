@@ -598,6 +598,7 @@ class Plugin extends BasePlugin
                 $event->rules['lens/search'] = 'lens/search/index';
                 $event->rules['lens/search/resolve-duplicate'] = 'lens/search/resolve-duplicate';
                 $event->rules['lens/search/export'] = 'lens/search/export';
+                $event->rules['lens/search/provider-models'] = 'lens/search/provider-models';
                 $event->rules['lens/logs'] = 'lens/log/index';
                 $event->rules['lens/logs/retry'] = 'lens/log/retry';
                 $event->rules['lens/logs/delete-all'] = 'lens/log/delete-all';

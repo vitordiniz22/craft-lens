@@ -1,6 +1,9 @@
 /**
- * Lens Plugin - Search Page
- * Handles search filtering, keyboard navigation, and duplicate resolution
+ * Lens Plugin — Search Page
+ *
+ * Filter UI lives in `components/lens-filter-picker.js`. This module handles
+ * search input, chip × removal, result-card keyboard navigation, view selector,
+ * and the cleanup pass that strips empty form fields before submit.
  */
 (function () {
     'use strict';
@@ -18,16 +21,11 @@
             if (!document.querySelector('[data-lens-target="search-form"]'))
                 return;
 
-            this.initFilterToggle();
             this.initFilterChips();
             this.initClearSearch();
             this.initFormCleanup();
             this.initSearchEnterKey();
-            this.initPresetButtonGroups();
             this.initViewSelector();
-            this.initColorInput();
-
-            this.initDatePickers();
             this.initKeyboardNavigation();
             this._initialized = true;
         },
@@ -58,20 +56,6 @@
             });
         },
 
-        initFilterToggle: function () {
-            var panel = document.querySelector(
-                '[data-lens-target="filters-panel"]'
-            );
-
-            DOM.delegate(
-                '[data-lens-action="toggle-filters"]',
-                'click',
-                function () {
-                    if (panel) DOM.toggleClass(panel);
-                }
-            );
-        },
-
         initFilterChips: function () {
             DOM.delegate(
                 '[data-lens-action="remove-filter-chip"]',
@@ -79,10 +63,9 @@
                 function (e, btn) {
                     e.preventDefault();
                     e.stopPropagation();
-                    var params = btn.dataset.lensFilterParam.split(',');
                     var url = new URL(window.location.href);
-                    params.forEach(function (param) {
-                        url.searchParams.delete(param.trim());
+                    btn.dataset.lensFilterParam.split(',').forEach(function (param) {
+                        Lens.utils.stripUrlParam(url, param.trim());
                     });
                     window.location.assign(url.toString());
                 }
@@ -149,93 +132,11 @@
             );
         },
 
-        initPresetButtonGroups: function () {
-            DOM.delegate('[data-lens-value]', 'click', function (e, btn) {
-                var group = btn.closest('[data-lens-preset]');
-                if (!group) return;
-
-                var groupName = group.dataset.lensPreset;
-                var value = btn.dataset.lensValue;
-                var isActive = btn.getAttribute('aria-pressed') === 'true';
-
-                // Toggle this button
-                btn.setAttribute('aria-pressed', isActive ? 'false' : 'true');
-                btn.classList.toggle('active');
-
-                // Update hidden input
-                var hiddenInput = document.querySelector(
-                    'input[name="' + groupName + '"]'
-                );
-                if (hiddenInput) {
-                    hiddenInput.value = isActive ? '' : value;
-                }
-
-                // Deactivate other buttons in same group
-                if (!isActive) {
-                    var siblings =
-                        group.querySelectorAll('[data-lens-value]');
-                    siblings.forEach(function (sibling) {
-                        if (sibling !== btn) {
-                            sibling.setAttribute('aria-pressed', 'false');
-                            sibling.classList.remove('active');
-                        }
-                    });
-                }
-            });
-        },
-
-        initColorInput: function () {
-            // Craft CMS native selector (forms.color() macro — no data-lens-* available)
-            var colorInput = document.querySelector('input[name="color"]');
-            if (!colorInput) return;
-
-            var toleranceWrap = document.querySelector(
-                '[data-lens-target="color-tolerance-wrap"]'
-            );
-            if (!toleranceWrap) return;
-
-            var updateVisibility = function () {
-                if (colorInput.value.trim()) {
-                    toleranceWrap.classList.remove('hidden');
-                } else {
-                    toleranceWrap.classList.add('hidden');
-                }
-            };
-
-            // Typing directly in the hex input
-            colorInput.addEventListener('input', updateVisibility);
-
-            // Craft.ColorInput sets the value programmatically from the
-            // native picker, which doesn't fire input/change. Instead,
-            // observe the preview swatch — Craft always updates its
-            // background-color when the value changes.
-            // Craft CMS native selectors (no data-lens-* available)
-            var container = colorInput.closest('.color-container');
-            if (container) {
-                var preview = container.querySelector('.color-preview');
-                if (preview) {
-                    new MutationObserver(updateVisibility).observe(preview, {
-                        attributes: true,
-                        attributeFilter: ['style'],
-                    });
-                }
-            }
-        },
-
-        initDatePickers: function () {
-            var dateFrom = DOM.findControl('date-from');
-            var dateTo = DOM.findControl('date-to');
-
-            if (dateFrom) jQuery(dateFrom).datepicker(Craft.datepickerOptions);
-            if (dateTo) jQuery(dateTo).datepicker(Craft.datepickerOptions);
-        },
-
         initKeyboardNavigation: function () {
             document.addEventListener('keydown', this.handleKeydown.bind(this));
         },
 
         handleKeydown: function (e) {
-            // "/" to focus search
             if (e.key === '/' && !e.target.matches('input, textarea')) {
                 e.preventDefault();
                 var searchInput = DOM.findControl('search-query');
@@ -245,7 +146,6 @@
                 }
             }
 
-            // Escape to clear search
             if (e.key === 'Escape') {
                 var escInput = DOM.findControl('search-query');
                 if (escInput && document.activeElement === escInput) {
@@ -254,7 +154,6 @@
                 }
             }
 
-            // Arrow keys for result navigation
             if (
                 (e.key === 'ArrowUp' || e.key === 'ArrowDown') &&
                 !e.target.matches('input, textarea, select')
@@ -263,7 +162,6 @@
                 this.navigateResults(e.key === 'ArrowDown' ? 1 : -1);
             }
 
-            // Enter to open focused result
             if (
                 e.key === 'Enter' &&
                 !e.target.matches('input, textarea, button, a')

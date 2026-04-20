@@ -36,6 +36,7 @@ class LensAsset extends AssetBundle
             'css/components/metric-card.css',
             'css/components/stat-strip.css',
             'css/components/swatch.css',
+            'css/components/lens-filter-picker.css',
 
             // Edition
             'css/components/edition.css',
