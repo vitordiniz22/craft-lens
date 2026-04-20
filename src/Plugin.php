@@ -480,16 +480,17 @@ class Plugin extends BasePlugin
                         'failed' => ['Failed Analyses', ['lensStatus' => 'failed', 'kind' => 'image']],
                         'missing-alt-text' => ['Missing Alt Text', ['hasAlt' => false, 'kind' => 'image']],
                         'nsfw-flagged' => ['NSFW Flagged', ['lensNsfwFlagged' => true, 'kind' => 'image']],
-                        'blurry' => ['Blurry', ['lensBlurry' => true, 'kind' => 'image']],
-                        'too-dark' => ['Too Dark', ['lensTooDark' => true, 'kind' => 'image']],
-                        'too-bright' => ['Too Bright', ['lensTooBright' => true, 'kind' => 'image']],
-                        'low-contrast' => ['Low Contrast', ['lensLowContrast' => true, 'kind' => 'image']],
                         'file-too-large' => ['File Too Large', ['lensTooLarge' => true, 'kind' => 'image']],
                         'missing-focal-point' => ['Missing Focal Point', ['lensHasFocalPoint' => false, 'kind' => 'image']],
                         'contains-people' => ['Contains People', ['lensContainsPeople' => true, 'kind' => 'image']],
                         'has-watermark' => ['Has Watermark', ['lensHasWatermark' => true, 'kind' => 'image']],
                         'has-brand-logo' => ['Has Brand Logo', ['lensContainsBrandLogo' => true, 'kind' => 'image']],
                     ];
+
+                    if ($this->getIsPro() && $this->getSettings()->requireReviewBeforeApply) {
+                        $sourceDefinitions = ['needs-review' => ['Needs Review', ['lensStatus' => 'pending_review', 'kind' => 'image']]]
+                            + $sourceDefinitions;
+                    }
 
                     foreach ($sourceDefinitions as $key => [$label, $criteria]) {
                         $event->sources[] = [
