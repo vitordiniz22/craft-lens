@@ -101,7 +101,7 @@ class TagAggregationService extends Component
             $query->andWhere(['in', '[[lens.assetId]]', (new Query())
                 ->select('id')
                 ->from('{{%assets}}')
-                ->where(['in', 'volumeId', $volumeIds])]);
+                ->where(['in', 'volumeId', $volumeIds]), ]);
         }
 
         $query->groupBy(['tags.tagNormalized', 'tags.tag']);

@@ -11,12 +11,16 @@ use craft\base\Plugin as BasePlugin;
 use craft\elements\Asset;
 use craft\elements\conditions\assets\AssetCondition;
 use craft\elements\db\AssetQuery;
+use craft\events\DefineAttributeHtmlEvent;
 use craft\events\DefineFieldLayoutElementsEvent;
 use craft\events\DefineMetadataEvent;
 use craft\events\ModelEvent;
 use craft\events\RegisterConditionRulesEvent;
 use craft\events\RegisterElementActionsEvent;
+use craft\events\RegisterElementDefaultTableAttributesEvent;
+use craft\events\RegisterElementSortOptionsEvent;
 use craft\events\RegisterElementSourcesEvent;
+use craft\events\RegisterElementTableAttributesEvent;
 use craft\events\RegisterUrlRulesEvent;
 use craft\events\ReplaceAssetEvent;
 use craft\events\TemplateEvent;
@@ -31,20 +35,32 @@ use craft\web\View;
 use Psr\Log\LogLevel;
 use vitordiniz22\craftlens\actions\AnalyzeAssetsAction;
 use vitordiniz22\craftlens\behaviors\AssetQueryBehavior;
-use vitordiniz22\craftlens\enums\LogCategory;
-use vitordiniz22\craftlens\helpers\FieldLayoutHelper;
-use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\conditions\ContainsBrandLogoConditionRule;
 use vitordiniz22\craftlens\conditions\ContainsPeopleConditionRule;
+use vitordiniz22\craftlens\conditions\FaceCountConditionRule;
+use vitordiniz22\craftlens\conditions\FileSizeConditionRule;
 use vitordiniz22\craftlens\conditions\FileTooLargeConditionRule;
+use vitordiniz22\craftlens\conditions\HasDuplicatesConditionRule;
 use vitordiniz22\craftlens\conditions\HasFocalPointConditionRule;
 use vitordiniz22\craftlens\conditions\HasTextInImageConditionRule;
+use vitordiniz22\craftlens\conditions\LensColorConditionRule;
 use vitordiniz22\craftlens\conditions\LensStatusConditionRule;
+use vitordiniz22\craftlens\conditions\LensTagsAllConditionRule;
+use vitordiniz22\craftlens\conditions\LensTagsAnyConditionRule;
 use vitordiniz22\craftlens\conditions\NsfwFlaggedConditionRule;
+use vitordiniz22\craftlens\conditions\NsfwScoreConditionRule;
+use vitordiniz22\craftlens\conditions\ProcessedDateConditionRule;
+use vitordiniz22\craftlens\conditions\ProviderConditionRule;
+use vitordiniz22\craftlens\conditions\ProviderModelConditionRule;
+use vitordiniz22\craftlens\conditions\QualityIssueConditionRule;
+use vitordiniz22\craftlens\conditions\SimilarToConditionRule;
 use vitordiniz22\craftlens\conditions\StockProviderConditionRule;
+use vitordiniz22\craftlens\conditions\UnprocessedConditionRule;
 use vitordiniz22\craftlens\conditions\WatermarkFlaggedConditionRule;
 use vitordiniz22\craftlens\conditions\WatermarkTypeConditionRule;
 use vitordiniz22\craftlens\fieldlayoutelements\LensAnalysisElement;
+use vitordiniz22\craftlens\helpers\AssetTableAttributes;
+use vitordiniz22\craftlens\helpers\FieldLayoutHelper;
 use vitordiniz22\craftlens\models\Settings;
 use vitordiniz22\craftlens\services\AiProviderService;
 use vitordiniz22\craftlens\services\AnalysisCancellationService;
@@ -311,11 +327,68 @@ class Plugin extends BasePlugin
         $this->registerAssetQueryBehavior();
         $this->registerAssetSources();
         $this->registerAssetSidebarHandler();
+        $this->registerAssetIndexExtensions();
         $this->registerFieldLayoutElements();
         $this->registerElementActions();
         $this->registerSemanticSearch();
         $this->registerAssetBundle();
         $this->registerGarbageCollection();
+    }
+
+    /**
+     * Hook sort options, table columns, default source columns, and cell HTML
+     * rendering into Craft's native asset index. All rendering lives in
+     * AssetTableAttributes; this just wires the events.
+     */
+    private function registerAssetIndexExtensions(): void
+    {
+        Event::on(
+            Asset::class,
+            Element::EVENT_REGISTER_SORT_OPTIONS,
+            function(RegisterElementSortOptionsEvent $event) {
+                foreach (AssetTableAttributes::sortOptions() as $option) {
+                    $event->sortOptions[] = $option;
+                }
+            }
+        );
+
+        Event::on(
+            Asset::class,
+            Element::EVENT_REGISTER_TABLE_ATTRIBUTES,
+            function(RegisterElementTableAttributesEvent $event) {
+                foreach (AssetTableAttributes::tableAttributes() as $key => $def) {
+                    $event->tableAttributes[$key] = $def;
+                }
+            }
+        );
+
+        Event::on(
+            Asset::class,
+            Element::EVENT_REGISTER_DEFAULT_TABLE_ATTRIBUTES,
+            function(RegisterElementDefaultTableAttributesEvent $event) {
+                $defaults = AssetTableAttributes::defaultAttributes($event->source);
+
+                foreach ($defaults as $attr) {
+                    if (!in_array($attr, $event->tableAttributes, true)) {
+                        $event->tableAttributes[] = $attr;
+                    }
+                }
+            }
+        );
+
+        Event::on(
+            Asset::class,
+            Element::EVENT_DEFINE_ATTRIBUTE_HTML,
+            function(DefineAttributeHtmlEvent $event) {
+                /** @var Asset $asset */
+                $asset = $event->sender;
+                $html = AssetTableAttributes::attributeHtml($asset, $event->attribute);
+
+                if ($html !== null) {
+                    $event->html = $html;
+                }
+            }
+        );
     }
 
     private function registerGarbageCollection(): void
@@ -379,7 +452,6 @@ class Plugin extends BasePlugin
                     $this->assetAnalysis->queueAsset($asset);
                     return;
                 }
-
             }
         );
 
@@ -437,17 +509,30 @@ class Plugin extends BasePlugin
             AssetCondition::EVENT_REGISTER_CONDITION_RULES,
             function(RegisterConditionRulesEvent $event) {
                 $event->conditionRules[] = NsfwFlaggedConditionRule::class;
+                $event->conditionRules[] = NsfwScoreConditionRule::class;
                 $event->conditionRules[] = HasFocalPointConditionRule::class;
                 $event->conditionRules[] = ContainsPeopleConditionRule::class;
+                $event->conditionRules[] = FaceCountConditionRule::class;
                 $event->conditionRules[] = WatermarkFlaggedConditionRule::class;
                 $event->conditionRules[] = ContainsBrandLogoConditionRule::class;
                 $event->conditionRules[] = WatermarkTypeConditionRule::class;
                 $event->conditionRules[] = FileTooLargeConditionRule::class;
+                $event->conditionRules[] = FileSizeConditionRule::class;
+                $event->conditionRules[] = QualityIssueConditionRule::class;
+                $event->conditionRules[] = ProcessedDateConditionRule::class;
+                $event->conditionRules[] = UnprocessedConditionRule::class;
+                $event->conditionRules[] = ProviderConditionRule::class;
+                $event->conditionRules[] = ProviderModelConditionRule::class;
 
                 if ($this->getIsPro()) {
                     $event->conditionRules[] = LensStatusConditionRule::class;
                     $event->conditionRules[] = StockProviderConditionRule::class;
                     $event->conditionRules[] = HasTextInImageConditionRule::class;
+                    $event->conditionRules[] = LensTagsAnyConditionRule::class;
+                    $event->conditionRules[] = LensTagsAllConditionRule::class;
+                    $event->conditionRules[] = LensColorConditionRule::class;
+                    $event->conditionRules[] = HasDuplicatesConditionRule::class;
+                    $event->conditionRules[] = SimilarToConditionRule::class;
                 }
             }
         );
@@ -503,7 +588,6 @@ class Plugin extends BasePlugin
                         ];
                     }
                 }
-
             }
         );
     }

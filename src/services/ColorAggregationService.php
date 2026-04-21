@@ -69,7 +69,7 @@ class ColorAggregationService extends Component
             $query->andWhere(['in', '[[a.assetId]]', (new Query())
                 ->select('id')
                 ->from('{{%assets}}')
-                ->where(['in', 'volumeId', $volumeIds])]);
+                ->where(['in', 'volumeId', $volumeIds]), ]);
         }
 
         $exactColorCounts = $query->groupBy(['c.hex'])->all();

@@ -6,7 +6,6 @@ namespace vitordiniz22\craftlens\records;
 
 use craft\db\ActiveRecord;
 use vitordiniz22\craftlens\migrations\Install;
-use vitordiniz22\craftlens\records\AssetAnalysisRecord;
 use yii\db\ActiveQueryInterface;
 
 /**

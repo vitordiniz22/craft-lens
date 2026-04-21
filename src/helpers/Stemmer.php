@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace vitordiniz22\craftlens\helpers;
 
 use Wamania\Snowball\NotFoundException;
-use Wamania\Snowball\StemmerFactory;
 use Wamania\Snowball\Stemmer\Stemmer as SnowballStemmer;
+use Wamania\Snowball\StemmerFactory;
 
 /**
  * Multilingual stemmer wrapper around wamania/php-stemmer.

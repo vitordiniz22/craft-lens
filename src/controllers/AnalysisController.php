@@ -7,12 +7,12 @@ namespace vitordiniz22\craftlens\controllers;
 use Craft;
 use craft\elements\Asset;
 use craft\web\Controller;
+use vitordiniz22\craftlens\controllers\traits\ValidatesIdsTrait;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\ColorSupport;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\helpers\MultisiteHelper;
-use vitordiniz22\craftlens\controllers\traits\ValidatesIdsTrait;
 use vitordiniz22\craftlens\Plugin;
 use yii\web\BadRequestHttpException;
 use yii\web\NotFoundHttpException;
@@ -472,5 +472,4 @@ class AnalysisController extends Controller
 
         return $asset;
     }
-
 }

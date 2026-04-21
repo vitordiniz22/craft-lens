@@ -580,7 +580,7 @@ class SearchIndexService extends Component
             ->limit(self::FUZZY_CANDIDATE_LIMIT)
             ->all();
 
-        $matched = array_filter($candidates, function (array $row) use ($stemmedTerm): bool {
+        $matched = array_filter($candidates, function(array $row) use ($stemmedTerm): bool {
             return levenshtein($row['token'], $stemmedTerm) <= 1;
         });
 

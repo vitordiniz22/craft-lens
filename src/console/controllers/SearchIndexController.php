@@ -30,7 +30,7 @@ class SearchIndexController extends Controller
         $this->stdout("Rebuilding Lens search index...\n");
 
         $indexed = Plugin::getInstance()->searchIndex->rebuildAll(
-            function (int $current, int $total): void {
+            function(int $current, int $total): void {
                 Console::updateProgress($current, $total);
             }
         );

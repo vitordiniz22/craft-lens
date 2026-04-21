@@ -8,7 +8,6 @@ use vitordiniz22\craftlens\exceptions\AnalysisException;
 use vitordiniz22\craftlens\exceptions\ConfigurationException;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\models\Settings;
-use vitordiniz22\craftlens\Plugin;
 
 /**
  * OpenAI Vision API provider for image analysis.

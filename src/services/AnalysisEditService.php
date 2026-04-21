@@ -292,5 +292,4 @@ class AnalysisEditService extends Component
 
         return $result;
     }
-
 }

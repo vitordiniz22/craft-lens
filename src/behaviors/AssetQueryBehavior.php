@@ -10,10 +10,11 @@ use craft\helpers\Db;
 use vitordiniz22\craftlens\conditions\FileTooLargeConditionRule;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\enums\LogCategory;
+use vitordiniz22\craftlens\helpers\ColorMatcher;
 use vitordiniz22\craftlens\helpers\ColorSupport;
 use vitordiniz22\craftlens\helpers\DuplicateSupport;
-use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\helpers\ImageMetricsAnalyzer;
+use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\helpers\QualitySupport;
 use vitordiniz22\craftlens\migrations\Install;
 use vitordiniz22\craftlens\Plugin;
@@ -35,17 +36,33 @@ class AssetQueryBehavior extends Behavior
     public ?bool $lensContainsPeople = null;
     public ?float $lensConfidenceBelow = null;
     public ?float $lensConfidenceAbove = null;
-    public ?string $lensTag = null;
+    public string|array|null $lensTag = null;
+    /** @var string[]|null AI tags that must ALL be present on the asset */
+    public ?array $lensTagsAll = null;
     public ?string $lensColor = null;
+    public ?int $lensColorTolerance = null;
     public ?bool $lensNsfwFlagged = null;
+    public ?float $lensNsfwScoreMin = null;
+    public ?float $lensNsfwScoreMax = null;
     public ?bool $lensHasWatermark = null;
     public ?string $lensWatermarkType = null;
     public ?array $lensWatermarkTypes = null;
     public ?bool $lensContainsBrandLogo = null;
     public ?string $lensDetectedBrand = null;
     public ?bool $lensHasDuplicates = null;
+    public ?int $lensSimilarTo = null;
     public ?string $lensTextSearch = null;
     public string|array|null $lensStockProvider = null;
+    /** @var string|string[]|null */
+    public string|array|null $lensProvider = null;
+    /** @var string|string[]|null */
+    public string|array|null $lensProviderModel = null;
+    public ?string $lensFaceCountPreset = null;
+    public ?float $lensFileSizeMinMb = null;
+    public ?float $lensFileSizeMaxMb = null;
+    public ?\DateTimeInterface $lensProcessedFrom = null;
+    public ?\DateTimeInterface $lensProcessedTo = null;
+    public ?bool $lensUnprocessed = null;
 
     // Quality filters
     public ?float $lensSharpnessBelow = null;
@@ -102,14 +119,31 @@ class AssetQueryBehavior extends Behavior
     }
 
     /**
-     * Filters assets by a specific AI tag.
+     * Filters assets by AI tag(s). Passing an array matches assets tagged with
+     * ANY of the given tags; use `lensTagsAll()` for strict AND semantics.
+     *
+     * @param string|string[]|null $value
      */
-    public function lensTag(?string $value): AssetQuery
+    public function lensTag(string|array|null $value): AssetQuery
     {
         if (!Plugin::getInstance()->getIsPro()) {
             return $this->owner;
         }
         $this->lensTag = $value;
+        return $this->owner;
+    }
+
+    /**
+     * Filters assets that have ALL of the given AI tags.
+     *
+     * @param string[]|null $value
+     */
+    public function lensTagsAll(?array $value): AssetQuery
+    {
+        if (!Plugin::getInstance()->getIsPro()) {
+            return $this->owner;
+        }
+        $this->lensTagsAll = $value;
         return $this->owner;
     }
 
@@ -129,11 +163,132 @@ class AssetQueryBehavior extends Behavior
     }
 
     /**
+     * Sets the HSL tolerance (0-100) paired with `lensColor()`. Null falls back
+     * to `ColorMatcher::DEFAULT_TOLERANCE`.
+     */
+    public function lensColorTolerance(?int $value): AssetQuery
+    {
+        $this->lensColorTolerance = $value;
+        return $this->owner;
+    }
+
+    /**
      * Sets the NSFW flagged filter.
      */
     public function lensNsfwFlagged(?bool $value): AssetQuery
     {
         $this->lensNsfwFlagged = $value;
+        return $this->owner;
+    }
+
+    /**
+     * Sets the NSFW score lower bound (inclusive).
+     */
+    public function lensNsfwScoreMin(?float $value): AssetQuery
+    {
+        $this->lensNsfwScoreMin = $value;
+        return $this->owner;
+    }
+
+    /**
+     * Sets the NSFW score upper bound (inclusive).
+     */
+    public function lensNsfwScoreMax(?float $value): AssetQuery
+    {
+        $this->lensNsfwScoreMax = $value;
+        return $this->owner;
+    }
+
+    /**
+     * Face count bucket: '0', '1', '2-5', or '6+'.
+     */
+    public function lensFaceCountPreset(?string $value): AssetQuery
+    {
+        $this->lensFaceCountPreset = $value;
+        return $this->owner;
+    }
+
+    /**
+     * Minimum file size in megabytes (inclusive).
+     */
+    public function lensFileSizeMinMb(?float $value): AssetQuery
+    {
+        $this->lensFileSizeMinMb = $value;
+        return $this->owner;
+    }
+
+    /**
+     * Maximum file size in megabytes (inclusive).
+     */
+    public function lensFileSizeMaxMb(?float $value): AssetQuery
+    {
+        $this->lensFileSizeMaxMb = $value;
+        return $this->owner;
+    }
+
+    /**
+     * Start of the processedAt range (inclusive).
+     */
+    public function lensProcessedFrom(?\DateTimeInterface $value): AssetQuery
+    {
+        $this->lensProcessedFrom = $value;
+        return $this->owner;
+    }
+
+    /**
+     * End of the processedAt range (inclusive, exclusive internally via +1 day).
+     */
+    public function lensProcessedTo(?\DateTimeInterface $value): AssetQuery
+    {
+        $this->lensProcessedTo = $value;
+        return $this->owner;
+    }
+
+    /**
+     * Filter by AI provider name(s).
+     *
+     * @param string|string[]|null $value
+     */
+    public function lensProvider(string|array|null $value): AssetQuery
+    {
+        $this->lensProvider = $value;
+        return $this->owner;
+    }
+
+    /**
+     * Filter by AI provider model identifier(s).
+     *
+     * @param string|string[]|null $value
+     */
+    public function lensProviderModel(string|array|null $value): AssetQuery
+    {
+        $this->lensProviderModel = $value;
+        return $this->owner;
+    }
+
+    /**
+     * Filter to assets the bulk job treats as unprocessed: either no analysis
+     * row, or a status in `AnalysisStatus::unprocessedStatuses()`.
+     */
+    public function lensUnprocessed(?bool $value): AssetQuery
+    {
+        $this->lensUnprocessed = $value;
+        return $this->owner;
+    }
+
+    /**
+     * Filter to assets in the same duplicate cluster as the given asset.
+     * Requires the Pro tier and `DuplicateSupport`.
+     */
+    public function lensSimilarTo(?int $assetId): AssetQuery
+    {
+        if (!Plugin::getInstance()->getIsPro()) {
+            return $this->owner;
+        }
+        if (!DuplicateSupport::isAvailable()) {
+            return $this->owner;
+        }
+        $this->lensSimilarTo = $assetId;
         return $this->owner;
     }
 
@@ -447,6 +602,104 @@ class AssetQueryBehavior extends Behavior
         }
     }
 
+    /**
+     * Append a WHERE fragment that requires the lens analyses join.
+     * Used by composite condition rules (e.g. quality issues) that need
+     * OR-across-subconditions and don't map to a single scope setter.
+     *
+     * @param array<mixed> $condition
+     */
+    public function lensAddRawWhere(array $condition): AssetQuery
+    {
+        $this->lensRawWhereConditions[] = $condition;
+        return $this->owner;
+    }
+
+    public function lensApplyHasDuplicatesFilter(): void
+    {
+        if ($this->lensHasDuplicates !== null && $this->owner->subQuery !== null) {
+            $this->safeApplyFilter(fn() => $this->applyHasDuplicatesFilter(), 'HasDuplicatesFilter', 'lensHasDuplicates');
+        }
+    }
+
+    public function lensApplySimilarToFilter(): void
+    {
+        if ($this->lensSimilarTo !== null && $this->owner->subQuery !== null) {
+            $this->safeApplyFilter(fn() => $this->applySimilarToFilter(), 'SimilarToFilter', 'lensSimilarTo');
+        }
+    }
+
+    public function lensApplyTagFilter(): void
+    {
+        if ($this->lensTag !== null && $this->owner->subQuery !== null) {
+            $this->safeApplyFilter(fn() => $this->applyTagFilter(), 'TagFilter', 'lensTag');
+        }
+    }
+
+    public function lensApplyTagsAllFilter(): void
+    {
+        if ($this->lensTagsAll !== null && !empty($this->lensTagsAll) && $this->owner->subQuery !== null) {
+            $this->safeApplyFilter(fn() => $this->applyTagsAllFilter(), 'TagsAllFilter', 'lensTagsAll');
+        }
+    }
+
+    public function lensApplyColorFilter(): void
+    {
+        if ($this->lensColor !== null && $this->owner->subQuery !== null) {
+            $this->safeApplyFilter(fn() => $this->applyColorFilter(), 'ColorFilter', 'lensColor');
+            $this->lensColor = null;
+        }
+    }
+
+    public function lensApplyNsfwScoreRangeFilter(): void
+    {
+        if (($this->lensNsfwScoreMin !== null || $this->lensNsfwScoreMax !== null) && $this->owner->subQuery !== null) {
+            $this->safeApplyFilter(fn() => $this->applyNsfwScoreRangeFilter(), 'NsfwScoreRangeFilter');
+        }
+    }
+
+    public function lensApplyFaceCountPresetFilter(): void
+    {
+        if ($this->lensFaceCountPreset !== null && $this->lensFaceCountPreset !== '' && $this->owner->subQuery !== null) {
+            $this->safeApplyFilter(fn() => $this->applyFaceCountPresetFilter(), 'FaceCountPresetFilter', 'lensFaceCountPreset');
+        }
+    }
+
+    public function lensApplyFileSizeRangeFilter(): void
+    {
+        if (($this->lensFileSizeMinMb !== null || $this->lensFileSizeMaxMb !== null) && $this->owner->subQuery !== null) {
+            $this->safeApplyFilter(fn() => $this->applyFileSizeRangeFilter(), 'FileSizeRangeFilter');
+        }
+    }
+
+    public function lensApplyProcessedDateFilter(): void
+    {
+        if (($this->lensProcessedFrom !== null || $this->lensProcessedTo !== null) && $this->owner->subQuery !== null) {
+            $this->safeApplyFilter(fn() => $this->applyProcessedDateFilter(), 'ProcessedDateFilter');
+        }
+    }
+
+    public function lensApplyProviderFilter(): void
+    {
+        if ($this->lensProvider !== null && $this->owner->subQuery !== null) {
+            $this->safeApplyFilter(fn() => $this->applyProviderFilter(), 'ProviderFilter', 'lensProvider');
+        }
+    }
+
+    public function lensApplyProviderModelFilter(): void
+    {
+        if ($this->lensProviderModel !== null && $this->owner->subQuery !== null) {
+            $this->safeApplyFilter(fn() => $this->applyProviderModelFilter(), 'ProviderModelFilter', 'lensProviderModel');
+        }
+    }
+
+    public function lensApplyUnprocessedFilter(): void
+    {
+        if ($this->lensUnprocessed !== null && $this->owner->subQuery !== null) {
+            $this->safeApplyFilter(fn() => $this->applyUnprocessedFilter(), 'UnprocessedFilter', 'lensUnprocessed');
+        }
+    }
+
     public function events(): array
     {
         return [
@@ -543,6 +796,42 @@ class AssetQueryBehavior extends Behavior
 
         if ($this->lensHasDuplicates !== null) {
             $this->applyHasDuplicatesFilter();
+        }
+
+        if ($this->lensSimilarTo !== null) {
+            $this->applySimilarToFilter();
+        }
+
+        if ($this->lensTagsAll !== null && !empty($this->lensTagsAll)) {
+            $this->applyTagsAllFilter();
+        }
+
+        if ($this->lensNsfwScoreMin !== null || $this->lensNsfwScoreMax !== null) {
+            $this->applyNsfwScoreRangeFilter();
+        }
+
+        if ($this->lensFaceCountPreset !== null && $this->lensFaceCountPreset !== '') {
+            $this->applyFaceCountPresetFilter();
+        }
+
+        if ($this->lensFileSizeMinMb !== null || $this->lensFileSizeMaxMb !== null) {
+            $this->applyFileSizeRangeFilter();
+        }
+
+        if ($this->lensProcessedFrom !== null || $this->lensProcessedTo !== null) {
+            $this->applyProcessedDateFilter();
+        }
+
+        if ($this->lensProvider !== null) {
+            $this->applyProviderFilter();
+        }
+
+        if ($this->lensProviderModel !== null) {
+            $this->applyProviderModelFilter();
+        }
+
+        if ($this->lensUnprocessed !== null) {
+            $this->applyUnprocessedFilter();
         }
 
         if ($this->lensTextSearch !== null) {
@@ -642,27 +931,63 @@ class AssetQueryBehavior extends Behavior
         $this->ensureJoined();
         $tagTable = Install::TABLE_ASSET_TAGS;
 
+        $values = is_array($this->lensTag) ? $this->lensTag : [$this->lensTag];
+        $values = array_map('mb_strtolower', array_filter($values, fn($v) => $v !== null && $v !== ''));
+
+        if (empty($values)) {
+            return;
+        }
+
         $tagSubQuery = (new Query())
             ->select(['analysisId'])
             ->from(['t' => $tagTable])
             ->where('[[t.analysisId]] = [[lens.id]]')
-            ->andWhere(['t.tag' => $this->lensTag]);
+            ->andWhere(['t.tagNormalized' => $values]);
 
         $this->owner->subQuery->andWhere(['exists', $tagSubQuery]);
     }
 
-    private function applyColorFilter(): void
+    private function applyTagsAllFilter(): void
     {
         $this->ensureJoined();
-        $colorTable = Install::TABLE_ASSET_COLORS;
+        $tagTable = Install::TABLE_ASSET_TAGS;
 
-        $colorSubQuery = (new Query())
-            ->select(['analysisId'])
-            ->from(['c' => $colorTable])
-            ->where('[[c.analysisId]] = [[lens.id]]')
-            ->andWhere(['c.hex' => $this->lensColor]);
+        $values = array_map('mb_strtolower', array_filter(
+            $this->lensTagsAll,
+            fn($v) => $v !== null && $v !== '',
+        ));
 
-        $this->owner->subQuery->andWhere(['exists', $colorSubQuery]);
+        foreach ($values as $tag) {
+            $existsSubQuery = (new Query())
+                ->select(['analysisId'])
+                ->from(['t' => $tagTable])
+                ->where('[[t.analysisId]] = [[lens.id]]')
+                ->andWhere(['t.tagNormalized' => $tag]);
+
+            $this->owner->subQuery->andWhere(['exists', $existsSubQuery]);
+        }
+    }
+
+    /**
+     * Matches assets whose dominant colors are within `lensColorTolerance` of
+     * `lensColor` in HSL space. Resolution runs in PHP via ColorMatcher, which
+     * returns the asset ID set to restrict the query to.
+     */
+    private function applyColorFilter(): void
+    {
+        if (!ColorSupport::isAvailable()) {
+            return;
+        }
+
+        $tolerance = $this->lensColorTolerance ?? ColorMatcher::DEFAULT_TOLERANCE;
+        $matchingIds = ColorMatcher::findAssetsMatching((string) $this->lensColor, $tolerance);
+
+        if (empty($matchingIds)) {
+            $this->owner->subQuery->andWhere('1 = 0');
+            return;
+        }
+
+        $this->owner->subQuery->andWhere(['elements.id' => $matchingIds]);
     }
 
     private function applyDetectedBrandFilter(): void
@@ -723,6 +1048,182 @@ class AssetQueryBehavior extends Behavior
     }
 
     /**
+     * Narrow the result set to assets sharing a duplicate cluster with the
+     * anchor asset. Delegates cluster resolution to DuplicateDetectionService,
+     * which walks the union-find graph and returns every sibling ID.
+     */
+    private function applySimilarToFilter(): void
+    {
+        if (!DuplicateSupport::isAvailable()) {
+            return;
+        }
+
+        $anchorId = (int) $this->lensSimilarTo;
+
+        if ($anchorId <= 0) {
+            return;
+        }
+
+        // Seed with the anchor + any direct pairs so the cluster walk has a basis.
+        $directPairs = (new Query())
+            ->select(['canonicalAssetId', 'duplicateAssetId'])
+            ->from(Install::TABLE_DUPLICATE_GROUPS)
+            ->where(['resolution' => null])
+            ->andWhere([
+                'or',
+                ['canonicalAssetId' => $anchorId],
+                ['duplicateAssetId' => $anchorId],
+            ])
+            ->all();
+
+        $seedIds = [$anchorId];
+
+        foreach ($directPairs as $pair) {
+            $seedIds[] = (int) $pair['canonicalAssetId'];
+            $seedIds[] = (int) $pair['duplicateAssetId'];
+        }
+
+        $seedIds = array_values(array_unique($seedIds));
+        $clusterMap = Plugin::getInstance()->duplicateDetection->getClusterKeysForAssets($seedIds);
+
+        if (!isset($clusterMap[$anchorId])) {
+            $this->owner->subQuery->andWhere(['elements.id' => $anchorId]);
+            return;
+        }
+
+        $anchorCluster = $clusterMap[$anchorId];
+        $siblingIds = array_keys(array_filter(
+            $clusterMap,
+            fn(int $cluster) => $cluster === $anchorCluster,
+        ));
+
+        // Always include the anchor even if it isn't clustered (graceful fallback).
+        if (!in_array($anchorId, $siblingIds, true)) {
+            $siblingIds[] = $anchorId;
+        }
+
+        $this->owner->subQuery->andWhere(['elements.id' => $siblingIds]);
+    }
+
+    private function applyNsfwScoreRangeFilter(): void
+    {
+        $this->ensureJoined();
+
+        if ($this->lensNsfwScoreMin !== null) {
+            $this->owner->subQuery->andWhere(['>=', 'lens.nsfwScore', $this->lensNsfwScoreMin]);
+        }
+
+        if ($this->lensNsfwScoreMax !== null) {
+            $this->owner->subQuery->andWhere(['<=', 'lens.nsfwScore', $this->lensNsfwScoreMax]);
+        }
+    }
+
+    private function applyFaceCountPresetFilter(): void
+    {
+        $this->ensureJoined();
+
+        match ($this->lensFaceCountPreset) {
+            '0' => $this->owner->subQuery->andWhere(['lens.containsPeople' => false]),
+            '1' => $this->owner->subQuery->andWhere(['lens.faceCount' => 1]),
+            '2-5' => $this->owner->subQuery
+                ->andWhere(['>=', 'lens.faceCount', 2])
+                ->andWhere(['<=', 'lens.faceCount', 5]),
+            '6+' => $this->owner->subQuery->andWhere(['>=', 'lens.faceCount', 6]),
+            default => null,
+        };
+    }
+
+    private function applyFileSizeRangeFilter(): void
+    {
+        $oneMib = 1_048_576;
+
+        if ($this->lensFileSizeMinMb !== null) {
+            $this->owner->subQuery->andWhere([
+                '>=',
+                'assets.size',
+                (int) round($this->lensFileSizeMinMb * $oneMib),
+            ]);
+        }
+
+        if ($this->lensFileSizeMaxMb !== null) {
+            $this->owner->subQuery->andWhere([
+                '<=',
+                'assets.size',
+                (int) round($this->lensFileSizeMaxMb * $oneMib),
+            ]);
+        }
+    }
+
+    private function applyProcessedDateFilter(): void
+    {
+        $this->ensureJoined();
+
+        if ($this->lensProcessedFrom !== null) {
+            $this->owner->subQuery->andWhere([
+                '>=',
+                'lens.processedAt',
+                $this->lensProcessedFrom->format('Y-m-d H:i:s'),
+            ]);
+        }
+
+        if ($this->lensProcessedTo !== null) {
+            // Match the custom browser: inclusive end-of-day, implemented as `< (to + 1 day)`.
+            $to = \DateTimeImmutable::createFromInterface($this->lensProcessedTo)->modify('+1 day');
+            $this->owner->subQuery->andWhere([
+                '<',
+                'lens.processedAt',
+                $to->format('Y-m-d H:i:s'),
+            ]);
+        }
+    }
+
+    private function applyProviderFilter(): void
+    {
+        $this->ensureJoined();
+        $value = is_array($this->lensProvider) ? $this->lensProvider : [$this->lensProvider];
+        $value = array_values(array_filter($value, fn($v) => $v !== null && $v !== ''));
+
+        if (empty($value)) {
+            return;
+        }
+
+        $this->owner->subQuery->andWhere(['lens.provider' => $value]);
+    }
+
+    private function applyProviderModelFilter(): void
+    {
+        $this->ensureJoined();
+        $value = is_array($this->lensProviderModel) ? $this->lensProviderModel : [$this->lensProviderModel];
+        $value = array_values(array_filter($value, fn($v) => $v !== null && $v !== ''));
+
+        if (empty($value)) {
+            return;
+        }
+
+        $this->owner->subQuery->andWhere(['lens.providerModel' => $value]);
+    }
+
+    private function applyUnprocessedFilter(): void
+    {
+        if ($this->lensUnprocessed) {
+            $this->ensureLeftJoined();
+            $this->owner->subQuery->andWhere([
+                'or',
+                ['lens.assetId' => null],
+                ['in', 'lens.status', AnalysisStatus::unprocessedStatuses()],
+            ]);
+            return;
+        }
+
+        $this->ensureJoined();
+        $this->owner->subQuery->andWhere([
+            'not in',
+            'lens.status',
+            AnalysisStatus::unprocessedStatuses(),
+        ]);
+    }
+
+    /**
      * Verify the Lens analysis table exists in the database.
      * Result cached per-request via static property.
      */
@@ -752,16 +1253,28 @@ class AssetQueryBehavior extends Behavior
             || $this->lensConfidenceBelow !== null
             || $this->lensConfidenceAbove !== null
             || $this->lensTag !== null
+            || $this->lensTagsAll !== null
             || $this->lensColor !== null
             || $this->lensNsfwFlagged !== null
+            || $this->lensNsfwScoreMin !== null
+            || $this->lensNsfwScoreMax !== null
             || $this->lensHasWatermark !== null
             || $this->lensWatermarkType !== null
             || $this->lensWatermarkTypes !== null
             || $this->lensContainsBrandLogo !== null
             || $this->lensDetectedBrand !== null
             || $this->lensHasDuplicates !== null
+            || $this->lensSimilarTo !== null
             || $this->lensTextSearch !== null
             || $this->lensStockProvider !== null
+            || $this->lensProvider !== null
+            || $this->lensProviderModel !== null
+            || $this->lensFaceCountPreset !== null
+            || $this->lensFileSizeMinMb !== null
+            || $this->lensFileSizeMaxMb !== null
+            || $this->lensProcessedFrom !== null
+            || $this->lensProcessedTo !== null
+            || $this->lensUnprocessed !== null
             || $this->lensSharpnessBelow !== null
             || $this->lensExposureIssues !== null
             || $this->lensHasFocalPoint !== null
@@ -803,16 +1316,29 @@ class AssetQueryBehavior extends Behavior
         $this->lensConfidenceBelow = null;
         $this->lensConfidenceAbove = null;
         $this->lensTag = null;
+        $this->lensTagsAll = null;
         $this->lensColor = null;
+        $this->lensColorTolerance = null;
         $this->lensNsfwFlagged = null;
+        $this->lensNsfwScoreMin = null;
+        $this->lensNsfwScoreMax = null;
         $this->lensHasWatermark = null;
         $this->lensWatermarkType = null;
         $this->lensWatermarkTypes = null;
         $this->lensContainsBrandLogo = null;
         $this->lensDetectedBrand = null;
         $this->lensHasDuplicates = null;
+        $this->lensSimilarTo = null;
         $this->lensTextSearch = null;
         $this->lensStockProvider = null;
+        $this->lensProvider = null;
+        $this->lensProviderModel = null;
+        $this->lensFaceCountPreset = null;
+        $this->lensFileSizeMinMb = null;
+        $this->lensFileSizeMaxMb = null;
+        $this->lensProcessedFrom = null;
+        $this->lensProcessedTo = null;
+        $this->lensUnprocessed = null;
         $this->lensSharpnessBelow = null;
         $this->lensExposureIssues = null;
         $this->lensHasFocalPoint = null;

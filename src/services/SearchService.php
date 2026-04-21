@@ -160,7 +160,7 @@ class SearchService extends Component
                 ->duplicateDetection
                 ->getClusterKeysForAssets($allIds);
 
-            usort($allIds, function (int $a, int $b) use ($clusterKeys): int {
+            usort($allIds, function(int $a, int $b) use ($clusterKeys): int {
                 $groupA = $clusterKeys[$a] ?? PHP_INT_MAX;
                 $groupB = $clusterKeys[$b] ?? PHP_INT_MAX;
                 return $groupA <=> $groupB ?: $a <=> $b;
@@ -874,7 +874,7 @@ class SearchService extends Component
         $providers = Plugin::getInstance()->aiProvider->getAllProviders();
 
         return array_map(
-            function (string $name) use ($providers) {
+            function(string $name) use ($providers) {
                 $label = isset($providers[$name]) ? $providers[$name]->getDisplayName() : ucfirst($name);
                 return ['value' => $name, 'label' => $label];
             },
@@ -971,7 +971,7 @@ class SearchService extends Component
      */
     public function getFilterRegistry(array $currentFilters = []): array
     {
-        $triState = function (string $yesLabel, string $noLabel): array {
+        $triState = function(string $yesLabel, string $noLabel): array {
             return [
                 'type' => 'tri-state',
                 'triStateLabels' => [

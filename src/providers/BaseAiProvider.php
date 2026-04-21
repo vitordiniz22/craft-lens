@@ -12,7 +12,6 @@ use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use vitordiniz22\craftlens\dto\AnalysisResult;
 use vitordiniz22\craftlens\enums\LogCategory;
-use vitordiniz22\craftlens\models\Settings;
 use vitordiniz22\craftlens\enums\LogLevel;
 use vitordiniz22\craftlens\exceptions\AnalysisException;
 use vitordiniz22\craftlens\exceptions\ConfigurationException;
@@ -20,6 +19,7 @@ use vitordiniz22\craftlens\helpers\ImagePreprocessor;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\helpers\PreprocessResult;
 use vitordiniz22\craftlens\helpers\ResponseNormalizer;
+use vitordiniz22\craftlens\models\Settings;
 
 /**
  * Base class for AI providers with shared functionality.

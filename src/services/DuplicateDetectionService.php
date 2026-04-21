@@ -11,11 +11,9 @@ use vitordiniz22\craftlens\helpers\DuplicateSupport;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\helpers\PerceptualHashHelper;
 use vitordiniz22\craftlens\migrations\Install;
-use vitordiniz22\craftlens\Plugin;
 use vitordiniz22\craftlens\records\AssetAnalysisRecord;
 use vitordiniz22\craftlens\records\DuplicateGroupRecord;
 use yii\base\Component;
-use yii\db\Expression;
 use yii\db\Query;
 
 /**
@@ -293,7 +291,7 @@ class DuplicateDetectionService extends Component
         $parent = [];
         $rank = [];
 
-        $find = function (int $x) use (&$parent, &$find): int {
+        $find = function(int $x) use (&$parent, &$find): int {
             if ($parent[$x] !== $x) {
                 $parent[$x] = $find($parent[$x]);
             }
@@ -301,7 +299,7 @@ class DuplicateDetectionService extends Component
             return $parent[$x];
         };
 
-        $union = function (int $a, int $b) use (&$parent, &$rank, $find): void {
+        $union = function(int $a, int $b) use (&$parent, &$rank, $find): void {
             $rootA = $find($a);
             $rootB = $find($b);
 
@@ -545,7 +543,7 @@ class DuplicateDetectionService extends Component
             return [];
         }
 
-        $ids = array_map(function (array $dup) use ($assetId) {
+        $ids = array_map(function(array $dup) use ($assetId) {
             return (int) $dup['canonicalAssetId'] === $assetId
                 ? (int) $dup['duplicateAssetId']
                 : (int) $dup['canonicalAssetId'];

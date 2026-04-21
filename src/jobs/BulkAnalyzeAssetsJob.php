@@ -112,5 +112,4 @@ class BulkAnalyzeAssetsJob extends BaseBatchedJob
 
         return Craft::t('lens', 'Lens: Analyzing all assets');
     }
-
 }

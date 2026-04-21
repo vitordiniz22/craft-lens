@@ -24,7 +24,7 @@ class RebuildSearchIndexJob extends BaseJob
         Logger::info(LogCategory::SearchIndex, 'Background search index rebuild started');
 
         $indexed = Plugin::getInstance()->searchIndex->rebuildAll(
-            function (int $current, int $total) use ($queue) {
+            function(int $current, int $total) use ($queue) {
                 $this->setProgress($queue, $current / max($total, 1), Craft::t('lens', 'Indexing asset {current} of {total}', [
                     'current' => $current,
                     'total' => $total,

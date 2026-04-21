@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace vitordiniz22\craftlens\controllers;
 
-use Craft;
 use craft\web\Controller;
 use vitordiniz22\craftlens\enums\AssetBrowserLayout;
 use vitordiniz22\craftlens\Plugin;

@@ -6,8 +6,8 @@ namespace vitordiniz22\craftlens\models;
 
 use Craft;
 use craft\base\Model;
-use craft\helpers\App;
 use craft\errors\MissingComponentException;
+use craft\helpers\App;
 use vitordiniz22\craftlens\enums\AiProvider;
 
 /**
@@ -53,11 +53,11 @@ class Settings extends Model
 
             // Provider API keys (conditionally required)
             [['openaiApiKey'], 'required', 'when' => fn() => $this->aiProvider === AiProvider::OpenAi->value,
-                'message' => Craft::t('lens', 'Add your OpenAI API key or set the $OPENAI_API_KEY environment variable.')],
+                'message' => Craft::t('lens', 'Add your OpenAI API key or set the $OPENAI_API_KEY environment variable.'), ],
             [['geminiApiKey'], 'required', 'when' => fn() => $this->aiProvider === AiProvider::Gemini->value,
-                'message' => Craft::t('lens', 'Add your Gemini API key or set the $GEMINI_API_KEY environment variable.')],
+                'message' => Craft::t('lens', 'Add your Gemini API key or set the $GEMINI_API_KEY environment variable.'), ],
             [['claudeApiKey'], 'required', 'when' => fn() => $this->aiProvider === AiProvider::Claude->value,
-                'message' => Craft::t('lens', 'Add your Claude API key or set the $ANTHROPIC_API_KEY environment variable.')],
+                'message' => Craft::t('lens', 'Add your Claude API key or set the $ANTHROPIC_API_KEY environment variable.'), ],
             [['claudeModel'], 'required', 'when' => fn() => $this->aiProvider === AiProvider::Claude->value],
             [['claudeModel'], 'in', 'range' => self::CLAUDE_MODELS],
             [['openaiModel'], 'required', 'when' => fn() => $this->aiProvider === AiProvider::OpenAi->value],
