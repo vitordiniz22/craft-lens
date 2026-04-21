@@ -2,7 +2,7 @@
    picker modals. The native search bar itself is untouched — this is
    only a visual signal that results are enhanced by Lens AI. */
 
-.toolbar:has(.lens-search-badge) {
+*:has(> .lens-search-badge) {
     display: flex;
     align-items: center;
 }
@@ -12,7 +12,8 @@
     width: 16px;
     height: 16px;
     flex-shrink: 0;
-    margin-right: 6px;
+    align-self: center;
+    vertical-align: middle;
     background-image: url("data:image/svg+xml,%3Csvg width='250' height='250' viewBox='0 0 250 250' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M125 8C158.122 8 188.029 21.7637 209.315 43.8834L186.276 107.527L160.648 62.8438H160.646L117.815 8.21745C120.191 8.07345 122.587 8 125 8Z' fill='%23ED1B24'/%3E%3Cpath d='M220.669 57.6318C234.107 76.6791 242 99.9177 242 125C242 133.589 241.074 141.962 239.317 150.024L171.441 168.337L196.297 125L196.288 124.984L220.669 57.6318Z' fill='%23F77E21'/%3E%3Cpath d='M234.105 167.335C220.027 203.591 188.4 231.087 149.652 239.397L108.837 187.156H160.648L160.649 187.154L234.105 167.335Z' fill='%23FDCB0A'/%3E%3Cpath d='M89.3516 187.156H89.3551L89.3516 187.159L132.035 241.791C129.707 241.929 127.362 242 125 242C91.8174 242 61.8615 228.186 40.5685 205.995L63.7025 142.435L89.3516 187.156Z' fill='%233AB54A'/%3E%3Cpath d='M53.7031 125L53.7053 125.004L29.2355 192.234C15.8559 173.212 8 150.023 8 125C8 116.355 8.93794 107.928 10.7172 99.8169L78.5742 81.6345L53.7031 125Z' fill='%230094DA'/%3E%3Cpath d='M141.132 62.8438H89.3516L89.348 62.8498L15.9524 82.5161C30.0403 46.3816 61.5701 18.9725 100.196 10.6347L141.132 62.8438Z' fill='%2392278F'/%3E%3Ccircle cx='136.551' cy='106.936' r='20.3263' fill='%23BDBDBD'/%3E%3C/svg%3E");
     background-size: contain;
     background-repeat: no-repeat;
