@@ -24,7 +24,8 @@ use vitordiniz22\craftlenstests\_support\Helpers\AnalysisRecordFixtures;
  *
  * Key behaviors under test:
  * - lensBlurry(false) is a NO-OP (unlike lensExposureIssues(false) which flips semantics)
- * - lensTooDark/Bright require THREE conjoint conditions; failing any one excludes the row
+ * - lensTooDark requires exposureScore < 0.22 AND shadowClipRatio > 0.40 (noise is NOT a factor)
+ * - lensTooBright requires exposureScore > 0.85 AND highlightClipRatio > 0.40 (noise is NOT a factor)
  * - lensSharpnessBelow explicitly excludes NULL
  * - lensHasTextInImage treats '[]' and NULL as equivalent "no text"
  * - lensTooLarge and lensHasFocalPoint operate on the `assets` table, not `lens`
@@ -180,33 +181,52 @@ class AssetQueryQualityTest extends Unit
         $this->assertContains($withoutFp->assetId, $ids);
     }
 
-    // ---------- lensTooDark (triple conjunction) ----------
+    // ---------- lensTooDark (conjunction of exposure + shadow clipping) ----------
 
-    public function testLensTooDarkTrueRequiresAllThreeConditions(): void
+    public function testLensTooDarkTrueRequiresExposureAndShadowClipping(): void
     {
         $this->assertSame(0.22, ImageMetricsAnalyzer::BRIGHTNESS_DARK_MEDIAN);
         $this->assertSame(0.40, ImageMetricsAnalyzer::SHADOW_CLIP_RATIO);
-        $this->assertSame(0.45, ImageMetricsAnalyzer::CONTRAST_LOW);
 
-        $allThree = $this->createAssetFixture('dark.jpg', [
-            'exposureScore' => 0.15, 'shadowClipRatio' => 0.50, 'noiseScore' => 0.20,
+        $dark = $this->createAssetFixture('dark.jpg', [
+            'exposureScore' => 0.15, 'shadowClipRatio' => 0.50,
         ]);
         $failExposure = $this->createAssetFixture('fe.jpg', [
-            'exposureScore' => 0.25, 'shadowClipRatio' => 0.50, 'noiseScore' => 0.20,
+            'exposureScore' => 0.25, 'shadowClipRatio' => 0.50,
         ]);
         $failShadow = $this->createAssetFixture('fs.jpg', [
-            'exposureScore' => 0.15, 'shadowClipRatio' => 0.30, 'noiseScore' => 0.20,
+            'exposureScore' => 0.15, 'shadowClipRatio' => 0.30,
         ]);
-        $failNoise = $this->createAssetFixture('fn.jpg', [
+
+        $ids = Asset::find()->volume('lenstest')->lensTooDark(true)->ids();
+
+        $this->assertContains($dark->assetId, $ids);
+        $this->assertNotContains($failExposure->assetId, $ids, 'exposure>=0.22 breaks TooDark');
+        $this->assertNotContains($failShadow->assetId, $ids, 'shadowClipRatio<=0.40 breaks TooDark');
+    }
+
+    public function testLensTooDarkIgnoresNoiseScore(): void
+    {
+        // Noise drives lensLowContrast, not lensTooDark. A dark, noisy asset
+        // must still match lensTooDark so the two filters stay orthogonal.
+        $darkAndNoisy = $this->createAssetFixture('dn.jpg', [
             'exposureScore' => 0.15, 'shadowClipRatio' => 0.50, 'noiseScore' => 0.50,
         ]);
 
         $ids = Asset::find()->volume('lenstest')->lensTooDark(true)->ids();
 
-        $this->assertContains($allThree->assetId, $ids);
-        $this->assertNotContains($failExposure->assetId, $ids, 'exposure>=0.22 breaks TooDark');
-        $this->assertNotContains($failShadow->assetId, $ids, 'shadowClipRatio<=0.40 breaks TooDark');
-        $this->assertNotContains($failNoise->assetId, $ids, 'noiseScore>=0.45 breaks TooDark');
+        $this->assertContains($darkAndNoisy->assetId, $ids);
+    }
+
+    public function testLensTooDarkExcludesNullExposure(): void
+    {
+        $nullExposure = $this->createAssetFixture('nx.jpg', [
+            'exposureScore' => null, 'shadowClipRatio' => 0.50,
+        ]);
+
+        $ids = Asset::find()->volume('lenstest')->lensTooDark(true)->ids();
+
+        $this->assertNotContains($nullExposure->assetId, $ids, 'NULL exposure must never qualify');
     }
 
     public function testLensTooDarkFalseIsNoOp(): void
@@ -218,32 +238,51 @@ class AssetQueryQualityTest extends Unit
         $this->assertContains($dark->assetId, $ids, 'lensTooDark(false) is a no-op');
     }
 
-    // ---------- lensTooBright (triple conjunction) ----------
+    // ---------- lensTooBright (conjunction of exposure + highlight clipping) ----------
 
-    public function testLensTooBrightTrueRequiresAllThreeConditions(): void
+    public function testLensTooBrightTrueRequiresExposureAndHighlightClipping(): void
     {
         $this->assertSame(0.85, ImageMetricsAnalyzer::BRIGHTNESS_BRIGHT_MEDIAN);
         $this->assertSame(0.40, ImageMetricsAnalyzer::HIGHLIGHT_CLIP_RATIO);
 
-        $allThree = $this->createAssetFixture('bright.jpg', [
-            'exposureScore' => 0.95, 'highlightClipRatio' => 0.50, 'noiseScore' => 0.20,
+        $bright = $this->createAssetFixture('bright.jpg', [
+            'exposureScore' => 0.95, 'highlightClipRatio' => 0.50,
         ]);
         $failExposure = $this->createAssetFixture('fe.jpg', [
-            'exposureScore' => 0.80, 'highlightClipRatio' => 0.50, 'noiseScore' => 0.20,
+            'exposureScore' => 0.80, 'highlightClipRatio' => 0.50,
         ]);
         $failHighlight = $this->createAssetFixture('fh.jpg', [
-            'exposureScore' => 0.95, 'highlightClipRatio' => 0.30, 'noiseScore' => 0.20,
+            'exposureScore' => 0.95, 'highlightClipRatio' => 0.30,
         ]);
-        $failNoise = $this->createAssetFixture('fn.jpg', [
+
+        $ids = Asset::find()->volume('lenstest')->lensTooBright(true)->ids();
+
+        $this->assertContains($bright->assetId, $ids);
+        $this->assertNotContains($failExposure->assetId, $ids);
+        $this->assertNotContains($failHighlight->assetId, $ids);
+    }
+
+    public function testLensTooBrightIgnoresNoiseScore(): void
+    {
+        // Parallel to TooDark: noise belongs to lensLowContrast, not lensTooBright.
+        $brightAndNoisy = $this->createAssetFixture('bn.jpg', [
             'exposureScore' => 0.95, 'highlightClipRatio' => 0.50, 'noiseScore' => 0.50,
         ]);
 
         $ids = Asset::find()->volume('lenstest')->lensTooBright(true)->ids();
 
-        $this->assertContains($allThree->assetId, $ids);
-        $this->assertNotContains($failExposure->assetId, $ids);
-        $this->assertNotContains($failHighlight->assetId, $ids);
-        $this->assertNotContains($failNoise->assetId, $ids);
+        $this->assertContains($brightAndNoisy->assetId, $ids);
+    }
+
+    public function testLensTooBrightExcludesNullExposure(): void
+    {
+        $nullExposure = $this->createAssetFixture('nx.jpg', [
+            'exposureScore' => null, 'highlightClipRatio' => 0.50,
+        ]);
+
+        $ids = Asset::find()->volume('lenstest')->lensTooBright(true)->ids();
+
+        $this->assertNotContains($nullExposure->assetId, $ids);
     }
 
     // ---------- lensLowContrast ----------
