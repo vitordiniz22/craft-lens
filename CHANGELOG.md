@@ -1,5 +1,12 @@
 # Release Notes for Lens
 
+## 1.0.0-beta.2 - 2026-04-22
+
+- Retired the custom Asset Browser in favor of the native Craft asset index, with Lens filters, quick-access sources (Needs Review, Not Analysed, Missing Alt Text, NSFW Flagged, etc.), sort options, and table columns merged into the native experience
+- Added image preprocessing before AI upload (resize, EXIF stripping, decode-cost guard) to shrink payloads for faster requests and stay under provider upload limits (notably Claude's ~5MB cap)
+- Search now works across every configured site's base language, so a query in any language hits assets analyzed in any other language
+- AI provider calls now retry on connection timeouts and 500/504 responses for better resilience
+
 ## 1.0.0-beta.1 - 2026-04-17
 
 - Onboarding overhaul: explicit volume opt-in, dashboard checklist with locked prerequisites and severity-tinted lock icons, per-asset volume-not-enabled panel state, reprocess-controller guard
