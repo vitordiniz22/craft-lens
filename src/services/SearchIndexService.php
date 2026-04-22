@@ -19,13 +19,16 @@ use yii\db\Query;
  * Search Index Service.
  *
  * Manages the `lens_search_index` table: a token-based full-text index with
- * pre-stemmed terms and BM25 relevance scoring. Tokens are stemmed using the
- * primary site's language (via wamania/php-stemmer) so that "animals" and
- * "animal" resolve to the same token.
+ * pre-stemmed terms and BM25 relevance scoring (via wamania/php-stemmer).
  *
- * Indexes primary-site content and per-language translations from
- * `lens_analysis_site_content`. AI original values are indexed when they
- * differ from the user-edited value (dual-column pattern).
+ * Primary-site fields are stemmed with the primary site's language; per-site
+ * translations from `lens_analysis_site_content` are stemmed with each site's
+ * own language and stored under field names like `siteTitle:{lang}` and
+ * `siteAltText:{lang}`. Query terms are expanded across every configured site
+ * base language so a query in any language can hit tokens in any language.
+ *
+ * AI original values are indexed when they differ from the user-edited value
+ * (dual-column pattern).
  */
 class SearchIndexService extends Component
 {
@@ -430,11 +433,28 @@ class SearchIndexService extends Component
             return [];
         }
 
-        // Stem each term
-        $stemmedTerms = array_values(array_unique(array_filter(
-            array_map(fn(string $t) => Stemmer::stem(mb_strtolower(trim($t), 'UTF-8')), $rawTerms),
-            fn(string $t) => strlen($t) >= 2
-        )));
+        // Stem each term against every configured site base language. This lets
+        // a query entered in any language hit tokens that were stemmed by the
+        // matching per-language stemmer during indexing (primary fields plus
+        // siteTitle:{lang} and siteAltText:{lang} rows).
+        $languages = MultisiteHelper::getAllBaseLanguages();
+
+        $stemmedTerms = [];
+        $termExpansions = [];
+        foreach ($rawTerms as $rawTerm) {
+            $norm = mb_strtolower(trim($rawTerm), 'UTF-8');
+            if (strlen($norm) < 2) {
+                continue;
+            }
+            $variants = [];
+            foreach ($languages as $lang) {
+                $variants[] = Stemmer::stemForLanguage($norm, $lang);
+            }
+            $variants = array_values(array_unique($variants));
+            $termExpansions[$norm] = $variants;
+            array_push($stemmedTerms, ...$variants);
+        }
+        $stemmedTerms = array_values(array_unique($stemmedTerms));
 
         if (empty($stemmedTerms)) {
             return [];
@@ -443,7 +463,12 @@ class SearchIndexService extends Component
         Logger::info(
             LogCategory::SearchIndex,
             'BM25 search started',
-            context: ['rawTerms' => $rawTerms, 'stemmedTerms' => $stemmedTerms]
+            context: [
+                'rawTerms' => $rawTerms,
+                'languages' => $languages,
+                'termExpansions' => $termExpansions,
+                'stemmedTerms' => $stemmedTerms,
+            ]
         );
 
         // 1. Exact matches
@@ -453,14 +478,21 @@ class SearchIndexService extends Component
             ->where(['token' => $stemmedTerms])
             ->all();
 
-        // 2. Fuzzy fallback for any term that got zero exact results
+        // 2. Fuzzy fallback for any original term whose language variants all missed.
+        // Runs per normalised term rather than per stemmed variant so a term that
+        // hit exactly in one language doesn't trigger redundant fuzzy lookups on
+        // its stems in other languages.
         $matchedTokens = array_unique(array_column($rows, 'token'));
 
-        foreach ($stemmedTerms as $term) {
-            if (!in_array($term, $matchedTokens, true)) {
-                $fuzzyRows = $this->fuzzyLookup($term);
+        foreach ($termExpansions as $variants) {
+            if (!empty(array_intersect($variants, $matchedTokens))) {
+                continue;
+            }
+            foreach ($variants as $variant) {
+                $fuzzyRows = $this->fuzzyLookup($variant);
                 if (!empty($fuzzyRows)) {
                     array_push($rows, ...$fuzzyRows);
+                    break;
                 }
             }
         }

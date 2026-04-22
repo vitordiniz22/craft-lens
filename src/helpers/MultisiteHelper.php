@@ -102,6 +102,25 @@ class MultisiteHelper
     }
 
     /**
+     * Get distinct base language codes across all enabled sites.
+     *
+     * Always contains at least the primary site's base language. Used by
+     * search to stem query terms against every language that could appear
+     * in the index.
+     *
+     * @return string[] e.g. ['en', 'pt', 'fr']
+     */
+    public static function getAllBaseLanguages(): array
+    {
+        $bases = [];
+        foreach (Craft::$app->getSites()->getAllSites() as $site) {
+            $bases[] = self::getBaseLanguage($site->language);
+        }
+
+        return array_values(array_unique($bases));
+    }
+
+    /**
      * Check if the alt field is translatable for a given volume.
      */
     public static function isAltTranslatable(int $volumeId): bool
