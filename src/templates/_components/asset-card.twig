@@ -1,28 +1,17 @@
 {#
- # Reusable asset card component for search results and review browse/bulk grids.
+ # Reusable asset card component for the review bulk-selection grid.
  #
  # Parameters:
- #   asset     - Craft Asset element
- #   analysis  - AssetAnalysisRecord or null (pre-loaded)
- #   tags      - array of tag records (pre-loaded), optional
- #   dupCount  - int (pre-loaded), optional
- #   linkUrl   - string (destination URL when card is clicked)
- #   showTags     - bool (default true)
- #   showMeta     - bool (show confidence badge in browse/bulk cards, default false)
- #   avgConfidence - float (for browse/bulk mode confidence badge, optional)
- #   tagCount   - int (for browse/bulk mode tag count display, optional)
- #   checkable  - bool (bulk selection mode: renders checkbox instead of link, default false)
- #   analysisId - int (required when checkable=true, used as checkbox value)
+ #   asset         - Craft Asset element
+ #   analysis      - AssetAnalysisRecord or null (pre-loaded)
+ #   analysisId    - int (used as the checkbox value)
+ #   showMeta      - bool (show confidence badge, default false)
+ #   avgConfidence - float (for the confidence badge, optional)
+ #   tagCount      - int (for the confidence badge, optional)
  #}
 
-{% set showTags = showTags ?? true %}
 {% set showMeta = showMeta ?? false %}
-{% set tags = tags ?? [] %}
-{% set dupCount = dupCount ?? 0 %}
-{% set checkable = checkable ?? false %}
-{% set analysisId = analysisId ?? null %}
 
-{% if checkable %}
 <label class="card lens-asset-card lens-asset-card--checkable"
        data-lens-target="result-card"
        data-lens-asset-id="{{ asset.id }}"
@@ -47,93 +36,3 @@
         {% endif %}
     </div>
 </label>
-{% else %}
-<div class="card lens-asset-card" data-lens-target="result-card" data-lens-asset-id="{{ asset.id }}">
-    <a href="{{ linkUrl }}" class="lens-result-preview" data-lens-target="result-link">
-        {% include 'lens/_components/_asset-preview' with {asset: asset} only %}
-
-        {# Failed is intentionally omitted: it has its own red badge in the branch below. #}
-        {% set unprocessedStatuses = [lens.status.pending, lens.status.rejected] %}
-        {% set isUnprocessed = (not analysis) or (analysis.status in unprocessedStatuses) %}
-
-        {% if analysis %}
-            {% if (similarity ?? null) is not null %}
-                <span class="lens-duplicate-badge">
-                    <span class="lens-badge lens-badge--small lens-badge--duplicate">
-                        {{ iconSvg('clone')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
-                        {{ (similarity * 100)|round }}% {{ 'match'|t('lens') }}
-                    </span>
-                </span>
-            {% elseif dupCount > 0 %}
-                <a href="{{ cpUrl('lens/search', {similarTo: asset.id}) }}" class="lens-duplicate-badge">
-                    <craft-tooltip self-managed text="{{ 'Compare duplicates'|t('lens') }}" placement="bottom">
-                        <span class="lens-badge lens-badge--small lens-badge--duplicate">
-                            {{ iconSvg('copy')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
-                            {{ dupCount }} {{ dupCount == 1 ? 'duplicate'|t('lens') : 'duplicates'|t('lens') }}
-                        </span>
-                    </craft-tooltip>
-                </a>
-            {% endif %}
-        {% endif %}
-
-        {% set showReviewBadge = analysis and analysis.status == lens.status.pendingReview and lens.isReviewActive %}
-        {% set showFailedBadge = analysis and analysis.status == lens.status.failed %}
-        {% if showReviewBadge or showFailedBadge or isUnprocessed %}
-            <div class="lens-result-overlay">
-                {% if showReviewBadge %}
-                    <a href="{{ cpUrl('lens/review/' ~ analysis.id) }}" class="lens-badge lens-badge--small lens-badge--info lens-badge--link">
-                        <craft-tooltip self-managed text="{{ 'Open review queue'|t('lens') }}" placement="bottom">
-                            {{ iconSvg('eye')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
-                            {{ 'Review'|t('lens') }}
-                        </craft-tooltip>
-                    </a>
-                {% elseif showFailedBadge %}
-                    <span class="lens-badge lens-badge--small lens-badge--error">
-                        {{ iconSvg('circle-xmark')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
-                        {{ 'Failed'|t('lens') }}
-                    </span>
-                {% else %}
-                    <span class="lens-badge lens-badge--small lens-badge--muted">
-                        {{ iconSvg('circle-exclamation')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
-                        {{ 'Unprocessed'|t('lens') }}
-                    </span>
-                {% endif %}
-            </div>
-        {% endif %}
-    </a>
-
-    <div class="lens-result-info">
-        {% set useAiTitle = analysis and analysis.suggestedTitle and lens.isAutoGeneratedTitle(asset) %}
-        <a href="{{ linkUrl }}" class="lens-result-title{{ useAiTitle ? ' lens-result-title--ai' : '' }}" title="{{ asset.filename }}">
-            <span class="lens-result-title__text">{{ useAiTitle ? analysis.suggestedTitle|truncate(30) : asset.title|truncate(30) }}</span>
-            {% if useAiTitle %}
-                <span class="lens-ai-title-chip lens-ai-title-chip--sm">{{ 'AI'|t('lens') }}</span>
-            {% endif %}
-        </a>
-
-        {% if not analysis and asset.alt %}
-            <p class="lens-result-native-alt">{{ asset.alt|truncate(80) }}</p>
-        {% endif %}
-
-        {% if analysis and showTags and tags|length %}
-            <div class="lens-result-meta">
-                <span class="lens-result-tags">
-                    {%- for tag in tags|slice(0, 3) -%}
-                        <a href="{{ cpUrl('lens/search', {tags: tag.tag}) }}">{{ tag.tag }}</a>
-                        {%- if not loop.last %}, {% endif -%}
-                    {%- endfor -%}
-                    {%- if tags|length > 3 %} <span class="light">+{{ tags|length - 3 }}</span>{% endif -%}
-                </span>
-            </div>
-        {% endif %}
-
-        {% if showMeta %}
-            {% include 'lens/_components/_card-meta' with {
-                analysis: analysis,
-                avgConfidence: avgConfidence ?? 0,
-                tagCount: tagCount ?? 0
-            } %}
-        {% endif %}
-    </div>
-</div>
-{% endif %}

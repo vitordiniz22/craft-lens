@@ -139,7 +139,7 @@
 
             var item = template.content.firstElementChild.cloneNode(true);
             item.dataset.lensHex = normalizedHex;
-            item.href = Craft.getCpUrl('lens/search', {color: normalizedHex});
+            item.href = Craft.getCpUrl('assets', {source: 'lens:all', lensColor: normalizedHex});
             item.querySelector('[data-lens-target="color-swatch"]').style.backgroundColor = normalizedHex;
             item.querySelector('[data-lens-target="chip-label"]').textContent = normalizedHex;
 

@@ -631,17 +631,13 @@ class SearchService extends Component
                 'and',
                 ['<', 'lens.exposureScore', ImageMetricsAnalyzer::BRIGHTNESS_DARK_MEDIAN],
                 ['>', 'lens.shadowClipRatio', ImageMetricsAnalyzer::SHADOW_CLIP_RATIO],
-                ['<', 'lens.noiseScore', ImageMetricsAnalyzer::CONTRAST_LOW],
                 ['not', ['lens.exposureScore' => null]],
-                ['not', ['lens.noiseScore' => null]],
             ]),
             'tooBright' => $query->andWhere([
                 'and',
                 ['>', 'lens.exposureScore', ImageMetricsAnalyzer::BRIGHTNESS_BRIGHT_MEDIAN],
                 ['>', 'lens.highlightClipRatio', ImageMetricsAnalyzer::HIGHLIGHT_CLIP_RATIO],
-                ['<', 'lens.noiseScore', ImageMetricsAnalyzer::CONTRAST_LOW],
                 ['not', ['lens.exposureScore' => null]],
-                ['not', ['lens.noiseScore' => null]],
             ]),
             'lowContrast' => $query->andWhere([
                 'and',

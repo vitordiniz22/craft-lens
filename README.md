@@ -31,13 +31,11 @@ Choose your AI provider (**OpenAI GPT**, **Google Gemini**, or **Anthropic Claud
 
 ### Search & Discovery
 
-- **Smart search** across all image metadata (AI-generated or edited) with relevance ranking, typo tolerance, and support for 14 languages
-- **20+ filters** to find assets by tag, color, people, quality, NSFW status, watermarks, brands, and more
-- **Duplicate detection** surfaces visually similar images so you stop re-uploading the same file, and lets you find images similar to any specific asset on demand
-- **Asset Browser** to explore your entire library with quick filter presets
-- **Enhanced Asset Search** replaces native search in asset selector modals, so you can find assets by their metadata instead of just filenames
+- **Smarter asset library.** Lens drops pre-built views into Craft's Assets section: Not Analysed, Failed Analyses, Missing Alt Text, NSFW Flagged, File Too Large, Missing Focal Point, Contains People, Has Watermark, and Has Brand Logo. Build your own filtered views with the Lens condition rules. Type "outdoor" into the search box and Lens ranks results by AI-generated tags, titles, descriptions, alt text, and OCR, right inside the browser you already use.
+- **Semantic search everywhere.** The same smart search powers Craft's Assets section and the image picker you see when attaching photos to entries. It handles typos and works in 14 languages. Turn it off in Settings to fall back to Craft's default filename search.
+- **Duplicate detection** surfaces visually similar images so you stop re-uploading the same file, flags duplicates on each asset's edit page, and lets you find images similar to any specific asset on demand.
 
-[[Image: Asset Browser. Show the search page with a query like "outdoor" entered, 2-3 active filter chips (e.g. "Contains People", a color filter), the quick filter buttons visible, and a grid of 8-12 matching asset thumbnails. The filter panel should be expanded to show the variety of available filters.]]
+[[Image: The native Craft asset browser with the Lens sources rail expanded (Not Analysed, NSFW Flagged, Has Watermark, Contains People, Missing Focal Point, and others), a semantic query like "outdoor" typed into the search box, and a grid of matching thumbnails.]]
 
 ### Automatic Tagging & Descriptions
 
@@ -92,7 +90,22 @@ Choose your AI provider (**OpenAI GPT**, **Google Gemini**, or **Anthropic Claud
 
 ## Editions
 
-Lens is available in two editions. **Lite** is free and includes AI analysis for every image (alt text, titles, descriptions, colors, focal points, people and content detection), auto-processing on upload, the analysis panel, multisite translations, 24 asset query methods, and 7 condition rules. **Pro** adds semantic tags, OCR text extraction, the Asset Browser, Review Queue, Bulk Processing, duplicate detection, enhanced asset search, and 3 additional condition rules.
+Lens has two editions. **Lite** is the analysis layer: every image gets AI-generated metadata, and Craft's asset library gets pre-built views and filters to navigate it. **Pro** is for libraries that grow, bulk runs across whole volumes, a review workflow for catching weird AI calls, semantic search over every field the analysis produces, and duplicate detection so the same file doesn't sneak in twice.
+
+**Lite** is free and includes:
+
+- AI analysis: alt text, titles, descriptions, dominant colors, focal points, people and face detection, NSFW scoring, and watermark and brand recognition, with per-site translations for multisite installs.
+- 10 pre-built views in Craft's asset library: All Images (scoped to your Lens-enabled volumes), Not Analysed, Failed Analyses, Missing Alt Text, NSFW Flagged, File Too Large, Missing Focal Point, Contains People, Has Watermark, and Has Brand Logo.
+- 15 filters you can combine to build your own custom views.
+
+**Pro** adds:
+
+- Semantic tags and OCR text extraction, so even the text inside your images is searchable.
+- Semantic search that ranks results in Craft's asset library and in the image picker on entries.
+- Review Queue to spot-check AI analyses and correct any weird detections, with Focus and Bulk modes and keyboard shortcuts for fast decisions.
+- Bulk Processing to analyse entire volumes in one run, with real-time progress, cost estimates, and retry for failed assets.
+- Duplicate detection via perceptual hashing.
+- 1 more pre-built view (Needs Review) and 8 more filters.
 
 Available on the <a href="https://plugins.craftcms.com/lens" target="_blank" rel="noopener">Craft Plugin Store</a>.
 

@@ -80,15 +80,15 @@ use vitordiniz22\craftlens\services\SetupStatusService;
 use vitordiniz22\craftlens\services\SiteContentService;
 use vitordiniz22\craftlens\services\StatisticsService;
 use vitordiniz22\craftlens\services\TagAggregationService;
-use vitordiniz22\craftlens\services\UserSettingsService;
 use vitordiniz22\craftlens\twig\LensTwigExtension;
 use vitordiniz22\craftlens\web\assets\lens\LensAsset;
 use vitordiniz22\craftlens\web\assets\lens\LensAssetActionsAsset;
+use vitordiniz22\craftlens\web\assets\lens\LensAssetIndexAsset;
 use vitordiniz22\craftlens\web\assets\lens\LensBulkAsset;
 use vitordiniz22\craftlens\web\assets\lens\LensLogsAsset;
 use vitordiniz22\craftlens\web\assets\lens\LensReviewAsset;
-use vitordiniz22\craftlens\web\assets\lens\LensSearchAsset;
 use vitordiniz22\craftlens\web\assets\lens\LensSemanticSelectorAsset;
+use vitordiniz22\craftlens\web\assets\lens\LensSettingsAsset;
 use yii\base\Event;
 use yii\web\ForbiddenHttpException;
 use yii\web\Response;
@@ -115,7 +115,6 @@ use yii\web\Response;
  * @property-read BulkProcessingStatusService $bulkProcessingStatus
  * @property-read LogService $log
  * @property-read SearchIndexService $searchIndex
- * @property-read UserSettingsService $userSettings
  * @property-read bool $isPro
  * @property-read bool $isLite
  * @author Vitor Diniz <vitordiniz22@gmail.com>
@@ -216,7 +215,6 @@ class Plugin extends BasePlugin
                 'log' => LogService::class,
                 'searchIndex' => SearchIndexService::class,
                 'analysisCancellation' => AnalysisCancellationService::class,
-                'userSettings' => UserSettingsService::class,
             ],
         ];
     }
@@ -265,10 +263,6 @@ class Plugin extends BasePlugin
         ];
 
         if ($this->getIsPro() && $isConfigured) {
-            $item['subnav']['search'] = [
-                'label' => Craft::t('lens', 'Asset Browser'),
-                'url' => 'lens/search',
-            ];
             if ($this->getSettings()->requireReviewBeforeApply) {
                 $item['subnav']['review'] = [
                     'label' => Craft::t('lens', 'Review Queue'),
@@ -366,13 +360,24 @@ class Plugin extends BasePlugin
             Asset::class,
             Element::EVENT_REGISTER_DEFAULT_TABLE_ATTRIBUTES,
             function(RegisterElementDefaultTableAttributesEvent $event) {
-                $defaults = AssetTableAttributes::defaultAttributes($event->source);
+                if (!str_starts_with($event->source, 'lens:')) {
+                    return;
+                }
 
-                foreach ($defaults as $attr) {
-                    if (!in_array($attr, $event->tableAttributes, true)) {
-                        $event->tableAttributes[] = $attr;
+                $columns = ['filename'];
+                if ($event->source === 'lens:file-too-large') {
+                    $columns[] = 'size';
+                }
+
+                foreach (AssetTableAttributes::defaultAttributes($event->source) as $attr) {
+                    if (!in_array($attr, $columns, true)) {
+                        $columns[] = $attr;
                     }
                 }
+
+                $columns[] = 'link';
+
+                $event->tableAttributes = $columns;
             }
         );
 
@@ -412,19 +417,29 @@ class Plugin extends BasePlugin
             View::class,
             View::EVENT_BEFORE_RENDER_PAGE_TEMPLATE,
             function(TemplateEvent $event) {
-                if (!Craft::$app->getRequest()->getIsCpRequest() || !str_starts_with($event->template, 'lens/')) {
+                if (!Craft::$app->getRequest()->getIsCpRequest()) {
                     return;
                 }
 
                 $view = Craft::$app->getView();
+                $template = $event->template;
+
+                if ($template === 'assets/_index') {
+                    $view->registerAssetBundle(LensAssetIndexAsset::class);
+                    return;
+                }
+
+                if (!str_starts_with($template, 'lens/')) {
+                    return;
+                }
+
                 $view->registerAssetBundle(LensAsset::class);
 
-                $template = $event->template;
                 $featureBundles = match (true) {
                     str_starts_with($template, 'lens/_review') => [LensReviewAsset::class, LensAssetActionsAsset::class],
-                    str_starts_with($template, 'lens/_search') => [LensSearchAsset::class],
                     str_starts_with($template, 'lens/_bulk') => [LensBulkAsset::class],
                     str_starts_with($template, 'lens/_logs') => [LensLogsAsset::class],
+                    str_starts_with($template, 'lens/_settings') => [LensSettingsAsset::class],
                     default => [],
                 };
 
@@ -560,22 +575,31 @@ class Plugin extends BasePlugin
                 $iconPath = $this->getBasePath() . '/icon-mask.svg';
 
                 if ($event->context === 'index') {
-                    $sourceDefinitions = [
-                        'not-analysed' => ['Not Analysed', ['lensStatus' => 'untagged', 'kind' => 'image']],
-                        'failed' => ['Failed Analyses', ['lensStatus' => 'failed', 'kind' => 'image']],
-                        'missing-alt-text' => ['Missing Alt Text', ['hasAlt' => false, 'kind' => 'image']],
-                        'nsfw-flagged' => ['NSFW Flagged', ['lensNsfwFlagged' => true, 'kind' => 'image']],
-                        'file-too-large' => ['File Too Large', ['lensTooLarge' => true, 'kind' => 'image']],
-                        'missing-focal-point' => ['Missing Focal Point', ['lensHasFocalPoint' => false, 'kind' => 'image']],
-                        'contains-people' => ['Contains People', ['lensContainsPeople' => true, 'kind' => 'image']],
-                        'has-watermark' => ['Has Watermark', ['lensHasWatermark' => true, 'kind' => 'image']],
-                        'has-brand-logo' => ['Has Brand Logo', ['lensContainsBrandLogo' => true, 'kind' => 'image']],
-                    ];
+                    $enabledVolumeIds = $this->getSettings()->getEnabledVolumeIds();
+
+                    if (empty($enabledVolumeIds)) {
+                        return;
+                    }
+
+                    $volumeScope = ['kind' => 'image', 'volumeId' => $enabledVolumeIds];
+
+                    $sourceDefinitions = ['all' => ['All Images', $volumeScope]];
 
                     if ($this->getIsPro() && $this->getSettings()->requireReviewBeforeApply) {
-                        $sourceDefinitions = ['needs-review' => ['Needs Review', ['lensStatus' => 'pending_review', 'kind' => 'image']]]
-                            + $sourceDefinitions;
+                        $sourceDefinitions['needs-review'] = ['Needs Review', ['lensStatus' => 'pending_review'] + $volumeScope];
                     }
+
+                    $sourceDefinitions += [
+                        'not-analysed' => ['Not Analysed', ['lensStatus' => 'untagged'] + $volumeScope],
+                        'failed' => ['Failed Analyses', ['lensStatus' => 'failed'] + $volumeScope],
+                        'missing-alt-text' => ['Missing Alt Text', ['hasAlt' => false] + $volumeScope],
+                        'nsfw-flagged' => ['NSFW Flagged', ['lensNsfwFlagged' => true] + $volumeScope],
+                        'file-too-large' => ['File Too Large', ['lensTooLarge' => true] + $volumeScope],
+                        'missing-focal-point' => ['Missing Focal Point', ['lensHasFocalPoint' => false] + $volumeScope],
+                        'contains-people' => ['Contains People', ['lensContainsPeople' => true] + $volumeScope],
+                        'has-watermark' => ['Has Watermark', ['lensHasWatermark' => true] + $volumeScope],
+                        'has-brand-logo' => ['Has Brand Logo', ['lensContainsBrandLogo' => true] + $volumeScope],
+                    ];
 
                     foreach ($sourceDefinitions as $key => [$label, $criteria]) {
                         $event->sources[] = [
@@ -681,9 +705,6 @@ class Plugin extends BasePlugin
                 $event->rules['lens/bulk/cancel'] = 'lens/bulk/cancel';
                 $event->rules['lens/bulk/progress'] = 'lens/bulk/progress';
                 $event->rules['lens/bulk/dismiss'] = 'lens/bulk/dismiss';
-                $event->rules['lens/search'] = 'lens/search/index';
-                $event->rules['lens/search/resolve-duplicate'] = 'lens/search/resolve-duplicate';
-                $event->rules['lens/search/provider-models'] = 'lens/search/provider-models';
                 $event->rules['lens/logs'] = 'lens/log/index';
                 $event->rules['lens/logs/retry'] = 'lens/log/retry';
                 $event->rules['lens/logs/delete-all'] = 'lens/log/delete-all';

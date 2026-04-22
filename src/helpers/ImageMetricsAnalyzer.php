@@ -762,21 +762,12 @@ class ImageMetricsAnalyzer
         $score = (float) $raw['exposureScore'];
         $shadowClip = isset($raw['shadowClipRatio']) ? (float) $raw['shadowClipRatio'] : 0.0;
         $highlightClip = isset($raw['highlightClipRatio']) ? (float) $raw['highlightClipRatio'] : 0.0;
-        // Tonal-range rescue: if the image spans a wide luma range, a bright or dark
-        // subject is almost certainly visible against its background (think: red ladybug
-        // on a white petal against a near-black background). Reuse the contrast check's
-        // "adequate range" threshold so the two checks stay aligned. When contrast is
-        // unknown (stale row), err toward silence and rescue rather than flag.
-        $hasNarrowRange = isset($raw['contrastScore'])
-            && (float) $raw['contrastScore'] < self::CONTRAST_LOW;
 
         $tooDark = $score < self::BRIGHTNESS_DARK_MEDIAN
-            && $shadowClip > self::SHADOW_CLIP_RATIO
-            && $hasNarrowRange;
+            && $shadowClip > self::SHADOW_CLIP_RATIO;
 
         $tooBright = $score > self::BRIGHTNESS_BRIGHT_MEDIAN
-            && $highlightClip > self::HIGHLIGHT_CLIP_RATIO
-            && $hasNarrowRange;
+            && $highlightClip > self::HIGHLIGHT_CLIP_RATIO;
 
         if ($tooDark) {
             $checks['brightness'] = self::checkResult('warning', 'sun', 'Brightness', null, 'Too dark', 'This image is quite dark and detail is lost in the shadows. If a brighter version is available, consider using that. If this is intentional, you can safely ignore this.');

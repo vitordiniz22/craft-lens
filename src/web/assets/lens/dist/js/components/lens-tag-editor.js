@@ -209,7 +209,7 @@
 
             var chip = template.content.firstElementChild.cloneNode(true);
 
-            chip.href = Craft.getCpUrl('lens/search', {tags: tagName});
+            chip.href = Craft.getCpUrl('assets', {source: 'lens:all', lensTag: tagName});
             chip.dataset.lensTag = tagName;
             chip.dataset.lensIsAi = isAi ? '1' : '0';
             chip.dataset.lensConfidence = isAi ? '' : '1';

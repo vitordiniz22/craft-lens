@@ -84,17 +84,13 @@ class QualityIssueConditionRule extends BaseMultiSelectConditionRule implements 
                 'and',
                 ['<', 'lens.exposureScore', ImageMetricsAnalyzer::BRIGHTNESS_DARK_MEDIAN],
                 ['>', 'lens.shadowClipRatio', ImageMetricsAnalyzer::SHADOW_CLIP_RATIO],
-                ['<', 'lens.noiseScore', ImageMetricsAnalyzer::CONTRAST_LOW],
                 ['not', ['lens.exposureScore' => null]],
-                ['not', ['lens.noiseScore' => null]],
             ],
             'tooBright' => [
                 'and',
                 ['>', 'lens.exposureScore', ImageMetricsAnalyzer::BRIGHTNESS_BRIGHT_MEDIAN],
                 ['>', 'lens.highlightClipRatio', ImageMetricsAnalyzer::HIGHLIGHT_CLIP_RATIO],
-                ['<', 'lens.noiseScore', ImageMetricsAnalyzer::CONTRAST_LOW],
                 ['not', ['lens.exposureScore' => null]],
-                ['not', ['lens.noiseScore' => null]],
             ],
             'lowContrast' => [
                 'and',
@@ -139,14 +135,12 @@ class QualityIssueConditionRule extends BaseMultiSelectConditionRule implements 
 
         return match ($issue) {
             'blurry' => $sharpness !== null && $sharpness < ImageMetricsAnalyzer::SHARPNESS_BLURRY,
-            'tooDark' => $exposure !== null && $noise !== null
+            'tooDark' => $exposure !== null
                 && $exposure < ImageMetricsAnalyzer::BRIGHTNESS_DARK_MEDIAN
-                && (float) $shadowClip > ImageMetricsAnalyzer::SHADOW_CLIP_RATIO
-                && $noise < ImageMetricsAnalyzer::CONTRAST_LOW,
-            'tooBright' => $exposure !== null && $noise !== null
+                && (float) $shadowClip > ImageMetricsAnalyzer::SHADOW_CLIP_RATIO,
+            'tooBright' => $exposure !== null
                 && $exposure > ImageMetricsAnalyzer::BRIGHTNESS_BRIGHT_MEDIAN
-                && (float) $highlightClip > ImageMetricsAnalyzer::HIGHLIGHT_CLIP_RATIO
-                && $noise < ImageMetricsAnalyzer::CONTRAST_LOW,
+                && (float) $highlightClip > ImageMetricsAnalyzer::HIGHLIGHT_CLIP_RATIO,
             'lowContrast' => $noise !== null && $noise < ImageMetricsAnalyzer::CONTRAST_LOW,
             default => false,
         };

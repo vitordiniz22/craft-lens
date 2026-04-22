@@ -91,7 +91,7 @@ TWIG;
         );
     }
 
-    // -- statusLabel inside a |map filter (used in _search/index.twig) --
+    // -- statusLabel inside a |map filter --
 
     public function testStatusLabelRendersInsideMapFilter(): void
     {

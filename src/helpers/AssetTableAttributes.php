@@ -7,7 +7,9 @@ namespace vitordiniz22\craftlens\helpers;
 use Craft;
 use craft\elements\Asset;
 use craft\helpers\Html;
+use vitordiniz22\craftlens\enums\AiProvider;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
+use vitordiniz22\craftlens\enums\WatermarkType;
 use vitordiniz22\craftlens\migrations\Install;
 use vitordiniz22\craftlens\Plugin;
 use vitordiniz22\craftlens\records\AssetAnalysisRecord;
@@ -23,6 +25,9 @@ class AssetTableAttributes
     public const ATTR_TAGS = 'lensTags';
     public const ATTR_NSFW = 'lensNsfwScore';
     public const ATTR_DUPLICATES = 'lensDuplicates';
+    public const ATTR_PEOPLE = 'lensPeople';
+    public const ATTR_BRANDS = 'lensBrands';
+    public const ATTR_WATERMARK = 'lensWatermark';
 
     private const TAG_DISPLAY_LIMIT = 5;
 
@@ -86,6 +91,9 @@ class AssetTableAttributes
             self::ATTR_STATUS => ['label' => Craft::t('lens', 'Lens Status')],
             self::ATTR_PROVIDER => ['label' => Craft::t('lens', 'Lens Provider')],
             self::ATTR_NSFW => ['label' => Craft::t('lens', 'Lens NSFW Score')],
+            self::ATTR_PEOPLE => ['label' => Craft::t('lens', 'Lens People')],
+            self::ATTR_BRANDS => ['label' => Craft::t('lens', 'Lens Brands')],
+            self::ATTR_WATERMARK => ['label' => Craft::t('lens', 'Lens Watermark')],
         ];
 
         if (Plugin::getInstance()->getIsPro()) {
@@ -105,14 +113,17 @@ class AssetTableAttributes
     public static function defaultAttributes(string $source): array
     {
         return match ($source) {
-            'lens:not-analysed' => [self::ATTR_STATUS],
-            'lens:failed' => [self::ATTR_STATUS, self::ATTR_PROVIDER],
-            'lens:nsfw-flagged' => [self::ATTR_NSFW, self::ATTR_STATUS],
-            'lens:has-watermark',
-            'lens:has-brand-logo',
-            'lens:contains-people',
-            'lens:missing-focal-point' => [self::ATTR_STATUS, self::ATTR_PROVIDER],
-            'lens:needs-review' => [self::ATTR_STATUS, self::ATTR_PROVIDER, self::ATTR_TAGS],
+            'lens:all' => [self::ATTR_PROVIDER, self::ATTR_STATUS],
+            'lens:not-analysed',
+            'lens:failed' => [],
+            'lens:nsfw-flagged' => [self::ATTR_NSFW, self::ATTR_PROVIDER, self::ATTR_STATUS],
+            'lens:missing-alt-text',
+            'lens:file-too-large' => [self::ATTR_STATUS],
+            'lens:has-watermark' => [self::ATTR_WATERMARK, self::ATTR_PROVIDER, self::ATTR_STATUS],
+            'lens:has-brand-logo' => [self::ATTR_BRANDS, self::ATTR_PROVIDER, self::ATTR_STATUS],
+            'lens:contains-people' => [self::ATTR_PEOPLE, self::ATTR_PROVIDER, self::ATTR_STATUS],
+            'lens:missing-focal-point' => [self::ATTR_STATUS],
+            'lens:needs-review' => [self::ATTR_PROVIDER, self::ATTR_TAGS],
             default => [],
         };
     }
@@ -129,6 +140,9 @@ class AssetTableAttributes
             self::ATTR_TAGS => self::tagsHtml($asset),
             self::ATTR_NSFW => self::nsfwHtml($asset),
             self::ATTR_DUPLICATES => self::duplicatesHtml($asset),
+            self::ATTR_PEOPLE => self::peopleHtml($asset),
+            self::ATTR_BRANDS => self::brandsHtml($asset),
+            self::ATTR_WATERMARK => self::watermarkHtml($asset),
             default => null,
         };
     }
@@ -166,9 +180,12 @@ class AssetTableAttributes
             return '';
         }
 
+        $providerLabel = AiProvider::tryFrom((string) $analysis->provider)?->label()
+            ?? (string) $analysis->provider;
+
         $display = $analysis->providerModel
-            ? "$analysis->provider / $analysis->providerModel"
-            : (string) $analysis->provider;
+            ? "$providerLabel / $analysis->providerModel"
+            : $providerLabel;
 
         return Html::encode($display);
     }
@@ -215,6 +232,80 @@ class AssetTableAttributes
         return Html::tag('span', "{$pct}%", [
             'class' => "status-label-with-icon $color",
         ]);
+    }
+
+    private static function watermarkHtml(Asset $asset): string
+    {
+        $analysis = self::getAnalysis($asset->id);
+
+        if ($analysis === null || !$analysis->hasWatermark) {
+            return '';
+        }
+
+        $type = $analysis->watermarkType
+            ? WatermarkType::tryFrom((string) $analysis->watermarkType)
+            : null;
+
+        $label = $type?->label() ?? Craft::t('lens', 'Detected');
+
+        $stockProvider = is_array($analysis->watermarkDetails)
+            ? ($analysis->watermarkDetails['stockProvider'] ?? null)
+            : null;
+
+        if ($type === WatermarkType::Stock && $stockProvider) {
+            $label .= ' (' . $stockProvider . ')';
+        }
+
+        return Html::encode($label);
+    }
+
+    private static function brandsHtml(Asset $asset): string
+    {
+        $analysis = self::getAnalysis($asset->id);
+
+        if ($analysis === null || empty($analysis->detectedBrands)) {
+            return '';
+        }
+
+        $names = [];
+        foreach ($analysis->detectedBrands as $entry) {
+            $brand = is_array($entry) ? ($entry['brand'] ?? null) : null;
+            if ($brand !== null && $brand !== '') {
+                $names[] = (string) $brand;
+            }
+        }
+
+        if (empty($names)) {
+            return '';
+        }
+
+        $names = array_slice($names, 0, self::TAG_DISPLAY_LIMIT);
+
+        return Html::encode(implode(', ', $names));
+    }
+
+    private static function peopleHtml(Asset $asset): string
+    {
+        $analysis = self::getAnalysis($asset->id);
+
+        if ($analysis === null) {
+            return '';
+        }
+
+        if (!$analysis->containsPeople) {
+            return Html::encode(Craft::t('lens', 'No people'));
+        }
+
+        $faceCount = (int) $analysis->faceCount;
+        $label = match (true) {
+            $faceCount === 0 => Craft::t('lens', 'People, no visible faces'),
+            $faceCount === 1 => Craft::t('lens', '1 person'),
+            $faceCount === 2 => Craft::t('lens', '2 people'),
+            $faceCount <= 5 => Craft::t('lens', '3-5 people'),
+            default => Craft::t('lens', '6+ people'),
+        };
+
+        return Html::encode($label);
     }
 
     private static function duplicatesHtml(Asset $asset): string

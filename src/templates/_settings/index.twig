@@ -166,12 +166,12 @@
 
     {% if lens.isPro %}
         <h2>{{ 'Semantic Search'|t('lens') }}</h2>
-        <p>{{ 'Replace the native asset selector search with Lens search. Editors can search using AI-generated descriptions, tags, and alt text instead of remembering exact filenames.'|t('lens') }}</p>
+        <p>{{ "Lens makes Craft's asset search smarter by looking through the descriptions, tags, and text extracted from every image, so editors find what they need by content. Works in the Assets section and in every asset picker."|t('lens') }}</p>
 
         {{ forms.lightswitchField({
             first: true,
-            label: 'Enable Semantic Asset Search'|t('lens'),
-            instructions: 'Replaces the native search in asset selector modals with Lens search. Queries match against AI-generated alt text, descriptions, tags, and extracted text.'|t('lens'),
+            label: 'Use Lens for asset search'|t('lens'),
+            instructions: "Turn off to fall back to Craft's default filename search."|t('lens'),
             id: 'enableSemanticSearch',
             name: 'settings[enableSemanticSearch]',
             on: settings.enableSemanticSearch,

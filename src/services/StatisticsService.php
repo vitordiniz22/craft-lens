@@ -11,7 +11,6 @@ use vitordiniz22\craftlens\conditions\FileTooLargeConditionRule;
 use vitordiniz22\craftlens\enums\AiProvider;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\helpers\ColorSupport;
-use vitordiniz22\craftlens\helpers\DuplicateSupport;
 use vitordiniz22\craftlens\helpers\ImageMetricsAnalyzer;
 use vitordiniz22\craftlens\helpers\QualitySupport;
 use vitordiniz22\craftlens\migrations\Install;
@@ -489,7 +488,7 @@ class StatisticsService extends Component
     /**
      * Get all items requiring user attention with counts and links.
      * Returns only items with count > 0.
-     * Order: Pending Review, Failed, NSFW, Watermarked, Duplicates
+     * Order: Pending Review, Failed, NSFW, Watermarked, File Too Large, quality issues.
      */
     public function getAttentionItems(?array $overviewStats = null): array
     {
@@ -498,9 +497,6 @@ class StatisticsService extends Component
         $overview = $overviewStats ?? $this->getOverviewStats();
         $nsfwCount = $this->getNsfwFlaggedCount();
         $watermarkedCount = $this->getWatermarkedCount();
-        $duplicateCount = DuplicateSupport::isAvailable()
-            ? $plugin->duplicateDetection->getUnresolvedDuplicateCount()
-            : 0;
         $fileTooLargeCount = $this->getFileTooLargeCount();
         $qualityIssues = $this->getQualityIssueCounts();
 
@@ -511,7 +507,7 @@ class StatisticsService extends Component
                 'type' => 'pending_review',
                 'label' => Craft::t('lens', 'Pending Review'),
                 'count' => $overview['pendingReview'],
-                'url' => 'lens/search?status=' . AnalysisStatus::PendingReview->value,
+                'url' => 'lens/review',
                 'color' => 'blue',
                 'icon' => 'eye',
             ];
@@ -522,9 +518,7 @@ class StatisticsService extends Component
                 'type' => 'failed',
                 'label' => Craft::t('lens', 'Failed Analyses'),
                 'count' => $overview['failed'],
-                'url' => $isPro
-                    ? 'lens/search?status=' . AnalysisStatus::Failed->value
-                    : 'assets?source=lens:failed',
+                'url' => 'assets?source=lens:failed',
                 'color' => 'red',
                 'icon' => 'triangle-exclamation',
             ];
@@ -535,9 +529,7 @@ class StatisticsService extends Component
                 'type' => 'nsfw_flagged',
                 'label' => Craft::t('lens', 'NSFW Flagged'),
                 'count' => $nsfwCount,
-                'url' => $isPro
-                    ? 'lens/search?nsfwFlagged=1'
-                    : 'assets?source=lens:nsfw-flagged',
+                'url' => 'assets?source=lens:nsfw-flagged',
                 'color' => 'red',
                 'icon' => 'triangle-exclamation',
             ];
@@ -548,22 +540,9 @@ class StatisticsService extends Component
                 'type' => 'watermarked',
                 'label' => Craft::t('lens', 'Watermarked'),
                 'count' => $watermarkedCount,
-                'url' => $isPro
-                    ? 'lens/search?hasWatermark=1'
-                    : 'assets?source=lens:has-watermark',
+                'url' => 'assets?source=lens:has-watermark',
                 'color' => 'amber',
                 'icon' => 'stamp',
-            ];
-        }
-
-        if ($duplicateCount > 0 && $isPro) {
-            $items[] = [
-                'type' => 'duplicates',
-                'label' => Craft::t('lens', 'Duplicates'),
-                'count' => $duplicateCount,
-                'url' => 'lens/search?hasDuplicates=1',
-                'color' => 'amber',
-                'icon' => 'copy',
             ];
         }
 
@@ -572,9 +551,7 @@ class StatisticsService extends Component
                 'type' => 'file_too_large',
                 'label' => Craft::t('lens', 'File Too Large'),
                 'count' => $fileTooLargeCount,
-                'url' => $isPro
-                    ? 'lens/search?fileSizePreset=1'
-                    : 'assets?source=lens:file-too-large',
+                'url' => 'assets?source=lens:file-too-large',
                 'color' => 'amber',
                 'icon' => 'file',
             ];
@@ -585,9 +562,7 @@ class StatisticsService extends Component
                 'type' => 'blurry',
                 'label' => Craft::t('lens', 'Blurry'),
                 'count' => $qualityIssues['blurry'],
-                'url' => $isPro
-                    ? 'lens/search?qualityIssue=blurry'
-                    : 'assets?source=lens:blurry',
+                'url' => 'assets?source=lens:all&lensFilter=blurry',
                 'color' => 'amber',
                 'icon' => 'eye',
             ];
@@ -598,9 +573,7 @@ class StatisticsService extends Component
                 'type' => 'too_dark',
                 'label' => Craft::t('lens', 'Too Dark'),
                 'count' => $qualityIssues['tooDark'],
-                'url' => $isPro
-                    ? 'lens/search?qualityIssue=tooDark'
-                    : 'assets?source=lens:too-dark',
+                'url' => 'assets?source=lens:all&lensFilter=too-dark',
                 'color' => 'amber',
                 'icon' => 'sun',
             ];
@@ -611,9 +584,7 @@ class StatisticsService extends Component
                 'type' => 'too_bright',
                 'label' => Craft::t('lens', 'Too Bright'),
                 'count' => $qualityIssues['tooBright'],
-                'url' => $isPro
-                    ? 'lens/search?qualityIssue=tooBright'
-                    : 'assets?source=lens:too-bright',
+                'url' => 'assets?source=lens:all&lensFilter=too-bright',
                 'color' => 'amber',
                 'icon' => 'sun',
             ];
@@ -624,9 +595,7 @@ class StatisticsService extends Component
                 'type' => 'low_contrast',
                 'label' => Craft::t('lens', 'Low Contrast'),
                 'count' => $qualityIssues['lowContrast'],
-                'url' => $isPro
-                    ? 'lens/search?qualityIssue=lowContrast'
-                    : 'assets?source=lens:low-contrast',
+                'url' => 'assets?source=lens:all&lensFilter=low-contrast',
                 'color' => 'amber',
                 'icon' => 'circle-half-stroke',
             ];
@@ -655,19 +624,17 @@ class StatisticsService extends Component
                     [':blur' => ImageMetricsAnalyzer::SHARPNESS_BLURRY]
                 ),
                 new Expression(
-                    'SUM(CASE WHEN [[exposureScore]] IS NOT NULL AND [[noiseScore]] IS NOT NULL AND [[exposureScore]] < :dark AND [[shadowClipRatio]] > :shadowClip AND [[noiseScore]] < :narrow THEN 1 ELSE 0 END) as tooDark',
+                    'SUM(CASE WHEN [[exposureScore]] IS NOT NULL AND [[exposureScore]] < :dark AND [[shadowClipRatio]] > :shadowClip THEN 1 ELSE 0 END) as tooDark',
                     [
                         ':dark' => ImageMetricsAnalyzer::BRIGHTNESS_DARK_MEDIAN,
                         ':shadowClip' => ImageMetricsAnalyzer::SHADOW_CLIP_RATIO,
-                        ':narrow' => ImageMetricsAnalyzer::CONTRAST_LOW,
                     ]
                 ),
                 new Expression(
-                    'SUM(CASE WHEN [[exposureScore]] IS NOT NULL AND [[noiseScore]] IS NOT NULL AND [[exposureScore]] > :bright AND [[highlightClipRatio]] > :highlightClip AND [[noiseScore]] < :narrow THEN 1 ELSE 0 END) as tooBright',
+                    'SUM(CASE WHEN [[exposureScore]] IS NOT NULL AND [[exposureScore]] > :bright AND [[highlightClipRatio]] > :highlightClip THEN 1 ELSE 0 END) as tooBright',
                     [
                         ':bright' => ImageMetricsAnalyzer::BRIGHTNESS_BRIGHT_MEDIAN,
                         ':highlightClip' => ImageMetricsAnalyzer::HIGHLIGHT_CLIP_RATIO,
-                        ':narrow' => ImageMetricsAnalyzer::CONTRAST_LOW,
                     ]
                 ),
                 new Expression(

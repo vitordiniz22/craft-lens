@@ -30,12 +30,11 @@
                         </span>
                     </a>
                 {% endfor %}
-                {% if extraCount > 0 and not isReview and (asset ?? null) %}
-                    <a href="{{ cpUrl('lens/search', {similarTo: asset.id}) }}"
-                       class="lens-inline-notice__thumb-more"
-                       title="{{ '+{count} more similar assets'|t('lens', {count: extraCount}) }}">
+                {% if extraCount > 0 %}
+                    <span class="lens-inline-notice__thumb-more"
+                          title="{{ '+{count} more similar assets'|t('lens', {count: extraCount}) }}">
                         +{{ extraCount }}
-                    </a>
+                    </span>
                 {% endif %}
             </div>
         {% endblock %}

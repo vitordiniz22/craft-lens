@@ -36,7 +36,6 @@ class LensAsset extends AssetBundle
             'css/components/metric-card.css',
             'css/components/stat-strip.css',
             'css/components/swatch.css',
-            'css/components/lens-filter-picker.css',
 
             // Edition
             'css/components/edition.css',
@@ -46,7 +45,6 @@ class LensAsset extends AssetBundle
             'css/pages/lens-bulk.css',
             'css/pages/lens-dashboard.css',
             'css/pages/lens-review.css',
-            'css/pages/lens-search.css',
         ];
         $this->js = [
             'js/lens-base.js',

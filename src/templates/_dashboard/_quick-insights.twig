@@ -9,7 +9,7 @@
         <h3 class="lens-field-label">{{ 'Top Tags'|t('lens') }}</h3>
         <div class="inline-chips">
             {% for item in topTags %}
-            <a href="{{ cpUrl('lens/search', {tags: item.tag}) }}" class="chip">
+            <a href="{{ cpUrl('assets', {source: 'lens:all', lensTag: item.tag}) }}" class="chip">
                 <div class="chip-content">
                     <span class="chip-label">{{ item.tag }}</span>
                 </div>
