@@ -7,7 +7,6 @@ namespace vitordiniz22\craftlens\console\controllers;
 use Craft;
 use craft\console\Controller;
 use craft\helpers\Console;
-use vitordiniz22\craftlens\helpers\ColorSupport;
 use vitordiniz22\craftlens\Plugin;
 use yii\console\ExitCode;
 
@@ -34,59 +33,6 @@ class StatsController extends Controller
 
         $this->stdout("Pending review: ", Console::FG_YELLOW);
         $this->stdout("{$pendingReview}\n");
-
-        return ExitCode::OK;
-    }
-
-    /**
-     * Displays tag frequency statistics.
-     *
-     * @param int $limit Number of results to show (default: 20)
-     */
-    public function actionTags(int $limit = 20): int
-    {
-        $this->stdout("AI Tag Statistics (Top {$limit})\n", Console::FG_CYAN);
-        $this->stdout("==================\n\n");
-
-        $tags = Plugin::getInstance()->tagAggregation->getTagCounts($limit, 'count');
-
-        if (empty($tags)) {
-            $this->stdout("No tags found.\n", Console::FG_YELLOW);
-            return ExitCode::OK;
-        }
-
-        foreach ($tags as $item) {
-            $this->stdout(sprintf("  %-30s %d\n", $item['tag'], $item['count']));
-        }
-
-        return ExitCode::OK;
-    }
-
-    /**
-     * Displays color palette statistics.
-     *
-     * @param int $limit Number of results to show (default: 15)
-     */
-    public function actionColors(int $limit = 15): int
-    {
-        $this->stdout("AI Color Statistics (Top {$limit})\n", Console::FG_CYAN);
-        $this->stdout("====================\n\n");
-
-        if (!ColorSupport::isAvailable()) {
-            $this->stdout("Color support unavailable: install the Imagick or GD PHP extension.\n", Console::FG_YELLOW);
-            return ExitCode::OK;
-        }
-
-        $colors = Plugin::getInstance()->colorAggregation->getColorCounts($limit);
-
-        if (empty($colors)) {
-            $this->stdout("No colors found.\n", Console::FG_YELLOW);
-            return ExitCode::OK;
-        }
-
-        foreach ($colors as $item) {
-            $this->stdout(sprintf("  %s  %d assets\n", $item['hex'], $item['count']));
-        }
 
         return ExitCode::OK;
     }
