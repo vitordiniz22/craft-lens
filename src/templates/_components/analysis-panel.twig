@@ -83,6 +83,7 @@
                     type: 'error',
                     title: 'Analysis Failed'|t('lens'),
                     message: errorMessage,
+                    attr: {'data-lens-target': 'failed-notice'},
                 } %}
                     {% block action %}
                         <div class="lens-inline-notice__action">
@@ -98,6 +99,7 @@
                     type: 'warning',
                     title: 'Re-analysis Failed'|t('lens'),
                     message: errorMessage ~ ' ' ~ ('Your previous analysis data is still available below.'|t('lens')),
+                    attr: {'data-lens-target': 'failed-notice'},
                 } %}
                     {% block action %}
                         <div class="lens-inline-notice__action">

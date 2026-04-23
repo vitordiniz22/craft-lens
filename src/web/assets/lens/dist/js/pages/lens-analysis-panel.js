@@ -197,6 +197,7 @@
             const reprocessBtn = panel.querySelector('[data-lens-action="reprocess"]');
             const emptyState = panel.querySelector('[data-lens-target="empty-analysis"]');
             const translationsNotice = panel.querySelector('[data-lens-target="translations-notice"]');
+            const failedNotice = panel.querySelector('[data-lens-target="failed-notice"]');
             const statusBadge = panel.querySelector('[data-lens-target="status-badge"]');
             const actionsContainer = panel.querySelector('[data-lens-target="header-actions"]');
 
@@ -217,6 +218,10 @@
 
             if (translationsNotice) {
                 translationsNotice.style.display = 'none';
+            }
+
+            if (failedNotice) {
+                failedNotice.style.display = 'none';
             }
 
             if (statusBadge) {
