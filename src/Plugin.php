@@ -725,11 +725,49 @@ class Plugin extends BasePlugin
             Asset::class,
             Element::EVENT_REGISTER_ACTIONS,
             function(RegisterElementActionsEvent $event) {
-                if ($this->getIsPro()) {
-                    $event->actions[] = AnalyzeAssetsAction::class;
+                if (!$this->getIsPro()) {
+                    return;
                 }
+
+                if (!$this->sourceIsLensEligible($event->source)) {
+                    return;
+                }
+
+                $event->actions[] = AnalyzeAssetsAction::class;
             }
         );
+    }
+
+    private function sourceIsLensEligible(string $source): bool
+    {
+        if (str_starts_with($source, 'lens:')) {
+            return true;
+        }
+
+        $volumeId = $this->resolveVolumeIdFromSource($source);
+
+        if ($volumeId === null) {
+            return true;
+        }
+
+        return $this->getSettings()->isVolumeEnabled($volumeId);
+    }
+
+    private function resolveVolumeIdFromSource(string $source): ?int
+    {
+        if (str_starts_with($source, 'volume:')) {
+            $uid = substr($source, 7);
+            $volume = Craft::$app->getVolumes()->getVolumeByUid($uid);
+            return $volume?->id;
+        }
+
+        if (str_starts_with($source, 'folder:')) {
+            $uid = substr($source, 7);
+            $folder = Craft::$app->getAssets()->getFolderByUid($uid);
+            return $folder?->volumeId;
+        }
+
+        return null;
     }
 
     private function registerSemanticSearch(): void
