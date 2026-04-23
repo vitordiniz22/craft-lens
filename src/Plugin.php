@@ -461,6 +461,14 @@ class Plugin extends BasePlugin
                     return;
                 }
 
+                // On upload conflicts Craft first saves the upload under a suffixed
+                // filename (setting conflictingFilename) and then prompts the user.
+                // Replace is handled by EVENT_AFTER_REPLACE_ASSET; any other outcome
+                // (Keep Both, Cancel) is intentionally not auto-analyzed.
+                if ($asset->conflictingFilename !== null) {
+                    return;
+                }
+
                 if ($this->assetAnalysis->shouldAutoProcessOnUpload($asset, $event->isNew)) {
                     $this->assetAnalysis->queueAsset($asset);
                     return;
