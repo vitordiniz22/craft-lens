@@ -31,18 +31,29 @@ class BulkProcessingStatusService extends Component
 
     /**
      * Get the full status response for the AJAX endpoint.
+     *
+     * When no bulk session is active but records are still marked Processing,
+     * only true orphans (records whose queue job has vanished) are deleted.
+     * A running single-asset job stamps its queueJobId on the record via
+     * queueAsset(), so its queue row stays alive while the worker runs and
+     * the poll leaves it alone instead of wiping it mid-AI-call.
      */
     public function getStatus(): array
     {
         $stats = $this->getStats();
         $state = $this->determineState($stats);
 
-        // If state reset to ready but assets are still in Processing status,
-        // jobs were cancelled externally. Clean up orphaned records and re-fetch stats.
         if ($state === 'ready' && ($stats['processing'] ?? 0) > 0) {
-            AssetAnalysisRecord::deleteAll(
-                ['status' => AnalysisStatus::Processing->value]
-            );
+            $liveQueueIds = (new Query())->select(['id'])->from('{{%queue}}');
+            AssetAnalysisRecord::deleteAll([
+                'and',
+                ['status' => AnalysisStatus::Processing->value],
+                [
+                    'or',
+                    ['queueJobId' => null],
+                    ['not in', 'queueJobId', $liveQueueIds],
+                ],
+            ]);
             $stats = $this->getStats();
         }
 
