@@ -50,11 +50,16 @@ class BulkController extends Controller
 
         // After actionProcess redirects back here without the volumeId query
         // param, fall back to the session's scope so stats match the session.
+        $sessionScope = null;
         if ($volumeId === null && $session !== null && !empty($session['volumeId'])) {
-            $volumeId = (int) $session['volumeId'];
+            $sessionScope = is_array($session['volumeId'])
+                ? $session['volumeId']
+                : (int) $session['volumeId'];
         }
 
-        $statsVolumeScope = $volumeId ?? (count($volumes) < count($allVolumes) ? $enabledVolumeIds : null);
+        $statsVolumeScope = $volumeId
+            ?? $sessionScope
+            ?? (count($volumes) < count($allVolumes) ? $enabledVolumeIds : null);
         $stats = $statusService->getStats($statsVolumeScope);
         $state = $statusService->determineState($stats);
 
@@ -183,15 +188,25 @@ class BulkController extends Controller
 
         $volumeId = $this->request->getBodyParam('volumeId');
         $volumeId = $volumeId ? (int) $volumeId : null;
+
+        if ($volumeId === null) {
+            $enabledVolumeIds = Plugin::getInstance()->getSettings()->getEnabledVolumeIds();
+            $scope = count($enabledVolumeIds) < count(Craft::$app->getVolumes()->getAllVolumes())
+                ? $enabledVolumeIds
+                : null;
+        } else {
+            $scope = $volumeId;
+        }
+
         $statusService = Plugin::getInstance()->bulkProcessingStatus;
-        $statusService->startSession($volumeId);
+        $statusService->startSession($scope);
 
         Queue::push(new BulkAnalyzeAssetsJob([
-            'volumeId' => $volumeId,
+            'volumeId' => $scope,
             'reprocess' => false,
         ]));
 
-        Logger::info(LogCategory::JobStarted, 'Bulk processing started from CP', context: ['volumeId' => $volumeId]);
+        Logger::info(LogCategory::JobStarted, 'Bulk processing started from CP', context: ['volumeId' => $scope]);
 
         return $this->redirect('lens/bulk');
     }

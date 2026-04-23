@@ -20,7 +20,7 @@ use vitordiniz22\craftlens\records\AssetAnalysisRecord;
  */
 class BulkAnalyzeAssetsJob extends BaseBatchedJob
 {
-    public ?int $volumeId = null;
+    public int|array|null $volumeId = null;
     public bool $reprocess = false;
 
     /**
@@ -103,7 +103,7 @@ class BulkAnalyzeAssetsJob extends BaseBatchedJob
 
     protected function defaultDescription(): ?string
     {
-        if ($this->volumeId !== null) {
+        if (is_int($this->volumeId)) {
             $volume = Craft::$app->getVolumes()->getVolumeById($this->volumeId);
             $volumeName = $volume?->name ?? "ID {$this->volumeId}";
 

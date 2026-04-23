@@ -327,7 +327,7 @@ class ReviewController extends Controller
         }
 
         // JSON-encoded arrays from hidden inputs
-        foreach (['tags' => 'tags', 'dominantColors' => 'dominantColors', 'siteContent' => 'siteContent'] as $param => $key) {
+        foreach (['tags' => 'tags', 'siteContent' => 'siteContent'] as $param => $key) {
             $decoded = $this->decodeJsonBodyParam($param);
             if ($decoded !== null) {
                 $modifications[$key] = $decoded;

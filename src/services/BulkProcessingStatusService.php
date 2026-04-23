@@ -111,7 +111,7 @@ class BulkProcessingStatusService extends Component
      * @param int|null $volumeId Scope to a specific volume (bulk mode only)
      * @param int[] $retriedFailedAssetIds Asset IDs being retried after previous failure
      */
-    public function startSession(?int $volumeId = null, array $retriedFailedAssetIds = []): void
+    public function startSession(null|int|array $volumeId = null, array $retriedFailedAssetIds = []): void
     {
         $isRetry = !empty($retriedFailedAssetIds);
         $initialCount = $isRetry
