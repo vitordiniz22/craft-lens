@@ -31,9 +31,9 @@ Choose your AI provider (**OpenAI GPT**, **Google Gemini**, or **Anthropic Claud
 
 ### Search & Discovery
 
-- **Smarter asset library.** Lens drops pre-built views into Craft's Assets section: Not Analysed, Failed Analyses, Missing Alt Text, NSFW Flagged, Missing Focal Point, Contains People, Has Watermark, and Has Brand Logo. Build your own filtered views with the Lens condition rules. Type "outdoor" into the search box and Lens ranks results by AI-generated tags, titles, descriptions, alt text, and OCR, right inside the browser you already use.
-- **Semantic search everywhere.** The same smart search powers Craft's Assets section and the image picker you see when attaching photos to entries. It handles typos and works in 14 languages. Turn it off in Settings to fall back to Craft's default filename search.
-- **Duplicate detection** surfaces visually similar images so you stop re-uploading the same file, flags duplicates on each asset's edit page, and lets you find images similar to any specific asset on demand.
+- **Smarter asset library.** Lens drops pre-built views into Craft's Assets section: Not Analyzed, Failed Analyses, Missing Alt Text, NSFW Flagged, Missing Focal Point, Contains People, Has Watermark, and Has Brand Logo, with Needs Review and Has Duplicates added on Pro. Build your own filtered views with the Lens condition rules.
+- **Semantic search (Pro).** Type "outdoor" into the search box and Lens ranks results by AI-generated tags, titles, descriptions, alt text, and OCR, right inside the browser you already use. The same smart search powers Craft's Assets section and the image picker you see when attaching photos to entries. It handles typos and stems queries in 14 languages (Catalan, Danish, Dutch, English, Finnish, French, German, Italian, Norwegian, Portuguese, Romanian, Russian, Spanish, Swedish); other languages still work but without stemming. Turn it off in Settings to fall back to Craft's default filename search.
+- **Duplicate detection (Pro)** surfaces visually similar images so you stop re-uploading the same file, flags duplicates on each asset's edit page, and lets you find images similar to any specific asset on demand.
 
 [[Image: The native Craft asset browser with the Lens sidebar expanded (Not Analysed, NSFW Flagged, Has Watermark, Contains People, Missing Focal Point, and others), a semantic query like "outdoor" typed into the search box, and a grid of matching thumbnails.]]
 
@@ -42,14 +42,14 @@ Choose your AI provider (**OpenAI GPT**, **Google Gemini**, or **Anthropic Claud
 - **Alt text** generated in each site's language, with translations for multisite installs and confidence scoring
 - **Title suggestions** that replace Craft's auto-generated titles with meaningful, descriptive names
 - **Long descriptions** that give images rich context and feed the search index for better discoverability
-- **Semantic tags** that actually describe what's in the image, 20-25 per asset, each scored by confidence
+- **Semantic tags** that actually describe what's in the image, typically 20-25 per asset, each scored by confidence
 - **Dominant colors** extracted as a 6-color palette with hex values and percentages, making your library searchable by color
 
 ### Content Detection
 
 - **Faces and people** with 6-tier detection: no people, people without visible faces, individual, duo, small group, large group
 - **NSFW scoring** with category breakdown (adult, violence, hate, self-harm, drugs) to catch unsafe content before it goes live
-- **Watermarks** identified by type (text, logo, stock, copyright, and more) to flag assets that may need review before publishing
+- **Watermarks** identified by type (text, logo, stock, copyright, AI-generated) to flag assets that may need review before publishing
 - **Brand/logo recognition** names the specific brands in each image so you can search by brand
 - **Stock photo detection** identifies which stock provider an asset came from
 - **OCR** extracts text from images, fully searchable
@@ -68,14 +68,14 @@ Choose your AI provider (**OpenAI GPT**, **Google Gemini**, or **Anthropic Claud
 
 ### Bulk Processing
 
-- **Analyze entire volumes** with real-time progress tracking, cost estimation, and retry for failed assets
+- **Analyze entire volumes** with an up-front cost estimate shown before the run starts, real-time progress tracking, and retry for failed assets
 
 ### Review Workflow
 
-- **Review Queue** lets you review, edit, and approve AI suggestions before they're applied to your assets, in Focus mode for one-at-a-time review or Bulk mode for batch actions
+- **Review Queue** lets you go through AI analyses, catch bad detections, and correct them so your library stays reliable. Use Focus mode for one-at-a-time review or Bulk mode for batch actions. Keyboard shortcuts in Focus mode: `A` to approve, `R` to reject, arrow keys to navigate.
 - **Two-panel Focus View** with a large image preview on the left and all AI-generated metadata on the right, fully editable inline
 - **Focal point editing** lets you click anywhere on the image to set the focal point, accept or override the AI suggestion
-- **Low-confidence flagging** surfaces uncertain AI results so you can focus review time where it matters
+- **Low-confidence flagging** surfaces AI results below 80% confidence so you can focus review time where it matters
 
 [[Image: Review Queue Focus View. Show the two-panel layout with a large image preview on the left (focal point crosshair visible if possible), and the right panel displaying editable title, alt text, long description, tag chips, color swatches, and the approve/reject buttons. Pick an asset with rich metadata to showcase the depth of analysis.]]
 
@@ -95,17 +95,17 @@ Lens has two editions. **Lite** is the analysis layer: every image gets AI-gener
 **Lite** is free and includes:
 
 - AI analysis: alt text, titles, descriptions, dominant colors, focal points, people and face detection, NSFW scoring, and watermark and brand recognition, with per-site translations for multisite installs.
-- 9 pre-built views in Craft's asset library: All Images (scoped to your Lens-enabled volumes), Not Analysed, Failed Analyses, Missing Alt Text, NSFW Flagged, Missing Focal Point, Contains People, Has Watermark, and Has Brand Logo.
+- 9 pre-built views in Craft's asset library: All Images (scoped to your Lens-enabled volumes), Not Analyzed, Failed Analyses, Missing Alt Text, NSFW Flagged, Missing Focal Point, Contains People, Has Watermark, and Has Brand Logo.
 - 15 filters you can combine to build your own custom views.
 
 **Pro** adds:
 
-- Semantic tags and OCR text extraction, so even the text inside your images is searchable.
-- Semantic search that ranks results in Craft's asset library and in the image picker on entries.
+- Semantic tags and OCR text extraction surfaced in the analysis panel, indexed for semantic search, and available to filter by.
+- Semantic search that ranks results in Craft's asset library and in the image picker on entries, using the tags, titles, descriptions, alt text, and OCR that analysis produces.
 - Review Queue to spot-check AI analyses and correct any weird detections, with Focus and Bulk modes and keyboard shortcuts for fast decisions.
-- Bulk Processing to analyse entire volumes in one run, with real-time progress, cost estimates, and retry for failed assets.
-- Duplicate detection via perceptual hashing.
-- 2 more pre-built views (Needs Review, Has Duplicates) and 8 more filters.
+- Bulk Processing to analyze entire volumes in one run, with an up-front cost estimate shown before the run starts, real-time progress, and retry for failed assets.
+- Duplicate detection via perceptual hashing (requires the GD PHP extension).
+- Up to 2 more pre-built views, each conditional on its prerequisite: **Needs Review** appears when *Require Human Review* is enabled in Settings, and **Has Duplicates** appears when GD is available. Plus 8 more filters.
 
 Available on the <a href="https://plugins.craftcms.com/lens" target="_blank" rel="noopener">Craft Plugin Store</a>.
 
@@ -115,7 +115,8 @@ Available on the <a href="https://plugins.craftcms.com/lens" target="_blank" rel
 - **PHP** 8.2 or later
 - **MySQL** 8.0+, **MariaDB** 10.6+, or **PostgreSQL** 14+
 - An API key from one of: [OpenAI](https://platform.openai.com/), [Google AI](https://ai.google.dev/), or [Anthropic](https://www.anthropic.com/)
-- **Imagick PHP extension** (recommended) enables local quality metrics (sharpness, brightness, contrast, compression quality, and color profile detection). Without it, those metrics are hidden; the rest of the Image Assessment section still works.
+- **Imagick PHP extension** (recommended) enables five local quality metrics: sharpness, brightness, contrast, compression quality, and color profile detection. Without Imagick, those five metrics are hidden; web readiness flags and accessibility detection still work.
+- **GD PHP extension** (recommended on Pro) enables duplicate detection via perceptual hashing. Without GD, the Has Duplicates view and the "find similar to this asset" action are disabled.
 
 ## Installation
 
@@ -138,7 +139,7 @@ php craft plugin/install lens
 2. Select your AI provider (OpenAI, Gemini, or Claude)
 3. Enter your API key (supports environment variables like `$OPENAI_API_KEY`, `$GEMINI_API_KEY`, or `$ANTHROPIC_API_KEY`) and choose a model
 4. Choose which volumes to enable for analysis
-5. In each enabled volume's field layout (**Settings** &rarr; **Assets** &rarr; *[Volume]* &rarr; **Field Layout**), drag the **Lens Analysis** UI component into the layout so AI results appear on the asset editor
+5. In each enabled volume's field layout (**Settings** &rarr; **Assets** &rarr; *[Volume]* &rarr; **Field Layout**), drag the **Lens Analysis** UI element into the layout so AI results appear on the asset editor
 6. Upload an image. Lens analyzes it automatically and displays results in the **Lens Analysis** panel on the asset editor.
 
 [[Image: Settings page. Show the AI provider configuration with one provider selected (OpenAI recommended for familiarity), the API key field with the environment variable placeholder visible, the model dropdown, auto-process toggle, require review toggle, and the volume checkboxes with at least 2 volumes listed.]]
