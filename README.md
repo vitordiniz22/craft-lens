@@ -31,11 +31,11 @@ Choose your AI provider (**OpenAI GPT**, **Google Gemini**, or **Anthropic Claud
 
 ### Search & Discovery
 
-- **Smarter asset library.** Lens drops pre-built views into Craft's Assets section: Not Analysed, Failed Analyses, Missing Alt Text, NSFW Flagged, File Too Large, Missing Focal Point, Contains People, Has Watermark, and Has Brand Logo. Build your own filtered views with the Lens condition rules. Type "outdoor" into the search box and Lens ranks results by AI-generated tags, titles, descriptions, alt text, and OCR, right inside the browser you already use.
+- **Smarter asset library.** Lens drops pre-built views into Craft's Assets section: Not Analysed, Failed Analyses, Missing Alt Text, NSFW Flagged, Missing Focal Point, Contains People, Has Watermark, and Has Brand Logo. Build your own filtered views with the Lens condition rules. Type "outdoor" into the search box and Lens ranks results by AI-generated tags, titles, descriptions, alt text, and OCR, right inside the browser you already use.
 - **Semantic search everywhere.** The same smart search powers Craft's Assets section and the image picker you see when attaching photos to entries. It handles typos and works in 14 languages. Turn it off in Settings to fall back to Craft's default filename search.
 - **Duplicate detection** surfaces visually similar images so you stop re-uploading the same file, flags duplicates on each asset's edit page, and lets you find images similar to any specific asset on demand.
 
-[[Image: The native Craft asset browser with the Lens sources rail expanded (Not Analysed, NSFW Flagged, Has Watermark, Contains People, Missing Focal Point, and others), a semantic query like "outdoor" typed into the search box, and a grid of matching thumbnails.]]
+[[Image: The native Craft asset browser with the Lens sidebar expanded (Not Analysed, NSFW Flagged, Has Watermark, Contains People, Missing Focal Point, and others), a semantic query like "outdoor" typed into the search box, and a grid of matching thumbnails.]]
 
 ### Automatic Tagging & Descriptions
 
@@ -95,7 +95,7 @@ Lens has two editions. **Lite** is the analysis layer: every image gets AI-gener
 **Lite** is free and includes:
 
 - AI analysis: alt text, titles, descriptions, dominant colors, focal points, people and face detection, NSFW scoring, and watermark and brand recognition, with per-site translations for multisite installs.
-- 10 pre-built views in Craft's asset library: All Images (scoped to your Lens-enabled volumes), Not Analysed, Failed Analyses, Missing Alt Text, NSFW Flagged, File Too Large, Missing Focal Point, Contains People, Has Watermark, and Has Brand Logo.
+- 9 pre-built views in Craft's asset library: All Images (scoped to your Lens-enabled volumes), Not Analysed, Failed Analyses, Missing Alt Text, NSFW Flagged, Missing Focal Point, Contains People, Has Watermark, and Has Brand Logo.
 - 15 filters you can combine to build your own custom views.
 
 **Pro** adds:
@@ -105,7 +105,7 @@ Lens has two editions. **Lite** is the analysis layer: every image gets AI-gener
 - Review Queue to spot-check AI analyses and correct any weird detections, with Focus and Bulk modes and keyboard shortcuts for fast decisions.
 - Bulk Processing to analyse entire volumes in one run, with real-time progress, cost estimates, and retry for failed assets.
 - Duplicate detection via perceptual hashing.
-- 1 more pre-built view (Needs Review) and 8 more filters.
+- 2 more pre-built views (Needs Review, Has Duplicates) and 8 more filters.
 
 Available on the <a href="https://plugins.craftcms.com/lens" target="_blank" rel="noopener">Craft Plugin Store</a>.
 

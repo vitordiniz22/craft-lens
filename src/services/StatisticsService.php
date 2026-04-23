@@ -7,7 +7,6 @@ namespace vitordiniz22\craftlens\services;
 use Craft;
 use craft\elements\Asset;
 use DateTime;
-use vitordiniz22\craftlens\conditions\FileTooLargeConditionRule;
 use vitordiniz22\craftlens\enums\AiProvider;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\helpers\ColorSupport;
@@ -488,7 +487,7 @@ class StatisticsService extends Component
     /**
      * Get all items requiring user attention with counts and links.
      * Returns only items with count > 0.
-     * Order: Pending Review, Failed, NSFW, Watermarked, File Too Large, quality issues.
+     * Order: Pending Review, Failed, NSFW, Watermarked, quality issues.
      */
     public function getAttentionItems(?array $overviewStats = null): array
     {
@@ -497,7 +496,6 @@ class StatisticsService extends Component
         $overview = $overviewStats ?? $this->getOverviewStats();
         $nsfwCount = $this->getNsfwFlaggedCount();
         $watermarkedCount = $this->getWatermarkedCount();
-        $fileTooLargeCount = $this->getFileTooLargeCount();
         $qualityIssues = $this->getQualityIssueCounts();
 
         $items = [];
@@ -543,17 +541,6 @@ class StatisticsService extends Component
                 'url' => 'assets?source=lens:has-watermark',
                 'color' => 'amber',
                 'icon' => 'stamp',
-            ];
-        }
-
-        if ($fileTooLargeCount > 0) {
-            $items[] = [
-                'type' => 'file_too_large',
-                'label' => Craft::t('lens', 'File Too Large'),
-                'count' => $fileTooLargeCount,
-                'url' => 'assets?source=lens:file-too-large',
-                'color' => 'amber',
-                'icon' => 'file',
             ];
         }
 
@@ -675,26 +662,6 @@ class StatisticsService extends Component
             'tooBright' => (int) ($result['tooBright'] ?? 0),
             'lowContrast' => (int) ($result['lowContrast'] ?? 0),
         ];
-    }
-
-    /**
-     * Count image assets in enabled volumes whose file size is at or above the
-     * warning threshold (1MB), regardless of analysis status. File size is a
-     * library fact, so this mirrors the browser's File Too Large filter.
-     */
-    public function getFileTooLargeCount(): int
-    {
-        $volumeIds = $this->getEnabledVolumeIds();
-
-        if (empty($volumeIds)) {
-            return 0;
-        }
-
-        return (int) Asset::find()
-            ->kind(Asset::KIND_IMAGE)
-            ->volumeId($volumeIds)
-            ->andWhere(['>=', 'assets.size', FileTooLargeConditionRule::FILE_SIZE_WARNING])
-            ->count();
     }
 
     /**

@@ -365,10 +365,7 @@ class Plugin extends BasePlugin
                     return;
                 }
 
-                $columns = ['filename'];
-                if ($event->source === 'lens:file-too-large') {
-                    $columns[] = 'size';
-                }
+                $columns = ['filename', 'location'];
 
                 foreach (AssetTableAttributes::defaultAttributes($event->source) as $attr) {
                     if (!in_array($attr, $columns, true)) {
@@ -595,7 +592,6 @@ class Plugin extends BasePlugin
                         'failed' => ['Failed Analyses', ['lensStatus' => 'failed'] + $volumeScope],
                         'missing-alt-text' => ['Missing Alt Text', ['hasAlt' => false] + $volumeScope],
                         'nsfw-flagged' => ['NSFW Flagged', ['lensNsfwFlagged' => true] + $volumeScope],
-                        'file-too-large' => ['File Too Large', ['lensTooLarge' => true] + $volumeScope],
                         'missing-focal-point' => ['Missing Focal Point', ['lensHasFocalPoint' => false] + $volumeScope],
                         'contains-people' => ['Contains People', ['lensContainsPeople' => true] + $volumeScope],
                         'has-watermark' => ['Has Watermark', ['lensHasWatermark' => true] + $volumeScope],
