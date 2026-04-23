@@ -60,6 +60,7 @@ use vitordiniz22\craftlens\conditions\WatermarkFlaggedConditionRule;
 use vitordiniz22\craftlens\conditions\WatermarkTypeConditionRule;
 use vitordiniz22\craftlens\fieldlayoutelements\LensAnalysisElement;
 use vitordiniz22\craftlens\helpers\AssetTableAttributes;
+use vitordiniz22\craftlens\helpers\DuplicateSupport;
 use vitordiniz22\craftlens\helpers\FieldLayoutHelper;
 use vitordiniz22\craftlens\models\Settings;
 use vitordiniz22\craftlens\services\AiProviderService;
@@ -600,6 +601,10 @@ class Plugin extends BasePlugin
                         'has-watermark' => ['Has Watermark', ['lensHasWatermark' => true] + $volumeScope],
                         'has-brand-logo' => ['Has Brand Logo', ['lensContainsBrandLogo' => true] + $volumeScope],
                     ];
+
+                    if ($this->getIsPro() && DuplicateSupport::isAvailable()) {
+                        $sourceDefinitions['has-duplicates'] = ['Has Duplicates', ['lensHasDuplicates' => true] + $volumeScope];
+                    }
 
                     foreach ($sourceDefinitions as $key => [$label, $criteria]) {
                         $event->sources[] = [

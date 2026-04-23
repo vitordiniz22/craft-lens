@@ -601,6 +601,21 @@ class StatisticsService extends Component
             ];
         }
 
+        if ($isPro) {
+            $duplicateCount = $plugin->duplicateDetection->getUnresolvedDuplicateCount();
+
+            if ($duplicateCount > 0) {
+                $items[] = [
+                    'type' => 'has_duplicates',
+                    'label' => Craft::t('lens', 'Has Duplicates'),
+                    'count' => $duplicateCount,
+                    'url' => 'assets?source=lens:has-duplicates',
+                    'color' => 'amber',
+                    'icon' => 'clone',
+                ];
+            }
+        }
+
         return $items;
     }
 
