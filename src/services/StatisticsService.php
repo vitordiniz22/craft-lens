@@ -9,7 +9,6 @@ use craft\elements\Asset;
 use DateTime;
 use vitordiniz22\craftlens\enums\AiProvider;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
-use vitordiniz22\craftlens\helpers\ColorSupport;
 use vitordiniz22\craftlens\helpers\ImageMetricsAnalyzer;
 use vitordiniz22\craftlens\helpers\QualitySupport;
 use vitordiniz22\craftlens\migrations\Install;
@@ -81,18 +80,6 @@ class StatisticsService extends Component
     public function getTopTags(int $limit = 10): array
     {
         return Plugin::getInstance()->tagAggregation->getTagCounts($limit, 'count', $this->getEnabledVolumeIds());
-    }
-
-    /**
-     * Get dominant colors by frequency, scoped to enabled volumes.
-     */
-    public function getDominantColors(int $limit = 5): array
-    {
-        if (!ColorSupport::isAvailable()) {
-            return [];
-        }
-
-        return Plugin::getInstance()->colorAggregation->getColorCounts($limit, $this->getEnabledVolumeIds());
     }
 
     /**

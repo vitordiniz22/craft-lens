@@ -19,7 +19,7 @@ class FilterParser
         'faceCountPreset',
         'nsfwScoreMin', 'nsfwScoreMax',
         'processedFrom', 'processedTo',
-        'color', 'colorTolerance', 'hasDuplicates',
+        'hasDuplicates',
         'hasWatermark', 'watermarkType', 'containsBrandLogo',
         'hasFocalPoint',
         'nsfwFlagged', 'missingAltText', 'unprocessed',
@@ -41,7 +41,6 @@ class FilterParser
         self::parsePeopleFilters($request, $filters);
         self::parseRangeFilters($request, $filters);
         self::parseDateFilters($request, $filters);
-        self::parseColorFilters($request, $filters);
         self::parseBooleanFilters($request, $filters);
         self::parseEnumFilters($request, $filters);
         self::parseStringFilters($request, $filters);
@@ -132,29 +131,6 @@ class FilterParser
                     $filters[$key] = $date;
                 }
             }
-        }
-    }
-
-    private static function parseColorFilters(Request $request, array &$filters): void
-    {
-        if (!ColorSupport::isAvailable()) {
-            return;
-        }
-
-        $color = $request->getQueryParam('color');
-
-        if ($color !== null && trim($color) !== '') {
-            $hex = ltrim(trim($color), '#');
-
-            if (preg_match('/^[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$/', $hex)) {
-                $filters['color'] = '#' . $hex;
-            }
-        }
-
-        $colorTolerance = $request->getQueryParam('colorTolerance');
-
-        if ($colorTolerance !== null && is_numeric($colorTolerance) && isset($filters['color'])) {
-            $filters['colorTolerance'] = max(0, min(100, (int) $colorTolerance));
         }
     }
 

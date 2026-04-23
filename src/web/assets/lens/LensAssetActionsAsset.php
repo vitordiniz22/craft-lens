@@ -15,7 +15,6 @@ class LensAssetActionsAsset extends AssetBundle
         $this->js = [
             'js/components/lens-inline-editor.js',
             'js/components/lens-tag-editor.js',
-            'js/components/lens-color-editor.js',
             'js/pages/lens-analysis-panel.js',
         ];
 

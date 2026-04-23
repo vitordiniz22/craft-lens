@@ -35,7 +35,7 @@
 
 ### Added
 - Initial alpha release of Lens, an AI-powered image analysis plugin for Craft CMS.
-- AI image analysis: alt text, titles, descriptions, tags, colors, OCR, quality scoring, and focal point detection.
+- AI image analysis: alt text, titles, descriptions, tags, OCR, quality scoring, and focal point detection.
 - Content detection: people/faces, NSFW scoring, watermarks, brand logos, and stock photo identification.
 - Duplicate detection via perceptual hashing with similarity scores.
 - Three AI providers: OpenAI GPT, Google Gemini, and Anthropic Claude.

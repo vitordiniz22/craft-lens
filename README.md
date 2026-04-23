@@ -15,7 +15,7 @@
   <a href="https://github.com/vitordiniz22/craft-lens/actions/workflows/tests.yml"><img src="https://github.com/vitordiniz22/craft-lens/actions/workflows/tests.yml/badge.svg" alt="Tests"></a>
 </p>
 
-Lens uses AI to analyze the images in your asset library, generating alt text, titles, descriptions, semantic tags, color palettes, focal points, and more. It detects faces, flags NSFW content, spots watermarks, identifies brands, extracts text via OCR, and finds duplicate images across your library.
+Lens uses AI to analyze the images in your asset library, generating alt text, titles, descriptions, semantic tags, focal points, and more. It detects faces, flags NSFW content, spots watermarks, identifies brands, extracts text via OCR, and finds duplicate images across your library.
 
 Choose your AI provider (**OpenAI GPT**, **Google Gemini**, or **Anthropic Claude**) and turn your asset library from bare-bones metadata into an organized, accessible, and fully searchable media system. All generated metadata is instantly searchable, and fully editable when you need to refine it.
 
@@ -43,7 +43,6 @@ Choose your AI provider (**OpenAI GPT**, **Google Gemini**, or **Anthropic Claud
 - **Title suggestions** that replace Craft's auto-generated titles with meaningful, descriptive names
 - **Long descriptions** that give images rich context and feed the search index for better discoverability
 - **Semantic tags** that actually describe what's in the image, typically 20-25 per asset, each scored by confidence
-- **Dominant colors** extracted as a 6-color palette with hex values and percentages, making your library searchable by color
 
 ### Content Detection
 
@@ -54,7 +53,7 @@ Choose your AI provider (**OpenAI GPT**, **Google Gemini**, or **Anthropic Claud
 - **Stock photo detection** identifies which stock provider an asset came from
 - **OCR** extracts text from images, fully searchable
 
-[[Image: Analysis panel in the asset editor. Show a real asset with all sections visible: suggested title and alt text with a confidence badge, semantic tags displayed as chips, the 6-color palette with hex values and percentages, quality metrics with verdicts, and people detection showing "Individual". Pick a visually interesting photo so the analysis results are compelling.]]
+[[Image: Analysis panel in the asset editor. Show a real asset with all sections visible: suggested title and alt text with a confidence badge, semantic tags displayed as chips, quality metrics with verdicts, and people detection showing "Individual". Pick a visually interesting photo so the analysis results are compelling.]]
 
 ### Image Assessment
 
@@ -77,7 +76,7 @@ Choose your AI provider (**OpenAI GPT**, **Google Gemini**, or **Anthropic Claud
 - **Focal point editing** lets you click anywhere on the image to set the focal point, accept or override the AI suggestion
 - **Low-confidence flagging** surfaces AI results below 80% confidence so you can focus review time where it matters
 
-[[Image: Review Queue Focus View. Show the two-panel layout with a large image preview on the left (focal point crosshair visible if possible), and the right panel displaying editable title, alt text, long description, tag chips, color swatches, and the approve/reject buttons. Pick an asset with rich metadata to showcase the depth of analysis.]]
+[[Image: Review Queue Focus View. Show the two-panel layout with a large image preview on the left (focal point crosshair visible if possible), and the right panel displaying editable title, alt text, long description, tag chips, and the approve/reject buttons. Pick an asset with rich metadata to showcase the depth of analysis.]]
 
 [[Image: Bulk Processing. Show the processing-in-progress state with the progress bar partially filled (e.g. "Processing 34 of 127"), the cost estimate visible, and the volume selector dropdown. This shows the scale of what Pro can handle.]]
 
@@ -94,7 +93,7 @@ Lens has two editions. **Lite** is the analysis layer: every image gets AI-gener
 
 **Lite** is free and includes:
 
-- AI analysis: alt text, titles, descriptions, dominant colors, focal points, people and face detection, NSFW scoring, and watermark and brand recognition, with per-site translations for multisite installs.
+- AI analysis: alt text, titles, descriptions, focal points, people and face detection, NSFW scoring, and watermark and brand recognition, with per-site translations for multisite installs.
 - 9 pre-built views in Craft's asset library: All Images (scoped to your Lens-enabled volumes), Not Analyzed, Failed Analyses, Missing Alt Text, NSFW Flagged, Missing Focal Point, Contains People, Has Watermark, and Has Brand Logo.
 - 15 filters you can combine to build your own custom views.
 

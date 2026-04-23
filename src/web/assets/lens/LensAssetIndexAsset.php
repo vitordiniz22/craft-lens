@@ -10,7 +10,7 @@ use craft\web\assets\cp\CpAsset;
 /**
  * Loaded on Craft's native assets index page. Honors `?source=lens:all`
  * + `?lensFilter=<key>` + `?search=<text>` deep links from Lens notices
- * and tag/color chips.
+ * and tag chips.
  */
 class LensAssetIndexAsset extends AssetBundle
 {

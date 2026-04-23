@@ -305,7 +305,7 @@ class SetupStatusService extends Component
             'key' => 'gd_available',
             'category' => self::CATEGORY_EXTENSIONS,
             'severity' => SetupSeverity::Warning->value,
-            'message' => Craft::t('lens', 'Install the GD PHP extension to unlock perceptual-hash duplicate detection and give color extraction a fallback when Imagick is unavailable. Without it, duplicate detection is disabled and related UI is hidden.'),
+            'message' => Craft::t('lens', 'Install the GD PHP extension to unlock perceptual-hash duplicate detection. Without it, duplicate detection is disabled and related UI is hidden.'),
             'actionLabel' => '',
             'actionUrl' => '',
             'docsUrl' => self::DOCS_BASE_URL . 'Getting-Started#enabling-gd-recommended',

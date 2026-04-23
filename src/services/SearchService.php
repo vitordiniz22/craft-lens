@@ -10,7 +10,6 @@ use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\enums\QuickFilter;
 use vitordiniz22\craftlens\enums\WatermarkType;
-use vitordiniz22\craftlens\helpers\ColorSupport;
 use vitordiniz22\craftlens\helpers\DuplicateSupport;
 use vitordiniz22\craftlens\helpers\ImageMetricsAnalyzer;
 use vitordiniz22\craftlens\helpers\Logger;
@@ -35,7 +34,6 @@ class SearchService extends Component
 {
     private const DEFAULT_LIMIT = 50;
     private const NATIVE_SEARCH_LIMIT = 500;
-    private const DEFAULT_COLOR_TOLERANCE = 30;
 
 
     /**
@@ -251,7 +249,6 @@ class SearchService extends Component
         $this->applyPeopleFilter($query, $filters);
         $this->applyNsfwFilter($query, $filters);
         $this->applyDateFilter($query, $filters);
-        $this->applyColorFilter($query, $filters);
         $this->applyDuplicatesFilter($query, $filters);
         $this->applyWatermarkFilter($query, $filters);
         $this->applyBrandLogoFilter($query, $filters);
@@ -311,7 +308,7 @@ class SearchService extends Component
             'tags', 'status', 'containsPeople', 'faceCountPreset',
             'nsfwScoreMin', 'nsfwScoreMax', 'nsfwFlagged',
             'processedFrom', 'processedTo',
-            'color', 'hasDuplicates',
+            'hasDuplicates',
             'hasWatermark', 'watermarkType', 'containsBrandLogo',
             'hasFocalPoint',
             'missingAltText', 'unprocessed',
@@ -465,30 +462,6 @@ class SearchService extends Component
             $to = (clone $to)->modify('+1 day');
             $query->andWhere(['<', 'lens.processedAt', $to->format('Y-m-d H:i:s')]);
         }
-    }
-
-    /**
-     * Apply color filter using direct hex matching with tolerance.
-     */
-    private function applyColorFilter(Query $query, array $filters): void
-    {
-        if (!isset($filters['color'])) {
-            return;
-        }
-
-        if (!ColorSupport::isAvailable()) {
-            return;
-        }
-
-        $tolerance = $filters['colorTolerance'] ?? self::DEFAULT_COLOR_TOLERANCE;
-        $matchingAssetIds = $this->findAssetsWithColorHex($filters['color'], $tolerance);
-
-        if (empty($matchingAssetIds)) {
-            $query->andWhere('1 = 0');
-            return;
-        }
-
-        $query->andWhere(['assets.id' => $matchingAssetIds]);
     }
 
     /**
@@ -724,109 +697,6 @@ class SearchService extends Component
     }
 
     /**
-     * Find assets that have dominant colors matching a given hex color within tolerance.
-     *
-     * @return int[]
-     */
-    private function findAssetsWithColorHex(string $hex, int $tolerance): array
-    {
-        $targetHsl = $this->hexToHsl($hex);
-
-        $query = (new Query())
-            ->select(['c.hex', 'a.assetId'])
-            ->from(Install::TABLE_ASSET_COLORS . ' c')
-            ->innerJoin(Install::TABLE_ASSET_ANALYSES . ' a', '[[c.analysisId]] = [[a.id]]')
-            ->where(['in', 'a.status', AnalysisStatus::analyzedValues()]);
-
-        $matchingIds = [];
-
-        foreach ($query->batch(500) as $rows) {
-            foreach ($rows as $row) {
-                if ($this->colorMatchesHsl($row['hex'] ?? '', $targetHsl, $tolerance)) {
-                    $matchingIds[] = (int) $row['assetId'];
-                }
-            }
-        }
-
-        return array_unique($matchingIds);
-    }
-
-    /**
-     * Check if a hex color matches a target HSL within tolerance.
-     */
-    private function colorMatchesHsl(string $hex, array $targetHsl, int $tolerance): bool
-    {
-        if (empty($hex)) {
-            return false;
-        }
-
-        $hsl = $this->hexToHsl($hex);
-
-        // Circular hue distance (0-180 max)
-        $hueDiff = abs($hsl['h'] - $targetHsl['h']);
-        $hueDist = min($hueDiff, 360 - $hueDiff);
-
-        $satDist = abs($hsl['s'] - $targetHsl['s']);
-        $lightDist = abs($hsl['l'] - $targetHsl['l']);
-
-        // Scale tolerance into per-channel thresholds
-        $hueThreshold = $tolerance * 1.5;   // 0-150 degrees
-        $satThreshold = $tolerance;          // 0-100%
-        $lightThreshold = $tolerance;        // 0-100%
-
-        return $hueDist <= $hueThreshold
-            && $satDist <= $satThreshold
-            && $lightDist <= $lightThreshold;
-    }
-
-    /**
-     * Convert hex color to HSL.
-     *
-     * @return array{h: int, s: int, l: int}
-     */
-    private function hexToHsl(string $hex): array
-    {
-        $hex = ltrim($hex, '#');
-        if (strlen($hex) === 3) {
-            $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
-        }
-
-        $r = hexdec(substr($hex, 0, 2)) / 255;
-        $g = hexdec(substr($hex, 2, 2)) / 255;
-        $b = hexdec(substr($hex, 4, 2)) / 255;
-
-        $max = max($r, $g, $b);
-        $min = min($r, $g, $b);
-        $l = ($max + $min) / 2;
-
-        if ($max === $min) {
-            $h = $s = 0;
-        } else {
-            $d = $max - $min;
-            $s = $l > 0.5 ? $d / (2 - $max - $min) : $d / ($max + $min);
-
-            switch ($max) {
-                case $r:
-                    $h = (($g - $b) / $d + ($g < $b ? 6 : 0)) / 6;
-                    break;
-                case $g:
-                    $h = (($b - $r) / $d + 2) / 6;
-                    break;
-                case $b:
-                default:
-                    $h = (($r - $g) / $d + 4) / 6;
-                    break;
-            }
-        }
-
-        return [
-            'h' => (int) round($h * 360),
-            's' => (int) round($s * 100),
-            'l' => (int) round($l * 100),
-        ];
-    }
-
-    /**
      * Get status options for filter dropdown.
      *
      * @return array<array{value: string, label: string}>
@@ -1025,18 +895,6 @@ class SearchService extends Component
                 'type' => 'preset-buttons',
                 'options' => $this->getFileSizePresets(),
             ],
-            'color' => [
-                'label' => Craft::t('lens', 'Color'),
-                'section' => 'technical',
-                'type' => 'color',
-                'params' => ['color' => 'color', 'tolerance' => 'colorTolerance'],
-                'tolerancePresets' => [
-                    ['value' => '10', 'label' => Craft::t('lens', 'Exact')],
-                    ['value' => '30', 'label' => Craft::t('lens', 'Close')],
-                    ['value' => '55', 'label' => Craft::t('lens', 'Broad')],
-                    ['value' => '80', 'label' => Craft::t('lens', 'Any')],
-                ],
-            ],
             'hasFocalPoint' => ['label' => Craft::t('lens', 'Focal point'), 'section' => 'technical']
                 + $triState(Craft::t('lens', 'Focal point set'), Craft::t('lens', 'Not set')),
             'status' => [
@@ -1069,10 +927,6 @@ class SearchService extends Component
                 'params' => ['tags' => 'tags', 'operator' => 'tagOperator'],
             ],
         ];
-
-        if (!ColorSupport::isAvailable()) {
-            unset($registry['color']);
-        }
 
         if (!QualitySupport::isAvailable()) {
             unset($registry['qualityIssue']);
@@ -1203,7 +1057,6 @@ class SearchService extends Component
             ['hasWatermark'],
             ['watermarkType'],
             ['containsBrandLogo'],
-            ['color'],
             ['status'],
             ['provider', 'providerModel'],
             ['nsfwScoreMin', 'nsfwScoreMax'],

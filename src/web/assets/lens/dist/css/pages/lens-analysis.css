@@ -442,13 +442,6 @@
     margin-top: 0px;
 }
 
-/* Color picker row inside taxonomy add field */
-.lens-color-picker-row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
 /* Autocomplete suggestions dropdown */
 .lens-tag-suggestions {
     position: absolute;
@@ -510,28 +503,6 @@
     font-weight: 600;
 }
 
-.lens-color-hex {
-    font-family: var(--mono-font-family);
-    font-size: 12px;
-}
-
-.lens-color-preview {
-    width: 32px;
-    height: 32px;
-    padding: 1px;
-    border: 1px solid var(--hairline-color);
-    border-radius: var(--small-border-radius);
-    cursor: pointer;
-    flex-shrink: 0;
-}
-
-.lens-color-hex-input {
-    width: 90px;
-    flex: 0 0 90px;
-    font-family: var(--mono-font-family);
-    font-size: 13px;
-}
-
 /* ==========================================================================
    Taxonomy Edit Mode Toggle
    ========================================================================== */
@@ -539,8 +510,7 @@
 /* Hide editing controls when toggle present but NOT in edit mode */
 [data-lens-edit-mode="toggle"]:not(.lens-is-editing) .lens-tag-remove,
 [data-lens-edit-mode="toggle"]:not(.lens-is-editing) craft-tooltip:has(.lens-tag-remove),
-[data-lens-edit-mode="toggle"]:not(.lens-is-editing) [data-lens-target="tag-input-wrapper"],
-[data-lens-edit-mode="toggle"]:not(.lens-is-editing) [data-lens-target="color-add-row"] {
+[data-lens-edit-mode="toggle"]:not(.lens-is-editing) [data-lens-target="tag-input-wrapper"] {
     display: none;
 }
 

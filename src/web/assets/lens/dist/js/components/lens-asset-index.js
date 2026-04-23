@@ -52,7 +52,7 @@
     };
 
     var FILTER_LABELS = {
-        'not-analysed': 'Not analysed',
+        'not-analysed': 'Not analyzed',
         'failed': 'Failed analyses',
         'missing-alt-text': 'Missing alt text',
         'missing-focal-point': 'Missing focal point',
@@ -84,7 +84,6 @@
             source: raw.source || null,
             filterKey: raw.lensFilter || null,
             tag: raw.lensTag || null,
-            color: raw.lensColor || null,
             search: raw.search || null,
         };
     }
@@ -93,13 +92,12 @@
         return (params.source && params.source.indexOf(LENS_PREFIX) === 0)
             || !!params.filterKey
             || !!params.tag
-            || !!params.color
             || (params.search && params.source === FALLBACK_SOURCE);
     }
 
     /**
      * Build the active criteria + chip label from URL params. Precedence:
-     * explicit filter key → dynamic tag → dynamic color.
+     * explicit filter key → dynamic tag.
      */
     function resolveCriteria(params) {
         if (params.filterKey && FILTER_CRITERIA[params.filterKey]) {
@@ -114,13 +112,6 @@
                 criteria: {lensTag: params.tag},
                 chipPrefix: Craft.t('lens', 'Lens tag:'),
                 chipLabel: params.tag,
-            };
-        }
-        if (params.color) {
-            return {
-                criteria: {lensColor: params.color},
-                chipPrefix: Craft.t('lens', 'Lens color:'),
-                chipLabel: params.color,
             };
         }
         return {criteria: null, chipPrefix: null, chipLabel: null};
@@ -333,7 +324,6 @@
             var url = new URL(window.location.href);
             url.searchParams.delete('lensFilter');
             url.searchParams.delete('lensTag');
-            url.searchParams.delete('lensColor');
             window.history.replaceState({}, '', url.toString());
         } catch (err) {
             safeWarn('URL cleanup failed', err);

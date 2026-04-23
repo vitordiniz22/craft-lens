@@ -10,7 +10,6 @@ use craft\web\Controller;
 use vitordiniz22\craftlens\controllers\traits\ValidatesIdsTrait;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\enums\LogCategory;
-use vitordiniz22\craftlens\helpers\ColorSupport;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\helpers\MultisiteHelper;
 use vitordiniz22\craftlens\Plugin;
@@ -412,31 +411,6 @@ class AnalysisController extends Controller
         try {
             $result = Plugin::getInstance()->analysisEdit->updateTags($analysisId, $tags);
             return $this->asJson(['success' => true, 'tags' => $result]);
-        } catch (\InvalidArgumentException $e) {
-            throw new BadRequestHttpException($e->getMessage());
-        }
-    }
-
-    /**
-     * Update colors for an analysis.
-     */
-    public function actionUpdateColors(): Response
-    {
-        $this->requireCpRequest();
-        $this->requirePostRequest();
-        $this->requirePermission('accessPlugin-lens');
-
-        if (!ColorSupport::isAvailable()) {
-            throw new BadRequestHttpException('Color support is unavailable: install the Imagick or GD PHP extension.');
-        }
-
-        $analysisId = $this->requireValidId('analysisId', 'analysis ID');
-        $colors = $this->request->getRequiredBodyParam('colors');
-        $colors = is_string($colors) ? (json_decode($colors, true) ?? []) : (array) $colors;
-
-        try {
-            $result = Plugin::getInstance()->analysisEdit->updateColors($analysisId, $colors);
-            return $this->asJson(['success' => true, 'colors' => $result]);
         } catch (\InvalidArgumentException $e) {
             throw new BadRequestHttpException($e->getMessage());
         }

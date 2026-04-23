@@ -10,8 +10,6 @@ use craft\helpers\Db;
 use vitordiniz22\craftlens\conditions\FileTooLargeConditionRule;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\enums\LogCategory;
-use vitordiniz22\craftlens\helpers\ColorMatcher;
-use vitordiniz22\craftlens\helpers\ColorSupport;
 use vitordiniz22\craftlens\helpers\DuplicateSupport;
 use vitordiniz22\craftlens\helpers\ImageMetricsAnalyzer;
 use vitordiniz22\craftlens\helpers\Logger;
@@ -39,8 +37,6 @@ class AssetQueryBehavior extends Behavior
     public string|array|null $lensTag = null;
     /** @var string[]|null AI tags that must ALL be present on the asset */
     public ?array $lensTagsAll = null;
-    public ?string $lensColor = null;
-    public ?int $lensColorTolerance = null;
     public ?bool $lensNsfwFlagged = null;
     public ?float $lensNsfwScoreMin = null;
     public ?float $lensNsfwScoreMax = null;
@@ -144,31 +140,6 @@ class AssetQueryBehavior extends Behavior
             return $this->owner;
         }
         $this->lensTagsAll = $value;
-        return $this->owner;
-    }
-
-    /**
-     * Filters assets by dominant color hex.
-     */
-    public function lensColor(?string $value): AssetQuery
-    {
-        if (!Plugin::getInstance()->getIsPro()) {
-            return $this->owner;
-        }
-        if (!ColorSupport::isAvailable()) {
-            return $this->owner;
-        }
-        $this->lensColor = $value;
-        return $this->owner;
-    }
-
-    /**
-     * Sets the HSL tolerance (0-100) paired with `lensColor()`. Null falls back
-     * to `ColorMatcher::DEFAULT_TOLERANCE`.
-     */
-    public function lensColorTolerance(?int $value): AssetQuery
-    {
-        $this->lensColorTolerance = $value;
         return $this->owner;
     }
 
@@ -643,14 +614,6 @@ class AssetQueryBehavior extends Behavior
         }
     }
 
-    public function lensApplyColorFilter(): void
-    {
-        if ($this->lensColor !== null && $this->owner->subQuery !== null) {
-            $this->safeApplyFilter(fn() => $this->applyColorFilter(), 'ColorFilter', 'lensColor');
-            $this->lensColor = null;
-        }
-    }
-
     public function lensApplyNsfwScoreRangeFilter(): void
     {
         if (($this->lensNsfwScoreMin !== null || $this->lensNsfwScoreMax !== null) && $this->owner->subQuery !== null) {
@@ -760,10 +723,6 @@ class AssetQueryBehavior extends Behavior
 
         if ($this->lensTag !== null) {
             $this->applyTagFilter();
-        }
-
-        if ($this->lensColor !== null) {
-            $this->applyColorFilter();
         }
 
         if ($this->lensNsfwFlagged !== null) {
@@ -966,28 +925,6 @@ class AssetQueryBehavior extends Behavior
 
             $this->owner->subQuery->andWhere(['exists', $existsSubQuery]);
         }
-    }
-
-    /**
-     * Matches assets whose dominant colors are within `lensColorTolerance` of
-     * `lensColor` in HSL space. Resolution runs in PHP via ColorMatcher, which
-     * returns the asset ID set to restrict the query to.
-     */
-    private function applyColorFilter(): void
-    {
-        if (!ColorSupport::isAvailable()) {
-            return;
-        }
-
-        $tolerance = $this->lensColorTolerance ?? ColorMatcher::DEFAULT_TOLERANCE;
-        $matchingIds = ColorMatcher::findAssetsMatching((string) $this->lensColor, $tolerance);
-
-        if (empty($matchingIds)) {
-            $this->owner->subQuery->andWhere('1 = 0');
-            return;
-        }
-
-        $this->owner->subQuery->andWhere(['elements.id' => $matchingIds]);
     }
 
     private function applyDetectedBrandFilter(): void
@@ -1254,7 +1191,6 @@ class AssetQueryBehavior extends Behavior
             || $this->lensConfidenceAbove !== null
             || $this->lensTag !== null
             || $this->lensTagsAll !== null
-            || $this->lensColor !== null
             || $this->lensNsfwFlagged !== null
             || $this->lensNsfwScoreMin !== null
             || $this->lensNsfwScoreMax !== null
@@ -1317,8 +1253,6 @@ class AssetQueryBehavior extends Behavior
         $this->lensConfidenceAbove = null;
         $this->lensTag = null;
         $this->lensTagsAll = null;
-        $this->lensColor = null;
-        $this->lensColorTolerance = null;
         $this->lensNsfwFlagged = null;
         $this->lensNsfwScoreMin = null;
         $this->lensNsfwScoreMax = null;

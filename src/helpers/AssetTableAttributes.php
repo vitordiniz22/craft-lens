@@ -112,17 +112,20 @@ class AssetTableAttributes
      */
     public static function defaultAttributes(string $source): array
     {
+        $isPro = Plugin::getInstance()->getIsPro();
+        $tags = $isPro ? [self::ATTR_TAGS] : [];
+
         return match ($source) {
-            'lens:all' => [self::ATTR_PROVIDER, self::ATTR_STATUS],
+            'lens:all' => array_merge([self::ATTR_PROVIDER, self::ATTR_STATUS], $tags),
             'lens:not-analysed',
             'lens:failed' => [],
-            'lens:nsfw-flagged' => [self::ATTR_NSFW, self::ATTR_PROVIDER, self::ATTR_STATUS],
-            'lens:missing-alt-text' => [self::ATTR_STATUS],
-            'lens:has-watermark' => [self::ATTR_WATERMARK, self::ATTR_PROVIDER, self::ATTR_STATUS],
-            'lens:has-brand-logo' => [self::ATTR_BRANDS, self::ATTR_PROVIDER, self::ATTR_STATUS],
-            'lens:contains-people' => [self::ATTR_PEOPLE, self::ATTR_PROVIDER, self::ATTR_STATUS],
-            'lens:missing-focal-point' => [self::ATTR_STATUS],
-            'lens:needs-review' => [self::ATTR_PROVIDER, self::ATTR_TAGS],
+            'lens:nsfw-flagged' => array_merge([self::ATTR_NSFW, self::ATTR_PROVIDER, self::ATTR_STATUS], $tags),
+            'lens:missing-alt-text' => array_merge([self::ATTR_STATUS], $tags),
+            'lens:has-watermark' => array_merge([self::ATTR_WATERMARK, self::ATTR_PROVIDER, self::ATTR_STATUS], $tags),
+            'lens:has-brand-logo' => array_merge([self::ATTR_BRANDS, self::ATTR_PROVIDER, self::ATTR_STATUS], $tags),
+            'lens:contains-people' => array_merge([self::ATTR_PEOPLE, self::ATTR_PROVIDER, self::ATTR_STATUS], $tags),
+            'lens:missing-focal-point' => array_merge([self::ATTR_STATUS], $tags),
+            'lens:needs-review' => array_merge([self::ATTR_PROVIDER], $tags),
             default => [],
         };
     }
@@ -151,7 +154,7 @@ class AssetTableAttributes
         $analysis = self::getAnalysis($asset->id);
 
         if ($analysis === null) {
-            return Html::tag('span', Craft::t('lens', 'Not analysed'), [
+            return Html::tag('span', Craft::t('lens', 'Not analyzed'), [
                 'class' => 'status-label-with-icon gray',
             ]);
         }

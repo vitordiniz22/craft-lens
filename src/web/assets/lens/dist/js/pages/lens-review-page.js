@@ -107,7 +107,7 @@
         },
 
         // ================================================================
-        // Form Submit — Serialize tags and colors before submission
+        // Form Submit — Serialize tags before submission
         // ================================================================
 
         _bindFormSubmit: function() {
@@ -121,14 +121,6 @@
                 if (tagEditor && tagsInput && window.Lens.services && window.Lens.services.Taxonomy) {
                     var tags = window.Lens.services.Taxonomy.collectTags(tagEditor);
                     tagsInput.value = JSON.stringify(tags);
-                }
-
-                // Serialize colors → JSON string in hidden input
-                var colorEditor = document.querySelector('[data-lens-target="color-editor"]');
-                var colorsInput = DOM.findControl('field-colors');
-                if (colorEditor && colorsInput && window.Lens.services && window.Lens.services.Taxonomy) {
-                    var colors = window.Lens.services.Taxonomy.collectColors(colorEditor);
-                    colorsInput.value = JSON.stringify(colors);
                 }
 
                 // Serialize per-site content → JSON string in hidden input

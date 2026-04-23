@@ -12,10 +12,10 @@ use vitordiniz22\craftlens\Plugin;
 use vitordiniz22\craftlenstests\_support\Helpers\AnalysisRecordFixtures;
 
 /**
- * Integration tests for lensTag(), lensColor(), lensTextSearch().
+ * Integration tests for lensTag() and lensTextSearch().
  *
- * These three filters read from child tables (lens_asset_tags, lens_asset_colors)
- * or a JSON column (extractedTextAi) via EXISTS subquery or LIKE respectively.
+ * Tag matching reads from a child table (lens_asset_tags) via EXISTS subquery;
+ * text search runs against a JSON column (extractedTextAi) via LIKE.
  */
 class AssetQueryContentTagsTest extends Unit
 {
@@ -79,61 +79,6 @@ class AssetQueryContentTagsTest extends Unit
 
         $this->assertContains($tagged->assetId, $ids);
         $this->assertContains($untagged->assetId, $ids);
-    }
-
-    // ---------- lensColor ----------
-
-    public function testLensColorMatchesAnyStoredColor(): void
-    {
-        $red = $this->createAssetFixture('red.jpg');
-        $this->createColorRow($red->id, $red->assetId, '#FF0000', 0.6);
-        $this->createColorRow($red->id, $red->assetId, '#000000', 0.4);
-
-        $blue = $this->createAssetFixture('blue.jpg');
-        $this->createColorRow($blue->id, $blue->assetId, '#0000FF', 1.0);
-
-        $noColors = $this->createAssetFixture('nocolors.jpg');
-
-        $ids = Asset::find()->volume('lenstest')->lensColor('#FF0000')->ids();
-
-        $this->assertContains($red->assetId, $ids, 'asset with multiple colors including red matches');
-        $this->assertNotContains($blue->assetId, $ids);
-        $this->assertNotContains($noColors->assetId, $ids);
-    }
-
-    public function testLensColorIsExactHexMatch(): void
-    {
-        $upper = $this->createAssetFixture('upper.jpg');
-        $this->createColorRow($upper->id, $upper->assetId, '#FF0000');
-
-        $lower = $this->createAssetFixture('lower.jpg');
-        $this->createColorRow($lower->id, $lower->assetId, '#ff0000');
-
-        // Matching by exact string. MySQL collation on varchar(7) determines
-        // whether #FF0000 and #ff0000 are equal; this test documents actual behavior.
-        $idsUpper = Asset::find()->volume('lenstest')->lensColor('#FF0000')->ids();
-
-        $this->assertContains($upper->assetId, $idsUpper);
-        // The lower-case record either matches (if CI collation) or not (if CS).
-        // Either way, the OPPOSITE direction must behave consistently:
-        $idsLower = Asset::find()->volume('lenstest')->lensColor('#ff0000')->ids();
-        $this->assertSame(
-            in_array($upper->assetId, $idsUpper, true),
-            in_array($lower->assetId, $idsLower, true),
-            'hex matching must be symmetrical across case (CI) or consistently case-sensitive',
-        );
-    }
-
-    public function testLensColorNullAppliesNoFilter(): void
-    {
-        $withColor = $this->createAssetFixture('a.jpg');
-        $this->createColorRow($withColor->id, $withColor->assetId, '#FF0000');
-        $noColor = $this->createAssetFixture('b.jpg');
-
-        $ids = Asset::find()->volume('lenstest')->lensColor(null)->ids();
-
-        $this->assertContains($withColor->assetId, $ids);
-        $this->assertContains($noColor->assetId, $ids);
     }
 
     // ---------- lensTextSearch ----------
@@ -217,22 +162,6 @@ class AssetQueryContentTagsTest extends Unit
 
         $this->assertContains($withSunset->assetId, $ids);
         $this->assertContains($withOther->assetId, $ids, 'Lite must ignore lensTag');
-    }
-
-    public function testLensColorIgnoredOnLite(): void
-    {
-        $red = $this->createAssetFixture('red.jpg');
-        $this->createColorRow($red->id, $red->assetId, '#FF0000');
-
-        $blue = $this->createAssetFixture('blue.jpg');
-        $this->createColorRow($blue->id, $blue->assetId, '#0000FF');
-
-        Plugin::getInstance()->edition = Plugin::EDITION_LITE;
-
-        $ids = Asset::find()->volume('lenstest')->lensColor('#FF0000')->ids();
-
-        $this->assertContains($red->assetId, $ids);
-        $this->assertContains($blue->assetId, $ids, 'Lite must ignore lensColor');
     }
 
     public function testLensTextSearchIgnoredOnLite(): void

@@ -24,7 +24,6 @@ enum FilterField: string
     case HasWatermark = 'hasWatermark';
     case WatermarkType = 'watermarkType';
     case ContainsBrandLogo = 'containsBrandLogo';
-    case Color = 'color';
     case Status = 'status';
     case Provider = 'provider';
     case ProviderModel = 'providerModel';
@@ -51,7 +50,6 @@ enum FilterField: string
             self::HasWatermark => 'Watermark',
             self::WatermarkType => 'Watermark Type',
             self::ContainsBrandLogo => 'Brand Logo',
-            self::Color => 'Color',
             self::Status => 'Status',
             self::Provider => 'Provider',
             self::ProviderModel => 'Model',

@@ -43,7 +43,6 @@ use vitordiniz22\craftlens\conditions\FileTooLargeConditionRule;
 use vitordiniz22\craftlens\conditions\HasDuplicatesConditionRule;
 use vitordiniz22\craftlens\conditions\HasFocalPointConditionRule;
 use vitordiniz22\craftlens\conditions\HasTextInImageConditionRule;
-use vitordiniz22\craftlens\conditions\LensColorConditionRule;
 use vitordiniz22\craftlens\conditions\LensStatusConditionRule;
 use vitordiniz22\craftlens\conditions\LensTagsAllConditionRule;
 use vitordiniz22\craftlens\conditions\LensTagsAnyConditionRule;
@@ -68,7 +67,6 @@ use vitordiniz22\craftlens\services\AnalysisCancellationService;
 use vitordiniz22\craftlens\services\AnalysisEditService;
 use vitordiniz22\craftlens\services\AssetAnalysisService;
 use vitordiniz22\craftlens\services\BulkProcessingStatusService;
-use vitordiniz22\craftlens\services\ColorAggregationService;
 use vitordiniz22\craftlens\services\ContentStorageService;
 use vitordiniz22\craftlens\services\DuplicateDetectionService;
 use vitordiniz22\craftlens\services\LogService;
@@ -106,7 +104,6 @@ use yii\web\Response;
  * @property-read PricingService $pricing
  * @property-read ReviewService $review
  * @property-read TagAggregationService $tagAggregation
- * @property-read ColorAggregationService $colorAggregation
  * @property-read StatisticsService $statistics
  * @property-read DuplicateDetectionService $duplicateDetection
  * @property-read SearchService $search
@@ -206,7 +203,6 @@ class Plugin extends BasePlugin
                 'pricing' => PricingService::class,
                 'review' => ReviewService::class,
                 'tagAggregation' => TagAggregationService::class,
-                'colorAggregation' => ColorAggregationService::class,
                 'statistics' => StatisticsService::class,
                 'duplicateDetection' => DuplicateDetectionService::class,
                 'search' => SearchService::class,
@@ -551,7 +547,6 @@ class Plugin extends BasePlugin
                     $event->conditionRules[] = HasTextInImageConditionRule::class;
                     $event->conditionRules[] = LensTagsAnyConditionRule::class;
                     $event->conditionRules[] = LensTagsAllConditionRule::class;
-                    $event->conditionRules[] = LensColorConditionRule::class;
                     $event->conditionRules[] = HasDuplicatesConditionRule::class;
                     $event->conditionRules[] = SimilarToConditionRule::class;
                 }
@@ -596,7 +591,7 @@ class Plugin extends BasePlugin
                     }
 
                     $sourceDefinitions += [
-                        'not-analysed' => ['Not Analysed', ['lensStatus' => 'untagged'] + $volumeScope],
+                        'not-analysed' => ['Not Analyzed', ['lensStatus' => 'untagged'] + $volumeScope],
                         'failed' => ['Failed Analyses', ['lensStatus' => 'failed'] + $volumeScope],
                         'missing-alt-text' => ['Missing Alt Text', ['hasAlt' => false] + $volumeScope],
                         'nsfw-flagged' => ['NSFW Flagged', ['lensNsfwFlagged' => true] + $volumeScope],
@@ -702,7 +697,6 @@ class Plugin extends BasePlugin
                 $event->rules['lens/analysis/update-field'] = 'lens/analysis/update-field';
                 $event->rules['lens/analysis/revert-field'] = 'lens/analysis/revert-field';
                 $event->rules['lens/analysis/update-tags'] = 'lens/analysis/update-tags';
-                $event->rules['lens/analysis/update-colors'] = 'lens/analysis/update-colors';
                 $event->rules['lens/analysis/tag-suggestions'] = 'lens/analysis/tag-suggestions';
                 $event->rules['lens/analysis/get-status'] = 'lens/analysis/get-status';
                 $event->rules['lens/analysis/apply-title'] = 'lens/analysis/apply-title';

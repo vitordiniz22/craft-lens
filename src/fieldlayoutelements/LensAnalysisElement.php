@@ -77,14 +77,12 @@ class LensAnalysisElement extends BaseUiElement
 
             $analysis = $plugin->assetAnalysis->getAnalysis($element->id);
             $tags = [];
-            $colors = [];
             $similarImages = [];
             $totalSimilarCount = 0;
             $siteContent = [];
 
             if ($analysis) {
                 $tags = $plugin->tagAggregation->getTagsForAnalysis($analysis->id);
-                $colors = $plugin->colorAggregation->getColorsForAnalysis($analysis->id);
 
                 if ($plugin->getIsPro()) {
                     $similarImages = $plugin->duplicateDetection->getSimilarAssetsForDisplay($element->id);
@@ -133,7 +131,6 @@ class LensAnalysisElement extends BaseUiElement
                     'altFieldInLayout' => FieldLayoutHelper::hasAltField($element),
                     'static' => $static,
                     'analysisTags' => $tags,
-                    'analysisColors' => $colors,
                     'similarImages' => $similarImages,
                     'totalSimilarCount' => $totalSimilarCount,
                     'siteContent' => $siteContent,

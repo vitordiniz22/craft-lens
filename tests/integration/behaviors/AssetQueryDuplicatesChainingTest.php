@@ -147,29 +147,6 @@ class AssetQueryDuplicatesChainingTest extends Unit
         $this->assertNotContains($goodPending->assetId, $ids);
     }
 
-    public function testChainingTagAndColorUsesTwoExistsSubqueries(): void
-    {
-        $both = $this->createAssetFixture('both.jpg');
-        $this->createTagRow($both->id, $both->assetId, 'sunset');
-        $this->createColorRow($both->id, $both->assetId, '#FF0000');
-
-        $onlyTag = $this->createAssetFixture('onlytag.jpg');
-        $this->createTagRow($onlyTag->id, $onlyTag->assetId, 'sunset');
-
-        $onlyColor = $this->createAssetFixture('onlycolor.jpg');
-        $this->createColorRow($onlyColor->id, $onlyColor->assetId, '#FF0000');
-
-        $ids = Asset::find()
-            ->volume('lenstest')
-            ->lensTag('sunset')
-            ->lensColor('#FF0000')
-            ->ids();
-
-        $this->assertContains($both->assetId, $ids);
-        $this->assertNotContains($onlyTag->assetId, $ids);
-        $this->assertNotContains($onlyColor->assetId, $ids);
-    }
-
     public function testChainingTwoAssetsTableFiltersCoexist(): void
     {
         // Regression guard: lensTooLarge and lensHasFocalPoint both operate on
