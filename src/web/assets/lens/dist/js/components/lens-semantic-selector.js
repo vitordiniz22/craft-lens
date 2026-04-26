@@ -22,12 +22,18 @@
             return;
         }
 
-        $('<span/>', {
+        var label = Craft.t('lens', 'Search enhanced by Lens AI');
+        var $badge = $('<span/>', {
             'class': 'lens-search-badge',
-            'title': Craft.t('lens', 'Search enhanced by Lens AI'),
-            'aria-label': Craft.t('lens', 'Search enhanced by Lens AI'),
+            'aria-label': label,
             'data-lens-target': 'search-badge'
-        }).insertBefore($container);
+        });
+        var tooltip = document.createElement('craft-tooltip');
+        tooltip.setAttribute('text', label);
+        tooltip.setAttribute('trigger', '.lens-search-badge');
+        tooltip.setAttribute('placement', 'bottom');
+        $badge[0].appendChild(tooltip);
+        $badge.insertBefore($container);
     }
 
     if (Craft.AssetSelectInput) {
