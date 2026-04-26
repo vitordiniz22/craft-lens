@@ -46,7 +46,6 @@ use vitordiniz22\craftlens\conditions\LensStatusConditionRule;
 use vitordiniz22\craftlens\conditions\LensTagsAllConditionRule;
 use vitordiniz22\craftlens\conditions\LensTagsAnyConditionRule;
 use vitordiniz22\craftlens\conditions\NsfwFlaggedConditionRule;
-use vitordiniz22\craftlens\conditions\NsfwScoreConditionRule;
 use vitordiniz22\craftlens\conditions\ProcessedDateConditionRule;
 use vitordiniz22\craftlens\conditions\ProviderConditionRule;
 use vitordiniz22\craftlens\conditions\ProviderModelConditionRule;
@@ -506,7 +505,6 @@ class Plugin extends BasePlugin
             AssetCondition::EVENT_REGISTER_CONDITION_RULES,
             function(RegisterConditionRulesEvent $event) {
                 $event->conditionRules[] = NsfwFlaggedConditionRule::class;
-                $event->conditionRules[] = NsfwScoreConditionRule::class;
                 $event->conditionRules[] = HasFocalPointConditionRule::class;
                 $event->conditionRules[] = ContainsPeopleConditionRule::class;
                 $event->conditionRules[] = FaceCountConditionRule::class;

@@ -86,7 +86,7 @@ Lens has two editions. **Lite** is the analysis layer: every image gets AI-gener
 
 - AI analysis: alt text, titles, descriptions, focal points, people and face detection, NSFW scoring, and watermark and brand recognition, with per-site translations for multisite installs.
 - 9 pre-built views in Craft's asset library: All Images (scoped to your Lens-enabled volumes), Not Analyzed, Failed Analyses, Missing Alt Text, NSFW Flagged, Missing Focal Point, Contains People, Has Watermark, and Has Brand Logo.
-- 15 filters you can combine to build your own custom views.
+- 13 filters you can combine to build your own custom views.
 
 **About Pro metadata on Lite:** By default, Lens still asks the AI for semantic tags, long descriptions, and OCR text while you're on Lite, even though those fields aren't surfaced in the Lite UI. The moment you upgrade to Pro, your entire library is already searchable, with no re-analysis run and no second AI bill. The trade-off is some extra AI cost per image while on Lite. You can disable this in **Lens → Settings → Asset Processing** if you'd rather pay the absolute minimum and accept that an upgrade later would require re-analyzing your library to populate the Pro fields.
 
@@ -96,7 +96,7 @@ Lens has two editions. **Lite** is the analysis layer: every image gets AI-gener
 - Semantic search that ranks results in Craft's asset library and in the image picker on entries, using the tags, titles, descriptions, alt text, and OCR that analysis produces.
 - Bulk Processing to analyze entire volumes in one run, with an up-front cost estimate shown before the run starts, real-time progress, and retry for failed assets.
 - Duplicate detection via perceptual hashing (requires the GD PHP extension).
-- One more pre-built view, conditional on its prerequisite: **Has Duplicates** appears when GD is available. Plus 8 more filters.
+- One more pre-built view, conditional on its prerequisite: **Has Duplicates** appears when GD is available. Plus 7 more filters.
 
 Available on the <a href="https://plugins.craftcms.com/lens" target="_blank" rel="noopener">Craft Plugin Store</a>.
 
