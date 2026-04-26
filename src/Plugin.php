@@ -72,7 +72,6 @@ use vitordiniz22\craftlens\services\DuplicateDetectionService;
 use vitordiniz22\craftlens\services\LogService;
 use vitordiniz22\craftlens\services\NativeSearchEnhancementService;
 use vitordiniz22\craftlens\services\PricingService;
-use vitordiniz22\craftlens\services\ReviewService;
 use vitordiniz22\craftlens\services\SearchIndexService;
 use vitordiniz22\craftlens\services\SearchService;
 use vitordiniz22\craftlens\services\SetupStatusService;
@@ -85,7 +84,6 @@ use vitordiniz22\craftlens\web\assets\lens\LensAssetActionsAsset;
 use vitordiniz22\craftlens\web\assets\lens\LensAssetIndexAsset;
 use vitordiniz22\craftlens\web\assets\lens\LensBulkAsset;
 use vitordiniz22\craftlens\web\assets\lens\LensLogsAsset;
-use vitordiniz22\craftlens\web\assets\lens\LensReviewAsset;
 use vitordiniz22\craftlens\web\assets\lens\LensSemanticSelectorAsset;
 use vitordiniz22\craftlens\web\assets\lens\LensSettingsAsset;
 use yii\base\Event;
@@ -102,7 +100,6 @@ use yii\web\Response;
  * @property-read AssetAnalysisService $assetAnalysis
  * @property-read ContentStorageService $contentStorage
  * @property-read PricingService $pricing
- * @property-read ReviewService $review
  * @property-read TagAggregationService $tagAggregation
  * @property-read StatisticsService $statistics
  * @property-read DuplicateDetectionService $duplicateDetection
@@ -201,7 +198,6 @@ class Plugin extends BasePlugin
                 'contentStorage' => ContentStorageService::class,
                 'bulkProcessingStatus' => BulkProcessingStatusService::class,
                 'pricing' => PricingService::class,
-                'review' => ReviewService::class,
                 'tagAggregation' => TagAggregationService::class,
                 'statistics' => StatisticsService::class,
                 'duplicateDetection' => DuplicateDetectionService::class,
@@ -260,12 +256,6 @@ class Plugin extends BasePlugin
         ];
 
         if ($this->getIsPro() && $isConfigured) {
-            if ($this->getSettings()->requireReviewBeforeApply) {
-                $item['subnav']['review'] = [
-                    'label' => Craft::t('lens', 'Review Queue'),
-                    'url' => 'lens/review',
-                ];
-            }
             $item['subnav']['bulk'] = [
                 'label' => Craft::t('lens', 'Bulk Processing'),
                 'url' => 'lens/bulk',
@@ -286,15 +276,6 @@ class Plugin extends BasePlugin
             $errorCount = $this->log->getRecentErrorCount(24);
             if ($errorCount > 0) {
                 $item['subnav']['logs']['badgeCount'] = $errorCount;
-            }
-        }
-
-        if ($this->getIsPro() && $isConfigured && $this->getSettings()->requireReviewBeforeApply) {
-            $pendingCount = $this->review->getPendingReviewCount();
-
-            if ($pendingCount > 0) {
-                $item['badgeCount'] = $pendingCount;
-                $item['subnav']['review']['badgeCount'] = $pendingCount;
             }
         }
 
@@ -430,7 +411,6 @@ class Plugin extends BasePlugin
                 $view->registerAssetBundle(LensAsset::class);
 
                 $featureBundles = match (true) {
-                    str_starts_with($template, 'lens/_review') => [LensReviewAsset::class, LensAssetActionsAsset::class],
                     str_starts_with($template, 'lens/_bulk') => [LensBulkAsset::class],
                     str_starts_with($template, 'lens/_logs') => [LensLogsAsset::class],
                     str_starts_with($template, 'lens/_settings') => [LensSettingsAsset::class],
@@ -587,10 +567,6 @@ class Plugin extends BasePlugin
 
                     $sourceDefinitions = ['all' => ['All Images', $volumeScope]];
 
-                    if ($this->getIsPro() && $this->getSettings()->requireReviewBeforeApply) {
-                        $sourceDefinitions['needs-review'] = ['Needs Review', ['lensStatus' => 'pending_review'] + $volumeScope];
-                    }
-
                     $sourceDefinitions += [
                         'not-analysed' => ['Not Analyzed', ['lensStatus' => 'untagged'] + $volumeScope],
                         'failed' => ['Failed Analyses', ['lensStatus' => 'failed'] + $volumeScope],
@@ -690,13 +666,6 @@ class Plugin extends BasePlugin
             function(RegisterUrlRulesEvent $event) {
                 $event->rules['lens'] = 'lens/dashboard/index';
                 $event->rules['lens/dashboard'] = 'lens/dashboard/index';
-                $event->rules['lens/review'] = 'lens/review/index';
-                $event->rules['lens/review/bulk'] = 'lens/review/bulk';
-                $event->rules['lens/review/<analysisId:\d+>'] = 'lens/review/view';
-                $event->rules['lens/review/approve'] = 'lens/review/approve';
-                $event->rules['lens/review/reject'] = 'lens/review/reject';
-                $event->rules['lens/review/bulk-approve'] = 'lens/review/bulk-approve';
-                $event->rules['lens/review/bulk-reject'] = 'lens/review/bulk-reject';
                 $event->rules['lens/analysis/reprocess'] = 'lens/analysis/reprocess';
                 $event->rules['lens/analysis/cancel'] = 'lens/analysis/cancel';
                 $event->rules['lens/analysis/update-field'] = 'lens/analysis/update-field';

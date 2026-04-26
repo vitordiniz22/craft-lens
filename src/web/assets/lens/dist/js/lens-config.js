@@ -171,9 +171,6 @@
             PROCESSING: 'processing',
             COMPLETED: 'completed',
             FAILED: 'failed',
-            PENDING_REVIEW: 'pending_review',
-            APPROVED: 'approved',
-            REJECTED: 'rejected',
             NOT_FOUND: 'not_found'
         },
 

@@ -98,9 +98,6 @@ class ProcessControllerTest extends Unit
             AnalysisStatus::Pending->value => $this->createAnalysisRecord(AnalysisStatus::Pending->value),
             AnalysisStatus::Processing->value => $this->createAnalysisRecord(AnalysisStatus::Processing->value),
             AnalysisStatus::Completed->value => $this->createAnalysisRecord(AnalysisStatus::Completed->value),
-            AnalysisStatus::PendingReview->value => $this->createAnalysisRecord(AnalysisStatus::PendingReview->value),
-            AnalysisStatus::Approved->value => $this->createAnalysisRecord(AnalysisStatus::Approved->value),
-            AnalysisStatus::Rejected->value => $this->createAnalysisRecord(AnalysisStatus::Rejected->value),
         ];
         $failed = $this->createAnalysisRecord(AnalysisStatus::Failed->value);
 

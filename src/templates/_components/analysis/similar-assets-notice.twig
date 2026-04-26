@@ -3,9 +3,8 @@
  # Inline notice with thumbnail strip for duplicate/similar asset alerts.
  # Embeds the shared inline-notice component with a custom body block.
  #
- # Expected variables: similarImages, totalSimilarCount, asset, static, isProcessing, variant (optional: 'review')
+ # Expected variables: similarImages, totalSimilarCount, asset, static, isProcessing
  #}
-{% set isReview = (variant ?? '') == 'review' %}
 {% set totalCount = totalSimilarCount ?? similarImages|length %}
 {% set extraCount = totalCount - similarImages|length %}
 

@@ -100,37 +100,24 @@ class AssetQueryStatusConfidenceTest extends Unit
         $this->assertNotContains($completed->assetId, $ids, 'completed must NOT match untagged');
     }
 
-    public function testLensStatusUntaggedExcludesProcessingAndReviewed(): void
+    public function testLensStatusUntaggedExcludesProcessingAndCompleted(): void
     {
         $processing = $this->createAssetFixture('processing.jpg', [], [], 'processing');
-        $approved = $this->createAssetFixture('approved.jpg', [], [], 'approved');
-        $rejected = $this->createAssetFixture('rejected.jpg', [], [], 'rejected');
-        $pendingReview = $this->createAssetFixture('pr.jpg', [], [], 'pending_review');
+        $completed = $this->createAssetFixture('completed.jpg', [], [], 'completed');
         $pending = $this->createAssetFixture('pending.jpg', [], [], 'pending');
 
         $ids = Asset::find()->volume('lenstest')->lensStatus('untagged')->ids();
 
         $this->assertContains($pending->assetId, $ids);
         $this->assertNotContains($processing->assetId, $ids);
-        $this->assertNotContains($approved->assetId, $ids);
-        $this->assertNotContains($rejected->assetId, $ids);
-        $this->assertNotContains($pendingReview->assetId, $ids);
+        $this->assertNotContains($completed->assetId, $ids);
     }
 
     // ---------- lensStatus('analyzed') ----------
 
-    public function testLensStatusAnalyzedMatchesExactlyCompletedApprovedPendingReview(): void
+    public function testLensStatusAnalyzedMatchesOnlyCompleted(): void
     {
-        // Sanity check: the enum helper returns the exact set we're testing.
-        $this->assertSame(
-            ['completed', 'pending_review', 'approved'],
-            AnalysisStatus::analyzedValues(),
-        );
-
         $completed = $this->createAssetFixture('c.jpg', [], [], 'completed');
-        $approved = $this->createAssetFixture('a.jpg', [], [], 'approved');
-        $pendingReview = $this->createAssetFixture('pr.jpg', [], [], 'pending_review');
-        $rejected = $this->createAssetFixture('r.jpg', [], [], 'rejected');
         $pending = $this->createAssetFixture('p.jpg', [], [], 'pending');
         $processing = $this->createAssetFixture('pro.jpg', [], [], 'processing');
         $failed = $this->createAssetFixture('f.jpg', [], [], 'failed');
@@ -138,9 +125,6 @@ class AssetQueryStatusConfidenceTest extends Unit
         $ids = Asset::find()->volume('lenstest')->lensStatus('analyzed')->ids();
 
         $this->assertContains($completed->assetId, $ids);
-        $this->assertContains($approved->assetId, $ids);
-        $this->assertContains($pendingReview->assetId, $ids);
-        $this->assertNotContains($rejected->assetId, $ids);
         $this->assertNotContains($pending->assetId, $ids);
         $this->assertNotContains($processing->assetId, $ids);
         $this->assertNotContains($failed->assetId, $ids);

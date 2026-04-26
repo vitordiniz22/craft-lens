@@ -11,28 +11,17 @@
         </div>
     </div>
     <div class="flex items-center gap-s" data-lens-target="header-actions">
-        {% if analysis %}
-            {% set showStatus = lens.isReviewActive or analysis.status in [lens.status.pending, lens.status.processing, lens.status.failed] %}
-            {% if showStatus %}
-                <div class="flex items-center gap-2xs" data-lens-target="status-badge">
-                    {% switch analysis.status %}
-                        {% case lens.status.pending %}
-                            <span class="status pending"></span>{{ 'Pending'|t('lens') }}
-                        {% case lens.status.processing %}
-                            <span class="status pending"></span>{{ 'Processing'|t('lens') }}
-                        {% case lens.status.completed %}
-                            <span class="status on"></span>{{ 'Analyzed'|t('lens') }}
-                        {% case lens.status.failed %}
-                            <span class="status off"></span>{{ 'Failed'|t('lens') }}
-                        {% case lens.status.pendingReview %}
-                            <span class="status pending"></span>{{ 'Pending Review'|t('lens') }}
-                        {% case lens.status.approved %}
-                            <span class="status on"></span>{{ 'Approved'|t('lens') }}
-                        {% case lens.status.rejected %}
-                            <span class="status off"></span>{{ 'Rejected'|t('lens') }}
-                    {% endswitch %}
-                </div>
-            {% endif %}
+        {% if analysis and analysis.status in [lens.status.pending, lens.status.processing, lens.status.failed] %}
+            <div class="flex items-center gap-2xs" data-lens-target="status-badge">
+                {% switch analysis.status %}
+                    {% case lens.status.pending %}
+                        <span class="status pending"></span>{{ 'Pending'|t('lens') }}
+                    {% case lens.status.processing %}
+                        <span class="status pending"></span>{{ 'Processing'|t('lens') }}
+                    {% case lens.status.failed %}
+                        <span class="status off"></span>{{ 'Failed'|t('lens') }}
+                {% endswitch %}
+            </div>
         {% endif %}
         {% if analysis and not static and analysis.status not in [lens.status.pending, lens.status.processing, lens.status.failed] %}
             <button type="button" class="btn small" data-lens-action="reprocess" data-lens-asset-id="{{ asset.id }}" data-lens-loading-text="{{ 'Processing'|t('lens') }}">

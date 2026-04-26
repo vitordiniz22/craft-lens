@@ -20,7 +20,7 @@ class LensTwigGlobal
 {
     /**
      * Expose AnalysisStatus enum values for Twig templates.
-     * Usage: `lens.status.pendingReview`, `lens.status.failed`, etc.
+     * Usage: `lens.status.completed`, `lens.status.failed`, etc.
      *
      * @return array<string, string>
      */
@@ -31,9 +31,6 @@ class LensTwigGlobal
             'processing' => AnalysisStatus::Processing->value,
             'completed' => AnalysisStatus::Completed->value,
             'failed' => AnalysisStatus::Failed->value,
-            'pendingReview' => AnalysisStatus::PendingReview->value,
-            'approved' => AnalysisStatus::Approved->value,
-            'rejected' => AnalysisStatus::Rejected->value,
         ];
     }
 
@@ -56,7 +53,7 @@ class LensTwigGlobal
 
     /**
      * Get translated label for a single status value.
-     * Usage: `lens.statusLabel('pending_review')` → 'Pending Review'
+     * Usage: `lens.statusLabel('completed')` → 'Analyzed'
      */
     public function statusLabel(string $value): string
     {
@@ -127,17 +124,6 @@ class LensTwigGlobal
     public function getIsLite(): bool
     {
         return Plugin::getInstance()->getIsLite();
-    }
-
-    public function getIsReviewActive(): bool
-    {
-        $plugin = Plugin::getInstance();
-        return $plugin->getIsPro() && $plugin->getSettings()->requireReviewBeforeApply;
-    }
-
-    public function getPendingReviewCount(): int
-    {
-        return Plugin::getInstance()->review->getPendingReviewCount();
     }
 
     public function getHasQualitySupport(): bool

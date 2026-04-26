@@ -26,13 +26,9 @@ class StatsController extends Controller
         $this->stdout("========================\n\n");
 
         $unprocessed = Plugin::getInstance()->assetAnalysis->getUnprocessedCount();
-        $pendingReview = Plugin::getInstance()->review->getPendingReviewCount();
 
         $this->stdout("Unprocessed assets: ", Console::FG_YELLOW);
         $this->stdout("{$unprocessed}\n");
-
-        $this->stdout("Pending review: ", Console::FG_YELLOW);
-        $this->stdout("{$pendingReview}\n");
 
         return ExitCode::OK;
     }

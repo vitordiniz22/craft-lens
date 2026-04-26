@@ -861,7 +861,7 @@ class AssetQueryBehavior extends Behavior
             ]);
         } elseif ($status === 'analyzed') {
             $this->ensureJoined();
-            $this->owner->subQuery->andWhere(['lens.status' => AnalysisStatus::analyzedValues()]);
+            $this->owner->subQuery->andWhere(['lens.status' => AnalysisStatus::Completed->value]);
         } else {
             $this->ensureJoined();
             $this->owner->subQuery->andWhere(['lens.status' => $status]);

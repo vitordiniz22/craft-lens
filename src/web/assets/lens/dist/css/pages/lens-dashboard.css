@@ -309,27 +309,11 @@
     background: var(--link-color);
 }
 
-.lens-activity__badge--approved {
-    color: var(--success-color);
-}
-.lens-activity__badge--approved .lens-activity__badge-dot {
-    background: var(--success-color);
-}
-
-.lens-activity__badge--rejected,
 .lens-activity__badge--failed {
     color: var(--error-color);
 }
-.lens-activity__badge--rejected .lens-activity__badge-dot,
 .lens-activity__badge--failed .lens-activity__badge-dot {
     background: var(--error-color);
-}
-
-.lens-activity__badge--pending_review {
-    color: var(--warning-color);
-}
-.lens-activity__badge--pending_review .lens-activity__badge-dot {
-    background: var(--warning-color);
 }
 
 /* ==========================================================================
@@ -378,10 +362,6 @@
     .lens-attention__cards {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-    }
-
-    .lens-asset-card {
-        width: 100%;
     }
 
     .lens-actions__grid {

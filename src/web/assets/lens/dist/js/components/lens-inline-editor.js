@@ -202,17 +202,6 @@
                 return;
             }
 
-            // Review context: skip AJAX, update form hidden inputs + UI only
-            if (this._isReviewContext(fieldEl)) {
-                this._syncHiddenInput('containsPeople', fields.containsPeople ? '1' : '0');
-                this._syncHiddenInput('faceCount', fields.faceCount.toString());
-                this._updatePeopleDisplay(fieldEl, fields);
-                this._showLockIcon(fieldEl);
-                this._showPeopleAISuggestion(fieldEl, fields);
-                this._updatePeopleBadge(fieldEl, fields);
-                return;
-            }
-
             this._withSavingState(fieldEl, this._savePeopleFields(analysisId, fields), (responses) => {
                 this._updatePeopleDisplay(fieldEl, fields);
                 this._showLockIcon(fieldEl);
@@ -228,21 +217,6 @@
         _handlePeopleRevert: function(e, revertBtn) {
             var fieldEl = window.Lens.core.DOM.findTarget(revertBtn, 'people-detection');
             var analysisId = revertBtn.dataset.lensAnalysisId;
-
-            // Review context: client-side revert (no AJAX)
-            if (this._isReviewContext(fieldEl)) {
-                var containsPeopleAi = fieldEl.dataset.lensContainsPeopleAi === '1';
-                var faceCountAi = parseInt(fieldEl.dataset.lensFaceCountAi) || 0;
-                var aiFields = { containsPeople: containsPeopleAi, faceCount: faceCountAi };
-                var aiMode = window.Lens.services.PeopleDetection.fieldsToMode(containsPeopleAi, faceCountAi);
-
-                var radios = fieldEl.querySelectorAll('[data-lens-control="people-mode"]');
-                radios.forEach(function(radio) { radio.checked = (radio.value === aiMode); });
-                this._syncHiddenInput('containsPeople', containsPeopleAi ? '1' : '0');
-                this._syncHiddenInput('faceCount', faceCountAi.toString());
-                this._revertPeopleUI(fieldEl, aiFields);
-                return;
-            }
 
             var promises = [
                 window.Lens.core.API.revertField(analysisId, 'containsPeople'),
@@ -314,15 +288,6 @@
             var trueValue = fieldEl.dataset.lensTrueValue;
             var isNowDetected = (value === trueValue);
 
-            // Review context: skip AJAX, update form hidden inputs + UI only
-            if (this._isReviewContext(fieldEl)) {
-                this._syncHiddenInput(fieldName, value);
-                this._updateDetectionUI(fieldEl, isNowDetected);
-                this._showLockIcon(fieldEl);
-                this._showDetectionAISuggestion(fieldEl, isNowDetected);
-                return;
-            }
-
             this._withSavingState(fieldEl, window.Lens.core.API.updateField(analysisId, fieldName, value), (response) => {
                 if (response.data.success) {
                     this._updateDetectionUI(fieldEl, isNowDetected);
@@ -343,13 +308,6 @@
             var analysisId = revertBtn.dataset.lensAnalysisId;
             var fieldName = revertBtn.dataset.lensField;
             var isDetectedAi = fieldEl.dataset.lensDetectedAi === '1';
-
-            // Review context: client-side revert (no AJAX)
-            if (this._isReviewContext(fieldEl)) {
-                var revertedValue = this._applyDetectionRevert(fieldEl, isDetectedAi);
-                this._syncHiddenInput(fieldName, revertedValue);
-                return;
-            }
 
             window.Lens.core.API.revertField(analysisId, fieldName).then((response) => {
                 if (response.data.success) {
@@ -651,9 +609,9 @@
                 var textSpan = aiSuggestion.querySelector('[data-lens-target="ai-suggestion-text"]');
                 if (textSpan) {
                     if (data.aiValue) {
-                        textSpan.textContent = Craft.t('lens', 'AI suggested: "{value}"', { value: data.aiValue });
+                        textSpan.textContent = '"' + data.aiValue + '"';
                     } else {
-                        textSpan.textContent = Craft.t('lens', 'AI suggested: No text detected');
+                        textSpan.textContent = Craft.t('lens', 'No text detected');
                     }
                 }
             }
@@ -672,7 +630,7 @@
                 var aiText = window.Lens.services.PeopleDetection.formatText(containsPeopleAi, faceCountAi);
                 var textSpan = suggestion.querySelector('[data-lens-target="people-ai-text"]');
                 if (textSpan) {
-                    textSpan.textContent = Craft.t('lens', 'AI suggested: "{text}"', { text: aiText });
+                    textSpan.textContent = '"' + aiText + '"';
                 }
             }
             this._toggleAISuggestion(suggestion, aiDiffers, 'people-revert');
@@ -684,15 +642,6 @@
             if (suggestion) {
                 window.Lens.core.DOM.hide(suggestion);
             }
-        },
-
-        _isReviewContext: function(fieldEl) {
-            return fieldEl && fieldEl.dataset.lensContext === 'review';
-        },
-
-        _syncHiddenInput: function(fieldName, value) {
-            var input = window.Lens.core.DOM.findControl('field-' + fieldName);
-            if (input) input.value = String(value);
         },
 
         _dispatchPeopleUpdateEvent: function(analysisId, fields) {

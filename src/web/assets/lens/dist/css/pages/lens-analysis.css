@@ -288,19 +288,12 @@
     color: var(--gray-800);
 }
 
-/* Apply button row */
-.lens-apply-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 8px;
-}
-
 .lens-applied-indicator {
     display: flex;
     align-items: center;
     gap: 4px;
     font-size: 12px;
+    margin-top: 4px;
 }
 
 .lens-applied-indicator .status {
@@ -319,59 +312,6 @@
     border-left: 3px solid var(--link-color);
     border-radius: 0 var(--small-border-radius) var(--small-border-radius) 0;
     background: var(--gray-050);
-}
-
-/* Bridge apply row (review page — apply checkbox + current value context) */
-.lens-bridge-apply-row {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 6px;
-    font-size: 12px;
-    color: var(--medium-text-color);
-}
-
-.lens-bridge-apply-row .status {
-    flex-shrink: 0;
-}
-
-.lens-apply-checkbox {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-weight: 600;
-    cursor: pointer;
-}
-
-.lens-apply-checkbox input[type="checkbox"] {
-    margin: 0;
-}
-
-.lens-context-separator {
-    color: var(--hairline-color);
-}
-
-.lens-bridge-apply-row__label {
-    font-weight: 600;
-    flex-shrink: 0;
-}
-
-.lens-bridge-apply-row__value {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.lens-native-context-chip {
-    display: inline-block;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--medium-text-color);
-    background: var(--gray-200);
-    padding: 0 6px;
-    border-radius: 8px;
-    margin-left: 2px;
 }
 
 /* ==========================================================================
@@ -807,145 +747,37 @@
 }
 
 /* ==========================================================================
-   Translation Shared Styles
+   AI Suggestion Bar — Universal style for the "AI suggested ... Revert to AI"
+   row used across editable fields, native bridges, detection toggles,
+   people detection, and focal point. Visual identity ties to the violet
+   AI badge icon and revert link.
    ========================================================================== */
 
-.lens-translations-header {
+.lens-ai-suggestion-inline {
     display: flex;
-    align-items: center;
-    flex-wrap: wrap;
+    align-items: flex-start;
     gap: 6px;
-    padding: 10px 14px;
-    background: var(--gray-050);
-    cursor: pointer;
-    user-select: none;
-    transition: background-color 0.15s;
-}
-
-.lens-translations-header:hover {
-    background: var(--gray-100);
-}
-
-.lens-translations-chevron {
-    display: inline-flex;
-    align-items: center;
-    width: 14px;
-    height: 14px;
-    flex-shrink: 0;
-    transition: transform 0.2s ease;
-}
-
-.lens-translations-chevron svg {
-    width: 12px;
-    height: 12px;
-    fill: var(--medium-text-color);
-}
-
-.lens-translations-header[aria-expanded="true"] .lens-translations-chevron {
-    transform: rotate(90deg);
-}
-
-.lens-translations-body {
-    border-top: 1px solid var(--gray-100);
-}
-
-.lens-translations-body.hidden {
-    display: none;
-}
-
-.lens-translation-lang-chip {
-    display: inline-flex;
-    align-items: center;
-    padding: 1px 6px;
-    border-radius: 8px;
-    font-size: 10px;
-    font-weight: 600;
-    background: var(--blue-100);
-    color: var(--blue-700);
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-}
-
-.lens-translation-group__header {
-    display: flex;
-    align-items: baseline;
-    gap: 6px;
-    margin-bottom: 8px;
-    font-size: 13px;
-}
-
-
-/* ==========================================================================
-   Translation Summary (Review Page)
-   ========================================================================== */
-
-.lens-translation-summary {
-    border: 1px solid var(--hairline-color);
-    border-radius: var(--medium-border-radius);
-    overflow: hidden;
-}
-
-.lens-translation-summary__table {
-    display: flex;
-    flex-direction: column;
-}
-
-.lens-translation-summary__row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 14px;
-    cursor: pointer;
-    transition: background-color 0.15s;
-    border-bottom: 1px solid var(--hairline-color);
-}
-
-.lens-translation-summary__row:last-child {
-    border-bottom: none;
-}
-
-.lens-translation-summary__row:hover {
-    background: var(--gray-050);
-}
-
-.lens-translation-summary__row--warn {
-    background: color-mix(in srgb, var(--amber-100) 30%, transparent);
-}
-
-.lens-translation-summary__preview {
-    flex: 1;
-    font-size: 13px;
-    color: var(--text-color);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.lens-translation-summary__confidence {
-    flex-shrink: 0;
-}
-
-.lens-translation-summary__hint {
-    padding: 6px 14px 10px;
+    margin-top: 8px;
+    padding: 6px 10px;
+    border-left: 2px solid var(--violet-500);
+    border-radius: 0 var(--small-border-radius) var(--small-border-radius) 0;
+    background: color-mix(in srgb, var(--violet-500) 6%, transparent);
     font-size: 12px;
-    margin: 0;
+    color: var(--medium-text-color);
 }
 
-.lens-translation-summary__expand {
-    padding: 12px 14px;
-    border-top: 1px solid var(--hairline-color);
-    background: var(--gray-050);
+.lens-ai-suggestion-inline > span:not(.lens-applied-indicator) {
+    flex: 1 1 auto;
+    min-width: 0;
 }
 
-.lens-translation-summary__expand.hidden {
+.lens-ai-suggestion-inline .lens-applied-indicator,
+.lens-ai-suggestion-inline .lens-revert-trigger {
+    flex-shrink: 0;
+}
+
+.lens-ai-suggestion-inline[hidden] {
     display: none;
-}
-
-
-.lens-ai-suggestion-inline .lens-applied-indicator {
-    display: flex;
-    align-items: center;
-    gap: 4px;
 }
 
 

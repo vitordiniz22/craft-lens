@@ -76,7 +76,7 @@ class AnalysisEditService extends Component
 
         $aiColumn = $field . 'Ai';
 
-        Logger::info(LogCategory::Review, "Field '{$field}' updated via panel", assetId: $record->assetId);
+        Logger::info(LogCategory::AssetProcessing, "Field '{$field}' updated via panel", assetId: $record->assetId);
 
         try {
             Plugin::getInstance()->searchIndex->reindexField($record, $field);
@@ -118,7 +118,7 @@ class AnalysisEditService extends Component
             throw new \RuntimeException("Failed to save analysis record {$analysisId}: {$errors}");
         }
 
-        Logger::info(LogCategory::Review, "Field '{$field}' reverted to AI value", assetId: $record->assetId);
+        Logger::info(LogCategory::AssetProcessing, "Field '{$field}' reverted to AI value", assetId: $record->assetId);
 
         try {
             Plugin::getInstance()->searchIndex->reindexField($record, $field);
@@ -181,7 +181,7 @@ class AnalysisEditService extends Component
                 $tagRecord->isAi = $isAi;
 
                 if (!$tagRecord->save(false)) {
-                    Logger::warning(LogCategory::Review, 'Failed to save tag record', assetId: $record->assetId, context: [
+                    Logger::warning(LogCategory::AssetProcessing, 'Failed to save tag record', assetId: $record->assetId, context: [
                         'tag' => $tagName,
                     ]);
                     continue;
@@ -200,7 +200,7 @@ class AnalysisEditService extends Component
             throw $e;
         }
 
-        Logger::info(LogCategory::Review, 'Tags updated via panel', assetId: $record->assetId, context: [
+        Logger::info(LogCategory::AssetProcessing, 'Tags updated via panel', assetId: $record->assetId, context: [
             'tagCount' => count($result),
         ]);
 

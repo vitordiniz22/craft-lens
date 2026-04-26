@@ -1,4 +1,3 @@
-{% set _reviewUrl = cpUrl('lens/review') %}
 {% set analyzedPercent = stats.totalImages > 0 ? ((stats.analyzed / stats.totalImages) * 100)|round(1) : 0 %}
 
 <div class="pane">
@@ -47,12 +46,6 @@
             heading: 'No Images Found'|t('lens'),
             description: emptyDescription,
         } only %}
-
-        {% if lens.pendingReviewCount > 0 and lens.isReviewActive %}
-            <div class="lens-complete-actions">
-                <a href="{{ _reviewUrl }}" class="btn">{{ 'Review Assets'|t('lens') }}</a>
-            </div>
-        {% endif %}
     {% elseif stats.unprocessed == 0 and stats.failed == 0 %}
         {% set selectedVolume = selectedVolumeId ? volumes|filter(v => v.id == selectedVolumeId)|first : null %}
         {% set doneDescription = selectedVolume
@@ -69,12 +62,6 @@
             heading: 'All Assets Analyzed'|t('lens'),
             description: doneDescription,
         } only %}
-
-        {% if lens.pendingReviewCount > 0 and lens.isReviewActive %}
-            <div class="lens-complete-actions">
-                <a href="{{ _reviewUrl }}" class="btn">{{ 'Review Assets'|t('lens') }}</a>
-            </div>
-        {% endif %}
     {% else %}
 
         <hr>
@@ -137,9 +124,6 @@
                         {{ 'Retry {count} Failed'|t('lens', {count: stats.failed|number_format}) }}
                     </button>
                 </form>
-            {% endif %}
-            {% if lens.pendingReviewCount > 0 and lens.isReviewActive %}
-                <a href="{{ _reviewUrl }}" class="btn">{{ 'Review Assets'|t('lens') }}</a>
             {% endif %}
         </div>
 

@@ -94,7 +94,6 @@ class BulkProcessingStatusService extends Component
             'totalImages' => $this->getTotalImageCount($volumeId),
             'analyzed' => $this->getAnalyzedCount($volumeId),
             'unprocessed' => $this->getUnprocessedCount($volumeId),
-            'pendingReview' => $this->getPendingReviewCount($volumeId),
             'failed' => $this->getFailedCount($volumeId),
             'processing' => $this->getProcessingCount($volumeId),
         ];
@@ -119,9 +118,9 @@ class BulkProcessingStatusService extends Component
             : $this->getUnprocessedCount($volumeId);
 
         // Snapshot how many assets in scope were already in a terminal state
-        // (Completed, PendingReview, Approved, Failed, Rejected). Progress is
-        // computed as (currentTerminal - initialTerminal), so the counter
-        // advances only when a session asset actually finishes.
+        // (Completed, Failed). Progress is computed as
+        // (currentTerminal - initialTerminal), so the counter advances only
+        // when a session asset actually finishes.
         $initialTerminalCount = $isRetry
             ? 0
             : $this->countByStatus(AnalysisStatus::terminalValues(), $volumeId);
@@ -539,7 +538,7 @@ class BulkProcessingStatusService extends Component
 
     private function getAnalyzedCount(null|int|array $volumeId = null): int
     {
-        return $this->countByStatus(AnalysisStatus::processedValues(), $volumeId);
+        return $this->countByStatus([AnalysisStatus::Completed->value], $volumeId);
     }
 
     private function getUnprocessedCount(null|int|array $volumeId = null): int
@@ -567,11 +566,6 @@ class BulkProcessingStatusService extends Component
     private function getProcessingCount(null|int|array $volumeId = null): int
     {
         return $this->countByStatus([AnalysisStatus::Processing->value], $volumeId);
-    }
-
-    private function getPendingReviewCount(null|int|array $volumeId = null): int
-    {
-        return $this->countByStatus([AnalysisStatus::PendingReview->value], $volumeId);
     }
 
     /**
@@ -628,7 +622,7 @@ class BulkProcessingStatusService extends Component
 
             // Restore retried-but-not-finished failures back to Failed so the
             // user can retry again. Assets that already re-analyzed to a
-            // terminal status (Completed, PendingReview, etc.) are skipped.
+            // terminal status (Completed, Failed) are skipped.
             if (!empty($retriedFailedAssetIds)) {
                 AssetAnalysisRecord::updateAll(
                     ['status' => AnalysisStatus::Failed->value],

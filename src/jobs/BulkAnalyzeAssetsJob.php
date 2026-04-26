@@ -55,7 +55,7 @@ class BulkAnalyzeAssetsJob extends BaseBatchedJob
         }
 
         // Restrict to assets that still need analysis: those with no record,
-        // or a record in Pending, Failed, or Rejected status.
+        // or a record in Pending or Failed status.
         if (!$this->reprocess) {
             $handledAssetIds = AssetAnalysisRecord::find()
                 ->select('assetId')

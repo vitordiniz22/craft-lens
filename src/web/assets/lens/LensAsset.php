@@ -23,7 +23,6 @@ class LensAsset extends AssetBundle
 
             // Components (alphabetical)
             'css/components/badge.css',
-            'css/components/card.css',
             'css/components/confidence-badge.css',
             'css/components/data-table.css',
             'css/components/empty-state.css',
@@ -43,7 +42,6 @@ class LensAsset extends AssetBundle
             'css/pages/lens-analysis.css',
             'css/pages/lens-bulk.css',
             'css/pages/lens-dashboard.css',
-            'css/pages/lens-review.css',
         ];
         $this->js = [
             'js/lens-base.js',

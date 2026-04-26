@@ -15,7 +15,7 @@
 {% set pageParam = pageParam ?? 'offset' %}
 
 {% if pageParam == 'page' %}
-    {# Page-based pagination (used by review browse) #}
+    {# Page-based pagination #}
     {% set totalPages = totalPages ?? 1 %}
     {% set page = page ?? 1 %}
 

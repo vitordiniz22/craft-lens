@@ -95,7 +95,7 @@ class AnalysisCancellationServiceTest extends Unit
     public function testCancelReAnalysisPreservesData(): void
     {
         $record = $this->createAnalysisRecord(AnalysisStatus::Processing->value);
-        $record->previousStatus = AnalysisStatus::Approved->value;
+        $record->previousStatus = AnalysisStatus::Completed->value;
         $record->altText = 'My manual edit';
         $record->altTextAi = 'AI suggested text';
         $record->suggestedTitle = 'My title';
@@ -107,7 +107,7 @@ class AnalysisCancellationServiceTest extends Unit
         $this->assertSame('My manual edit', $restored->altText);
         $this->assertSame('AI suggested text', $restored->altTextAi);
         $this->assertSame('My title', $restored->suggestedTitle);
-        $this->assertSame(AnalysisStatus::Approved->value, $restored->status);
+        $this->assertSame(AnalysisStatus::Completed->value, $restored->status);
     }
 
     // -- cancel(): terminal status (race condition) --

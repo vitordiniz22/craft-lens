@@ -7,7 +7,6 @@
  #   confidence - float (0.0-1.0)
  #   mode       - string (default 'default'):
  #                'default' — tooltip + class="badge" + data-lens-target="confidence-badge"
- #                'review'  — tooltip + colored tier badge (medium/low), no data-lens-target
  #                'simple'  — plain badge, no tooltip, no data-lens-target
  #}
 {% macro confidenceBadge(confidence, mode) %}
@@ -15,10 +14,6 @@
 {% set pct = (confidence * 100)|round %}
 {%- if mode == 'simple' -%}
     <span class="badge">{{ pct }}%</span>
-{%- elseif mode == 'review' -%}
-    <craft-tooltip text="{{ 'AI confidence for this field'|t('lens') }}"><button type="button" class="lens-confidence-badge lens-confidence-{{ pct >= 50 ? 'medium' : 'low' }}">
-        {{ pct }}%
-    </button></craft-tooltip>
 {%- else -%}
     <craft-tooltip text="{{ 'AI confidence for this field'|t('lens') }}"><button type="button" class="badge" data-lens-target="confidence-badge">{{ pct }}%</button></craft-tooltip>
 {%- endif -%}

@@ -47,7 +47,6 @@
         'too-dark': {lensTooDark: true},
         'too-bright': {lensTooBright: true},
         'low-contrast': {lensLowContrast: true},
-        'needs-review': {lensStatus: 'pending_review'},
         'has-duplicates': {lensHasDuplicates: true},
     };
 
@@ -64,7 +63,6 @@
         'too-dark': 'Too dark',
         'too-bright': 'Too bright',
         'low-contrast': 'Low contrast',
-        'needs-review': 'Needs review',
         'has-duplicates': 'Has duplicates',
     };
 

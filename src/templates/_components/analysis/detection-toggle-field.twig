@@ -1,5 +1,5 @@
 {#
- # Detection Toggle Field — 3-State Pattern
+ # Detection Toggle Field — 2-State Pattern
  # Binary detection toggle with icon, status badge, and segmented control.
  #
  # Expected variables:
@@ -9,7 +9,7 @@
  #   detected       - bool, current detection value
  #   detectedAi     - bool, AI detection value
  #   analysisId     - int
- #   fieldState     - 'readonly'|'unlocked'|'editing'
+ #   fieldState     - 'readonly'|'unlocked'
  #   detectedLabel  - string (e.g., 'NSFW content present')
  #   clearedLabel   - string (e.g., 'No NSFW content')
  #   trueValue      - mixed (value to send when "detected", e.g., 1.0 for nsfwScore, 1 for bools)
@@ -68,13 +68,9 @@
 </div>
 
 {# ============================================================
-   UNLOCKED / EDITING — Same component, different interaction mode.
-   unlocked: asset edit page (click-to-edit, auto-save via AJAX)
-   editing:  review page (always editable, form-based submission)
+   UNLOCKED — Asset edit page (click pencil to edit, AJAX save)
    ============================================================ #}
-{% elseif fieldState == 'unlocked' or fieldState == 'editing' %}
-
-{% set isReview = fieldState == 'editing' %}
+{% elseif fieldState == 'unlocked' %}
 
 <div class="lens-editable-field lens-editable-field--detection"
      data-lens-target="detection-toggle"
@@ -84,8 +80,7 @@
      data-lens-detected-ai="{{ detectedAi ? '1' : '0' }}"
      data-lens-true-value="{{ trueValue }}"
      data-lens-false-value="{{ falseValue }}"
-     {% if flaggedLabel %}data-lens-flagged-label="{{ flaggedLabel }}"{% endif %}
-     {% if isReview %}data-lens-context="review"{% endif %}>
+     {% if flaggedLabel %}data-lens-flagged-label="{{ flaggedLabel }}"{% endif %}>
 
     <div class="lens-field-header" data-lens-target="field-header">
         <span class="lens-detection-icon{{ detected ? ' lens-detection-icon--flagged' : '' }}" data-lens-target="detection-icon">
@@ -95,12 +90,10 @@
             {% include 'lens/_components/analysis/_tooltip-lock' only %}
         {% endif %}
         <span class="lens-field-label">{{ label }}</span>
-        {% if (isReview or not isEdited) and (confidence ?? null) and not (hideConfidence ?? false) %}
+        {% if not isEdited and (confidence ?? null) and not (hideConfidence ?? false) %}
             {{ confidenceBadge(confidence) }}
         {% endif %}
-        {% if not isReview %}
-            {% include 'lens/_components/analysis/_tooltip-edit' with {editAction: 'detection-edit'} only %}
-        {% endif %}
+        {% include 'lens/_components/analysis/_tooltip-edit' with {editAction: 'detection-edit'} only %}
         {{ detectionStatusBadge(detected, true, flaggedLabel) }}
     </div>
 
@@ -119,11 +112,11 @@
         </div>
     {% endif %}
 
-    {# Segmented control — hidden by default in unlocked, always visible in review #}
-    <div{% if not isReview %} class="lens-field-edit" data-lens-target="detection-edit-panel" hidden{% endif %}>
+    {# Segmented control (hidden by default; revealed on edit click) #}
+    <div class="lens-field-edit" data-lens-target="detection-edit-panel" hidden>
         <div class="lens-segmented-control">
             <label class="lens-segmented-control__option">
-                <input type="radio" name="detection-{{ fieldName }}{% if not isReview %}-{{ analysisId }}{% endif %}" value="{{ trueValue }}"
+                <input type="radio" name="detection-{{ fieldName }}-{{ analysisId }}" value="{{ trueValue }}"
                        data-lens-control="detection-radio"
                        data-lens-field="{{ fieldName }}"
                        {% if detected %}checked{% endif %}>
@@ -133,7 +126,7 @@
                 <span>{{ 'Flagged'|t('lens') }}</span>
             </label>
             <label class="lens-segmented-control__option">
-                <input type="radio" name="detection-{{ fieldName }}{% if not isReview %}-{{ analysisId }}{% endif %}" value="{{ falseValue }}"
+                <input type="radio" name="detection-{{ fieldName }}-{{ analysisId }}" value="{{ falseValue }}"
                        data-lens-control="detection-radio"
                        data-lens-field="{{ fieldName }}"
                        {% if not detected %}checked{% endif %}>
@@ -144,15 +137,11 @@
             </label>
         </div>
 
-        {% if not isReview %}
-            {# Hidden input to hold selected value #}
-            <input type="hidden" data-lens-target="detection-value" value="{{ detected ? trueValue : falseValue }}">
+        <input type="hidden" data-lens-target="detection-value" value="{{ detected ? trueValue : falseValue }}">
 
-            {# Close link to dismiss edit panel #}
-            <div class="lens-field-actions">
-                <button type="button" class="btn small" data-lens-action="detection-cancel">{{ 'Close'|t('lens') }}</button>
-            </div>
-        {% endif %}
+        <div class="lens-field-actions">
+            <button type="button" class="btn small" data-lens-action="detection-cancel">{{ 'Close'|t('lens') }}</button>
+        </div>
     </div>
 
     {# AI suggestion — purple bar, shown when value differs from AI #}
@@ -161,7 +150,7 @@
         {% include 'lens/_components/analysis/_tooltip-ai' only %}
         <span data-lens-target="detection-ai-text">
             {% set aiText = (detectedAi ? detectedLabel : clearedLabel) ~ ((detectedAi and (details ?? [])|length) ? ' (' ~ details|join(', ') ~ ')' : '') %}
-            {{ 'AI suggested: "{value}"'|t('lens', {value: aiText}) }}
+            "{{ aiText }}"
         </span>
         <button type="button" class="lens-revert-trigger" data-lens-action="detection-revert" data-lens-field="{{ fieldName }}" data-lens-analysis-id="{{ analysisId }}"{% if not aiDiffers %} hidden{% endif %}>
             {{ 'Revert to AI'|t('lens') }}

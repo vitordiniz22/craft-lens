@@ -72,7 +72,7 @@
                     // Handle terminal states
                     var S = window.Lens.config.STATUS;
 
-                    if (status === S.COMPLETED || status === S.APPROVED || status === S.FAILED || status === S.PENDING_REVIEW) {
+                    if (status === S.COMPLETED || status === S.FAILED) {
                         self._clearPoll(assetId);
 
                         var cancelBtn = document.querySelector('[data-lens-action="cancel-analysis"]');

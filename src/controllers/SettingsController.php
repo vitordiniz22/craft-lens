@@ -58,7 +58,6 @@ class SettingsController extends Controller
             'claudeApiKey',
             'claudeModel',
             'autoProcessOnUpload',
-            'requireReviewBeforeApply',
             'enabledVolumes',
             'enableSemanticSearch',
         ];
@@ -89,7 +88,6 @@ class SettingsController extends Controller
         Logger::info(LogCategory::Configuration, 'Plugin settings saved', context: [
             'provider' => $settings->aiProvider,
             'autoProcess' => $settings->autoProcessOnUpload,
-            'requireReview' => $settings->requireReviewBeforeApply,
         ]);
 
         Craft::$app->getSession()->setNotice(Craft::t('lens', 'Settings saved.'));

@@ -29,8 +29,6 @@ class LensTwigGlobalServicesTest extends Unit
 
     private string $originalEdition;
 
-    private bool $originalRequireReview;
-
     private string $originalAiProvider;
 
     private string $originalOpenaiApiKey;
@@ -48,7 +46,6 @@ class LensTwigGlobalServicesTest extends Unit
         $settings = $plugin->getSettings();
 
         $this->originalEdition = $plugin->edition;
-        $this->originalRequireReview = $settings->requireReviewBeforeApply;
         $this->originalAiProvider = $settings->aiProvider;
         $this->originalOpenaiApiKey = $settings->openaiApiKey;
         $this->originalEnabledVolumes = $settings->enabledVolumes;
@@ -66,7 +63,6 @@ class LensTwigGlobalServicesTest extends Unit
         $settings = $plugin->getSettings();
 
         $plugin->edition = $this->originalEdition;
-        $settings->requireReviewBeforeApply = $this->originalRequireReview;
         $settings->aiProvider = $this->originalAiProvider;
         $settings->openaiApiKey = $this->originalOpenaiApiKey;
         $settings->enabledVolumes = $this->originalEnabledVolumes;
@@ -369,35 +365,6 @@ class LensTwigGlobalServicesTest extends Unit
 
         $this->assertTrue($this->global->getIsLite());
         $this->assertFalse($this->global->getIsPro());
-    }
-
-    // -- getIsReviewActive() --
-
-    public function testGetIsReviewActiveFalseWhenNotPro(): void
-    {
-        $plugin = Plugin::getInstance();
-        $plugin->edition = Plugin::EDITION_LITE;
-        $plugin->getSettings()->requireReviewBeforeApply = true;
-
-        $this->assertFalse($this->global->getIsReviewActive());
-    }
-
-    public function testGetIsReviewActiveFalseWhenProButSettingOff(): void
-    {
-        $plugin = Plugin::getInstance();
-        $plugin->edition = Plugin::EDITION_PRO;
-        $plugin->getSettings()->requireReviewBeforeApply = false;
-
-        $this->assertFalse($this->global->getIsReviewActive());
-    }
-
-    public function testGetIsReviewActiveTrueWhenProAndSettingOn(): void
-    {
-        $plugin = Plugin::getInstance();
-        $plugin->edition = Plugin::EDITION_PRO;
-        $plugin->getSettings()->requireReviewBeforeApply = true;
-
-        $this->assertTrue($this->global->getIsReviewActive());
     }
 
     // -- arrange helpers --

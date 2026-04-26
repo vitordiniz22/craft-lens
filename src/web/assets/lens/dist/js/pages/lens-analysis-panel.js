@@ -521,60 +521,6 @@
         },
 
         // ================================================================
-        // Translations (collapse/expand, summary expand)
-        // ================================================================
-
-        initTranslations: function () {
-            var DOM = window.Lens.core.DOM;
-
-            // Toggle collapse/expand
-            DOM.delegate(
-                '[data-lens-action="toggle-translations"]',
-                'click',
-                this._handleTranslationToggle.bind(this),
-            );
-
-            // Summary row expand (review page)
-            DOM.delegate(
-                '[data-lens-action="translation-expand"]',
-                'click',
-                this._handleTranslationExpand.bind(this),
-            );
-        },
-
-        _handleTranslationToggle: function (e, header) {
-            var section = header.closest('[data-lens-target="translation-summary"]');
-            if (!section) return;
-
-            var body = section.querySelector('[data-lens-target="translations-body"]');
-            if (!body) return;
-
-            var isExpanded = header.getAttribute('aria-expanded') === 'true';
-            header.setAttribute('aria-expanded', isExpanded ? 'false' : 'true');
-            window.Lens.core.DOM.toggleClass(body, !isExpanded);
-        },
-
-        _handleTranslationExpand: function (e, row) {
-            var summary = row.closest('[data-lens-target="translation-summary"]');
-            if (!summary) return;
-
-            var siteId = row.dataset.lensExpandSite;
-            if (!siteId) return;
-
-            // Accordion: collapse any currently expanded detail
-            var allDetails = summary.querySelectorAll('[data-lens-target="translation-detail"]');
-            for (var i = 0; i < allDetails.length; i++) {
-                var detail = allDetails[i];
-                if (detail.dataset.lensSiteId === siteId) {
-                    // Toggle this one
-                    detail.classList.toggle('hidden');
-                } else {
-                    detail.classList.add('hidden');
-                }
-            }
-        },
-
-        // ================================================================
         // Auto-Polling
         // ================================================================
 
@@ -600,9 +546,6 @@
 
     // Auto-initialize
     Lens.utils.onReady(function() {
-        // Translation delegates use event delegation and work on both
-        // analysis panel and review page — register unconditionally
-        LensAnalysisPanel.initTranslations();
         LensAnalysisPanel.init();
     });
 })();

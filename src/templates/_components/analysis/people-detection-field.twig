@@ -1,10 +1,10 @@
 {#
- # People Detection Inline Editor — 3-State Pattern
+ # People Detection Inline Editor — 2-State Pattern
  # Icon + badge display, native radios with auto-save
  #
  # Expected variables:
  #   analysis     - AssetAnalysisRecord
- #   fieldState   - 'readonly'|'unlocked'|'editing'
+ #   fieldState   - 'readonly'|'unlocked'
  #}
 
 {# Macro for consistent text generation (matches JS utility: Lens.utils.formatPeopleDetectionText) #}
@@ -118,18 +118,13 @@
 </div>
 
 {# ============================================================
-   UNLOCKED / EDITING — Same component, different interaction mode.
-   unlocked: asset edit page (click-to-edit, auto-save via AJAX)
-   editing:  review page (always editable, form-based submission)
+   UNLOCKED — Asset edit page (click pencil to edit, AJAX save)
    ============================================================ #}
-{% elseif fieldState == 'unlocked' or fieldState == 'editing' %}
-
-{% set isReview = fieldState == 'editing' %}
+{% elseif fieldState == 'unlocked' %}
 
 <div class="lens-editable-field lens-editable-field--detection"
      data-lens-target="people-detection"
      data-lens-analysis-id="{{ analysis.id }}"
-     {% if isReview %}data-lens-context="review"{% endif %}
      data-lens-contains-people="{{ analysis.containsPeople ? '1' : '0' }}"
      data-lens-face-count="{{ analysis.faceCount }}"
      data-lens-contains-people-ai="{{ analysis.containsPeopleAi ? '1' : '0' }}"
@@ -143,12 +138,10 @@
             {% include 'lens/_components/analysis/_tooltip-lock' only %}
         {% endif %}
         <span class="lens-field-label">{{ 'People Detection'|t('lens') }}</span>
-        {% if (isReview or not isEdited) and analysis.containsPeopleConfidence is defined and analysis.containsPeopleConfidence and not (hideConfidence ?? false) %}
+        {% if not isEdited and analysis.containsPeopleConfidence is defined and analysis.containsPeopleConfidence and not (hideConfidence ?? false) %}
             {{ confidenceBadge(analysis.containsPeopleConfidence) }}
         {% endif %}
-        {% if not isReview %}
-            {% include 'lens/_components/analysis/_tooltip-edit' with {editAction: 'people-edit'} only %}
-        {% endif %}
+        {% include 'lens/_components/analysis/_tooltip-edit' with {editAction: 'people-edit'} only %}
         <span class="lens-detection-badge {{ hasPeople ? 'lens-detection-badge--info' : 'lens-detection-badge--clear' }}" data-lens-target="people-badge">
             {% if hasPeople %}
                 {{ iconSvg('user')|attr({width: 12, height: 12, fill: 'currentColor'}) }}
@@ -160,29 +153,25 @@
         </span>
     </div>
 
-    {% if not isReview %}
-        {# Display mode — help text #}
-        <div data-lens-target="field-display">
-            <div data-lens-target="people-present"{% if not hasPeople %} hidden{% endif %}>
-                <p class="lens-detection-help" data-lens-target="people-help-text">
-                    <span class="lens-detection-help__icon">{{ iconSvg('lightbulb')|attr({width: 12, height: 12, fill: 'currentColor'}) }}</span>
-                    {{ _self.peopleHelpText(hasPeople, analysis.faceCount) }}
-                </p>
-            </div>
-            <div data-lens-target="people-absent"{% if hasPeople %} hidden{% endif %}></div>
+    {# Display mode — help text #}
+    <div data-lens-target="field-display">
+        <div data-lens-target="people-present"{% if not hasPeople %} hidden{% endif %}>
+            <p class="lens-detection-help" data-lens-target="people-help-text">
+                <span class="lens-detection-help__icon">{{ iconSvg('lightbulb')|attr({width: 12, height: 12, fill: 'currentColor'}) }}</span>
+                {{ _self.peopleHelpText(hasPeople, analysis.faceCount) }}
+            </p>
         </div>
-    {% endif %}
+        <div data-lens-target="people-absent"{% if hasPeople %} hidden{% endif %}></div>
+    </div>
 
-    {# Radios — hidden by default in unlocked (revealed on edit click), always visible in review #}
-    <div{% if not isReview %} class="lens-field-edit" data-lens-target="people-edit-panel" hidden{% endif %}>
+    {# Radios (hidden by default; revealed on edit click) #}
+    <div class="lens-field-edit" data-lens-target="people-edit-panel" hidden>
         <div class="lens-radio-list">
             {{ _self.radioOptions(analysis, 'people-mode') }}
         </div>
-        {% if not isReview %}
-            <div class="lens-field-actions">
-                <button type="button" class="btn small" data-lens-action="people-cancel">{{ 'Close'|t('lens') }}</button>
-            </div>
-        {% endif %}
+        <div class="lens-field-actions">
+            <button type="button" class="btn small" data-lens-action="people-cancel">{{ 'Close'|t('lens') }}</button>
+        </div>
     </div>
 
     {# AI suggestion — purple bar, shown when value differs from AI #}
@@ -190,9 +179,7 @@
     <div class="lens-ai-suggestion-inline" data-lens-target="people-ai-suggestion"{% if not aiDiffers %} hidden{% endif %}>
         {% include 'lens/_components/analysis/_tooltip-ai' only %}
         <span data-lens-target="people-ai-text">
-            {{ 'AI suggested: "{text}"'|t('lens', {
-                text: _self.peopleDetectionText(analysis.containsPeopleAi, analysis.faceCountAi)
-            }) }}
+            "{{ _self.peopleDetectionText(analysis.containsPeopleAi, analysis.faceCountAi) }}"
         </span>
         <button type="button" class="lens-revert-trigger" data-lens-action="people-revert" data-lens-analysis-id="{{ analysis.id }}"{% if not aiDiffers %} hidden{% endif %}>
             {{ 'Revert to AI'|t('lens') }}

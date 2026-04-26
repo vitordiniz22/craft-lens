@@ -10,8 +10,8 @@
 
 {% set hasSafetyFlags = analysis and (analysis.containsPeople or (analysis.nsfwScore is defined and analysis.nsfwScore >= 0.2) or analysis.hasWatermark or (analysis.containsBrandLogo and analysis.detectedBrands|length)) %}
 
-{# Editing is locked when static (Craft preview) or when asset is pending review #}
-{% set readOnly = (static ?? false) or (analysis and analysis.status == lens.status.pendingReview and lens.isReviewActive) %}
+{# Editing is locked when static (Craft preview). #}
+{% set readOnly = static ?? false %}
 
 {# Processing state detection #}
 {% set isProcessing = analysis and analysis.status == lens.status.processing %}
@@ -24,19 +24,11 @@
 {% set isReprocessing = isProcessing and hasExistingData %}
 {% set isRepending = analysis and analysis.status == lens.status.pending and hasExistingData %}
 
-{# Unified field state: readonly (no editing), unlocked (edit pencil + save/cancel), editing (review page) #}
+{# Unified field state: readonly (no editing), unlocked (edit pencil + save/cancel) #}
 {% set fieldState = (readOnly or isProcessing or isRepending) ? 'readonly' : 'unlocked' %}
-{% set hideConfidence = analysis is not null and (
-    isProcessing
-    or isRepending
-    or analysis.status in [lens.status.completed, lens.status.approved]
-    or (not lens.isReviewActive and analysis.status == lens.status.pendingReview)
-) %}
+{% set hideConfidence = isProcessing or isRepending %}
 
 {% set displayStatus = analysis ? analysis.status : 'not_found' %}
-{% if not lens.isReviewActive and displayStatus in [lens.status.pendingReview, lens.status.approved, lens.status.rejected] %}
-    {% set displayStatus = lens.status.completed %}
-{% endif %}
 <div class="lens-analysis-panel{% if isProcessing or isRepending %} lens-analysis-panel--processing{% endif %}" data-lens-target="analysis-panel" data-lens-asset-id="{{ asset.id }}" data-lens-analysis-status="{{ displayStatus }}">
 
     {% set isSecondarySite = currentSiteId != (primarySiteId ?? craft.app.sites.primarySite.id) %}
@@ -115,21 +107,6 @@
 
     {% if analysis %}
         {% if not isSecondarySite %}
-            {# Pending review notice #}
-            {% if analysis.status == lens.status.pendingReview and not (static ?? false) and lens.isReviewActive %}
-                {% include 'lens/_components/inline-notice' with {
-                    type: 'warning',
-                    title: 'Pending Review'|t('lens'),
-                    message: 'This analysis is awaiting review. All data shown is provisional and may be edited after approval or rejection.'|t('lens'),
-                    cta: {
-                        label: 'Review now'|t('lens'),
-                        url: 'lens/review/' ~ analysis.id,
-                        small: false,
-                        submit: true
-                    }
-                } %}
-            {% endif %}
-
             {# Similar Assets notice — shown prominently when duplicates detected #}
             {% if analysis.status not in [lens.status.failed] and (not isProcessing or isReprocessing) and (similarImages ?? [])|length %}
                 {% include 'lens/_components/analysis/similar-assets-notice' with {

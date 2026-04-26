@@ -25,13 +25,13 @@ Choose your AI provider (**OpenAI GPT**, **Google Gemini**, or **Anthropic Claud
 
 1. **Upload.** Drop images into any enabled volume. Lens analyzes them automatically on upload, on demand from the asset editor, or in bulk across entire volumes.
 2. **Analyze.** In a single pass, AI generates rich metadata for every image, searchable right away.
-3. **Refine.** AI does the heavy lifting, you ensure the quality. Edit any field inline, or work through the Review Queue at your own pace.
+3. **Refine.** AI does the heavy lifting, you ensure the quality. Edit titles, alt text, tags, and detection flags inline on the asset edit page, and apply the suggested focal point with one click.
 
 ## Features
 
 ### Search & Discovery
 
-- **Smarter asset library.** Lens drops pre-built views into Craft's Assets section: Not Analyzed, Failed Analyses, Missing Alt Text, NSFW Flagged, Missing Focal Point, Contains People, Has Watermark, and Has Brand Logo, with Needs Review and Has Duplicates added on Pro. Build your own filtered views with the Lens condition rules.
+- **Smarter asset library.** Lens drops pre-built views into Craft's Assets section: Not Analyzed, Failed Analyses, Missing Alt Text, NSFW Flagged, Missing Focal Point, Contains People, Has Watermark, and Has Brand Logo, with Has Duplicates added on Pro. Build your own filtered views with the Lens condition rules.
 - **Semantic search (Pro).** Type "outdoor" into the search box and Lens ranks results by AI-generated tags, titles, descriptions, alt text, and OCR, right inside the browser you already use. The same smart search powers Craft's Assets section and the image picker you see when attaching photos to entries. It handles typos and stems queries in 14 languages (Catalan, Danish, Dutch, English, Finnish, French, German, Italian, Norwegian, Portuguese, Romanian, Russian, Spanish, Swedish); other languages still work but without stemming. Turn it off in Settings to fall back to Craft's default filename search.
 - **Duplicate detection (Pro)** surfaces visually similar images so you stop re-uploading the same file, flags duplicates on each asset's edit page, and lets you find images similar to any specific asset on demand.
 
@@ -69,15 +69,6 @@ Choose your AI provider (**OpenAI GPT**, **Google Gemini**, or **Anthropic Claud
 
 - **Analyze entire volumes** with an up-front cost estimate shown before the run starts, real-time progress tracking, and retry for failed assets
 
-### Review Workflow
-
-- **Review Queue** lets you go through AI analyses, catch bad detections, and correct them so your library stays reliable. Use Focus mode for one-at-a-time review or Bulk mode for batch actions. Keyboard shortcuts in Focus mode: `A` to approve, `R` to reject, arrow keys to navigate.
-- **Two-panel Focus View** with a large image preview on the left and all AI-generated metadata on the right, fully editable inline
-- **Focal point editing** lets you click anywhere on the image to set the focal point, accept or override the AI suggestion
-- **Low-confidence flagging** surfaces AI results below 80% confidence so you can focus review time where it matters
-
-[[Image: Review Queue Focus View. Show the two-panel layout with a large image preview on the left (focal point crosshair visible if possible), and the right panel displaying editable title, alt text, long description, tag chips, and the approve/reject buttons. Pick an asset with rich metadata to showcase the depth of analysis.]]
-
 [[Image: Bulk Processing. Show the processing-in-progress state with the progress bar partially filled (e.g. "Processing 34 of 127"), the cost estimate visible, and the volume selector dropdown. This shows the scale of what Pro can handle.]]
 
 ### Language & Multisite
@@ -89,7 +80,7 @@ Choose your AI provider (**OpenAI GPT**, **Google Gemini**, or **Anthropic Claud
 
 ## Editions
 
-Lens has two editions. **Lite** is the analysis layer: every image gets AI-generated metadata, and Craft's asset library gets pre-built views and filters to navigate it. **Pro** is for libraries that grow, bulk runs across whole volumes, a review workflow for catching weird AI calls, semantic search over every field the analysis produces, and duplicate detection so the same file doesn't sneak in twice.
+Lens has two editions. **Lite** is the analysis layer: every image gets AI-generated metadata, and Craft's asset library gets pre-built views and filters to navigate it. **Pro** is for libraries that grow, bulk runs across whole volumes, semantic search over every field the analysis produces, and duplicate detection so the same file doesn't sneak in twice.
 
 **Lite** is free and includes:
 
@@ -101,10 +92,9 @@ Lens has two editions. **Lite** is the analysis layer: every image gets AI-gener
 
 - Semantic tags and OCR text extraction surfaced in the analysis panel, indexed for semantic search, and available to filter by.
 - Semantic search that ranks results in Craft's asset library and in the image picker on entries, using the tags, titles, descriptions, alt text, and OCR that analysis produces.
-- Review Queue to spot-check AI analyses and correct any weird detections, with Focus and Bulk modes and keyboard shortcuts for fast decisions.
 - Bulk Processing to analyze entire volumes in one run, with an up-front cost estimate shown before the run starts, real-time progress, and retry for failed assets.
 - Duplicate detection via perceptual hashing (requires the GD PHP extension).
-- Up to 2 more pre-built views, each conditional on its prerequisite: **Needs Review** appears when *Require Human Review* is enabled in Settings, and **Has Duplicates** appears when GD is available. Plus 8 more filters.
+- One more pre-built view, conditional on its prerequisite: **Has Duplicates** appears when GD is available. Plus 8 more filters.
 
 Available on the <a href="https://plugins.craftcms.com/lens" target="_blank" rel="noopener">Craft Plugin Store</a>.
 
@@ -141,7 +131,7 @@ php craft plugin/install lens
 5. In each enabled volume's field layout (**Settings** &rarr; **Assets** &rarr; *[Volume]* &rarr; **Field Layout**), drag the **Lens Analysis** UI element into the layout so AI results appear on the asset editor
 6. Upload an image. Lens analyzes it automatically and displays results in the **Lens Analysis** panel on the asset editor.
 
-[[Image: Settings page. Show the AI provider configuration with one provider selected (OpenAI recommended for familiarity), the API key field with the environment variable placeholder visible, the model dropdown, auto-process toggle, require review toggle, and the volume checkboxes with at least 2 volumes listed.]]
+[[Image: Settings page. Show the AI provider configuration with one provider selected (OpenAI recommended for familiarity), the API key field with the environment variable placeholder visible, the model dropdown, auto-process toggle, and the volume checkboxes with at least 2 volumes listed.]]
 
 ## Documentation
 

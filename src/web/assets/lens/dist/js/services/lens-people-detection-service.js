@@ -1,7 +1,7 @@
 /**
  * Lens Plugin - People Detection Service
  * Centralized people detection mode mapping and formatting
- * Eliminates duplicate switch statements in lens-asset-actions.js and lens-review.js
+ * Eliminates duplicate switch statements in lens-asset-actions.js
  */
 (function() {
     'use strict';

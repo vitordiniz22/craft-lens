@@ -95,7 +95,7 @@ class TagAggregationService extends Component
             ->select(['tags.tag', 'COUNT(*) as count'])
             ->from(Install::TABLE_ASSET_TAGS . ' tags')
             ->innerJoin(Install::TABLE_ASSET_ANALYSES . ' lens', '[[tags.analysisId]] = [[lens.id]]')
-            ->where(['in', 'lens.status', AnalysisStatus::withMetadataValues()]);
+            ->where(['lens.status' => AnalysisStatus::Completed->value]);
 
         if ($volumeIds !== null) {
             $query->andWhere(['in', '[[lens.assetId]]', (new Query())

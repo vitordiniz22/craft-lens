@@ -30,25 +30,11 @@ class StatisticsService extends Component
      */
     public function getOverviewStats(): array
     {
-        $analyzedStatuses = AnalysisStatus::analyzedValues();
-
         $result = AssetAnalysisRecord::find()
             ->select([
                 new Expression(
-                    'SUM(CASE WHEN status IN (:analyzed1, :analyzed2, :analyzed3) THEN 1 ELSE 0 END) as analyzed',
-                    [':analyzed1' => $analyzedStatuses[0], ':analyzed2' => $analyzedStatuses[1], ':analyzed3' => $analyzedStatuses[2]]
-                ),
-                new Expression(
-                    'SUM(CASE WHEN status = :approved THEN 1 ELSE 0 END) as approved',
-                    [':approved' => AnalysisStatus::Approved->value]
-                ),
-                new Expression(
-                    'SUM(CASE WHEN status = :rejected THEN 1 ELSE 0 END) as rejected',
-                    [':rejected' => AnalysisStatus::Rejected->value]
-                ),
-                new Expression(
-                    'SUM(CASE WHEN status = :pendingReview THEN 1 ELSE 0 END) as pendingReview',
-                    [':pendingReview' => AnalysisStatus::PendingReview->value]
+                    'SUM(CASE WHEN status = :completed THEN 1 ELSE 0 END) as analyzed',
+                    [':completed' => AnalysisStatus::Completed->value]
                 ),
                 new Expression(
                     'SUM(CASE WHEN status = :failed THEN 1 ELSE 0 END) as failed',
@@ -66,9 +52,6 @@ class StatisticsService extends Component
             'totalImages' => $this->getTotalImageCount(),
             'analyzed' => $analyzed,
             'unprocessed' => $this->getUnprocessedCount(),
-            'pendingReview' => (int) ($result['pendingReview'] ?? 0),
-            'approved' => (int) ($result['approved'] ?? 0),
-            'rejected' => (int) ($result['rejected'] ?? 0),
             'failed' => (int) ($result['failed'] ?? 0),
             'totalCost' => $totalCost,
         ];
@@ -129,11 +112,6 @@ class StatisticsService extends Component
         return Plugin::getInstance()->assetAnalysis->getUnprocessedCount();
     }
 
-    public function getPendingReviewCount(): int
-    {
-        return Plugin::getInstance()->review->getPendingReviewCount();
-    }
-
     public function getFailedCount(): int
     {
         return (int) AssetAnalysisRecord::find()
@@ -155,7 +133,7 @@ class StatisticsService extends Component
     public function getNsfwFlaggedCount(): int
     {
         return (int) AssetAnalysisRecord::find()
-            ->where(['in', 'status', AnalysisStatus::processedValues()])
+            ->where(['status' => AnalysisStatus::Completed->value])
             ->andWhere(['>=', 'nsfwScore', self::NSFW_SCORE_THRESHOLD])
             ->count();
     }
@@ -166,7 +144,7 @@ class StatisticsService extends Component
     public function getWatermarkedCount(): int
     {
         return (int) AssetAnalysisRecord::find()
-            ->where(['in', 'status', AnalysisStatus::processedValues()])
+            ->where(['status' => AnalysisStatus::Completed->value])
             ->andWhere(['hasWatermark' => true])
             ->count();
     }
@@ -249,23 +227,10 @@ class StatisticsService extends Component
      */
     public function getRecentActivity(int $limit = 10): array
     {
-        $plugin = Plugin::getInstance();
-        $isReviewActive = $plugin->getIsPro() && $plugin->getSettings()->requireReviewBeforeApply;
-
         $statusTypeMap = [
             AnalysisStatus::Completed->value => 'analyzed',
             AnalysisStatus::Failed->value => 'failed',
         ];
-
-        if ($isReviewActive) {
-            $statusTypeMap[AnalysisStatus::PendingReview->value] = 'pending_review';
-            $statusTypeMap[AnalysisStatus::Approved->value] = 'approved';
-            $statusTypeMap[AnalysisStatus::Rejected->value] = 'rejected';
-        } else {
-            $statusTypeMap[AnalysisStatus::PendingReview->value] = 'analyzed';
-            $statusTypeMap[AnalysisStatus::Approved->value] = 'analyzed';
-            $statusTypeMap[AnalysisStatus::Rejected->value] = 'analyzed';
-        }
 
         $records = AssetAnalysisRecord::find()
             ->where(['in', 'status', array_keys($statusTypeMap)])
@@ -295,10 +260,8 @@ class StatisticsService extends Component
                 : null;
 
             $activities[] = [
-                'type' => $statusTypeMap[$record->status] ?? 'analyzed',
-                'statusLabel' => ($statusTypeMap[$record->status] ?? 'analyzed') === 'analyzed'
-                    ? AnalysisStatus::Completed->label()
-                    : AnalysisStatus::from($record->status)->label(),
+                'type' => $statusTypeMap[$record->status],
+                'statusLabel' => AnalysisStatus::from($record->status)->label(),
                 'assetId' => $record->assetId,
                 'assetTitle' => $asset?->title ?? Craft::t('lens', 'Deleted asset'),
                 'assetUrl' => $asset?->getCpEditUrl(),
@@ -411,7 +374,7 @@ class StatisticsService extends Component
                 'COUNT(*) as count',
                 'SUM(actualCost) as totalCost',
             ])
-            ->where(['in', 'status', AnalysisStatus::processedValues()])
+            ->where(['status' => AnalysisStatus::Completed->value])
             ->andWhere(['>=', 'processedAt', $from]);
 
         if ($to !== null) {
@@ -442,7 +405,7 @@ class StatisticsService extends Component
                 'COUNT(*) as count',
                 'SUM(actualCost) as totalCost',
             ])
-            ->where(['in', 'status', AnalysisStatus::processedValues()])
+            ->where(['status' => AnalysisStatus::Completed->value])
             ->asArray()
             ->one();
 
@@ -474,7 +437,7 @@ class StatisticsService extends Component
     /**
      * Get all items requiring user attention with counts and links.
      * Returns only items with count > 0.
-     * Order: Pending Review, Failed, NSFW, Watermarked, quality issues.
+     * Order: Failed, NSFW, Watermarked, quality issues.
      */
     public function getAttentionItems(?array $overviewStats = null): array
     {
@@ -486,17 +449,6 @@ class StatisticsService extends Component
         $qualityIssues = $this->getQualityIssueCounts();
 
         $items = [];
-
-        if ($overview['pendingReview'] > 0 && $isPro && $plugin->getSettings()->requireReviewBeforeApply) {
-            $items[] = [
-                'type' => 'pending_review',
-                'label' => Craft::t('lens', 'Pending Review'),
-                'count' => $overview['pendingReview'],
-                'url' => 'lens/review',
-                'color' => 'blue',
-                'icon' => 'eye',
-            ];
-        }
 
         if ($overview['failed'] > 0) {
             $items[] = [
@@ -632,7 +584,7 @@ class StatisticsService extends Component
                 ),
             ])
             ->from(Install::TABLE_ASSET_ANALYSES)
-            ->where(['in', 'status', AnalysisStatus::processedValues()]);
+            ->where(['status' => AnalysisStatus::Completed->value]);
 
         if ($volumeIds !== null) {
             if (empty($volumeIds)) {
@@ -663,7 +615,7 @@ class StatisticsService extends Component
                 'SUM(inputTokens) as inputTokens',
                 'SUM(outputTokens) as outputTokens',
             ])
-            ->where(['in', 'status', AnalysisStatus::processedValues()])
+            ->where(['status' => AnalysisStatus::Completed->value])
             ->asArray()
             ->one();
 
@@ -691,7 +643,7 @@ class StatisticsService extends Component
                 'COUNT(*) as cnt',
                 'SUM(actualCost) as totalCost',
             ])
-            ->where(['in', 'status', AnalysisStatus::processedValues()])
+            ->where(['status' => AnalysisStatus::Completed->value])
             ->andWhere(['not', ['provider' => null]])
             ->groupBy(['provider', 'providerModel'])
             ->orderBy(['totalCost' => SORT_DESC])

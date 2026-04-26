@@ -12,7 +12,7 @@
  #   confidence      - float|null, AI confidence (0-1)
  #   analysisId      - int, the analysis record ID
  #   assetId         - int|null, the asset ID
- #   fieldState      - 'readonly'|'unlocked'|'editing'
+ #   fieldState      - 'readonly'|'unlocked'
  #   siteId          - int|null, optional site ID for per-site content (omit for primary site)
  #}
 
@@ -56,128 +56,68 @@
 </div>
 
 {# ============================================================
-   UNLOCKED / EDITING — Same component, different interaction mode.
-   unlocked: asset edit page (editable field + AI suggestion + Apply)
-   editing:  review page (current value context + editable input)
+   UNLOCKED — Asset edit page (editable field + AI suggestion + Apply)
    ============================================================ #}
-{% elseif fieldState == 'unlocked' or fieldState == 'editing' %}
-
-{% set isReview = fieldState == 'editing' %}
+{% elseif fieldState == 'unlocked' %}
 
 <div class="lens-accent-bar"
-     {% if isReview %}
-     data-lens-target="bridge-field"
-     {% else %}
      data-lens-target="alt-proxy-field"
      data-lens-asset-id="{{ assetId }}"
      data-lens-analysis-id="{{ analysisId }}"
-     {% if siteId %}data-lens-site-id="{{ siteId }}"{% endif %}
-     {% endif %}>
+     {% if siteId %}data-lens-site-id="{{ siteId }}"{% endif %}>
 
     <div class="lens-field-header" data-lens-target="field-header">
         <span class="lens-field-label">{{ 'Alt Text'|t('lens') }}</span>
-        {% if isReview %}
-            {% if confidence and confidence < 0.8 %}
-                {{ confidenceBadge(confidence, 'review') }}
-            {% endif %}
-        {% else %}
-            {% if confidence and not (hideConfidence ?? false) %}
-                {{ confidenceBadge(confidence) }}
-            {% endif %}
-            {% include 'lens/_components/analysis/_tooltip-edit' with {editAction: 'alt-proxy-edit'} only %}
+        {% if confidence and not (hideConfidence ?? false) %}
+            {{ confidenceBadge(confidence) }}
         {% endif %}
+        {% include 'lens/_components/analysis/_tooltip-edit' with {editAction: 'alt-proxy-edit'} only %}
     </div>
 
-    {% if isReview %}
-        {# Current asset value (static context) #}
-        <div class="lens-native-current lens-native-current--context">
-            <span class="lens-native-current-label">{{ 'Current asset value'|t('lens') }}:</span>
+    {% if not valuesMatch %}
+        <div class="lens-field-display" data-lens-target="alt-proxy-current">
             {% if nativeValue %}
-                <span>{{ nativeValue }}</span>
+                <p>{{ nativeValue }}</p>
             {% else %}
-                <span class="light"><em>{{ 'Empty'|t('lens') }}</em></span>
+                <p class="light">{{ 'Empty'|t('lens') }}</p>
             {% endif %}
-        </div>
-
-        {# Editable suggestion input #}
-        <textarea class="text fullwidth" name="altText" rows="2" maxlength="{{ maxlength }}" data-lens-target="bridge-review-input"{% if aiValue ?? null %} data-lens-ai-value="{{ aiValue }}"{% endif %}>{{ suggestionValue }}</textarea>
-
-        {# Status line #}
-        <div class="lens-native-status">
-            {% if valuesMatch %}
-                <span class="light">{{ 'Already applied to asset'|t('lens') }}</span>
-            {% elseif nativeValue is not empty %}
-                <span class="light">{{ 'Suggestion only — current value was set manually'|t('lens') }}</span>
-            {% elseif hasSuggestion %}
-                <span class="light">{{ 'Will be applied to the asset on approval'|t('lens') }}</span>
-            {% endif %}
-        </div>
-    {% else %}
-        {% if not valuesMatch %}
-            <div class="lens-field-display" data-lens-target="alt-proxy-current">
-                {% if nativeValue %}
-                    <p>{{ nativeValue }}</p>
-                {% else %}
-                    <p class="light">{{ 'Empty'|t('lens') }}</p>
-                {% endif %}
-            </div>
-        {% endif %}
-
-        {% if hasSuggestion %}
-            <div class="lens-ai-suggestion-inline" data-lens-target="alt-proxy-suggestion-row">
-                {% include 'lens/_components/analysis/_tooltip-ai' only %}
-                <span data-lens-target="alt-proxy-suggestion-text">{{ suggestionValue }}</span>
-                {% if valuesMatch %}
-                    <span class="lens-applied-indicator" data-lens-target="alt-proxy-applied">
-                        <span class="status on"></span>
-                        <span class="smalltext">{{ 'Applied'|t('lens') }}</span>
-                    </span>
-                {% else %}
-                    <button type="button" class="lens-revert-trigger"
-                            data-lens-target="alt-proxy-apply-link"
-                            data-lens-action="apply-alt"
-                            data-lens-asset-id="{{ assetId }}"
-                            data-lens-analysis-id="{{ analysisId }}"
-                            {% if siteId %}data-lens-site-id="{{ siteId }}"{% endif %}>
-                        {{ 'Apply to Asset'|t('lens') }}
-                    </button>
-                {% endif %}
-            </div>
-        {% else %}
-            <div class="lens-field-display">
-                <p class="light">{{ 'No suggestion available'|t('lens') }}</p>
-            </div>
-        {% endif %}
-
-        {# Edit mode (hidden by default) #}
-        <div class="lens-field-edit" data-lens-target="alt-proxy-edit-area" hidden>
-            <textarea class="text fullwidth" rows="3" maxlength="{{ maxlength }}" data-lens-target="alt-proxy-input">{{ nativeValue }}</textarea>
-            <div class="lens-field-actions">
-                <button type="button" class="btn small submit" data-lens-action="alt-proxy-save">{{ 'Save'|t('lens') }}</button>
-                <button type="button" class="btn small" data-lens-action="alt-proxy-cancel">{{ 'Cancel'|t('lens') }}</button>
-            </div>
         </div>
     {% endif %}
 
-    {# AI suggestion inline — shows original AI value when suggestion has been edited #}
-    {% if isReview %}
-        {% set showProxyAi = (aiValue ?? null) and aiValue != suggestionValue %}
-        <div class="lens-ai-suggestion-inline" data-lens-target="bridge-review-ai"{% if not showProxyAi %} hidden{% endif %}>
+    {% if hasSuggestion %}
+        <div class="lens-ai-suggestion-inline" data-lens-target="alt-proxy-suggestion-row">
             {% include 'lens/_components/analysis/_tooltip-ai' only %}
-            <span data-lens-target="bridge-review-ai-text">
-                {% if showProxyAi %}
-                    {{ 'AI: "{value}"'|t('lens', {value: aiValue}) }}
-                {% endif %}
-            </span>
-            {% if aiValue ?? null %}
+            <span data-lens-target="alt-proxy-suggestion-text">{{ suggestionValue }}</span>
+            {% if valuesMatch %}
+                <span class="lens-applied-indicator" data-lens-target="alt-proxy-applied">
+                    <span class="status on"></span>
+                    <span class="smalltext">{{ 'Applied'|t('lens') }}</span>
+                </span>
+            {% else %}
                 <button type="button" class="lens-revert-trigger"
-                        data-lens-action="bridge-review-revert"
-                        data-lens-ai-value="{{ aiValue }}"{% if not showProxyAi %} hidden{% endif %}>
-                    {{ 'Revert to AI'|t('lens') }}
+                        data-lens-target="alt-proxy-apply-link"
+                        data-lens-action="apply-alt"
+                        data-lens-asset-id="{{ assetId }}"
+                        data-lens-analysis-id="{{ analysisId }}"
+                        {% if siteId %}data-lens-site-id="{{ siteId }}"{% endif %}>
+                    {{ 'Apply to Asset'|t('lens') }}
                 </button>
             {% endif %}
         </div>
+    {% else %}
+        <div class="lens-field-display">
+            <p class="light">{{ 'No suggestion available'|t('lens') }}</p>
+        </div>
     {% endif %}
+
+    {# Edit mode (hidden by default) #}
+    <div class="lens-field-edit" data-lens-target="alt-proxy-edit-area" hidden>
+        <textarea class="text fullwidth" rows="3" maxlength="{{ maxlength }}" data-lens-target="alt-proxy-input">{{ nativeValue }}</textarea>
+        <div class="lens-field-actions">
+            <button type="button" class="btn small submit" data-lens-action="alt-proxy-save">{{ 'Save'|t('lens') }}</button>
+            <button type="button" class="btn small" data-lens-action="alt-proxy-cancel">{{ 'Cancel'|t('lens') }}</button>
+        </div>
+    </div>
 </div>
 
 {% endif %}

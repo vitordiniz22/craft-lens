@@ -35,9 +35,6 @@ class LensTwigGlobalStatusTest extends Unit
         $this->assertSame(AnalysisStatus::Processing->value, $status['processing']);
         $this->assertSame(AnalysisStatus::Completed->value, $status['completed']);
         $this->assertSame(AnalysisStatus::Failed->value, $status['failed']);
-        $this->assertSame(AnalysisStatus::PendingReview->value, $status['pendingReview']);
-        $this->assertSame(AnalysisStatus::Approved->value, $status['approved']);
-        $this->assertSame(AnalysisStatus::Rejected->value, $status['rejected']);
     }
 
     public function testGetStatusCoversEveryEnumCase(): void
@@ -61,9 +58,6 @@ class LensTwigGlobalStatusTest extends Unit
         $this->assertSame('Processing', $labels['processing']);
         $this->assertSame('Analyzed', $labels['completed']);
         $this->assertSame('Failed', $labels['failed']);
-        $this->assertSame('Pending Review', $labels['pending_review']);
-        $this->assertSame('Approved', $labels['approved']);
-        $this->assertSame('Rejected', $labels['rejected']);
         $this->assertCount(count(AnalysisStatus::cases()), $labels);
     }
 
@@ -72,8 +66,8 @@ class LensTwigGlobalStatusTest extends Unit
     public function testStatusLabelReturnsTranslatedLabelForValidValue(): void
     {
         $this->assertSame(
-            AnalysisStatus::PendingReview->label(),
-            $this->global->statusLabel('pending_review')
+            AnalysisStatus::Completed->label(),
+            $this->global->statusLabel('completed')
         );
     }
 

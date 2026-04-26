@@ -5,9 +5,6 @@
  # (when AltField is in layout). The current asset value is NOT shown here —
  # the user can see it in Craft's native field above.
  #
- # On the review page (editing state), an "Apply to asset" checkbox and
- # compact current-value context replace the heavy "Current asset value" block.
- #
  # Expected variables:
  #   fieldName       - string, the analysis field key (e.g. 'suggestedTitle', 'altText')
  #   label           - string, display label (e.g. 'Title', 'Alt Text')
@@ -19,7 +16,7 @@
  #   inputType       - string, 'text' or 'textarea' (default: 'text')
  #   analysisId      - int, the analysis record ID
  #   assetId         - int|null, the asset ID
- #   fieldState      - 'readonly'|'unlocked'|'editing'
+ #   fieldState      - 'readonly'|'unlocked'
  #   applyAction     - string, the data-lens-action value (e.g. 'apply-title', 'apply-alt')
  #   siteId          - int|null, optional site ID for per-site content (omit for primary site)
  #}
@@ -30,8 +27,6 @@
 {% set siteId = siteId ?? null %}
 {% set fieldState = fieldState ?? 'readonly' %}
 {% set isEdited = (aiValue ?? null) is not null and suggestionValue != aiValue %}
-{% set fieldMaxLengths = { altText: 500, suggestedTitle: 255 } %}
-{% set maxlength = fieldMaxLengths[fieldName] ?? null %}
 
 {# Determine the status of the native value relative to the suggestion #}
 {% set hasSuggestion = suggestionValue is defined and suggestionValue is not empty %}
@@ -72,119 +67,49 @@
 </div>
 
 {# ============================================================
-   UNLOCKED / EDITING — Same component, different interaction mode.
-   unlocked: asset edit page (suggestion display + apply button)
-   editing:  review page (editable input + apply checkbox + compact context)
+   UNLOCKED — Asset edit page (suggestion display + apply button)
    ============================================================ #}
-{% elseif fieldState == 'unlocked' or fieldState == 'editing' %}
-
-{% set isReview = fieldState == 'editing' %}
+{% elseif fieldState == 'unlocked' %}
 
 <div class="lens-accent-bar"
-     {% if isReview %}
-     data-lens-target="bridge-field"
-     {% else %}
      data-lens-target="native-bridge"
      data-lens-field="{{ fieldName }}"
      data-lens-analysis-id="{{ analysisId }}"
-     {% if siteId %}data-lens-site-id="{{ siteId }}"{% endif %}
-     {% endif %}>
+     {% if siteId %}data-lens-site-id="{{ siteId }}"{% endif %}>
 
     <div class="lens-field-header" data-lens-target="field-header">
-        {% if not isReview and isEdited %}
+        {% if isEdited %}
             {% include 'lens/_components/analysis/_tooltip-lock' only %}
         {% endif %}
         <span class="lens-field-label">{{ label }}</span>
-        {% if isReview %}
-            {% if confidence and confidence < 0.8 %}
-                {{ confidenceBadge(confidence, 'review') }}
-            {% endif %}
-        {% else %}
-            {% if not isEdited and confidence and not (hideConfidence ?? false) %}
-                {{ confidenceBadge(confidence) }}
-            {% endif %}
+        {% if not isEdited and confidence and not (hideConfidence ?? false) %}
+            {{ confidenceBadge(confidence) }}
         {% endif %}
     </div>
 
-    {% if isReview %}
-        {# Editable suggestion input (primary — what the reviewer evaluates) #}
-        {% if inputType == 'textarea' %}
-            <textarea class="text fullwidth" name="{{ fieldName }}" rows="2"{% if maxlength %} maxlength="{{ maxlength }}"{% endif %} data-lens-target="bridge-review-input"{% if aiValue ?? null %} data-lens-ai-value="{{ aiValue }}"{% endif %}>{{ suggestionValue }}</textarea>
-        {% else %}
-            <input type="text" class="text fullwidth" name="{{ fieldName }}" value="{{ suggestionValue }}"{% if maxlength %} maxlength="{{ maxlength }}"{% endif %} data-lens-target="bridge-review-input"{% if aiValue ?? null %} data-lens-ai-value="{{ aiValue }}"{% endif %}>
-        {% endif %}
-
-        {# Apply control + current asset value context #}
-        {% set applyParamName = fieldName == 'suggestedTitle' ? 'applyTitle' : 'applyAlt' %}
-        <div class="lens-bridge-apply-row">
+    {% if hasSuggestion %}
+        <div class="lens-ai-suggestion-inline" data-lens-target="native-apply-row">
+            {% include 'lens/_components/analysis/_tooltip-ai' only %}
+            <span data-lens-target="bridge-suggestion-text">{{ suggestionValue }}</span>
             {% if valuesMatch %}
-                <span class="status on"></span>
-                <span>{{ 'Matches current asset value'|t('lens') }}</span>
-            {% else %}
-                <label class="lens-apply-checkbox">
-                    <input type="hidden" name="{{ applyParamName }}" value="0">
-                    <input type="checkbox" name="{{ applyParamName }}" value="1" checked>
-                    <span>{{ 'Apply to asset'|t('lens') }}</span>
-                </label>
-                <span class="lens-context-separator">&middot;</span>
-                <span class="lens-bridge-apply-row__label">{{ 'Current:'|t('lens') }}</span>
-                <span class="lens-bridge-apply-row__value">
-                    {% if isNativeDefault %}
-                        <em>{{ nativeValue ?: ('Empty'|t('lens')) }}</em>
-                        <span class="lens-native-context-chip">{{ nativeValue ? ('Auto-generated'|t('lens')) : ('Empty'|t('lens')) }}</span>
-                    {% elseif nativeValue %}
-                        {{ nativeValue|length > 80 ? nativeValue|slice(0, 80) ~ '…' : nativeValue }}
-                    {% else %}
-                        <em>{{ 'Empty'|t('lens') }}</em>
-                    {% endif %}
+                <span class="lens-applied-indicator">
+                    <span class="status on"></span>
+                    <span class="smalltext">{{ 'Applied'|t('lens') }}</span>
                 </span>
+            {% else %}
+                <button type="button" class="lens-revert-trigger"
+                        data-lens-target="native-apply-link"
+                        data-lens-action="{{ applyAction }}"
+                        data-lens-asset-id="{{ assetId }}"
+                        data-lens-analysis-id="{{ analysisId }}"
+                        {% if siteId %}data-lens-site-id="{{ siteId }}"{% endif %}>
+                    {{ 'Apply to Asset'|t('lens') }}
+                </button>
             {% endif %}
         </div>
     {% else %}
-        {% if hasSuggestion %}
-            <div class="lens-ai-suggestion-inline" data-lens-target="native-apply-row">
-                {% include 'lens/_components/analysis/_tooltip-ai' only %}
-                <span data-lens-target="bridge-suggestion-text">{{ suggestionValue }}</span>
-                {% if valuesMatch %}
-                    <span class="lens-applied-indicator">
-                        <span class="status on"></span>
-                        <span class="smalltext">{{ 'Applied'|t('lens') }}</span>
-                    </span>
-                {% else %}
-                    <button type="button" class="lens-revert-trigger"
-                            data-lens-target="native-apply-link"
-                            data-lens-action="{{ applyAction }}"
-                            data-lens-asset-id="{{ assetId }}"
-                            data-lens-analysis-id="{{ analysisId }}"
-                            {% if siteId %}data-lens-site-id="{{ siteId }}"{% endif %}>
-                        {{ 'Apply to Asset'|t('lens') }}
-                    </button>
-                {% endif %}
-            </div>
-        {% else %}
-            <div class="lens-field-display">
-                <p class="light">{{ 'No suggestion available'|t('lens') }}</p>
-            </div>
-        {% endif %}
-    {% endif %}
-
-    {# AI suggestion inline — shows original AI value when suggestion has been edited #}
-    {% if isReview %}
-        {% set showBridgeAi = (aiValue ?? null) and aiValue != suggestionValue %}
-        <div class="lens-ai-suggestion-inline" data-lens-target="bridge-review-ai"{% if not showBridgeAi %} hidden{% endif %}>
-            {% include 'lens/_components/analysis/_tooltip-ai' only %}
-            <span data-lens-target="bridge-review-ai-text">
-                {% if showBridgeAi %}
-                    {{ 'AI: "{value}"'|t('lens', {value: aiValue}) }}
-                {% endif %}
-            </span>
-            {% if aiValue ?? null %}
-                <button type="button" class="lens-revert-trigger"
-                        data-lens-action="bridge-review-revert"
-                        data-lens-ai-value="{{ aiValue }}"{% if not showBridgeAi %} hidden{% endif %}>
-                    {{ 'Revert to AI'|t('lens') }}
-                </button>
-            {% endif %}
+        <div class="lens-field-display">
+            <p class="light">{{ 'No suggestion available'|t('lens') }}</p>
         </div>
     {% endif %}
 </div>

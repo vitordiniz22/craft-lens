@@ -250,7 +250,7 @@ class SiteContentService extends Component
         $analysis = $siteRecord->analysis;
 
         Logger::info(
-            LogCategory::Review,
+            LogCategory::AssetProcessing,
             "Site content field '{$field}' updated for site {$siteId}",
             assetId: $analysis->assetId ?? null,
         );
@@ -298,7 +298,7 @@ class SiteContentService extends Component
         $analysis = $siteRecord->analysis;
 
         Logger::info(
-            LogCategory::Review,
+            LogCategory::AssetProcessing,
             "Site content field '{$field}' reverted for site {$siteId}",
             assetId: $analysis->assetId ?? null,
         );

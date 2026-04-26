@@ -10,7 +10,6 @@ use vitordiniz22\craftlens\console\controllers\StatsController;
 use vitordiniz22\craftlens\Plugin;
 use vitordiniz22\craftlens\services\AssetAnalysisService;
 use vitordiniz22\craftlens\services\DuplicateDetectionService;
-use vitordiniz22\craftlens\services\ReviewService;
 use vitordiniz22\craftlenstests\_support\Helpers\AnalysisRecordFixtures;
 use yii\console\ExitCode;
 
@@ -37,7 +36,7 @@ class StatsControllerTest extends Unit
     // actionIndex
     // ---------------------------------------------------------------------
 
-    public function testIndexPrintsUnprocessedAndPendingCounts(): void
+    public function testIndexPrintsUnprocessedCount(): void
     {
         $assetAnalysis = new class extends AssetAnalysisService {
             public function getUnprocessedCount(): int
@@ -45,23 +44,14 @@ class StatsControllerTest extends Unit
                 return 7;
             }
         };
-        $review = new class extends ReviewService {
-            public function getPendingReviewCount(): int
-            {
-                return 3;
-            }
-        };
 
         $originalAsset = Plugin::getInstance()->assetAnalysis;
-        $originalReview = Plugin::getInstance()->review;
         Plugin::getInstance()->set('assetAnalysis', $assetAnalysis);
-        Plugin::getInstance()->set('review', $review);
 
         try {
             [$exitCode, $stdout, $stderr] = $this->capture(fn () => $this->controller->actionIndex());
         } finally {
             Plugin::getInstance()->set('assetAnalysis', $originalAsset);
-            Plugin::getInstance()->set('review', $originalReview);
         }
 
         $this->assertSame(ExitCode::OK, $exitCode);
@@ -69,8 +59,6 @@ class StatsControllerTest extends Unit
         $this->assertStringContainsString('Lens Analysis Statistics', $stdout);
         $this->assertStringContainsString('Unprocessed assets:', $stdout);
         $this->assertStringContainsString('7', $stdout);
-        $this->assertStringContainsString('Pending review:', $stdout);
-        $this->assertStringContainsString('3', $stdout);
     }
 
     public function testDefaultActionResolvesToIndex(): void

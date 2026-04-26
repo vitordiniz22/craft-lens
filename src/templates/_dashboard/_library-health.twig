@@ -35,22 +35,6 @@
             } only %}
         {% endif %}
 
-        {# Review Coverage — only when review workflow is active #}
-        {% if lens.isReviewActive and overviewStats is defined %}
-            {% set reviewedCount = overviewStats.approved|default(0) %}
-            {% set totalReviewable = (overviewStats.approved|default(0)) + (overviewStats.pendingReview|default(0)) %}
-            {% set reviewPercentage = totalReviewable > 0 ? ((reviewedCount / totalReviewable) * 100)|round(1) : 0 %}
-
-            {% include 'lens/_dashboard/_coverage-metric' with {
-                label: 'Reviewed'|t('lens'),
-                percentage: reviewPercentage,
-                covered: reviewedCount,
-                total: totalReviewable,
-                linkUrl: cpUrl('lens/review'),
-                linkText: 'Review queue'|t('lens'),
-            } only %}
-        {% endif %}
-
         {# Alt Text Coverage #}
         {% set altMissing = altTextCoverage.total - altTextCoverage.withAltText %}
         {% include 'lens/_dashboard/_coverage-metric' with {

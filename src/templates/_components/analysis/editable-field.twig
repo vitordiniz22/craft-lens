@@ -1,5 +1,5 @@
 {#
- # Reusable Inline Editable Field — 3-State Pattern
+ # Reusable Inline Editable Field — 2-State Pattern
  #
  # Expected variables:
  #   fieldName      - string, the field key (e.g. 'suggestedTitle')
@@ -10,7 +10,7 @@
  #   inputType      - string, 'text' or 'textarea' (default: 'text')
  #   featured       - bool, use featured styling (default: false)
  #   analysisId     - int, the analysis record ID
- #   fieldState     - 'readonly'|'unlocked'|'editing'
+ #   fieldState     - 'readonly'|'unlocked'
  #   nullAiIsValid  - bool, treat null AI value as valid suggestion (default: false)
  #                    When true, a null aiValue means "AI found nothing" and the user
  #                    can revert to that empty state after manually adding content.
@@ -60,111 +60,73 @@
 </div>
 
 {# ============================================================
-   UNLOCKED / EDITING — Same component, different interaction mode.
-   unlocked: asset edit page (click-to-edit, auto-save via AJAX)
-   editing:  review page (always editable, form-based submission)
+   UNLOCKED — Asset edit page (click pencil to edit, AJAX save)
    ============================================================ #}
-{% elseif fieldState == 'unlocked' or fieldState == 'editing' %}
-
-{% set isReview = fieldState == 'editing' %}
+{% elseif fieldState == 'unlocked' %}
 
 <div class="lens-editable-field{% if featured %} lens-panel-featured{% endif %}"
-     {% if not isReview %}
      data-lens-target="editable-field"
      data-lens-field="{{ fieldName }}"
      data-lens-analysis-id="{{ analysisId }}"
      {% if siteId %}data-lens-site-id="{{ siteId }}"{% endif %}
-     {% if nullAiIsValid %}data-lens-null-ai-valid="1"{% endif %}
-     {% endif %}>
+     {% if nullAiIsValid %}data-lens-null-ai-valid="1"{% endif %}>
 
     <div class="lens-field-header" data-lens-target="field-header">
-        {% if not isReview and isEdited %}
+        {% if isEdited %}
             {% include 'lens/_components/analysis/_tooltip-lock' only %}
         {% endif %}
         {% if label is defined and label %}
             <span class="lens-field-label">{{ label }}</span>
         {% endif %}
-        {% if isReview %}
-            {% if confidence and confidence < 0.8 %}
-                {{ confidenceBadge(confidence, 'review') }}
+        {% if not isEdited and confidence and not (hideConfidence ?? false) %}
+            {{ confidenceBadge(confidence) }}
+        {% endif %}
+        {% include 'lens/_components/analysis/_tooltip-edit' with {editAction: 'field-edit'} only %}
+    </div>
+
+    {# Display mode #}
+    <div class="lens-field-display" data-lens-target="field-display">
+        {% if value %}
+            {% if inputType == 'text' and featured %}
+                <p class="lens-panel-title">{{ value }}</p>
+            {% else %}
+                <p>{{ value }}</p>
             {% endif %}
         {% else %}
-            {% if not isEdited and confidence and not (hideConfidence ?? false) %}
-                {{ confidenceBadge(confidence) }}
-            {% endif %}
-            {% include 'lens/_components/analysis/_tooltip-edit' with {editAction: 'field-edit'} only %}
+            <p class="light">{{ emptyText }}</p>
         {% endif %}
     </div>
 
-    {% if isReview %}
-        {# Review: direct inputs for form submit.
-           Primary-site fields use name= so they're captured by getBodyParam().
-           Translation fields (siteId set) omit name= to avoid collisions — JS
-           serializes them into the siteContent JSON hidden input instead. #}
+    {# Edit mode (hidden by default) #}
+    <div class="lens-field-edit" data-lens-target="field-edit" hidden>
         {% if inputType == 'textarea' %}
-            <textarea class="text fullwidth"{% if not siteId %} name="{{ fieldName }}"{% endif %} data-lens-control="field-{{ fieldName }}" rows="{{ fieldName == 'longDescription' ? 6 : 2 }}"{% if maxlength %} maxlength="{{ maxlength }}"{% endif %}>{{ value }}</textarea>
+            <textarea class="text fullwidth" rows="6"{% if maxlength %} maxlength="{{ maxlength }}"{% endif %}>{{ value }}</textarea>
         {% else %}
-            <input type="text" class="text fullwidth"{% if not siteId %} name="{{ fieldName }}"{% endif %} data-lens-control="field-{{ fieldName }}" value="{{ value }}"{% if maxlength %} maxlength="{{ maxlength }}"{% endif %}>
+            <input type="text" class="text fullwidth" value="{{ value }}"{% if maxlength %} maxlength="{{ maxlength }}"{% endif %}>
         {% endif %}
-    {% else %}
-        {# Display mode #}
-        <div class="lens-field-display" data-lens-target="field-display">
-            {% if value %}
-                {% if inputType == 'text' and featured %}
-                    <p class="lens-panel-title">{{ value }}</p>
-                {% else %}
-                    <p>{{ value }}</p>
-                {% endif %}
-            {% else %}
-                <p class="light">{{ emptyText }}</p>
-            {% endif %}
+        <div class="lens-field-actions">
+            <button type="button" class="btn small submit" data-lens-action="field-save">{{ 'Save'|t('lens') }}</button>
+            <button type="button" class="btn small" data-lens-action="field-cancel">{{ 'Cancel'|t('lens') }}</button>
         </div>
+    </div>
 
-        {# Edit mode (hidden by default) #}
-        <div class="lens-field-edit" data-lens-target="field-edit" hidden>
-            {% if inputType == 'textarea' %}
-                <textarea class="text fullwidth" rows="6"{% if maxlength %} maxlength="{{ maxlength }}"{% endif %}>{{ value }}</textarea>
-            {% else %}
-                <input type="text" class="text fullwidth" value="{{ value }}"{% if maxlength %} maxlength="{{ maxlength }}"{% endif %}>
-            {% endif %}
-            <div class="lens-field-actions">
-                <button type="button" class="btn small submit" data-lens-action="field-save">{{ 'Save'|t('lens') }}</button>
-                <button type="button" class="btn small" data-lens-action="field-cancel">{{ 'Cancel'|t('lens') }}</button>
-            </div>
-        </div>
-
-    {% endif %}
-
-    {# AI suggestion #}
-    {% if isReview %}
-        {% if isEdited %}
-            <div class="lens-ai-suggestion-inline">
-                {% include 'lens/_components/analysis/_tooltip-ai' only %}
+    {# AI suggestion (shown when value differs from AI) #}
+    {% set showAiSuggestion = isEdited %}
+    <div class="lens-ai-suggestion-inline" data-lens-target="field-ai-suggestion"{% if not showAiSuggestion %} hidden{% endif %}>
+        {% include 'lens/_components/analysis/_tooltip-ai' only %}
+        <span data-lens-target="ai-suggestion-text">
+            {% if showAiSuggestion %}
                 {% if aiValue %}
-                    {{ 'AI: "{value}"'|t('lens', {value: aiValue}) }}
+                    "{{ aiValue }}"
                 {% else %}
-                    {{ 'AI: No text detected'|t('lens') }}
+                    {{ 'No text detected'|t('lens') }}
                 {% endif %}
-            </div>
-        {% endif %}
-    {% else %}
-        {% set showAiSuggestion = isEdited %}
-        <div class="lens-ai-suggestion-inline" data-lens-target="field-ai-suggestion"{% if not showAiSuggestion %} hidden{% endif %}>
-            {% include 'lens/_components/analysis/_tooltip-ai' only %}
-            <span data-lens-target="ai-suggestion-text">
-                {% if showAiSuggestion %}
-                    {% if aiValue %}
-                        {{ 'AI suggested: "{value}"'|t('lens', {value: aiValue}) }}
-                    {% else %}
-                        {{ 'AI suggested: No text detected'|t('lens') }}
-                    {% endif %}
-                {% endif %}
-            </span>
-            <button type="button" class="lens-revert-trigger" data-lens-action="field-revert" data-lens-field="{{ fieldName }}" data-lens-analysis-id="{{ analysisId }}"{% if siteId %} data-lens-site-id="{{ siteId }}"{% endif %}{% if not showAiSuggestion %} hidden{% endif %}>
-                {{ 'Revert to AI'|t('lens') }}
-            </button>
-        </div>
-    {% endif %}
+            {% endif %}
+        </span>
+        <button type="button" class="lens-revert-trigger" data-lens-action="field-revert" data-lens-field="{{ fieldName }}" data-lens-analysis-id="{{ analysisId }}"{% if siteId %} data-lens-site-id="{{ siteId }}"{% endif %}{% if not showAiSuggestion %} hidden{% endif %}>
+            {{ 'Revert to AI'|t('lens') }}
+        </button>
+    </div>
 </div>
 
 {% endif %}

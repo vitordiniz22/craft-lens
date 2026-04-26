@@ -127,16 +127,6 @@
         on: settings.autoProcessOnUpload,
     }) }}
 
-    {% if lens.isPro %}
-        {{ forms.lightswitchField({
-            label: 'Require Human Review'|t('lens'),
-            instructions: 'Hold AI-generated metadata for review before applying it to assets. Recommended for published sites where accuracy matters. Pending assets appear in the Review Queue.'|t('lens'),
-            id: 'requireReviewBeforeApply',
-            name: 'settings[requireReviewBeforeApply]',
-            on: settings.requireReviewBeforeApply,
-        }) }}
-    {% endif %}
-
     {% if volumeOptions is empty %}
         {{ forms.field({
             label: 'Volumes to Process'|t('lens'),

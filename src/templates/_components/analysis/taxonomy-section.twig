@@ -2,18 +2,16 @@
  # Taxonomy Section
  # Tags (chip editor) with add/remove capability.
  # Auto-saves on each add/remove when fieldState == 'unlocked' (asset edit page).
- # In review mode (fieldState == 'editing'), changes are collected at form submit.
  #
  # Expected variables: analysis, analysisTags, fieldState
  #}
 {% set fieldState = fieldState ?? 'readonly' %}
-{% set isInteractive = fieldState in ['unlocked', 'editing'] %}
-{% set autoSave = fieldState == 'unlocked' %}
+{% set isInteractive = fieldState == 'unlocked' %}
 {% set showTaxonomy = analysis.status not in [lens.status.pending, lens.status.processing, lens.status.failed] %}
 
 {% if showTaxonomy %}
     {# Tags #}
-    <div class="lens-editable-field{{ fieldState == 'editing' ? ' lens-is-editing' }}" data-lens-target="tag-editor" data-lens-analysis-id="{{ analysis.id }}"{{ autoSave ? ' data-lens-auto-save="1"' }}{{ isInteractive ? ' data-lens-edit-mode="toggle"' }}>
+    <div class="lens-editable-field" data-lens-target="tag-editor" data-lens-analysis-id="{{ analysis.id }}"{{ isInteractive ? ' data-lens-auto-save="1" data-lens-edit-mode="toggle"' }}>
         <div class="lens-field-header" data-lens-target="field-header">
             <span class="lens-field-label" data-lens-target="field-label">{{ 'Tags'|t('lens') }} ({{ analysisTags|length }})</span>
             {% if isInteractive %}
@@ -48,9 +46,7 @@
                     <button type="button" class="btn small" data-lens-action="taxonomy-done">{{ 'Done'|t('lens') }}</button>
                 </div>
             </div>
-        {% endif %}
 
-        {% if isInteractive %}
             <template data-lens-target="tag-chip-template">
                 <a href="" class="chip" data-lens-tag="" data-lens-is-ai="0" data-lens-confidence="">
                     <div class="chip-content">

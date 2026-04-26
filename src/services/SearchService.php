@@ -703,22 +703,12 @@ class SearchService extends Component
      */
     public function getStatusOptions(): array
     {
-        $isReviewActive = Plugin::getInstance()->getIsPro()
-            && Plugin::getInstance()->getSettings()->requireReviewBeforeApply;
-
-        $options = [
+        return [
             ['value' => AnalysisStatus::Completed->value, 'label' => AnalysisStatus::Completed->label()],
             ['value' => AnalysisStatus::Pending->value, 'label' => AnalysisStatus::Pending->label()],
             ['value' => AnalysisStatus::Processing->value, 'label' => AnalysisStatus::Processing->label()],
             ['value' => AnalysisStatus::Failed->value, 'label' => AnalysisStatus::Failed->label()],
         ];
-
-        if ($isReviewActive) {
-            $options[] = ['value' => AnalysisStatus::Approved->value, 'label' => AnalysisStatus::Approved->label()];
-            $options[] = ['value' => AnalysisStatus::PendingReview->value, 'label' => AnalysisStatus::PendingReview->label()];
-        }
-
-        return $options;
     }
 
     /**
@@ -999,9 +989,6 @@ class SearchService extends Component
      */
     public function getQuickFilters(array $filters = [], array $rawQueryParams = []): array
     {
-        $isReviewActive = Plugin::getInstance()->getIsPro()
-            && Plugin::getInstance()->getSettings()->requireReviewBeforeApply;
-
         // Drop pagination cursor and the similar-to anchor when navigating
         // to a different curated view — neither survives a preset toggle.
         unset($rawQueryParams['offset'], $rawQueryParams['p']);
@@ -1009,10 +996,6 @@ class SearchService extends Component
         $quickFilters = [];
 
         foreach (QuickFilter::cases() as $case) {
-            if ($case === QuickFilter::NeedsReview && !$isReviewActive) {
-                continue;
-            }
-
             $presetParams = $case->params();
             $active = $case->matches($filters);
 

@@ -25,7 +25,7 @@ class AnalysisCancellationService extends Component
      *
      * - First-time analysis (previousStatus is null): deletes the record.
      * - Re-analysis (previousStatus is set): restores the previous status.
-     * - Terminal status (completed, approved, etc.): rejects as already completed.
+     * - Terminal status (completed, failed): rejects as already completed.
      *
      * @return array{success: bool, restored: bool, status: ?string, alreadyCompleted?: bool, message?: string}
      */

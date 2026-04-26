@@ -138,7 +138,6 @@ class AssetTableAttributes
             'lens:has-brand-logo' => array_merge([self::ATTR_BRANDS, self::ATTR_PROVIDER, self::ATTR_STATUS], $tags),
             'lens:contains-people' => array_merge([self::ATTR_PEOPLE, self::ATTR_PROVIDER, self::ATTR_STATUS], $tags),
             'lens:missing-focal-point' => array_merge([self::ATTR_STATUS], $tags),
-            'lens:needs-review' => array_merge([self::ATTR_PROVIDER], $tags),
             default => [],
         };
     }
@@ -175,10 +174,9 @@ class AssetTableAttributes
         $status = AnalysisStatus::tryFrom($analysis->status);
         $label = $status?->label() ?? $analysis->status;
         $color = match ($status) {
-            AnalysisStatus::Completed, AnalysisStatus::Approved => 'green',
-            AnalysisStatus::PendingReview => 'orange',
+            AnalysisStatus::Completed => 'green',
             AnalysisStatus::Pending, AnalysisStatus::Processing => 'blue',
-            AnalysisStatus::Failed, AnalysisStatus::Rejected => 'red',
+            AnalysisStatus::Failed => 'red',
             default => 'gray',
         };
 

@@ -6,7 +6,6 @@ namespace vitordiniz22\craftlens\enums;
 
 enum QuickFilter: string
 {
-    case NeedsReview = 'needs-review';
     case MissingAltText = 'missing-alt-text';
     case Unprocessed = 'unprocessed';
     case Failed = 'failed';
@@ -19,7 +18,6 @@ enum QuickFilter: string
     public function label(): string
     {
         return match ($this) {
-            self::NeedsReview => 'Needs Review',
             self::MissingAltText => 'Missing Alt Text',
             self::Unprocessed => 'Unprocessed',
             self::Failed => 'Failed',
@@ -34,7 +32,6 @@ enum QuickFilter: string
     public function icon(): string
     {
         return match ($this) {
-            self::NeedsReview => 'eye',
             self::MissingAltText => 'universal-access',
             self::Unprocessed => 'clock',
             self::Failed => 'triangle-exclamation',
@@ -55,7 +52,6 @@ enum QuickFilter: string
     public function params(): array
     {
         return match ($this) {
-            self::NeedsReview => ['status' => [AnalysisStatus::PendingReview->value]],
             self::MissingAltText => ['missingAltText' => true],
             self::Unprocessed => ['unprocessed' => true],
             self::Failed => ['status' => [AnalysisStatus::Failed->value]],
