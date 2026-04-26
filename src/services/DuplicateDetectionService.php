@@ -43,6 +43,7 @@ class DuplicateDetectionService extends Component
         $existingPairs = $this->loadExistingPairs([$assetId]);
 
         $matches = [];
+        $newPairAssetIds = [];
         $transaction = Craft::$app->getDb()->beginTransaction();
 
         try {
@@ -53,16 +54,25 @@ class DuplicateDetectionService extends Component
 
             foreach ($query->batch(1000) as $batch) {
                 foreach ($batch as $other) {
+                    $isNew = false;
                     $result = $this->matchPair(
                         $assetId, $other->assetId,
                         $sourceHash, $other->perceptualHash,
-                        $threshold, $existingPairs,
+                        $threshold, $existingPairs, $isNew,
                     );
 
                     if ($result !== null) {
                         $matches[] = $result;
+                        if ($isNew) {
+                            $newPairAssetIds[$assetId] = true;
+                            $newPairAssetIds[(int) $other->assetId] = true;
+                        }
                     }
                 }
+            }
+
+            if (!empty($newPairAssetIds)) {
+                $this->recomputeClusterKeys(array_keys($newPairAssetIds));
             }
 
             $transaction->commit();
@@ -107,21 +117,31 @@ class DuplicateDetectionService extends Component
         $existingPairs = $this->loadExistingPairs($assetIds);
 
         $pairsFound = 0;
+        $newPairAssetIds = [];
         $transaction = Craft::$app->getDb()->beginTransaction();
 
         try {
             for ($i = 0, $count = count($records); $i < $count; $i++) {
                 for ($j = $i + 1; $j < $count; $j++) {
+                    $isNew = false;
                     $result = $this->matchPair(
                         $records[$i]->assetId, $records[$j]->assetId,
                         $records[$i]->perceptualHash, $records[$j]->perceptualHash,
-                        $threshold, $existingPairs,
+                        $threshold, $existingPairs, $isNew,
                     );
 
                     if ($result !== null) {
                         $pairsFound++;
+                        if ($isNew) {
+                            $newPairAssetIds[(int) $records[$i]->assetId] = true;
+                            $newPairAssetIds[(int) $records[$j]->assetId] = true;
+                        }
                     }
                 }
+            }
+
+            if (!empty($newPairAssetIds)) {
+                $this->recomputeClusterKeys(array_keys($newPairAssetIds));
             }
 
             $transaction->commit();
@@ -160,6 +180,7 @@ class DuplicateDetectionService extends Component
         $existingPairs = $this->loadExistingPairs();
         $count = count($hashes);
         $newPairs = 0;
+        $anyNewPair = false;
 
         // Process in chunks to keep transactions short and memory bounded.
         for ($chunkStart = 0; $chunkStart < $count; $chunkStart += self::COMPARISON_CHUNK_SIZE) {
@@ -178,6 +199,7 @@ class DuplicateDetectionService extends Component
 
                         if ($result !== null && $isNew) {
                             $newPairs++;
+                            $anyNewPair = true;
                         }
                     }
                 }
@@ -188,6 +210,10 @@ class DuplicateDetectionService extends Component
                 Logger::error(LogCategory::Duplicate, 'Full duplicate scan failed', exception: $e, context: ['recordsScanned' => $count]);
                 throw $e;
             }
+        }
+
+        if ($anyNewPair) {
+            $this->recomputeAllClusterKeys();
         }
 
         Logger::info(LogCategory::Duplicate, 'Full duplicate scan completed', context: ['newPairsFound' => $newPairs, 'recordsScanned' => $count]);
@@ -462,7 +488,7 @@ class DuplicateDetectionService extends Component
 
         $duplicates = DuplicateGroupRecord::find()
             ->where(['and',
-                ['resolvedAt' => null],
+                ['resolution' => null],
                 ['or',
                     ['canonicalAssetId' => $assetId],
                     ['duplicateAssetId' => $assetId],
@@ -529,7 +555,7 @@ class DuplicateDetectionService extends Component
         $duplicates = DuplicateGroupRecord::find()
             ->select(['canonicalAssetId', 'duplicateAssetId'])
             ->where(['and',
-                ['resolvedAt' => null],
+                ['resolution' => null],
                 ['or',
                     ['canonicalAssetId' => $assetId],
                     ['duplicateAssetId' => $assetId],
@@ -562,7 +588,7 @@ class DuplicateDetectionService extends Component
         $duplicates = DuplicateGroupRecord::find()
             ->select(['canonicalAssetId', 'duplicateAssetId', 'similarity'])
             ->where(['and',
-                ['resolvedAt' => null],
+                ['resolution' => null],
                 ['or',
                     ['canonicalAssetId' => $assetId],
                     ['duplicateAssetId' => $assetId],
@@ -597,6 +623,9 @@ class DuplicateDetectionService extends Component
             return false;
         }
 
+        $canonicalId = (int) $record->canonicalAssetId;
+        $duplicateId = (int) $record->duplicateAssetId;
+
         $record->resolution = $resolution;
         $record->resolvedAt = DateTimeHelper::now();
         $record->resolvedBy = $userId;
@@ -604,10 +633,229 @@ class DuplicateDetectionService extends Component
         $saved = $record->save();
 
         if ($saved) {
+            // Resolving a pair may split a cluster (e.g. A-B-C becomes A-B and C
+            // once the bridging pair is resolved). Re-walk the remaining unresolved
+            // pairs touching either endpoint so surviving rows carry the correct key.
+            $this->recomputeClusterKeys([$canonicalId, $duplicateId]);
             Logger::info(LogCategory::Duplicate, "Duplicate pair resolved", context: ['groupId' => $groupId, 'resolution' => $resolution]);
         }
 
         return $saved;
+    }
+
+    /**
+     * Drop pair rows touching a deleted asset and re-cluster surviving siblings.
+     *
+     * Hard delete relies on the FK CASCADE to remove pair rows but never
+     * recomputes `clusterKey` on the rows that survive. Soft delete leaves the
+     * elements row in place, so the cascade never fires and the pair rows live
+     * on as orphaned references. Both cases need explicit cleanup.
+     */
+    public function cleanupForDeletedAsset(int $assetId): void
+    {
+        if (!DuplicateSupport::isAvailable()) {
+            return;
+        }
+
+        $rows = (new Query())
+            ->select(['canonicalAssetId', 'duplicateAssetId'])
+            ->from(Install::TABLE_DUPLICATE_GROUPS)
+            ->where(['or',
+                ['canonicalAssetId' => $assetId],
+                ['duplicateAssetId' => $assetId],
+            ])
+            ->all();
+
+        if (empty($rows)) {
+            return;
+        }
+
+        $siblingIds = [];
+
+        foreach ($rows as $row) {
+            $canonical = (int) $row['canonicalAssetId'];
+            $duplicate = (int) $row['duplicateAssetId'];
+
+            if ($canonical !== $assetId) {
+                $siblingIds[$canonical] = true;
+            }
+
+            if ($duplicate !== $assetId) {
+                $siblingIds[$duplicate] = true;
+            }
+        }
+
+        DuplicateGroupRecord::deleteAll(['or',
+            ['canonicalAssetId' => $assetId],
+            ['duplicateAssetId' => $assetId],
+        ]);
+
+        if (!empty($siblingIds)) {
+            $this->recomputeClusterKeys(array_keys($siblingIds));
+        }
+    }
+
+    /**
+     * Rebuild `clusterKey` on every unresolved pair whose connected component
+     * contains at least one of the given seed assets. The seed set is BFS-expanded
+     * through unresolved pairs so the full cluster is covered, including transitive
+     * members missed by a one-hop lookup. Each affected row is stamped with its
+     * cluster's minimum asset ID, which is the same value for every row in the
+     * cluster and is what the "Has Duplicates" sort key groups on.
+     *
+     * @param int[] $seedAssetIds
+     */
+    private function recomputeClusterKeys(array $seedAssetIds): void
+    {
+        if (empty($seedAssetIds)) {
+            return;
+        }
+
+        $seedAssetIds = array_values(array_unique(array_map('intval', $seedAssetIds)));
+        $visited = array_fill_keys($seedAssetIds, true);
+        $frontier = $seedAssetIds;
+        $allPairs = [];
+
+        while (!empty($frontier)) {
+            $rows = (new Query())
+                ->select(['id', 'canonicalAssetId', 'duplicateAssetId'])
+                ->from(Install::TABLE_DUPLICATE_GROUPS)
+                ->where(['resolution' => null])
+                ->andWhere(['or',
+                    ['canonicalAssetId' => $frontier],
+                    ['duplicateAssetId' => $frontier],
+                ])
+                ->all();
+
+            $nextFrontier = [];
+
+            foreach ($rows as $row) {
+                $pairId = (int) $row['id'];
+
+                if (isset($allPairs[$pairId])) {
+                    continue;
+                }
+
+                $canonical = (int) $row['canonicalAssetId'];
+                $duplicate = (int) $row['duplicateAssetId'];
+                $allPairs[$pairId] = [$canonical, $duplicate];
+
+                foreach ([$canonical, $duplicate] as $id) {
+                    if (!isset($visited[$id])) {
+                        $visited[$id] = true;
+                        $nextFrontier[] = $id;
+                    }
+                }
+            }
+
+            $frontier = $nextFrontier;
+        }
+
+        $this->applyClusterKeys($allPairs);
+    }
+
+    /**
+     * Rebuild `clusterKey` on every unresolved pair in the table. Used after a
+     * full scan, where touching every cluster individually would duplicate work.
+     */
+    private function recomputeAllClusterKeys(): void
+    {
+        $rows = (new Query())
+            ->select(['id', 'canonicalAssetId', 'duplicateAssetId'])
+            ->from(Install::TABLE_DUPLICATE_GROUPS)
+            ->where(['resolution' => null])
+            ->all();
+
+        $allPairs = [];
+
+        foreach ($rows as $row) {
+            $allPairs[(int) $row['id']] = [(int) $row['canonicalAssetId'], (int) $row['duplicateAssetId']];
+        }
+
+        $this->applyClusterKeys($allPairs);
+    }
+
+    /**
+     * Union-find over a set of pair rows, then stamp every row with its
+     * component's minimum asset ID. Rows are grouped by target key so the
+     * update is one statement per distinct cluster.
+     *
+     * @param array<int, array{0:int,1:int}> $allPairs pairId => [canonical, duplicate]
+     */
+    private function applyClusterKeys(array $allPairs): void
+    {
+        if (empty($allPairs)) {
+            return;
+        }
+
+        $parent = [];
+        $rank = [];
+
+        $find = function(int $x) use (&$parent, &$find): int {
+            if ($parent[$x] !== $x) {
+                $parent[$x] = $find($parent[$x]);
+            }
+
+            return $parent[$x];
+        };
+
+        $union = function(int $a, int $b) use (&$parent, &$rank, $find): void {
+            $rootA = $find($a);
+            $rootB = $find($b);
+
+            if ($rootA === $rootB) {
+                return;
+            }
+
+            if ($rank[$rootA] < $rank[$rootB]) {
+                $parent[$rootA] = $rootB;
+            } elseif ($rank[$rootA] > $rank[$rootB]) {
+                $parent[$rootB] = $rootA;
+            } else {
+                $parent[$rootB] = $rootA;
+                $rank[$rootA]++;
+            }
+        };
+
+        foreach ($allPairs as [$canonical, $duplicate]) {
+            foreach ([$canonical, $duplicate] as $id) {
+                if (!isset($parent[$id])) {
+                    $parent[$id] = $id;
+                    $rank[$id] = 0;
+                }
+            }
+
+            $union($canonical, $duplicate);
+        }
+
+        $componentMin = [];
+
+        foreach ($parent as $id => $__) {
+            $root = $find($id);
+
+            if (!isset($componentMin[$root]) || $id < $componentMin[$root]) {
+                $componentMin[$root] = $id;
+            }
+        }
+
+        $updatesByKey = [];
+
+        foreach ($allPairs as $pairId => [$canonical, $__]) {
+            $key = $componentMin[$find($canonical)];
+            $updatesByKey[$key][] = $pairId;
+        }
+
+        $db = Craft::$app->getDb();
+
+        foreach ($updatesByKey as $clusterKey => $pairIds) {
+            $db->createCommand()
+                ->update(
+                    Install::TABLE_DUPLICATE_GROUPS,
+                    ['clusterKey' => $clusterKey],
+                    ['id' => $pairIds],
+                )
+                ->execute();
+        }
     }
 
     /**

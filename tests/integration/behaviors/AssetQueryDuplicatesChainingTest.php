@@ -8,8 +8,10 @@ use Codeception\Test\Unit;
 use craft\elements\Asset;
 use ReflectionProperty;
 use vitordiniz22\craftlens\behaviors\AssetQueryBehavior;
+use vitordiniz22\craftlens\helpers\AssetTableAttributes;
 use vitordiniz22\craftlens\Plugin;
 use vitordiniz22\craftlenstests\_support\Helpers\AnalysisRecordFixtures;
+use yii\db\Expression;
 
 /**
  * Integration tests for lensHasDuplicates() plus filter composition.
@@ -238,5 +240,86 @@ class AssetQueryDuplicatesChainingTest extends Unit
         $this->assertContains($canonical->assetId, $ids);
         $this->assertContains($duplicate->assetId, $ids);
         $this->assertContains($noDup->assetId, $ids, 'Lite must ignore lensHasDuplicates and return asset with no duplicate group');
+    }
+
+    // ---------- Cluster sort grouping ----------
+
+    public function testClusterSortGroupsSiblingsAdjacent(): void
+    {
+        // Build two clusters with INTERLEAVED IDs so the cluster grouping
+        // can't be a coincidence of ascending insertion order. The sort must
+        // pull sibling pairs back together regardless of when they were created.
+        //   Cluster X: a1, a3
+        //   Cluster Y: a2, a4
+        $a1 = $this->createAssetFixture('a1.jpg');
+        $a2 = $this->createAssetFixture('a2.jpg');
+        $a3 = $this->createAssetFixture('a3.jpg');
+        $a4 = $this->createAssetFixture('a4.jpg');
+
+        $this->createDuplicateGroup(min($a1->assetId, $a3->assetId), max($a1->assetId, $a3->assetId));
+        $this->createDuplicateGroup(min($a2->assetId, $a4->assetId), max($a2->assetId, $a4->assetId));
+
+        // Stamp clusterKey via the same path the production code uses.
+        $service = Plugin::getInstance()->duplicateDetection;
+        (new \ReflectionMethod($service, 'recomputeAllClusterKeys'))
+            ->invoke($service);
+
+        $orderBy = $this->resolveClusterSortOrderBy();
+
+        $ids = Asset::find()
+            ->volume('lenstest')
+            ->lensHasDuplicates(true)
+            ->orderBy(new Expression($orderBy))
+            ->ids();
+
+        $this->assertCount(4, $ids);
+
+        // Find each asset's position. Siblings must be adjacent (positions differ by 1).
+        $position = array_flip($ids);
+
+        $clusterX = [$a1->assetId, $a3->assetId];
+        $clusterY = [$a2->assetId, $a4->assetId];
+
+        foreach ([$clusterX, $clusterY] as $cluster) {
+            $positions = [$position[$cluster[0]], $position[$cluster[1]]];
+            sort($positions);
+            $this->assertSame(
+                1,
+                $positions[1] - $positions[0],
+                "Cluster siblings must be adjacent in the sort order; got positions " . json_encode($positions),
+            );
+        }
+    }
+
+    // ---------- Deletion-driven filter behavior ----------
+
+    public function testFilterDropsAssetWhenItsOnlyDuplicatePartnerIsCleanedUp(): void
+    {
+        // A-B is the only pair. After A is deleted (cleanup runs), B has no
+        // unresolved partners left, so the source must stop showing B.
+        $a = $this->createAssetFixture('a.jpg');
+        $b = $this->createAssetFixture('b.jpg');
+
+        $this->createDuplicateGroup($a->assetId, $b->assetId);
+
+        $idsBefore = Asset::find()->volume('lenstest')->lensHasDuplicates(true)->ids();
+        $this->assertContains($a->assetId, $idsBefore);
+        $this->assertContains($b->assetId, $idsBefore);
+
+        Plugin::getInstance()->duplicateDetection->cleanupForDeletedAsset($a->assetId);
+
+        $idsAfter = Asset::find()->volume('lenstest')->lensHasDuplicates(true)->ids();
+        $this->assertNotContains($b->assetId, $idsAfter, 'B has no remaining duplicate pair, so it must drop from the source');
+    }
+
+    private function resolveClusterSortOrderBy(): string
+    {
+        foreach (AssetTableAttributes::sortOptions() as $option) {
+            if (($option['attribute'] ?? null) === AssetTableAttributes::ATTR_DUPLICATE_CLUSTER) {
+                return $option['orderBy'];
+            }
+        }
+
+        $this->fail('Cluster sort option not registered');
     }
 }

@@ -264,7 +264,12 @@ class AssetAnalysisService extends Component
     {
         $record = $this->getAnalysis($asset->id);
 
-        if ($record !== null) {
+        if ($record === null) {
+            $record = new AssetAnalysisRecord();
+            $record->assetId = $asset->id;
+            $record->status = AnalysisStatus::Pending->value;
+            $record->save();
+        } else {
             if ($record->status === AnalysisStatus::Pending->value && $record->dateUpdated) {
                 $dateUpdated = $record->dateUpdated instanceof \DateTime
                     ? $record->dateUpdated
@@ -290,7 +295,7 @@ class AssetAnalysisService extends Component
             'assetId' => $asset->id,
         ]));
 
-        if ($jobId !== null && $record !== null) {
+        if ($jobId !== null) {
             $record->queueJobId = (string) $jobId;
             $record->save();
         }

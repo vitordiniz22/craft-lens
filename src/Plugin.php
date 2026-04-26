@@ -479,6 +479,7 @@ class Plugin extends BasePlugin
                 /** @var Asset $asset */
                 $asset = $event->sender;
                 $this->assetAnalysis->deleteAnalysis($asset->id);
+                $this->duplicateDetection->cleanupForDeletedAsset($asset->id);
             }
         );
 
@@ -606,12 +607,16 @@ class Plugin extends BasePlugin
                     }
 
                     foreach ($sourceDefinitions as $key => [$label, $criteria]) {
+                        $defaultSort = $key === 'has-duplicates'
+                            ? [AssetTableAttributes::ATTR_DUPLICATE_CLUSTER, 'asc']
+                            : ['dateCreated', 'desc'];
+
                         $event->sources[] = [
                             'key' => "lens:{$key}",
                             'label' => Craft::t('lens', $label),
                             'criteria' => $criteria,
                             'hasThumbs' => true,
-                            'defaultSort' => ['dateCreated', 'desc'],
+                            'defaultSort' => $defaultSort,
                             'iconMask' => $iconPath,
                         ];
                     }

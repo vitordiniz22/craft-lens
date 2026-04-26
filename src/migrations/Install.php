@@ -154,13 +154,14 @@ class Install extends Migration
             'uid' => $this->uid(),
         ]);
 
-        // Duplicate groups table (unchanged)
+        // Duplicate groups table
         $this->createTable(self::TABLE_DUPLICATE_GROUPS, [
             'id' => $this->primaryKey(),
             'canonicalAssetId' => $this->integer()->notNull(),
             'duplicateAssetId' => $this->integer()->notNull(),
             'hammingDistance' => $this->smallInteger()->notNull(),
             'similarity' => $this->decimal(5, 4)->notNull(),
+            'clusterKey' => $this->integer()->null(),
             'resolvedAt' => $this->dateTime()->null(),
             'resolvedBy' => $this->integer()->null(),
             'resolution' => $this->string(20)->null(),
@@ -268,6 +269,7 @@ class Install extends Migration
         $this->createIndex(null, self::TABLE_DUPLICATE_GROUPS, ['canonicalAssetId', 'duplicateAssetId'], true);
         $this->createIndex(null, self::TABLE_DUPLICATE_GROUPS, ['hammingDistance']);
         $this->createIndex(null, self::TABLE_DUPLICATE_GROUPS, ['resolution']);
+        $this->createIndex(null, self::TABLE_DUPLICATE_GROUPS, ['clusterKey']);
 
         // Logs indexes — only in development environments
         if (Plugin::isDevInstall()) {

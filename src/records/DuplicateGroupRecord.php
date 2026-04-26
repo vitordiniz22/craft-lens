@@ -19,6 +19,7 @@ use yii\db\ActiveQueryInterface;
  * @property int $duplicateAssetId
  * @property int $hammingDistance
  * @property float $similarity
+ * @property int|null $clusterKey
  * @property \DateTime|null $resolvedAt
  * @property int|null $resolvedBy
  * @property string|null $resolution
@@ -55,7 +56,7 @@ class DuplicateGroupRecord extends ActiveRecord
     {
         return [
             [['canonicalAssetId', 'duplicateAssetId', 'hammingDistance'], 'required'],
-            [['canonicalAssetId', 'duplicateAssetId', 'hammingDistance'], 'integer'],
+            [['canonicalAssetId', 'duplicateAssetId', 'hammingDistance', 'clusterKey'], 'integer'],
             [['similarity'], 'number', 'min' => 0, 'max' => 1],
             [['resolution'], 'in', 'range' => array_column(DuplicateResolution::cases(), 'value')],
         ];

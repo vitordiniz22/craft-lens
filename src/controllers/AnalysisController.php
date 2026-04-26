@@ -301,7 +301,7 @@ class AnalysisController extends Controller
             }
 
             $cancellation = Plugin::getInstance()->analysisCancellation;
-            
+
             if (
                 in_array($analysis->status, [AnalysisStatus::Pending->value, AnalysisStatus::Processing->value], true)
                 && $analysis->queueJobId !== null

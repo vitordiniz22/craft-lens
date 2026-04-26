@@ -25,6 +25,7 @@ class AssetTableAttributes
     public const ATTR_TAGS = 'lensTags';
     public const ATTR_NSFW = 'lensNsfwScore';
     public const ATTR_DUPLICATES = 'lensDuplicates';
+    public const ATTR_DUPLICATE_CLUSTER = 'lensDuplicateCluster';
     public const ATTR_PEOPLE = 'lensPeople';
     public const ATTR_BRANDS = 'lensBrands';
     public const ATTR_WATERMARK = 'lensWatermark';
@@ -45,8 +46,9 @@ class AssetTableAttributes
     public static function sortOptions(): array
     {
         $table = Craft::$app->getDb()->getSchema()->getRawTableName(Install::TABLE_ASSET_ANALYSES);
+        $dupTable = Craft::$app->getDb()->getSchema()->getRawTableName(Install::TABLE_DUPLICATE_GROUPS);
 
-        return [
+        $options = [
             [
                 'label' => Craft::t('lens', 'Lens — NSFW Score'),
                 'orderBy' => "(SELECT nsfwScore FROM $table WHERE assetId = elements.id)",
@@ -78,6 +80,17 @@ class AssetTableAttributes
                 'defaultDir' => 'asc',
             ],
         ];
+
+        if (DuplicateSupport::isAvailable()) {
+            $options[] = [
+                'label' => Craft::t('lens', 'Lens — Duplicate Cluster'),
+                'orderBy' => "(SELECT MIN(clusterKey) FROM $dupTable WHERE resolution IS NULL AND (canonicalAssetId = elements.id OR duplicateAssetId = elements.id)), elements.id",
+                'attribute' => self::ATTR_DUPLICATE_CLUSTER,
+                'defaultDir' => 'asc',
+            ];
+        }
+
+        return $options;
     }
 
     /**
