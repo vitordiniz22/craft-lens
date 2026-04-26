@@ -54,8 +54,6 @@ class AssetQueryBehavior extends Behavior
     /** @var string|string[]|null */
     public string|array|null $lensProviderModel = null;
     public ?string $lensFaceCountPreset = null;
-    public ?float $lensFileSizeMinMb = null;
-    public ?float $lensFileSizeMaxMb = null;
     public ?\DateTimeInterface $lensProcessedFrom = null;
     public ?\DateTimeInterface $lensProcessedTo = null;
     public ?bool $lensUnprocessed = null;
@@ -176,24 +174,6 @@ class AssetQueryBehavior extends Behavior
     public function lensFaceCountPreset(?string $value): AssetQuery
     {
         $this->lensFaceCountPreset = $value;
-        return $this->owner;
-    }
-
-    /**
-     * Minimum file size in megabytes (inclusive).
-     */
-    public function lensFileSizeMinMb(?float $value): AssetQuery
-    {
-        $this->lensFileSizeMinMb = $value;
-        return $this->owner;
-    }
-
-    /**
-     * Maximum file size in megabytes (inclusive).
-     */
-    public function lensFileSizeMaxMb(?float $value): AssetQuery
-    {
-        $this->lensFileSizeMaxMb = $value;
         return $this->owner;
     }
 
@@ -628,13 +608,6 @@ class AssetQueryBehavior extends Behavior
         }
     }
 
-    public function lensApplyFileSizeRangeFilter(): void
-    {
-        if (($this->lensFileSizeMinMb !== null || $this->lensFileSizeMaxMb !== null) && $this->owner->subQuery !== null) {
-            $this->safeApplyFilter(fn() => $this->applyFileSizeRangeFilter(), 'FileSizeRangeFilter');
-        }
-    }
-
     public function lensApplyProcessedDateFilter(): void
     {
         if (($this->lensProcessedFrom !== null || $this->lensProcessedTo !== null) && $this->owner->subQuery !== null) {
@@ -771,10 +744,6 @@ class AssetQueryBehavior extends Behavior
 
         if ($this->lensFaceCountPreset !== null && $this->lensFaceCountPreset !== '') {
             $this->applyFaceCountPresetFilter();
-        }
-
-        if ($this->lensFileSizeMinMb !== null || $this->lensFileSizeMaxMb !== null) {
-            $this->applyFileSizeRangeFilter();
         }
 
         if ($this->lensProcessedFrom !== null || $this->lensProcessedTo !== null) {
@@ -1070,27 +1039,6 @@ class AssetQueryBehavior extends Behavior
         };
     }
 
-    private function applyFileSizeRangeFilter(): void
-    {
-        $oneMib = 1_048_576;
-
-        if ($this->lensFileSizeMinMb !== null) {
-            $this->owner->subQuery->andWhere([
-                '>=',
-                'assets.size',
-                (int) round($this->lensFileSizeMinMb * $oneMib),
-            ]);
-        }
-
-        if ($this->lensFileSizeMaxMb !== null) {
-            $this->owner->subQuery->andWhere([
-                '<=',
-                'assets.size',
-                (int) round($this->lensFileSizeMaxMb * $oneMib),
-            ]);
-        }
-    }
-
     private function applyProcessedDateFilter(): void
     {
         $this->ensureJoined();
@@ -1206,8 +1154,6 @@ class AssetQueryBehavior extends Behavior
             || $this->lensProvider !== null
             || $this->lensProviderModel !== null
             || $this->lensFaceCountPreset !== null
-            || $this->lensFileSizeMinMb !== null
-            || $this->lensFileSizeMaxMb !== null
             || $this->lensProcessedFrom !== null
             || $this->lensProcessedTo !== null
             || $this->lensUnprocessed !== null
@@ -1268,8 +1214,6 @@ class AssetQueryBehavior extends Behavior
         $this->lensProvider = null;
         $this->lensProviderModel = null;
         $this->lensFaceCountPreset = null;
-        $this->lensFileSizeMinMb = null;
-        $this->lensFileSizeMaxMb = null;
         $this->lensProcessedFrom = null;
         $this->lensProcessedTo = null;
         $this->lensUnprocessed = null;

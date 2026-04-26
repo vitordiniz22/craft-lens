@@ -38,7 +38,6 @@ use vitordiniz22\craftlens\behaviors\AssetQueryBehavior;
 use vitordiniz22\craftlens\conditions\ContainsBrandLogoConditionRule;
 use vitordiniz22\craftlens\conditions\ContainsPeopleConditionRule;
 use vitordiniz22\craftlens\conditions\FaceCountConditionRule;
-use vitordiniz22\craftlens\conditions\FileSizeConditionRule;
 use vitordiniz22\craftlens\conditions\FileTooLargeConditionRule;
 use vitordiniz22\craftlens\conditions\HasDuplicatesConditionRule;
 use vitordiniz22\craftlens\conditions\HasFocalPointConditionRule;
@@ -515,7 +514,6 @@ class Plugin extends BasePlugin
                 $event->conditionRules[] = ContainsBrandLogoConditionRule::class;
                 $event->conditionRules[] = WatermarkTypeConditionRule::class;
                 $event->conditionRules[] = FileTooLargeConditionRule::class;
-                $event->conditionRules[] = FileSizeConditionRule::class;
                 $event->conditionRules[] = QualityIssueConditionRule::class;
                 $event->conditionRules[] = ProcessedDateConditionRule::class;
                 $event->conditionRules[] = UnprocessedConditionRule::class;
