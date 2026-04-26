@@ -60,6 +60,7 @@ class SettingsController extends Controller
             'autoProcessOnUpload',
             'enabledVolumes',
             'enableSemanticSearch',
+            'preGenerateProMetadata',
         ];
 
         $settings->setAttributes(array_intersect_key((array) $settingsData, array_flip($allowedKeys)));

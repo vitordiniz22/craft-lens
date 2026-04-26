@@ -29,6 +29,9 @@ class Settings extends Model
     // Processing Options
     public bool $autoProcessOnUpload = true;
 
+    // Pre-generate Pro-only metadata (tags, longDescription, extractedText)
+    public bool $preGenerateProMetadata = true;
+
     // Volume Settings
     public array $enabledVolumes = [];
 
@@ -68,6 +71,7 @@ class Settings extends Model
             [[
                 'autoProcessOnUpload',
                 'enableSemanticSearch',
+                'preGenerateProMetadata',
             ], 'boolean'],
 
             // Arrays
@@ -88,6 +92,7 @@ class Settings extends Model
             'autoProcessOnUpload' => Craft::t('lens', 'Auto-Process on Upload'),
             'enabledVolumes' => Craft::t('lens', 'Enabled Volumes'),
             'enableSemanticSearch' => Craft::t('lens', 'Semantic Asset Search'),
+            'preGenerateProMetadata' => Craft::t('lens', 'Pre-generate Pro Metadata'),
         ];
     }
 

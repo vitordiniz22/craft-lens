@@ -56,6 +56,18 @@
             linkUrl: fpMissing > 0 ? cpUrl('assets', {source: 'lens:missing-focal-point'}) : null,
             linkText: 'View missing'|t('lens'),
         } only %}
+
+        {# Pro Metadata Coverage (tags + long description + OCR) — transitional, hides at 100% #}
+        {% if proMetadataCoverage is defined and proMetadataCoverage.total > 0 and proMetadataCoverage.withProMetadata < proMetadataCoverage.total %}
+            {% include 'lens/_dashboard/_coverage-metric' with {
+                label: 'Pro Metadata'|t('lens'),
+                percentage: proMetadataCoverage.percentage,
+                covered: proMetadataCoverage.withProMetadata,
+                total: proMetadataCoverage.total,
+                linkUrl: null,
+                linkText: null,
+            } only %}
+        {% endif %}
     </div>
 </div>
 

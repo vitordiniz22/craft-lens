@@ -127,6 +127,16 @@
         on: settings.autoProcessOnUpload,
     }) }}
 
+    {% if not lens.isPro %}
+        {{ forms.lightswitchField({
+            label: 'Pre-generate Pro Metadata'|t('lens'),
+            instructions: 'Generates semantic tags, long descriptions, and OCR text during analysis even on Lite. These fields stay hidden on Lite, but the moment you upgrade to Pro your entire library is searchable instantly with no re-analysis. Adds extra AI cost per image. Turn off if you do not plan to upgrade and want the lowest possible cost.'|t('lens'),
+            id: 'preGenerateProMetadata',
+            name: 'settings[preGenerateProMetadata]',
+            on: settings.preGenerateProMetadata,
+        }) }}
+    {% endif %}
+
     {% if volumeOptions is empty %}
         {{ forms.field({
             label: 'Volumes to Process'|t('lens'),

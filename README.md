@@ -88,6 +88,8 @@ Lens has two editions. **Lite** is the analysis layer: every image gets AI-gener
 - 9 pre-built views in Craft's asset library: All Images (scoped to your Lens-enabled volumes), Not Analyzed, Failed Analyses, Missing Alt Text, NSFW Flagged, Missing Focal Point, Contains People, Has Watermark, and Has Brand Logo.
 - 15 filters you can combine to build your own custom views.
 
+**About Pro metadata on Lite:** By default, Lens still asks the AI for semantic tags, long descriptions, and OCR text while you're on Lite, even though those fields aren't surfaced in the Lite UI. The moment you upgrade to Pro, your entire library is already searchable, with no re-analysis run and no second AI bill. The trade-off is some extra AI cost per image while on Lite. You can disable this in **Lens → Settings → Asset Processing** if you'd rather pay the absolute minimum and accept that an upgrade later would require re-analyzing your library to populate the Pro fields.
+
 **Pro** adds:
 
 - Semantic tags and OCR text extraction surfaced in the analysis panel, indexed for semantic search, and available to filter by.

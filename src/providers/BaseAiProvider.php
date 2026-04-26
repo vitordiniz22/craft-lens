@@ -20,6 +20,7 @@ use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\helpers\PreprocessResult;
 use vitordiniz22\craftlens\helpers\ResponseNormalizer;
 use vitordiniz22\craftlens\models\Settings;
+use vitordiniz22\craftlens\Plugin;
 
 /**
  * Base class for AI providers with shared functionality.
@@ -114,6 +115,10 @@ abstract class BaseAiProvider implements AiProviderInterface
     {
         $primaryName = $this->languageDisplayName($primaryLanguage);
 
+        $plugin = Plugin::getInstance();
+        $includeProMetadata = !$plugin->is(Plugin::EDITION_LITE)
+            || $plugin->getSettings()->preGenerateProMetadata;
+
         $hasTranslations = !empty($additionalLanguages);
         $languageNote = $hasTranslations
             ? sprintf('Write all TOP-LEVEL text fields in %s (%s). Translations for other languages go in a separate "siteContent" object (described below).', $primaryName, $primaryLanguage)
@@ -127,22 +132,26 @@ abstract class BaseAiProvider implements AiProviderInterface
         $instructions[] = sprintf('- "altText": A natural, descriptive alt text for accessibility (1-2 sentences, in %s)', $primaryName);
         $instructions[] = '- "altTextConfidence": Your confidence in the alt text (0.0-1.0)';
 
-        $instructions[] = sprintf('- "longDescription": A detailed, comprehensive description (6-8 sentences, roughly 130-200 words) providing rich context about the image content, composition, subjects, setting, mood, lighting, color palette, notable details, spatial relationships, and any relevant background elements. Lead with the primary subject and what is happening, then expand into setting, style, and supporting detail. Use concrete nouns rather than vague modifiers. Avoid speculation about people\'s names, intentions, or off-frame context. Be thorough and descriptive to maximize searchability (in %s)', $primaryName);
-        $instructions[] = '- "longDescriptionConfidence": Your confidence in the long description (0.0-1.0)';
+        if ($includeProMetadata) {
+            $instructions[] = sprintf('- "longDescription": A detailed, comprehensive description (6-8 sentences, roughly 130-200 words) providing rich context about the image content, composition, subjects, setting, mood, lighting, color palette, notable details, spatial relationships, and any relevant background elements. Lead with the primary subject and what is happening, then expand into setting, style, and supporting detail. Use concrete nouns rather than vague modifiers. Avoid speculation about people\'s names, intentions, or off-frame context. Be thorough and descriptive to maximize searchability (in %s)', $primaryName);
+            $instructions[] = '- "longDescriptionConfidence": Your confidence in the long description (0.0-1.0)';
+        }
 
         $instructions[] = sprintf('- "suggestedTitle": A concise title (2-6 words, Title Case, specific not generic, in %s)', $primaryName);
         $instructions[] = '- "titleConfidence": Your confidence in the title (0.0-1.0)';
         $instructions[] = '  Title rules: NO "Image of/Photo of" prefixes, NO file extensions, be SPECIFIC';
 
-        $instructions[] = sprintf('- "tags": An array of objects with "tag" (lowercase single word or short phrase, in %s) and "confidence" (0.0-1.0), generate at least 20 tags (aim for 20-25)', $primaryName);
-        $instructions[] = '  Tag vocabulary guidelines for DAM (Digital Asset Management) systems:';
-        $instructions[] = '  • Prefer COMMON, GENERAL-PURPOSE tags that are widely understood and searchable (e.g., "beach", "sunset", "portrait", "food", "architecture", "business")';
-        $instructions[] = '  • Avoid overly specific or technical terms unless they are the PRIMARY subject (e.g., prefer "flower" over "chrysanthemum", "car" over "sedan", "building" over "skyscraper" unless specificity is critical)';
-        $instructions[] = '  • Use industry-standard DAM categories: subjects (people, animals, objects), settings (indoor, outdoor, urban, nature, office), styles (vintage, modern, minimalist), activities (sports, working, eating, meeting), emotions/mood (happy, serious, calm, energetic), and concepts (teamwork, success, growth)';
-        $instructions[] = '  • Focus on tags that would be useful for search and categorization across a large professional image library';
-        $instructions[] = '  • Avoid brand names, artist names, or location-specific details unless they are obvious and iconic (e.g., "eiffel tower" is acceptable, but not "paris 16th arrondissement")';
-        $instructions[] = '  • Prioritize tags that describe WHAT is in the image, not HOW it was made (avoid "bokeh", "long exposure", "f/2.8" unless these are the main subject)';
-        $instructions[] = '- "extractedText": Array of text transcribed from the image. Group all text on the same physical sign, panel, or board into ONE entry (all its lines together, separated by "\n"). Start a new entry only for text on a different sign or surface. Only include text that is fully visible and clearly readable. If any part of the text is cut off, occluded, or unreadable, omit that entry entirely; do NOT guess, complete, or infer missing letters or words, and do NOT transcribe partial fragments. Skip entries that would contain only an isolated digit, single letter, or disconnected fragment with no meaningful context on its own. Use [] if no fully readable text remains.';
+        if ($includeProMetadata) {
+            $instructions[] = sprintf('- "tags": An array of objects with "tag" (lowercase single word or short phrase, in %s) and "confidence" (0.0-1.0), generate at least 20 tags (aim for 20-25)', $primaryName);
+            $instructions[] = '  Tag vocabulary guidelines for DAM (Digital Asset Management) systems:';
+            $instructions[] = '  • Prefer COMMON, GENERAL-PURPOSE tags that are widely understood and searchable (e.g., "beach", "sunset", "portrait", "food", "architecture", "business")';
+            $instructions[] = '  • Avoid overly specific or technical terms unless they are the PRIMARY subject (e.g., prefer "flower" over "chrysanthemum", "car" over "sedan", "building" over "skyscraper" unless specificity is critical)';
+            $instructions[] = '  • Use industry-standard DAM categories: subjects (people, animals, objects), settings (indoor, outdoor, urban, nature, office), styles (vintage, modern, minimalist), activities (sports, working, eating, meeting), emotions/mood (happy, serious, calm, energetic), and concepts (teamwork, success, growth)';
+            $instructions[] = '  • Focus on tags that would be useful for search and categorization across a large professional image library';
+            $instructions[] = '  • Avoid brand names, artist names, or location-specific details unless they are obvious and iconic (e.g., "eiffel tower" is acceptable, but not "paris 16th arrondissement")';
+            $instructions[] = '  • Prioritize tags that describe WHAT is in the image, not HOW it was made (avoid "bokeh", "long exposure", "f/2.8" unless these are the main subject)';
+            $instructions[] = '- "extractedText": Array of text transcribed from the image. Group all text on the same physical sign, panel, or board into ONE entry (all its lines together, separated by "\n"). Start a new entry only for text on a different sign or surface. Only include text that is fully visible and clearly readable. If any part of the text is cut off, occluded, or unreadable, omit that entry entirely; do NOT guess, complete, or infer missing letters or words, and do NOT transcribe partial fragments. Skip entries that would contain only an isolated digit, single letter, or disconnected fragment with no meaningful context on its own. Use [] if no fully readable text remains.';
+        }
         $instructions[] = '- "containsPeople": true if the image shows one or more identifiable persons, meaning a recognizable human body or face that a viewer would naturally describe as "a person in the photo". A disembodied hand, foot, or anonymous background silhouette is not enough on its own. Boolean.';
         $instructions[] = '- "faceCount": integer count of human faces showing enough features (eyes, nose, or mouth) to be recognized as a face. Include profile and three-quarter views. Exclude faces fully turned away, fully masked, or too small/blurred to read as a face. If people are clearly present but no faces meet this bar, return 0.';
         $instructions[] = '- "containsPeopleConfidence": 0.0-1.0. High when the image is unambiguously populated or unambiguously empty of people; low only for genuinely borderline cases (distant figures, mannequins, statues).';

@@ -468,14 +468,14 @@ class AssetAnalysisService extends Component
 
             $contentStorage->saveAnalysisContent($record);
 
-            // Long description to main record (with dual-write)
-            $this->applyAiLongDescription($record, $result);
+            $skipProMetadata = Plugin::getInstance()->is(Plugin::EDITION_LITE)
+                && !Plugin::getInstance()->getSettings()->preGenerateProMetadata;
 
-            // Extracted text to main record (with dual-write)
-            $this->applyAiExtractedText($record, $result);
-
-            // Sync tags from AI to indexed table (respects user-added items)
-            $this->syncTagsFromAiResult($record, $result->tags);
+            if (!$skipProMetadata) {
+                $this->applyAiLongDescription($record, $result);
+                $this->applyAiExtractedText($record, $result);
+                $this->syncTagsFromAiResult($record, $result->tags);
+            }
 
             // Save per-site content (translated alt text and title for non-primary sites)
             if (!empty($sites) && !empty($result->siteContent)) {

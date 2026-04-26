@@ -221,6 +221,43 @@ class StatisticsService extends Component
     }
 
     /**
+     * Get coverage of Pro-only metadata fields (tags + long description + OCR).
+     *
+     * Counts assets whose analysis row has all three fields generated. NULL
+     * `extractedTextAi` means OCR was never asked for; an empty array means
+     * OCR was asked for but no text was found in the image. Both are valid
+     * outcomes, so coverage is judged by NULL vs not-NULL, not by content.
+     *
+     * @return array{percentage: float, withProMetadata: int, total: int}
+     */
+    public function getProMetadataCoverage(): array
+    {
+        $total = (int) (new Query())
+            ->from(Install::TABLE_ASSET_ANALYSES)
+            ->where(['status' => AnalysisStatus::Completed->value])
+            ->count();
+
+        if ($total === 0) {
+            return $this->buildCoverageResult(0, 0, 'withProMetadata');
+        }
+
+        $withProMetadata = (int) (new Query())
+            ->from(['aaa' => Install::TABLE_ASSET_ANALYSES])
+            ->where(['aaa.status' => AnalysisStatus::Completed->value])
+            ->andWhere(['not', ['aaa.longDescriptionAi' => null]])
+            ->andWhere(['!=', 'aaa.longDescriptionAi', ''])
+            ->andWhere(['not', ['aaa.extractedTextAi' => null]])
+            ->andWhere(['exists', (new Query())
+                ->from(['lat' => Install::TABLE_ASSET_TAGS])
+                ->where('lat.assetId = aaa.assetId')
+                ->andWhere(['lat.isAi' => true]),
+            ])
+            ->count();
+
+        return $this->buildCoverageResult($withProMetadata, $total, 'withProMetadata');
+    }
+
+    /**
      * Get recent activity feed items for dashboard.
      *
      * @return array<array{type: string, statusLabel: string, assetId: int|null, assetTitle: string, assetUrl: string|null, thumbnailUrl: string|null, timestamp: string, timeAgo: string}>

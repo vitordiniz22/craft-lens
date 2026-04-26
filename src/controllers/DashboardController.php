@@ -79,6 +79,7 @@ class DashboardController extends Controller
                 'overviewStats' => $overviewStats,
                 'altTextCoverage' => $stats->getAltTextCoverage(),
                 'focalPointCoverage' => $stats->getFocalPointCoverage(),
+                'proMetadataCoverage' => $stats->getProMetadataCoverage(),
 
                 // Section 4: Quick Insights
                 'topTags' => $stats->getTopTags(25),
