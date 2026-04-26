@@ -77,11 +77,6 @@
             TAG_LENGTH_NEAR_LIMIT: 240,
 
             /**
-             * Bridge review AI text truncation length
-             */
-            AI_PREVIEW_LENGTH: 60,
-
-            /**
              * Inline editor AI suggestion truncation length
              */
             AI_SUGGESTION_PREVIEW_LENGTH: 100

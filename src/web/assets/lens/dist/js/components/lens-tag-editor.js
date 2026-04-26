@@ -2,7 +2,6 @@
  * Lens Plugin - Tag Editor Component
  * Tag management with autocomplete suggestions, keyboard navigation, and auto-save.
  * Auto-saves on each add/remove when data-lens-auto-save="1" is present (asset edit page).
- * In review mode, changes are collected at form submit time.
  */
 (function() {
     'use strict';

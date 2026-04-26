@@ -323,7 +323,7 @@
         },
 
         /**
-         * Shared UI update for detection revert (both review and non-review paths).
+         * Shared UI update for detection revert.
          * @returns {string} The reverted radio value
          */
         _applyDetectionRevert: function(fieldEl, isDetectedAi) {
@@ -386,7 +386,7 @@
         },
 
         /**
-         * Common UI cleanup after people detection revert (both review and normal paths).
+         * Common UI cleanup after people detection revert.
          */
         _revertPeopleUI: function(fieldEl, fields) {
             this._updatePeopleDisplay(fieldEl, fields);
@@ -409,7 +409,6 @@
             fieldEl.dataset.lensContainsPeople = fields.containsPeople ? '1' : '0';
             fieldEl.dataset.lensFaceCount = fields.faceCount;
 
-            // people-present/absent only exist on asset edit page (not review)
             var present = fieldEl.querySelector('[data-lens-target="people-present"]');
             var absent = fieldEl.querySelector('[data-lens-target="people-absent"]');
             if (!present && !absent) return;
