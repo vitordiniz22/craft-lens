@@ -5,7 +5,7 @@
 <h1 align="center">Lens</h1>
 
 <p align="center">
-  AI Asset Intelligence for Craft CMS
+  <strong>Describe it. Find it.</strong>
 </p>
 
 <p align="center">
@@ -15,61 +15,49 @@
   <a href="https://github.com/vitordiniz22/craft-lens/actions/workflows/tests.yml"><img src="https://github.com/vitordiniz22/craft-lens/actions/workflows/tests.yml/badge.svg" alt="Tests"></a>
 </p>
 
-Lens uses AI to analyze the images in your asset library, generating alt text, titles, descriptions, semantic tags, focal points, and more. It detects faces, flags NSFW content, spots watermarks, identifies brands, extracts text via OCR, and finds duplicate images across your library.
+Lens uses AI to analyze every image in your asset library and indexes the results (tags, descriptions, alt text, OCR'd text) into Craft's native search and every asset picker. Editors find images by what's in them instead of relying on filenames or folder structure.
 
-Choose your AI provider (**OpenAI GPT**, **Google Gemini**, or **Anthropic Claude**) and turn your asset library from bare-bones metadata into an organized, accessible, and fully searchable media system. All generated metadata is instantly searchable, and fully editable when you need to refine it.
+Beyond search, Lens flags duplicates before they pile up, identifies brands and people, sets focal points so Craft's image transforms crop around the subject, catches NSFW content and watermarks, audits image quality, and includes pre-built filtered views so editors browse by what's in the picture.
 
-[[Image: Lens Dashboard. Show the full dashboard with library health stats, coverage metrics (analyzed vs total), attention items panel highlighting assets that need action, and the analysis status breakdown. Use a library with 50+ analyzed assets so the dashboard looks populated and useful.]]
+Multi-provider by design: bring your own API key for **OpenAI**, **Google Gemini**, or **Anthropic Claude**, and switch whenever. No middleman, no vendor lock-in.
 
 ## How It Works
 
-1. **Upload.** Drop images into any enabled volume. Lens analyzes them automatically on upload, on demand from the asset editor, or in bulk across entire volumes.
-2. **Analyze.** In a single pass, AI generates rich metadata for every image, searchable right away.
-3. **Refine.** AI does the heavy lifting, you ensure the quality. Edit titles, alt text, tags, and detection flags inline on the asset edit page, and apply the suggested focal point with one click.
+1. **Drop in images.** Lens analyzes them automatically on upload, on demand from the asset editor, or in bulk across entire volumes.
+2. **Get rich metadata in one pass.** Alt text in every site language, descriptions, 35+ semantic tags, focal points, NSFW and watermark flags, and OCR'd text, all from a single AI call per image.
+3. **Find everything, immediately.** Lens metadata feeds Craft's native search, pre-built sources, and condition rules across the asset browser and every image picker.
 
 ## Features
 
 ### Search & Discovery
 
-- **Smarter asset library.** Lens drops pre-built views into Craft's Assets section: Not Analyzed, Failed Analyses, Missing Alt Text, NSFW Flagged, Missing Focal Point, Contains People, Has Watermark, and Has Brand Logo, with Has Duplicates added on Pro. Build your own filtered views with the Lens condition rules.
-- **Semantic search (Pro).** Type "outdoor" into the search box and Lens ranks results by AI-generated tags, titles, descriptions, alt text, and OCR, right inside the browser you already use. The same smart search powers Craft's Assets section and the image picker you see when attaching photos to entries. It handles typos and stems queries in 14 languages (Catalan, Danish, Dutch, English, Finnish, French, German, Italian, Norwegian, Portuguese, Romanian, Russian, Spanish, Swedish); other languages still work but without stemming. Turn it off in Settings to fall back to Craft's default filename search.
-- **Duplicate detection (Pro)** surfaces visually similar images so you stop re-uploading the same file, flags duplicates on each asset's edit page, and lets you find images similar to any specific asset on demand.
-
-[[Image: The native Craft asset browser with the Lens sidebar expanded (Not Analysed, NSFW Flagged, Has Watermark, Contains People, Missing Focal Point, and others), a semantic query like "outdoor" typed into the search box, and a grid of matching thumbnails.]]
+- **Search by what's in the picture.** `[Pro]` Type *"outdoor"*, *"team meeting"*, into Craft's asset search and Lens ranks results by AI-generated tags, descriptions, alt text, and OCR, alongside Craft's native title and filename matching. The same smart search powers every image picker on every entry, so editors find the right photo without leaving the entry they're writing.
+- **Pre-built views in your asset library.** Not Analysed, Failed Analyses, Missing Alt Text, NSFW Flagged, Missing Focal Point, Contains People, Has Watermark, Has Brand Logo. Build your own with Lens condition rules.
+- **Duplicate detection** `[Pro]` surfaces visually similar images so you stop re-uploading the same file, flags duplicates on each asset's edit page, and lets you find similar images to any asset on demand.
 
 ### Automatic Tagging & Descriptions
 
 - **Alt text** generated in each site's language, with translations for multisite installs and confidence scoring
 - **Title suggestions** that replace Craft's auto-generated titles with meaningful, descriptive names
-- **Long descriptions** that give images rich context and feed the search index for better discoverability
-- **Semantic tags** that actually describe what's in the image, typically 20-25 per asset, each scored by confidence
+- **Long descriptions** `[Pro]` that give images rich context and feed the search index for better discoverability
+- **Semantic tags** `[Pro]` that actually describe what's in the image, 35-40 per asset, each scored by confidence
 
 ### Content Detection
 
 - **Faces and people** with 6-tier detection: no people, people without visible faces, individual, duo, small group, large group
 - **NSFW scoring** with category breakdown (adult, violence, hate, self-harm, drugs) to catch unsafe content before it goes live
-- **Watermarks** identified by type (text, logo, stock, copyright) to flag assets that may need review before publishing
-- **Brand/logo recognition** names the specific brands in each image so you can search by brand
-- **Stock photo detection** identifies which stock provider an asset came from
-- **OCR** extracts text from images, fully searchable
-
-[[Image: Analysis panel in the asset editor. Show a real asset with all sections visible: suggested title and alt text with a confidence badge, semantic tags displayed as chips, quality metrics with verdicts, and people detection showing "Individual". Pick a visually interesting photo so the analysis results are compelling.]]
+- **Watermarks** identified by type (text, logo, stock, copyright, and more) to flag assets that may need review before publishing
+- **Brand/logo recognition** names the specific brands in each image and lets you filter by brand in custom views, with full search-box ranking on Pro
+- **Focal point detection** generates a focal point suggestion on the primary subject and applies it to assets that don't already have one, so Craft's image transforms crop around what matters
+- **OCR** `[Pro]` extracts text from images, fully searchable
 
 ### Image Assessment
 
-- **Quality analysis** covering sharpness, brightness, contrast, compression quality, and color profile detection via Imagick
-- **Web readiness** flags oversized files, unsuitable resolutions, and formats browsers can't render, so you catch performance and rendering issues before assets go live
-- **Accessibility** detection of embedded text in images, a reminder to provide equivalent HTML for screen readers
+- **Quality analysis** flags blurry or soft images, ones that are too dark or too bright, low-contrast (flat) shots, heavily compressed files, and non-sRGB color profiles, with a recommendation for each issue
 
-### Focal Point
+### Bulk Processing `[Pro]`
 
-- **Focal point detection** automatically sets the focal point on the primary subject so Craft's image transforms crop around what matters
-
-### Bulk Processing
-
-- **Analyze entire volumes** with an up-front cost estimate shown before the run starts, real-time progress tracking, and retry for failed assets
-
-[[Image: Bulk Processing. Show the processing-in-progress state with the progress bar partially filled (e.g. "Processing 34 of 127"), the cost estimate visible, and the volume selector dropdown. This shows the scale of what Pro can handle.]]
+- **Analyze entire volumes** with real-time progress tracking, cost estimation, and retry for failed assets
 
 ### Language & Multisite
 
@@ -80,23 +68,31 @@ Choose your AI provider (**OpenAI GPT**, **Google Gemini**, or **Anthropic Claud
 
 ## Editions
 
-Lens has two editions. **Lite** is the analysis layer: every image gets AI-generated metadata, and Craft's asset library gets pre-built views and filters to navigate it. **Pro** is for libraries that grow, bulk runs across whole volumes, semantic search over every field the analysis produces, and duplicate detection so the same file doesn't sneak in twice.
+### Lite, for single editors and small libraries
 
-**Lite** is free and includes:
+Every image gets AI-generated alt text, focal points, NSFW and watermark flags, brand recognition and much more. Craft's asset library gets 9 pre-built filtered views and 14 condition rules so you can navigate by what's actually in the picture, not just the filename. Free. Always.
 
-- AI analysis: alt text, titles, descriptions, focal points, people and face detection, NSFW scoring, and watermark and brand recognition, with per-site translations for multisite installs.
-- 9 pre-built views in Craft's asset library: All Images (scoped to your Lens-enabled volumes), Not Analyzed, Failed Analyses, Missing Alt Text, NSFW Flagged, Missing Focal Point, Contains People, Has Watermark, and Has Brand Logo.
-- 13 filters you can combine to build your own custom views.
+**Lite includes:**
 
-**About Pro metadata on Lite:** By default, Lens still asks the AI for semantic tags, long descriptions, and OCR text while you're on Lite, even though those fields aren't surfaced in the Lite UI. The moment you upgrade to Pro, your entire library is already searchable, with no re-analysis run and no second AI bill. The trade-off is some extra AI cost per image while on Lite. You can disable this in **Lens → Settings → Asset Processing** if you'd rather pay the absolute minimum and accept that an upgrade later would require re-analyzing your library to populate the Pro fields.
+- AI analysis on every upload: alt text, titles, focal points, people and face detection, NSFW scoring, watermark and brand recognition, image quality assessment
+- Per-site translations for multisite installs (English site gets English alt text, Spanish site gets Spanish, automatically)
+- 9 pre-built views in Craft's asset library
+- 14 condition rules to build your own custom views
+- All three AI providers: OpenAI, Gemini, Claude
 
-**Pro** adds:
+### Pro, for teams and libraries that grow
 
-- Semantic tags and OCR text extraction surfaced in the analysis panel, indexed for semantic search, and available to filter by.
-- Semantic search that ranks results in Craft's asset library and in the image picker on entries, using the tags, titles, descriptions, alt text, and OCR that analysis produces.
-- Bulk Processing to analyze entire volumes in one run, with an up-front cost estimate shown before the run starts, real-time progress, and retry for failed assets.
-- Duplicate detection via perceptual hashing (requires the GD PHP extension).
-- One more pre-built view, conditional on its prerequisite: **Has Duplicates** appears when GD is available. Plus 7 more filters.
+Pro turns your image library into a searchable knowledge base. Search across alt text, descriptions, semantic tags, and OCR'd text, in Craft's asset browser and inside every image picker. Bulk-process entire volumes with cost preview and retry. Catch duplicates before they multiply.
+
+**Pro adds:**
+
+- **Semantic search** across every field the analysis produces, ranking results in Craft's asset library and in the image picker on every entry
+- **OCR text extraction** so the words inside screenshots, signs, and document images are searchable
+- **35+ semantic tags per asset**, each scored by confidence, all searchable
+- **Bulk processing** of entire volumes with real-time progress, cost estimates, and retry for failed assets
+- **Duplicate detection** via perceptual hashing, flagged on every asset edit page and findable on demand
+- **Cost tracking** by provider, asset, and month so you always know what your AI usage is costing
+- **1 extra pre-built view and 7 extra condition rules** for sharper filtering (status, stock provider, text-in-image, tags, duplicates, similarity)
 
 Available on the <a href="https://plugins.craftcms.com/lens" target="_blank" rel="noopener">Craft Plugin Store</a>.
 
@@ -106,8 +102,7 @@ Available on the <a href="https://plugins.craftcms.com/lens" target="_blank" rel
 - **PHP** 8.2 or later
 - **MySQL** 8.0+, **MariaDB** 10.6+, or **PostgreSQL** 14+
 - An API key from one of: [OpenAI](https://platform.openai.com/), [Google AI](https://ai.google.dev/), or [Anthropic](https://www.anthropic.com/)
-- **Imagick PHP extension** (recommended) enables five local quality metrics: sharpness, brightness, contrast, compression quality, and color profile detection. Without Imagick, those five metrics are hidden; web readiness flags and accessibility detection still work.
-- **GD PHP extension** (recommended on Pro) enables duplicate detection via perceptual hashing. Without GD, the Has Duplicates view and the "find similar to this asset" action are disabled.
+- **Imagick PHP extension** (recommended) enables local quality metrics (sharpness, brightness, contrast, compression quality, and color profile detection). Without it, those metrics are hidden; the rest of the Image Assessment section still works.
 
 ## Installation
 
@@ -130,10 +125,8 @@ php craft plugin/install lens
 2. Select your AI provider (OpenAI, Gemini, or Claude)
 3. Enter your API key (supports environment variables like `$OPENAI_API_KEY`, `$GEMINI_API_KEY`, or `$ANTHROPIC_API_KEY`) and choose a model
 4. Choose which volumes to enable for analysis
-5. In each enabled volume's field layout (**Settings** &rarr; **Assets** &rarr; *[Volume]* &rarr; **Field Layout**), drag the **Lens Analysis** UI element into the layout so AI results appear on the asset editor
+5. In each enabled volume's field layout (**Settings** &rarr; **Assets** &rarr; *[Volume]* &rarr; **Field Layout**), drag the **Lens Analysis** UI component into the layout so AI results appear on the asset editor
 6. Upload an image. Lens analyzes it automatically and displays results in the **Lens Analysis** panel on the asset editor.
-
-[[Image: Settings page. Show the AI provider configuration with one provider selected (OpenAI recommended for familiarity), the API key field with the environment variable placeholder visible, the model dropdown, auto-process toggle, and the volume checkboxes with at least 2 volumes listed.]]
 
 ## Documentation
 

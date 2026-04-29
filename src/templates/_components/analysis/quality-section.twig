@@ -1,46 +1,18 @@
 {#
  # Image Assessment Section
- # Row-based layout: icon + label + optional value + verdict badge per check.
- # Quality metrics (Imagick), Web Readiness, and Accessibility shown as separate groups.
+ # Renders the local Imagick-based quality metrics block.
  #
- # Expected variables: analysis, asset (optional), fieldState, webReadiness, qualityMetrics
+ # Expected variables: analysis, asset (optional), fieldState, qualityMetrics
  #}
 
 {% set fieldState = fieldState ?? 'readonly' %}
-{% set webReadiness = webReadiness ?? {issues: [], checks: {}} %}
 {% set qualityMetrics = qualityMetrics ?? {} %}
 
-{# ── Quality Metrics (Imagick-based) ──────────────────── #}
 {% if lens.hasQualitySupport and qualityMetrics|length %}
     <span class="lens-field-label">{{ 'Quality'|t('lens') }}</span>
     <div class="lens-quality-metrics">
         {% for key, metric in qualityMetrics %}
             {% include 'lens/_components/analysis/_quality-metric-row' with {item: metric} only %}
         {% endfor %}
-    </div>
-{% endif %}
-
-{# ── Web Readiness ────────────────────────────────────── #}
-{% set wrChecks = webReadiness.checks ?? {} %}
-{% if wrChecks|length %}
-    <span class="lens-field-label">{{ 'Web Readiness'|t('lens') }}</span>
-    <div class="lens-quality-metrics">
-        {% for key, check in wrChecks %}
-            {% include 'lens/_components/analysis/_quality-metric-row' with {item: check} only %}
-        {% endfor %}
-    </div>
-{% endif %}
-
-{# ── Accessibility ─────────────────────────────────────── #}
-{% if lens.isPro and analysis.extractedTextAi is defined and analysis.extractedTextAi|length > 0 %}
-    <span class="lens-field-label">{{ 'Accessibility'|t('lens') }}</span>
-    <div class="lens-quality-metrics">
-        {% include 'lens/_components/analysis/_quality-metric-row' with {item: {
-            status: 'warning',
-            icon: 'file-lines',
-            label: 'Embedded Text'|t('lens'),
-            verdict: 'Detected'|t('lens'),
-            recommendation: 'Ensure this text is also available as HTML on the page for screen reader accessibility.'|t('lens'),
-        }} only %}
     </div>
 {% endif %}

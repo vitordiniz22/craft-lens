@@ -29,7 +29,6 @@ class LensAsset extends AssetBundle
             'css/components/expander.css',
             'css/components/inline-notice.css',
             'css/components/link.css',
-            'css/components/pagination.css',
             'css/components/progress-bar.css',
             'css/components/setup-banner.css',
             'css/components/metric-card.css',

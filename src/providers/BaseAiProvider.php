@@ -142,7 +142,7 @@ abstract class BaseAiProvider implements AiProviderInterface
         $instructions[] = '  Title rules: NO "Image of/Photo of" prefixes, NO file extensions, be SPECIFIC';
 
         if ($includeProMetadata) {
-            $instructions[] = sprintf('- "tags": An array of objects with "tag" (lowercase single word or short phrase, in %s) and "confidence" (0.0-1.0), generate at least 20 tags (aim for 20-25)', $primaryName);
+            $instructions[] = sprintf('- "tags": An array of objects with "tag" (lowercase single word or short phrase, in %s) and "confidence" (0.0-1.0), generate at least 35 tags (aim for 35-40)', $primaryName);
             $instructions[] = '  Tag vocabulary guidelines for DAM (Digital Asset Management) systems:';
             $instructions[] = '  • Prefer COMMON, GENERAL-PURPOSE tags that are widely understood and searchable (e.g., "beach", "sunset", "portrait", "food", "architecture", "business")';
             $instructions[] = '  • Avoid overly specific or technical terms unless they are the PRIMARY subject (e.g., prefer "flower" over "chrysanthemum", "car" over "sedan", "building" over "skyscraper" unless specificity is critical)';

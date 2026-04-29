@@ -1056,6 +1056,49 @@ private function computePerceptualHash(Asset $asset, AssetAnalysisRecord $record
     }
 
     /**
+     * Get all distinct brands detected in the library.
+     *
+     * @return array<string, string> brand => Brand Label
+     */
+    public function getDetectedBrands(): array
+    {
+        $records = AssetAnalysisRecord::find()
+            ->select(['detectedBrands'])
+            ->where(['not', ['detectedBrands' => null]])
+            ->asArray()
+            ->limit(5000)
+            ->all();
+
+        $brands = [];
+        foreach ($records as $record) {
+            $entries = is_string($record['detectedBrands'])
+                ? json_decode($record['detectedBrands'], true)
+                : $record['detectedBrands'];
+
+            if (!is_array($entries)) {
+                continue;
+            }
+
+            foreach ($entries as $entry) {
+                $name = is_array($entry) ? ($entry['brand'] ?? null) : null;
+
+                if (!is_string($name) || trim($name) === '') {
+                    continue;
+                }
+
+                $key = strtolower($name);
+                if (!isset($brands[$key])) {
+                    $brands[$key] = $name;
+                }
+            }
+        }
+
+        ksort($brands);
+
+        return $brands;
+    }
+
+    /**
      * Get all distinct stock providers detected in the library.
      *
      * @return array<string, string> provider => Provider Label

@@ -7,7 +7,6 @@ namespace vitordiniz22\craftlens\behaviors;
 use Craft;
 use craft\elements\db\AssetQuery;
 use craft\helpers\Db;
-use vitordiniz22\craftlens\conditions\FileTooLargeConditionRule;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\DuplicateSupport;
@@ -66,7 +65,6 @@ class AssetQueryBehavior extends Behavior
     public ?bool $lensTooDark = null;
     public ?bool $lensTooBright = null;
     public ?bool $lensLowContrast = null;
-    public ?bool $lensTooLarge = null;
     public ?bool $lensHasTextInImage = null;
     /** @var array[] Raw WHERE conditions requiring the lens join, used by complex condition rules */
     public array $lensRawWhereConditions = [];
@@ -413,15 +411,6 @@ class AssetQueryBehavior extends Behavior
     }
 
     /**
-     * Filters assets with file size >= 1MB.
-     */
-    public function lensTooLarge(?bool $value): AssetQuery
-    {
-        $this->lensTooLarge = $value;
-        return $this->owner;
-    }
-
-    /**
      * Filters assets that contain embedded text (OCR).
      */
     public function lensHasTextInImage(?bool $value): AssetQuery
@@ -529,13 +518,6 @@ class AssetQueryBehavior extends Behavior
     {
         if ($this->lensHasFocalPoint !== null && $this->owner->subQuery !== null) {
             $this->safeApplyFilter(fn() => $this->applyHasFocalPointFilter(), 'HasFocalPointFilter', 'lensHasFocalPoint');
-        }
-    }
-
-    public function lensApplyTooLargeFilter(): void
-    {
-        if ($this->lensTooLarge !== null && $this->owner->subQuery !== null) {
-            $this->safeApplyFilter(fn() => $this->applyTooLargeFilter(), 'TooLargeFilter', 'lensTooLarge');
         }
     }
 
@@ -794,10 +776,6 @@ class AssetQueryBehavior extends Behavior
             $this->applyLowContrastFilter();
         }
 
-        if ($this->lensTooLarge !== null) {
-            $this->applyTooLargeFilter();
-        }
-
         if ($this->lensHasTextInImage !== null) {
             $this->applyHasTextInImageFilter();
         }
@@ -894,6 +872,15 @@ class AssetQueryBehavior extends Behavior
 
             $this->owner->subQuery->andWhere(['exists', $existsSubQuery]);
         }
+    }
+
+    public function lensApplyDetectedBrandFilter(): void
+    {
+        if ($this->lensDetectedBrand === null) {
+            return;
+        }
+
+        $this->applyDetectedBrandFilter();
     }
 
     private function applyDetectedBrandFilter(): void
@@ -1164,7 +1151,6 @@ class AssetQueryBehavior extends Behavior
             || $this->lensTooDark !== null
             || $this->lensTooBright !== null
             || $this->lensLowContrast !== null
-            || $this->lensTooLarge !== null
             || $this->lensHasTextInImage !== null
             || !empty($this->lensRawWhereConditions);
     }
@@ -1224,7 +1210,6 @@ class AssetQueryBehavior extends Behavior
         $this->lensTooDark = null;
         $this->lensTooBright = null;
         $this->lensLowContrast = null;
-        $this->lensTooLarge = null;
         $this->lensHasTextInImage = null;
         $this->lensRawWhereConditions = [];
     }
@@ -1391,13 +1376,6 @@ class AssetQueryBehavior extends Behavior
             $this->ensureJoined();
             $this->owner->subQuery->andWhere(['<', 'lens.noiseScore', ImageMetricsAnalyzer::CONTRAST_LOW]);
             $this->owner->subQuery->andWhere(['not', ['lens.noiseScore' => null]]);
-        }
-    }
-
-    private function applyTooLargeFilter(): void
-    {
-        if ($this->lensTooLarge) {
-            $this->owner->subQuery->andWhere(['>=', 'assets.size', FileTooLargeConditionRule::FILE_SIZE_WARNING]);
         }
     }
 

@@ -8,7 +8,6 @@ use Codeception\Test\Unit;
 use craft\elements\Asset;
 use ReflectionProperty;
 use vitordiniz22\craftlens\behaviors\AssetQueryBehavior;
-use vitordiniz22\craftlens\conditions\FileTooLargeConditionRule;
 use vitordiniz22\craftlens\helpers\ImageMetricsAnalyzer;
 use vitordiniz22\craftlens\Plugin;
 use vitordiniz22\craftlenstests\_support\Helpers\AnalysisRecordFixtures;
@@ -16,11 +15,11 @@ use vitordiniz22\craftlenstests\_support\Helpers\AnalysisRecordFixtures;
 /**
  * Integration tests for quality and technical filters:
  * lensSharpnessBelow, lensExposureIssues, lensHasFocalPoint, lensBlurry,
- * lensTooDark, lensTooBright, lensLowContrast, lensTooLarge, lensHasTextInImage.
+ * lensTooDark, lensTooBright, lensLowContrast, lensHasTextInImage.
  *
- * Every test locks its boundary to the constant in ImageMetricsAnalyzer or
- * FileTooLargeConditionRule, so if a future refactor moves a threshold the
- * test fails loudly rather than silently drifting.
+ * Every test locks its boundary to the constant in ImageMetricsAnalyzer,
+ * so if a future refactor moves a threshold the test fails loudly rather
+ * than silently drifting.
  *
  * Key behaviors under test:
  * - lensBlurry(false) is a NO-OP (unlike lensExposureIssues(false) which flips semantics)
@@ -28,7 +27,7 @@ use vitordiniz22\craftlenstests\_support\Helpers\AnalysisRecordFixtures;
  * - lensTooBright requires exposureScore > 0.85 AND highlightClipRatio > 0.40 (noise is NOT a factor)
  * - lensSharpnessBelow explicitly excludes NULL
  * - lensHasTextInImage treats '[]' and NULL as equivalent "no text"
- * - lensTooLarge and lensHasFocalPoint operate on the `assets` table, not `lens`
+ * - lensHasFocalPoint operates on the `assets` table, not `lens`
  */
 class AssetQueryQualityTest extends Unit
 {
@@ -304,30 +303,6 @@ class AssetQueryQualityTest extends Unit
         $this->assertNotContains($nullRow->assetId, $ids);
     }
 
-    // ---------- lensTooLarge (assets.size) ----------
-
-    public function testLensTooLargeTrueBoundaryOneMillion(): void
-    {
-        $this->assertSame(1_000_000, FileTooLargeConditionRule::FILE_SIZE_WARNING);
-
-        $below = $this->createAssetFixture('below.jpg', [], ['size' => 999_999]);
-        $boundary = $this->createAssetFixture('eq.jpg', [], ['size' => 1_000_000]);
-        $above = $this->createAssetFixture('above.jpg', [], ['size' => 1_500_000]);
-
-        $ids = Asset::find()->volume('lenstest')->lensTooLarge(true)->ids();
-
-        $this->assertNotContains($below->assetId, $ids, '999_999 bytes is below 1MB threshold');
-        $this->assertContains($boundary->assetId, $ids, '1MB exactly is >= 1_000_000 (inclusive)');
-        $this->assertContains($above->assetId, $ids);
-    }
-
-    public function testLensTooLargeFalseIsNoOp(): void
-    {
-        $large = $this->createAssetFixture('large.jpg', [], ['size' => 5_000_000]);
-        $ids = Asset::find()->volume('lenstest')->lensTooLarge(false)->ids();
-        $this->assertContains($large->assetId, $ids);
-    }
-
     // ---------- lensHasTextInImage ----------
 
     public function testLensHasTextInImageTrueExcludesEmptyArrayAndNull(): void
@@ -412,7 +387,6 @@ class AssetQueryQualityTest extends Unit
             'lensTooDark' => null,
             'lensTooBright' => null,
             'lensLowContrast' => null,
-            'lensTooLarge' => null,
             'lensHasTextInImage' => null,
         ] as $method => $arg) {
             $ids = Asset::find()->volume('lenstest')->{$method}($arg)->ids();

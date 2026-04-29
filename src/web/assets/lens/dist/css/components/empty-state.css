@@ -1,7 +1,7 @@
 /**
  * Empty State Component
  * Generic empty state for list views.
- * Used by: _components/empty-state.twig, review, logs, bulk
+ * Used by: _components/empty-state.twig, logs, bulk
  */
 
 .lens-empty-state {

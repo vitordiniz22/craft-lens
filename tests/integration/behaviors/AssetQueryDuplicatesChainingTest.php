@@ -149,32 +149,6 @@ class AssetQueryDuplicatesChainingTest extends Unit
         $this->assertNotContains($goodPending->assetId, $ids);
     }
 
-    public function testChainingTwoAssetsTableFiltersCoexist(): void
-    {
-        // Regression guard: lensTooLarge and lensHasFocalPoint both operate on
-        // the assets table. Earlier versions of the behavior used an explicit
-        // JOIN; if that regresses, both constraints should still AND together.
-        $largeWithFp = $this->createAssetFixture('lg.jpg', [], [
-            'size' => 2_000_000, 'focalPoint' => '0.5;0.5',
-        ]);
-        $largeNoFp = $this->createAssetFixture('ln.jpg', [], [
-            'size' => 2_000_000, 'focalPoint' => null,
-        ]);
-        $smallWithFp = $this->createAssetFixture('sf.jpg', [], [
-            'size' => 100_000, 'focalPoint' => '0.5;0.5',
-        ]);
-
-        $ids = Asset::find()
-            ->volume('lenstest')
-            ->lensTooLarge(true)
-            ->lensHasFocalPoint(true)
-            ->ids();
-
-        $this->assertContains($largeWithFp->assetId, $ids);
-        $this->assertNotContains($largeNoFp->assetId, $ids);
-        $this->assertNotContains($smallWithFp->assetId, $ids);
-    }
-
     public function testRepeatedSetterCallsOverwriteRatherThanAccumulate(): void
     {
         $withPeople = $this->createAssetFixture('wp.jpg', ['containsPeople' => true]);

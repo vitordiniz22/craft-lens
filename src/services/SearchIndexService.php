@@ -40,6 +40,7 @@ class SearchIndexService extends Component
     private const FIELD_WEIGHTS = [
         'tag' => 1.50,
         'title' => 1.30,
+        'detectedBrand' => 1.25,
         'suggestedTitle' => 1.20,
         'altText' => 1.10,
         'alt' => 1.10,
@@ -133,6 +134,11 @@ class SearchIndexService extends Component
         $tagRows = $this->buildTagRows($record->assetId, $record->id);
         $fieldCounts['tag'] = count($tagRows);
         array_push($rows, ...$tagRows);
+
+        // --- Detected brands ---
+        $brandRows = $this->buildBrandRows($record);
+        $fieldCounts['detectedBrand'] = count($brandRows);
+        array_push($rows, ...$brandRows);
 
         // --- Site content translations ---
         $siteRows = $this->buildSiteContentRows($record->assetId, $record->id);
@@ -760,6 +766,38 @@ class SearchIndexService extends Component
         foreach ($tags as $tag) {
             $tagRows = $this->buildTokenRows($assetId, $analysisId, 'tag', (string) $tag);
             array_push($rows, ...$tagRows);
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Build token rows from the analysis record's detectedBrands JSON column.
+     *
+     * @return array<array<string, mixed>>
+     */
+    private function buildBrandRows(AssetAnalysisRecord $record): array
+    {
+        $brands = $record->detectedBrands;
+
+        if (is_string($brands)) {
+            $brands = json_decode($brands, true) ?: [];
+        }
+
+        if (!is_array($brands) || empty($brands)) {
+            return [];
+        }
+
+        $rows = [];
+        foreach ($brands as $entry) {
+            $name = is_array($entry) ? ($entry['brand'] ?? null) : null;
+
+            if (!is_string($name) || trim($name) === '') {
+                continue;
+            }
+
+            $brandRows = $this->buildTokenRows($record->assetId, $record->id, 'detectedBrand', $name);
+            array_push($rows, ...$brandRows);
         }
 
         return $rows;

@@ -203,28 +203,25 @@
             {% endif %}
 
             {# Section 4: Image Assessment #}
-            {% if (analysis.status not in [lens.status.pending, lens.status.failed] or isRepending) and (not isProcessing or isReprocessing) %}
-                {% set wrStatus = (webReadiness ?? {}).overallStatus ?? 'pass' %}
+            {% if (analysis.status not in [lens.status.pending, lens.status.failed] or isRepending) and (not isProcessing or isReprocessing) and lens.hasQualitySupport and (qualityMetrics ?? [])|length %}
                 {% set hasQualityWarning = false %}
                 {% set hasQualityError = false %}
-                {% for metric in (qualityMetrics ?? []) %}
+                {% for metric in qualityMetrics %}
                     {% if metric.status == 'error' %}{% set hasQualityError = true %}{% endif %}
                     {% if metric.status == 'warning' %}{% set hasQualityWarning = true %}{% endif %}
                 {% endfor %}
-                {% set qualityBadge = (wrStatus == 'error' or hasQualityError) ? 'error'
-                    : ((wrStatus == 'warning' or hasQualityWarning) ? 'warning' : null) %}
+                {% set qualityBadge = hasQualityError ? 'error' : (hasQualityWarning ? 'warning' : null) %}
                 <div class="lens-section">
                     {% include 'lens/_components/analysis/_section-header' with {
                         title: 'Image Assessment'|t('lens'),
-                        intro: 'Technical checks to ensure your image is web-ready.'|t('lens'),
+                        intro: 'Local image quality metrics: sharpness, exposure, contrast, compression, and color profile.'|t('lens'),
                         badge: qualityBadge
                     } only %}
                     <div class="lens-section-body">
                         {% include 'lens/_components/analysis/quality-section' with {
                             analysis: analysis, asset: asset,
                             fieldState: fieldState,
-                            webReadiness: webReadiness ?? {issues: [], checks: {}},
-                            qualityMetrics: qualityMetrics ?? {}
+                            qualityMetrics: qualityMetrics
                         } %}
                     </div>
                 </div>
