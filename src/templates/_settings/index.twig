@@ -127,20 +127,20 @@
         on: settings.autoProcessOnUpload,
     }) }}
 
-    {{ forms.textField({
-        label: 'Bulk Processing Concurrency'|t('lens'),
-        instructions: 'How many AI requests to run in parallel during bulk processing. Higher values are faster but more likely to hit provider rate limits. Range: 1 to 20.'|t('lens'),
-        id: 'bulkConcurrency',
-        name: 'settings[bulkConcurrency]',
-        type: 'number',
-        size: 5,
-        min: 1,
-        max: 20,
-        value: settings.bulkConcurrency,
-        errors: settings.getErrors('bulkConcurrency'),
-    }) }}
-
-    {% if not lens.isPro %}
+    {% if lens.isPro %}
+        {{ forms.textField({
+            label: 'Bulk Processing Concurrency'|t('lens'),
+            instructions: 'How many AI requests to run in parallel during bulk processing. Higher values are faster but more likely to hit provider rate limits. Range: 1 to 20.'|t('lens'),
+            id: 'bulkConcurrency',
+            name: 'settings[bulkConcurrency]',
+            type: 'number',
+            size: 5,
+            min: 1,
+            max: 20,
+            value: settings.bulkConcurrency,
+            errors: settings.getErrors('bulkConcurrency'),
+        }) }}
+    {% else %}
         {{ forms.lightswitchField({
             label: 'Pre-generate Pro Metadata'|t('lens'),
             instructions: 'Generates semantic tags, long descriptions, and OCR text during analysis even on Lite. These fields stay hidden on Lite, but the moment you upgrade to Pro your entire library is searchable instantly with no re-analysis. Adds extra AI cost per image. Turn off if you do not plan to upgrade and want the lowest possible cost.'|t('lens'),
