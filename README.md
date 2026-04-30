@@ -70,14 +70,14 @@ Multi-provider by design: bring your own API key for **OpenAI**, **Google Gemini
 
 ### Lite, for single editors and small libraries
 
-Every image gets AI-generated alt text, focal points, NSFW and watermark flags, brand recognition and much more. Craft's asset library gets 9 pre-built filtered views and 13 condition rules so you can navigate by what's actually in the picture, not just the filename. Free. Always.
+Every image gets AI-generated alt text, focal points, NSFW and watermark flags, brand recognition and much more. Craft's asset library gets 9 pre-built filtered views and 11 condition rules so you can navigate by what's actually in the picture, not just the filename. Free. Always.
 
 **Lite includes:**
 
 - AI analysis on every upload: alt text, titles, focal points, people and face detection, NSFW scoring, watermark and brand recognition, image quality assessment
 - Per-site translations for multisite installs (English site gets English alt text, Spanish site gets Spanish, automatically)
 - 9 pre-built views in Craft's asset library
-- 13 condition rules to build your own custom views
+- 11 condition rules to build your own custom views
 - All three AI providers: OpenAI, Gemini, Claude
 
 ### Pro, for teams and libraries that grow

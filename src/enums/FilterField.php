@@ -22,7 +22,6 @@ enum FilterField: string
     case FileSizePreset = 'fileSizePreset';
     case HasTextInImage = 'hasTextInImage';
     case HasWatermark = 'hasWatermark';
-    case WatermarkType = 'watermarkType';
     case ContainsBrandLogo = 'containsBrandLogo';
     case Status = 'status';
     case Provider = 'provider';
@@ -48,7 +47,6 @@ enum FilterField: string
             self::FileSizePreset => 'File Size',
             self::HasTextInImage => 'Text in Image',
             self::HasWatermark => 'Watermark',
-            self::WatermarkType => 'Watermark Type',
             self::ContainsBrandLogo => 'Brand Logo',
             self::Status => 'Status',
             self::Provider => 'Provider',

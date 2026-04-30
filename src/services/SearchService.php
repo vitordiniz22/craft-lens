@@ -9,7 +9,6 @@ use craft\elements\Asset;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\enums\QuickFilter;
-use vitordiniz22\craftlens\enums\WatermarkType;
 use vitordiniz22\craftlens\helpers\DuplicateSupport;
 use vitordiniz22\craftlens\helpers\ImageMetricsAnalyzer;
 use vitordiniz22\craftlens\helpers\Logger;
@@ -309,7 +308,7 @@ class SearchService extends Component
             'nsfwScoreMin', 'nsfwScoreMax', 'nsfwFlagged',
             'processedFrom', 'processedTo',
             'hasDuplicates',
-            'hasWatermark', 'watermarkType', 'containsBrandLogo',
+            'hasWatermark', 'containsBrandLogo',
             'hasFocalPoint',
             'missingAltText', 'unprocessed',
             'qualityIssue', 'fileSizePreset', 'hasTextInImage',
@@ -506,10 +505,6 @@ class SearchService extends Component
     {
         if (isset($filters['hasWatermark'])) {
             $query->andWhere(['lens.hasWatermark' => $filters['hasWatermark']]);
-        }
-
-        if (!empty($filters['watermarkType'])) {
-            $query->andWhere(['lens.watermarkType' => $filters['watermarkType']]);
         }
     }
 
@@ -766,20 +761,6 @@ class SearchService extends Component
     }
 
     /**
-     * Options for the watermark-type multi-select.
-     *
-     * @return array<array{value: string, label: string}>
-     */
-    public function getWatermarkTypeOptions(): array
-    {
-        $out = [];
-        foreach (WatermarkType::options() as $value => $label) {
-            $out[] = ['value' => $value, 'label' => $label];
-        }
-        return $out;
-    }
-
-    /**
      * Options for the single-select quality issue filter.
      *
      * @return array<array{value: string, label: string}>
@@ -856,12 +837,6 @@ class SearchService extends Component
                 + $triState(Craft::t('lens', 'Contains text'), Craft::t('lens', 'No text')),
             'hasWatermark' => ['label' => Craft::t('lens', 'Watermark'), 'section' => 'content']
                 + $triState(Craft::t('lens', 'Watermarked'), Craft::t('lens', 'Clean')),
-            'watermarkType' => [
-                'label' => Craft::t('lens', 'Watermark type'),
-                'section' => 'content',
-                'type' => 'multi-select',
-                'options' => $this->getWatermarkTypeOptions(),
-            ],
             'containsBrandLogo' => ['label' => Craft::t('lens', 'Brand logo'), 'section' => 'content']
                 + $triState(Craft::t('lens', 'Has brand logo'), Craft::t('lens', 'No brand logo')),
             'nsfwScore' => [
@@ -1038,7 +1013,6 @@ class SearchService extends Component
             ['fileSizePreset'],
             ['hasTextInImage'],
             ['hasWatermark'],
-            ['watermarkType'],
             ['containsBrandLogo'],
             ['status'],
             ['provider', 'providerModel'],

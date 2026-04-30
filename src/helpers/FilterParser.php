@@ -6,7 +6,6 @@ namespace vitordiniz22\craftlens\helpers;
 
 use craft\web\Request;
 use vitordiniz22\craftlens\enums\LogCategory;
-use vitordiniz22\craftlens\enums\WatermarkType;
 
 /**
  * Parses and validates search filter parameters from HTTP requests.
@@ -20,7 +19,7 @@ class FilterParser
         'nsfwScoreMin', 'nsfwScoreMax',
         'processedFrom', 'processedTo',
         'hasDuplicates',
-        'hasWatermark', 'watermarkType', 'containsBrandLogo',
+        'hasWatermark', 'containsBrandLogo',
         'hasFocalPoint',
         'nsfwFlagged', 'missingAltText', 'unprocessed',
         'similarTo',
@@ -158,7 +157,6 @@ class FilterParser
     private static function parseEnumFilters(Request $request, array &$filters): void
     {
         $enumFilters = [
-            'watermarkType' => array_column(WatermarkType::cases(), 'value'),
             'fileSizePreset' => ['1', '5', '10', '25', '50'],
         ];
 
