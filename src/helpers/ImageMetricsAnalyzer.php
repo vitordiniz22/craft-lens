@@ -26,7 +26,7 @@ class ImageMetricsAnalyzer
     public const BRIGHTNESS_DARK_MEDIAN = 0.22;
     public const BRIGHTNESS_BRIGHT_MEDIAN = 0.85;
     public const SHADOW_CLIP_RATIO = 0.40;
-    public const HIGHLIGHT_CLIP_RATIO = 0.40;
+    public const HIGHLIGHT_CLIP_RATIO = 0.30;
 
     // Luma bounds (0-1) that count as "detail lost" in shadow / highlight tails.
     private const SHADOW_CLIP_LUMA = 0.05;
