@@ -206,8 +206,7 @@ abstract class BaseAiProvider implements AiProviderInterface
         $primaryName = $this->languageDisplayName($primaryLanguage);
 
         $plugin = Plugin::getInstance();
-        $includeProMetadata = !$plugin->is(Plugin::EDITION_LITE)
-            || $plugin->getSettings()->preGenerateProMetadata;
+        $includeProMetadata = !$plugin->is(Plugin::EDITION_LITE);
 
         $hasTranslations = !empty($additionalLanguages);
         $languageNote = $hasTranslations

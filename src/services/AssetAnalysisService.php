@@ -977,8 +977,7 @@ class AssetAnalysisService extends Component
 
             $contentStorage->saveAnalysisContent($record);
 
-            $skipProMetadata = Plugin::getInstance()->is(Plugin::EDITION_LITE)
-                && !Plugin::getInstance()->getSettings()->preGenerateProMetadata;
+            $skipProMetadata = Plugin::getInstance()->is(Plugin::EDITION_LITE);
 
             if (!$skipProMetadata) {
                 $this->applyAiLongDescription($record, $result);

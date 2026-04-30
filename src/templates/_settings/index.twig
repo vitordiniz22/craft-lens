@@ -140,14 +140,6 @@
             value: settings.bulkConcurrency,
             errors: settings.getErrors('bulkConcurrency'),
         }) }}
-    {% else %}
-        {{ forms.lightswitchField({
-            label: 'Pre-generate Pro Metadata'|t('lens'),
-            instructions: 'Generates extra metadata during analysis (semantic tags, long descriptions, OCR text) and indexes it for search. If you upgrade to Pro later, your existing library is ready immediately with no re-analysis. Adds AI cost per image. Turn off if you do not plan to upgrade and want the lowest cost.'|t('lens'),
-            id: 'preGenerateProMetadata',
-            name: 'settings[preGenerateProMetadata]',
-            on: settings.preGenerateProMetadata,
-        }) }}
     {% endif %}
 
     {% if volumeOptions is empty %}

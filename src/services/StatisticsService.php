@@ -121,8 +121,8 @@ class StatisticsService extends Component
 
     /**
      * Count Completed analyses missing Pro-only metadata. These are records
-     * produced under Lite (or Lite + `preGenerateProMetadata = false`) that
-     * a Pro user can backfill via the bulk page's Sync Pro Metadata button.
+     * produced under Lite that a Pro user can backfill via the bulk page's
+     * Sync Pro Metadata button.
      *
      * `longDescriptionAi` is the canonical "never had AI Pro metadata" signal:
      * the prompt gates `longDescription`, AI tags, and `extractedText` on the

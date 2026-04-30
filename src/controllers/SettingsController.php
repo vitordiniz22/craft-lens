@@ -60,7 +60,6 @@ class SettingsController extends Controller
             'autoProcessOnUpload',
             'enabledVolumes',
             'enableSemanticSearch',
-            'preGenerateProMetadata',
             'bulkConcurrency',
         ];
 
