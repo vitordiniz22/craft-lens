@@ -42,27 +42,41 @@
     padding: 0;
     margin: 0;
     width: 100%;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
     font-size: 13px;
+    line-height: 1.5;
     color: var(--medium-text-color);
 }
 
+.lens-upgrade-banner__features li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
 .lens-upgrade-banner__features li::before {
-    content: '\2713\00a0';
-    color: var(--success-color);
-    font-weight: 600;
+    content: '\2713';
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    margin-top: 3px;
+    border-radius: 50%;
+    background: var(--success-color);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 1;
 }
 
 @media (max-width: 768px) {
     .lens-upgrade-banner {
         flex-direction: column;
         align-items: flex-start;
-    }
-
-    .lens-upgrade-banner__features {
-        grid-template-columns: 1fr;
     }
 }
 

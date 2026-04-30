@@ -31,10 +31,6 @@
 
     {# Dashboard content: only after critical issues resolved AND at least 1 analysis #}
     {% if not hasCriticalIssues and hasAnalyses %}
-        {% if not lens.isPro %}
-            {% include 'lens/_components/upgrade-banner' %}
-        {% endif %}
-
         {% include 'lens/_dashboard/_attention' %}
 
         {% include 'lens/_dashboard/_library-health' %}
@@ -47,6 +43,10 @@
             {% include 'lens/_dashboard/_recent-activity' with {
                 recentActivity: recentActivity|slice(0, 5)
             } %}
+        {% endif %}
+
+        {% if not lens.isPro %}
+            {% include 'lens/_components/upgrade-banner' %}
         {% endif %}
     {% endif %}
 </div>
