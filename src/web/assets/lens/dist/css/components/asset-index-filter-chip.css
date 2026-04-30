@@ -1,6 +1,8 @@
 /**
- * Dismissible "Lens filter: ..." chip that appears above the native asset
- * index results when a Lens notice or chip deep-links with a filter applied.
+ * Dismissible "Lens filter: ..." chip that mounts inside #content, directly
+ * above the asset grid, when a Lens notice or chip deep-links with a filter
+ * applied. The negative top margin cancels #content's own top padding so the
+ * chip sits flush below the toolbar instead of floating mid-page.
  *
  * Uses Craft CP design tokens so it picks up light/dark themes automatically.
  */
@@ -8,7 +10,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    margin: 10px 0 14px;
+    margin: -14px -7px 32px;
     flex-wrap: wrap;
 }
 

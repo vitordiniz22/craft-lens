@@ -306,6 +306,16 @@
     }
 
     function mountChip(index, $chip) {
+        var $elements = index.$container.find('#content #elements').first();
+        if ($elements.length) {
+            $chip.insertBefore($elements);
+            return;
+        }
+        var $content = index.$container.find('#content').first();
+        if ($content.length) {
+            $content.prepend($chip);
+            return;
+        }
         var $toolbar = index.$container.find('#toolbar').first();
         if ($toolbar.length) {
             $chip.insertAfter($toolbar);
