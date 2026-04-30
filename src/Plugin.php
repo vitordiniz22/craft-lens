@@ -548,17 +548,21 @@ class Plugin extends BasePlugin
             function(RegisterElementSourcesEvent $event) {
                 $iconPath = $this->getBasePath() . '/icon-mask.svg';
 
+                $enabledVolumeIds = $this->getSettings()->getEnabledVolumeIds();
+
+                if (empty($enabledVolumeIds)) {
+                    return;
+                }
+
+                $volumeScope = ['kind' => 'image', 'volumeId' => $enabledVolumeIds];
+
+                if (!in_array($event->context, ['index', 'modal'], true)) {
+                    return;
+                }
+
+                $sourceDefinitions = ['all' => ['All Images', $volumeScope]];
+
                 if ($event->context === 'index') {
-                    $enabledVolumeIds = $this->getSettings()->getEnabledVolumeIds();
-
-                    if (empty($enabledVolumeIds)) {
-                        return;
-                    }
-
-                    $volumeScope = ['kind' => 'image', 'volumeId' => $enabledVolumeIds];
-
-                    $sourceDefinitions = ['all' => ['All Images', $volumeScope]];
-
                     $sourceDefinitions += [
                         'not-analysed' => ['Not Analyzed', ['lensStatus' => 'untagged'] + $volumeScope],
                         'failed' => ['Failed Analyses', ['lensStatus' => 'failed'] + $volumeScope],
@@ -573,21 +577,21 @@ class Plugin extends BasePlugin
                     if ($this->getIsPro() && DuplicateSupport::isAvailable()) {
                         $sourceDefinitions['has-duplicates'] = ['Has Duplicates', ['lensHasDuplicates' => true] + $volumeScope];
                     }
+                }
 
-                    foreach ($sourceDefinitions as $key => [$label, $criteria]) {
-                        $defaultSort = $key === 'has-duplicates'
-                            ? [AssetTableAttributes::ATTR_DUPLICATE_CLUSTER, 'asc']
-                            : ['dateCreated', 'desc'];
+                foreach ($sourceDefinitions as $key => [$label, $criteria]) {
+                    $defaultSort = $key === 'has-duplicates'
+                        ? [AssetTableAttributes::ATTR_DUPLICATE_CLUSTER, 'asc']
+                        : ['dateCreated', 'desc'];
 
-                        $event->sources[] = [
-                            'key' => "lens:{$key}",
-                            'label' => Craft::t('lens', $label),
-                            'criteria' => $criteria,
-                            'hasThumbs' => true,
-                            'defaultSort' => $defaultSort,
-                            'iconMask' => $iconPath,
-                        ];
-                    }
+                    $event->sources[] = [
+                        'key' => "lens:{$key}",
+                        'label' => Craft::t('lens', $label),
+                        'criteria' => $criteria,
+                        'hasThumbs' => true,
+                        'defaultSort' => $defaultSort,
+                        'iconMask' => $iconPath,
+                    ];
                 }
             }
         );

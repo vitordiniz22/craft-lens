@@ -223,7 +223,9 @@ class AssetTableAttributes
             return '';
         }
 
-        return Html::encode(implode(', ', $tags));
+        return Html::tag('span', Html::encode(implode(', ', $tags)), [
+            'style' => 'white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; max-width: 100%;',
+        ]);
     }
 
     private static function nsfwHtml(Asset $asset): string
