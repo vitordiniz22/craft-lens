@@ -1,6 +1,6 @@
 {
   "name": "vitordiniz22/craft-lens",
-  "description": "AI-powered image analysis, tagging, and search for Craft CMS assets. Automatically generate alt text, extract colors, detect faces and content issues, find duplicates, and organize your media library with 20+ smart filters.",
+  "description": "AI-powered image analysis, tagging, and search for Craft CMS assets.",
   "keywords": [
     "craftcms",
     "craft-plugin",
@@ -75,13 +75,12 @@
         "handle": "pro",
         "features": [
           "Find any asset instantly with smart search and advanced filters",
-          "Review Queue to track and verify AI results across your library",
           "Analyze your entire media library in one click",
           "Detect duplicate and near-identical images automatically",
           "AI-powered semantic search in the native asset picker",
           "Full dashboard with usage stats, insights, and attention alerts",
           "Custom condition rules for stock photos and text-in-image filtering",
-          "Edit AI-generated tags, colors, and extracted text per asset"
+          "Edit AI-generated tags and extracted text per asset"
         ]
       }
     ]

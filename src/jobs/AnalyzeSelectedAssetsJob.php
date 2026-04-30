@@ -5,64 +5,46 @@ declare(strict_types=1);
 namespace vitordiniz22\craftlens\jobs;
 
 use Craft;
+use craft\base\Batchable;
+use craft\db\QueryBatcher;
 use craft\elements\Asset;
-use craft\queue\BaseJob;
-use vitordiniz22\craftlens\enums\LogCategory;
-use vitordiniz22\craftlens\helpers\Logger;
-use vitordiniz22\craftlens\Plugin;
 
 /**
  * Queue job for analyzing a specific set of assets selected by the user.
+ *
+ * Assets are loaded from the DB in batches (no in-memory list of all IDs),
+ * then dispatched concurrently via the shared `BatchedAnalysisJob` machinery.
+ * Selected runs have no session/cancel concept — once queued, they run to
+ * completion (or until the queue worker is cancelled).
  */
-class AnalyzeSelectedAssetsJob extends BaseJob
+class AnalyzeSelectedAssetsJob extends BatchedAnalysisJob
 {
     /** @var int[] */
     public array $assetIds = [];
-    public int $ttr = 600;
 
-    public function execute($queue): void
+    protected function loadData(): Batchable
     {
-        $total = count($this->assetIds);
+        $query = Asset::find()
+            ->id($this->assetIds)
+            ->orderBy(['elements.id' => SORT_ASC]);
 
-        foreach ($this->assetIds as $i => $assetId) {
-            $this->setProgress($queue, $i / $total, Craft::t('lens', 'Analyzing asset {current} of {total}', [
-                'current' => $i + 1,
-                'total' => $total,
-            ]));
+        return new QueryBatcher($query);
+    }
 
-            $asset = Asset::find()->id($assetId)->one();
+    protected function shouldQueueItem(Asset $item): bool
+    {
+        return true;
+    }
 
-            if ($asset === null) {
-                Logger::warning(
-                    LogCategory::JobFailed,
-                    "Asset {$assetId} not found, skipping",
-                    $assetId,
-                );
-                continue;
-            }
-
-            try {
-                Plugin::getInstance()->assetAnalysis->processAsset($asset);
-            } catch (\Throwable $e) {
-                Logger::jobFailure(
-                    jobType: 'AnalyzeSelectedAssetsJob',
-                    message: "Failed to analyze asset {$assetId}: {$e->getMessage()}",
-                    assetId: $assetId,
-                    retryJobData: [
-                        'class' => AnalyzeAssetJob::class,
-                        'params' => ['assetId' => $assetId],
-                    ],
-                    exception: $e,
-                );
-            }
-        }
-
-        $this->setProgress($queue, 1);
+    protected function getCancelSignal(): ?callable
+    {
+        return null;
     }
 
     protected function defaultDescription(): ?string
     {
         $count = count($this->assetIds);
+
         return Craft::t('lens', 'Lens: Analyzing {count} selected assets', ['count' => $count]);
     }
 }

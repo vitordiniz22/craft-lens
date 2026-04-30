@@ -120,6 +120,45 @@ class StatisticsService extends Component
     }
 
     /**
+     * Count Completed analyses missing Pro-only metadata. These are records
+     * produced under Lite (or Lite + `preGenerateProMetadata = false`) that
+     * a Pro user can backfill via the bulk page's Sync Pro Metadata button.
+     *
+     * `longDescriptionAi` is the canonical "never had AI Pro metadata" signal:
+     * the prompt gates `longDescription`, AI tags, and `extractedText` on the
+     * same `$includeProMetadata` block, so they're populated or missing together.
+     */
+    public function getProSyncCandidatesCount(): int
+    {
+        return (int) AssetAnalysisRecord::find()
+            ->where(['status' => AnalysisStatus::Completed->value])
+            ->andWhere(['or',
+                ['longDescriptionAi' => null],
+                ['longDescriptionAi' => ''],
+            ])
+            ->count();
+    }
+
+    /**
+     * Asset IDs needing Pro-metadata sync. See `getProSyncCandidatesCount()`.
+     *
+     * @return int[]
+     */
+    public function getProSyncCandidateIds(): array
+    {
+        $ids = AssetAnalysisRecord::find()
+            ->select('assetId')
+            ->where(['status' => AnalysisStatus::Completed->value])
+            ->andWhere(['or',
+                ['longDescriptionAi' => null],
+                ['longDescriptionAi' => ''],
+            ])
+            ->column();
+
+        return array_map('intval', $ids);
+    }
+
+    /**
      * Get total cost across all analyses.
      */
     public function getTotalCost(): float

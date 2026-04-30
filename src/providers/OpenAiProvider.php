@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace vitordiniz22\craftlens\providers;
 
+use Psr\Http\Message\ResponseInterface;
 use vitordiniz22\craftlens\exceptions\AnalysisException;
 use vitordiniz22\craftlens\exceptions\ConfigurationException;
 use vitordiniz22\craftlens\helpers\Logger;
@@ -66,7 +67,7 @@ class OpenAiProvider extends BaseAiProvider
     /**
      * @param array{base64: string, mimeType: string} $imageData
      */
-    protected function sendRequest(Settings $settings, array $imageData, string $prompt, int $assetId): array
+    protected function buildHttpRequest(Settings $settings, array $imageData, string $prompt, int $assetId): array
     {
         $payload = [
             'model' => $settings->openaiModel,
@@ -96,43 +97,46 @@ class OpenAiProvider extends BaseAiProvider
             $payload['reasoning_effort'] = 'none';
         }
 
-        return $this->executeApiRequest(function(int $startTime) use ($settings, $payload, $assetId) {
-            $response = $this->client->post(self::API_URL, [
+        return [
+            'method' => 'POST',
+            'url' => self::API_URL,
+            'options' => [
                 'headers' => [
                     'Authorization' => 'Bearer ' . $settings->getOpenaiApiKey(),
                     'Content-Type' => 'application/json',
                 ],
                 'json' => $payload,
-            ]);
+            ],
+            'parseResponse' => function (ResponseInterface $response, int $startTime) use ($payload, $assetId): array {
+                $elapsed = (int) ((hrtime(true) - $startTime) / 1_000_000);
+                $body = $this->parseJsonBody($response->getBody()->getContents(), $assetId);
 
-            $elapsed = (int) ((hrtime(true) - $startTime) / 1_000_000);
-            $body = $this->parseJsonBody($response->getBody()->getContents(), $assetId);
+                if (!isset($body['choices'][0]['message']['content'])) {
+                    throw AnalysisException::invalidResponse($this->getDisplayName(), $assetId);
+                }
 
-            if (!isset($body['choices'][0]['message']['content'])) {
-                throw AnalysisException::invalidResponse($this->getDisplayName(), $assetId);
-            }
+                $usage = $this->extractTokenUsage($body);
 
-            $usage = $this->extractTokenUsage($body);
+                $logPayload = $payload;
+                $dataUrl = $logPayload['messages'][0]['content'][1]['image_url']['url'] ?? '';
+                $imageBytes = strlen($dataUrl);
+                $logPayload['messages'][0]['content'][1]['image_url']['url'] = "[base64 data URL removed — {$imageBytes} bytes]";
 
-            $logPayload = $payload;
-            $dataUrl = $logPayload['messages'][0]['content'][1]['image_url']['url'] ?? '';
-            $imageBytes = strlen($dataUrl);
-            $logPayload['messages'][0]['content'][1]['image_url']['url'] = "[base64 data URL removed — {$imageBytes} bytes]";
+                Logger::apiCall(
+                    provider: $this->getName(),
+                    message: "Image analysis completed for asset {$assetId}",
+                    assetId: $assetId,
+                    responseTimeMs: $elapsed,
+                    httpStatusCode: $response->getStatusCode(),
+                    inputTokens: $usage['inputTokens'],
+                    outputTokens: $usage['outputTokens'],
+                    requestPayload: $logPayload,
+                    responsePayload: $body,
+                );
 
-            Logger::apiCall(
-                provider: $this->getName(),
-                message: "Image analysis completed for asset {$assetId}",
-                assetId: $assetId,
-                responseTimeMs: $elapsed,
-                httpStatusCode: $response->getStatusCode(),
-                inputTokens: $usage['inputTokens'],
-                outputTokens: $usage['outputTokens'],
-                requestPayload: $logPayload,
-                responsePayload: $body,
-            );
-
-            return $body;
-        }, $assetId);
+                return $body;
+            },
+        ];
     }
 
     /**

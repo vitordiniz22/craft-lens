@@ -61,6 +61,7 @@ class SettingsController extends Controller
             'enabledVolumes',
             'enableSemanticSearch',
             'preGenerateProMetadata',
+            'bulkConcurrency',
         ];
 
         $settings->setAttributes(array_intersect_key((array) $settingsData, array_flip($allowedKeys)));

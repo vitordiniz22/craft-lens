@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace vitordiniz22\craftlens\providers;
 
+use Psr\Http\Message\ResponseInterface;
 use vitordiniz22\craftlens\exceptions\AnalysisException;
 use vitordiniz22\craftlens\exceptions\ConfigurationException;
 use vitordiniz22\craftlens\helpers\Logger;
@@ -66,7 +67,7 @@ class GeminiProvider extends BaseAiProvider
     /**
      * @param array{base64: string, mimeType: string} $imageData
      */
-    protected function sendRequest(Settings $settings, array $imageData, string $prompt, int $assetId): array
+    protected function buildHttpRequest(Settings $settings, array $imageData, string $prompt, int $assetId): array
     {
         $model = $settings->geminiModel;
         $apiKey = $settings->getGeminiApiKey();
@@ -93,43 +94,46 @@ class GeminiProvider extends BaseAiProvider
             ],
         ];
 
-        return $this->executeApiRequest(function(int $startTime) use ($url, $apiKey, $payload, $assetId) {
-            $response = $this->client->post($url, [
+        return [
+            'method' => 'POST',
+            'url' => $url,
+            'options' => [
                 'headers' => [
                     'Content-Type' => 'application/json',
                     'x-goog-api-key' => $apiKey,
                 ],
                 'json' => $payload,
-            ]);
+            ],
+            'parseResponse' => function (ResponseInterface $response, int $startTime) use ($payload, $assetId): array {
+                $elapsed = (int) ((hrtime(true) - $startTime) / 1_000_000);
+                $body = $this->parseJsonBody($response->getBody()->getContents(), $assetId);
 
-            $elapsed = (int) ((hrtime(true) - $startTime) / 1_000_000);
-            $body = $this->parseJsonBody($response->getBody()->getContents(), $assetId);
+                $this->checkApiError($body, $assetId);
 
-            $this->checkApiError($body, $assetId);
+                if (!isset($body['candidates'][0]['content']['parts'][0]['text'])) {
+                    throw AnalysisException::invalidResponse($this->getDisplayName(), $assetId);
+                }
 
-            if (!isset($body['candidates'][0]['content']['parts'][0]['text'])) {
-                throw AnalysisException::invalidResponse($this->getDisplayName(), $assetId);
-            }
+                $usage = $body['usageMetadata'] ?? [];
+                $logPayload = $payload;
+                $imageBytes = strlen($logPayload['contents'][0]['parts'][1]['inline_data']['data'] ?? '');
+                $logPayload['contents'][0]['parts'][1]['inline_data']['data'] = "[base64 image removed — {$imageBytes} bytes]";
 
-            $usage = $body['usageMetadata'] ?? [];
-            $logPayload = $payload;
-            $imageBytes = strlen($logPayload['contents'][0]['parts'][1]['inline_data']['data'] ?? '');
-            $logPayload['contents'][0]['parts'][1]['inline_data']['data'] = "[base64 image removed — {$imageBytes} bytes]";
+                Logger::apiCall(
+                    provider: $this->getName(),
+                    message: "Image analysis completed for asset {$assetId}",
+                    assetId: $assetId,
+                    responseTimeMs: $elapsed,
+                    httpStatusCode: $response->getStatusCode(),
+                    inputTokens: (int) ($usage['promptTokenCount'] ?? 0),
+                    outputTokens: (int) ($usage['candidatesTokenCount'] ?? 0),
+                    requestPayload: $logPayload,
+                    responsePayload: $body,
+                );
 
-            Logger::apiCall(
-                provider: $this->getName(),
-                message: "Image analysis completed for asset {$assetId}",
-                assetId: $assetId,
-                responseTimeMs: $elapsed,
-                httpStatusCode: $response->getStatusCode(),
-                inputTokens: (int) ($usage['promptTokenCount'] ?? 0),
-                outputTokens: (int) ($usage['candidatesTokenCount'] ?? 0),
-                requestPayload: $logPayload,
-                responsePayload: $body,
-            );
-
-            return $body;
-        }, $assetId);
+                return $body;
+            },
+        ];
     }
 
     /**

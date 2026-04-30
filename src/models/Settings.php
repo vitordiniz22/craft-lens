@@ -41,6 +41,12 @@ class Settings extends Model
     // Batch Processing
     public const BATCH_SIZE = 20;
 
+    /**
+     * How many AI requests to fire in parallel during bulk processing.
+     * Higher values are faster but increase the chance of hitting provider rate limits.
+     */
+    public int $bulkConcurrency = 5;
+
     // Supported models per provider (single source of truth for validation and defaults)
     public const OPENAI_MODELS = ['gpt-5.4', 'gpt-5.4-mini', 'gpt-5.4-nano'];
     public const GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.5-pro'];
@@ -76,6 +82,9 @@ class Settings extends Model
 
             // Arrays
             [['enabledVolumes'], 'safe'],
+
+            // Bulk concurrency
+            [['bulkConcurrency'], 'integer', 'min' => 1, 'max' => 20],
         ];
     }
 
@@ -93,6 +102,7 @@ class Settings extends Model
             'enabledVolumes' => Craft::t('lens', 'Enabled Volumes'),
             'enableSemanticSearch' => Craft::t('lens', 'Semantic Asset Search'),
             'preGenerateProMetadata' => Craft::t('lens', 'Pre-generate Pro Metadata'),
+            'bulkConcurrency' => Craft::t('lens', 'Bulk Processing Concurrency'),
         ];
     }
 

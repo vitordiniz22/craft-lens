@@ -11,8 +11,9 @@ use vitordiniz22\craftlens\providers\BaseAiProvider;
  * Concrete BaseAiProvider implementation for integration tests.
  *
  * Implements only the abstract methods needed to instantiate and drive
- * getBase64ImageData() end-to-end. sendRequest() and the extract methods
- * are never exercised by these tests and throw if accidentally invoked.
+ * getBase64ImageData() end-to-end. buildHttpRequest() and the extract
+ * methods are never exercised by these tests and throw if accidentally
+ * invoked.
  */
 final class TestAiProvider extends BaseAiProvider
 {
@@ -46,9 +47,9 @@ final class TestAiProvider extends BaseAiProvider
         return $this->maxFileSizeBytes;
     }
 
-    protected function sendRequest(Settings $settings, array $imageData, string $prompt, int $assetId): array
+    protected function buildHttpRequest(Settings $settings, array $imageData, string $prompt, int $assetId): array
     {
-        throw new \LogicException('TestAiProvider::sendRequest should not be called by these tests');
+        throw new \LogicException('TestAiProvider::buildHttpRequest should not be called by these tests');
     }
 
     protected function extractContentText(array $response): string

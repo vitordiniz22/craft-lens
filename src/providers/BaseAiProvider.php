@@ -10,6 +10,9 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Promise\Create;
+use GuzzleHttp\Promise\PromiseInterface;
+use Psr\Http\Message\ResponseInterface;
 use vitordiniz22\craftlens\dto\AnalysisResult;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\enums\LogLevel;
@@ -80,12 +83,48 @@ abstract class BaseAiProvider implements AiProviderInterface
     abstract protected function getMaxFileSizeBytes(): int;
 
     /**
-     * Send the analysis request to the provider's API.
+     * Build the provider-specific HTTP request specification.
+     *
+     * Returns an array describing the outgoing request and how to parse a
+     * successful response. The same spec is consumed by both the synchronous
+     * path (`sendRequest`) and the concurrent path (`analyzeAsync`).
+     *
+     * @param array{base64: string, mimeType: string} $imageData
+     * @return array{method: string, url: string, options: array<string, mixed>, parseResponse: \Closure(ResponseInterface, int): array}
+     */
+    abstract protected function buildHttpRequest(
+        Settings $settings,
+        array $imageData,
+        string $prompt,
+        int $assetId,
+    ): array;
+
+    /**
+     * Send the analysis request to the provider's API synchronously.
      *
      * @param array{base64: string, mimeType: string} $imageData
      * @return array Raw API response body
      */
-    abstract protected function sendRequest(Settings $settings, array $imageData, string $prompt, int $assetId): array;
+    protected function sendRequest(Settings $settings, array $imageData, string $prompt, int $assetId): array
+    {
+        $spec = $this->buildHttpRequest($settings, $imageData, $prompt, $assetId);
+
+        return $this->executeApiRequest(function (int $startTime) use ($spec) {
+            $response = $this->client->request($spec['method'], $spec['url'], $spec['options']);
+            return ($spec['parseResponse'])($response, $startTime);
+        }, $assetId);
+    }
+
+    /**
+     * Returns the underlying Guzzle client.
+     *
+     * Exposed so the bulk concurrent path can drive a `\GuzzleHttp\Pool` against
+     * the same client instance the synchronous path uses.
+     */
+    public function getHttpClient(): Client
+    {
+        return $this->client;
+    }
 
     /**
      * Analyze an image asset using this provider's API.
@@ -103,6 +142,57 @@ abstract class BaseAiProvider implements AiProviderInterface
         $response = $this->sendRequest($settings, $imageData, $prompt, $asset->id);
 
         return $this->parseResponse($response);
+    }
+
+    /**
+     * Asynchronously analyze an image asset, returning a promise that resolves
+     * to an `AnalysisResult`.
+     *
+     * Used by the bulk concurrent path to fan out N requests at once via
+     * `\GuzzleHttp\Pool`. Local prep (image preprocessing, prompt build) runs
+     * eagerly when the promise is created — the pool throttles how many
+     * promises are active by invoking the factory callable lazily.
+     */
+    final public function analyzeAsync(
+        Asset $asset,
+        Settings $settings,
+        string $primaryLanguage,
+        array $additionalLanguages = [],
+    ): PromiseInterface {
+        try {
+            $this->validateCredentials($settings);
+            $imageData = $this->getBase64ImageData($asset);
+            $prompt = $this->buildPrompt($primaryLanguage, $additionalLanguages);
+            $spec = $this->buildHttpRequest($settings, $imageData, $prompt, $asset->id);
+        } catch (\Throwable $e) {
+            return Create::rejectionFor($e);
+        }
+
+        return $this->dispatchAsyncRequest($spec, $asset->id, 0)
+            ->then(fn(array $response) => $this->parseResponse($response));
+    }
+
+    /**
+     * Asynchronously request only the Pro-only metadata fields for an asset
+     * whose existing analysis is missing them. Same retry/Pool semantics as
+     * `analyzeAsync` — only the prompt differs.
+     */
+    final public function analyzeProCompletionAsync(
+        Asset $asset,
+        Settings $settings,
+        string $primaryLanguage,
+    ): PromiseInterface {
+        try {
+            $this->validateCredentials($settings);
+            $imageData = $this->getBase64ImageData($asset);
+            $prompt = $this->buildProCompletionPrompt($primaryLanguage);
+            $spec = $this->buildHttpRequest($settings, $imageData, $prompt, $asset->id);
+        } catch (\Throwable $e) {
+            return Create::rejectionFor($e);
+        }
+
+        return $this->dispatchAsyncRequest($spec, $asset->id, 0)
+            ->then(fn(array $response) => $this->parseResponse($response));
     }
 
     /**
@@ -133,8 +223,7 @@ abstract class BaseAiProvider implements AiProviderInterface
         $instructions[] = '- "altTextConfidence": Your confidence in the alt text (0.0-1.0)';
 
         if ($includeProMetadata) {
-            $instructions[] = sprintf('- "longDescription": A detailed, comprehensive description (6-8 sentences, roughly 130-200 words) providing rich context about the image content, composition, subjects, setting, mood, lighting, color palette, notable details, spatial relationships, and any relevant background elements. Lead with the primary subject and what is happening, then expand into setting, style, and supporting detail. Use concrete nouns rather than vague modifiers. Avoid speculation about people\'s names, intentions, or off-frame context. Be thorough and descriptive to maximize searchability (in %s)', $primaryName);
-            $instructions[] = '- "longDescriptionConfidence": Your confidence in the long description (0.0-1.0)';
+            array_push($instructions, ...$this->buildLongDescriptionInstructions($primaryName));
         }
 
         $instructions[] = sprintf('- "suggestedTitle": A concise title (2-6 words, Title Case, specific not generic, in %s)', $primaryName);
@@ -142,15 +231,7 @@ abstract class BaseAiProvider implements AiProviderInterface
         $instructions[] = '  Title rules: NO "Image of/Photo of" prefixes, NO file extensions, be SPECIFIC';
 
         if ($includeProMetadata) {
-            $instructions[] = sprintf('- "tags": An array of objects with "tag" (lowercase single word or short phrase, in %s) and "confidence" (0.0-1.0), generate at least 35 tags (aim for 35-40)', $primaryName);
-            $instructions[] = '  Tag vocabulary guidelines for DAM (Digital Asset Management) systems:';
-            $instructions[] = '  • Prefer COMMON, GENERAL-PURPOSE tags that are widely understood and searchable (e.g., "beach", "sunset", "portrait", "food", "architecture", "business")';
-            $instructions[] = '  • Avoid overly specific or technical terms unless they are the PRIMARY subject (e.g., prefer "flower" over "chrysanthemum", "car" over "sedan", "building" over "skyscraper" unless specificity is critical)';
-            $instructions[] = '  • Use industry-standard DAM categories: subjects (people, animals, objects), settings (indoor, outdoor, urban, nature, office), styles (vintage, modern, minimalist), activities (sports, working, eating, meeting), emotions/mood (happy, serious, calm, energetic), and concepts (teamwork, success, growth)';
-            $instructions[] = '  • Focus on tags that would be useful for search and categorization across a large professional image library';
-            $instructions[] = '  • Avoid brand names, artist names, or location-specific details unless they are obvious and iconic (e.g., "eiffel tower" is acceptable, but not "paris 16th arrondissement")';
-            $instructions[] = '  • Prioritize tags that describe WHAT is in the image, not HOW it was made (avoid "bokeh", "long exposure", "f/2.8" unless these are the main subject)';
-            $instructions[] = '- "extractedText": Array of text transcribed from the image. Group all text on the same physical sign, panel, or board into ONE entry (all its lines together, separated by "\n"). Start a new entry only for text on a different sign or surface. Only include text that is fully visible and clearly readable. If any part of the text is cut off, occluded, or unreadable, omit that entry entirely; do NOT guess, complete, or infer missing letters or words, and do NOT transcribe partial fragments. Skip entries that would contain only an isolated digit, single letter, or disconnected fragment with no meaningful context on its own. Use [] if no fully readable text remains.';
+            array_push($instructions, ...$this->buildTagsAndOcrInstructions($primaryName));
         }
         $instructions[] = '- "containsPeople": true if the image shows one or more identifiable persons, meaning a recognizable human body or face that a viewer would naturally describe as "a person in the photo". A disembodied hand, foot, or anonymous background silhouette is not enough on its own. Boolean.';
         $instructions[] = '- "faceCount": integer count of human faces showing enough features (eyes, nose, or mouth) to be recognized as a face. Include profile and three-quarter views. Exclude faces fully turned away, fully masked, or too small/blurred to read as a face. If people are clearly present but no faces meet this bar, return 0.';
@@ -217,6 +298,68 @@ abstract class BaseAiProvider implements AiProviderInterface
         $instructions[] = 'Respond ONLY with valid JSON, no markdown or explanation.';
 
         return implode("\n", $instructions);
+    }
+
+    /**
+     * Build a prompt that requests ONLY the Pro-only metadata fields
+     * (`longDescription`, `tags`, `extractedText`). Used by the bulk Pro-sync
+     * flow to backfill records that were originally analyzed under Lite.
+     *
+     * No alt text, title, NSFW, watermark, focal point, brands, people,
+     * translations, or quality signals — those are already populated.
+     */
+    protected function buildProCompletionPrompt(string $primaryLanguage): string
+    {
+        $primaryName = $this->languageDisplayName($primaryLanguage);
+
+        $instructions = [sprintf(
+            'Analyze this image and provide the following Pro metadata fields in JSON format. Write ALL text fields in %s (%s) only.',
+            $primaryName,
+            $primaryLanguage,
+        )];
+
+        array_push($instructions, ...$this->buildLongDescriptionInstructions($primaryName));
+        array_push($instructions, ...$this->buildTagsAndOcrInstructions($primaryName));
+
+        $instructions[] = '';
+        $instructions[] = 'Respond ONLY with valid JSON, no markdown or explanation.';
+
+        return implode("\n", $instructions);
+    }
+
+    /**
+     * Long-description prompt block, shared between the full prompt and the
+     * Pro-completion prompt.
+     *
+     * @return string[]
+     */
+    private function buildLongDescriptionInstructions(string $primaryName): array
+    {
+        return [
+            sprintf('- "longDescription": A detailed, comprehensive description (6-8 sentences, roughly 130-200 words) providing rich context about the image content, composition, subjects, setting, mood, lighting, color palette, notable details, spatial relationships, and any relevant background elements. Lead with the primary subject and what is happening, then expand into setting, style, and supporting detail. Use concrete nouns rather than vague modifiers. Avoid speculation about people\'s names, intentions, or off-frame context. Be thorough and descriptive to maximize searchability (in %s)', $primaryName),
+            '- "longDescriptionConfidence": Your confidence in the long description (0.0-1.0)',
+        ];
+    }
+
+    /**
+     * Tags + OCR prompt block, shared between the full prompt and the
+     * Pro-completion prompt.
+     *
+     * @return string[]
+     */
+    private function buildTagsAndOcrInstructions(string $primaryName): array
+    {
+        return [
+            sprintf('- "tags": An array of objects with "tag" (lowercase single word or short phrase, in %s) and "confidence" (0.0-1.0), generate at least 35 tags (aim for 35-40)', $primaryName),
+            '  Tag vocabulary guidelines for DAM (Digital Asset Management) systems:',
+            '  • Prefer COMMON, GENERAL-PURPOSE tags that are widely understood and searchable (e.g., "beach", "sunset", "portrait", "food", "architecture", "business")',
+            '  • Avoid overly specific or technical terms unless they are the PRIMARY subject (e.g., prefer "flower" over "chrysanthemum", "car" over "sedan", "building" over "skyscraper" unless specificity is critical)',
+            '  • Use industry-standard DAM categories: subjects (people, animals, objects), settings (indoor, outdoor, urban, nature, office), styles (vintage, modern, minimalist), activities (sports, working, eating, meeting), emotions/mood (happy, serious, calm, energetic), and concepts (teamwork, success, growth)',
+            '  • Focus on tags that would be useful for search and categorization across a large professional image library',
+            '  • Avoid brand names, artist names, or location-specific details unless they are obvious and iconic (e.g., "eiffel tower" is acceptable, but not "paris 16th arrondissement")',
+            '  • Prioritize tags that describe WHAT is in the image, not HOW it was made (avoid "bokeh", "long exposure", "f/2.8" unless these are the main subject)',
+            '- "extractedText": Array of text transcribed from the image. Group all text on the same physical sign, panel, or board into ONE entry (all its lines together, separated by "\n"). Start a new entry only for text on a different sign or surface. Only include text that is fully visible and clearly readable. If any part of the text is cut off, occluded, or unreadable, omit that entry entirely; do NOT guess, complete, or infer missing letters or words, and do NOT transcribe partial fragments. Skip entries that would contain only an isolated digit, single letter, or disconnected fragment with no meaningful context on its own. Use [] if no fully readable text remains.',
+        ];
     }
 
     /**
@@ -474,9 +617,9 @@ abstract class BaseAiProvider implements AiProviderInterface
         }
     }
 
-    private const MAX_RETRIES = 2;
-    private const RETRYABLE_STATUS_CODES = [429, 500, 502, 503, 504];
-    private const MAX_RETRY_AFTER_SECONDS = 30;
+    protected const MAX_RETRIES = 2;
+    protected const RETRYABLE_STATUS_CODES = [429, 500, 502, 503, 504];
+    protected const MAX_RETRY_AFTER_SECONDS = 30;
 
     /**
      * Execute an HTTP request with standardized Guzzle error handling and retry logic.
@@ -587,6 +730,147 @@ abstract class BaseAiProvider implements AiProviderInterface
             ? $this->sanitizeErrorMessage($lastException->getMessage())
             : 'Request failed after retries';
         throw AnalysisException::apiError($this->getDisplayName(), $errorMessage, $assetId);
+    }
+
+    /**
+     * Dispatch a request asynchronously, with retry semantics mirroring
+     * `executeApiRequest`. Returns a promise that resolves to the parsed body
+     * or rejects with an `AnalysisException`.
+     *
+     * Backoff between retries is non-blocking: the next attempt is dispatched
+     * immediately with Guzzle's `delay` request option set, so the cURL
+     * multi-handler defers just that one request while every other in-flight
+     * pool request keeps progressing.
+     *
+     * @param array{method: string, url: string, options: array<string, mixed>, parseResponse: \Closure(ResponseInterface, int): array} $spec
+     */
+    private function dispatchAsyncRequest(array $spec, int $assetId, int $attempt): PromiseInterface
+    {
+        $startTime = hrtime(true);
+
+        return $this->client->requestAsync($spec['method'], $spec['url'], $spec['options'])->then(
+            fn(ResponseInterface $response) => ($spec['parseResponse'])($response, $startTime),
+            function (\Throwable $reason) use ($spec, $assetId, $attempt, $startTime) {
+                return $this->handleAsyncFailure($reason, $spec, $assetId, $attempt, $startTime);
+            },
+        );
+    }
+
+    /**
+     * Returns a copy of the request spec with the Guzzle `delay` option set
+     * to `$delaySeconds * 1000` ms. The cURL multi-handler holds the request
+     * for that long before sending, without blocking the event loop.
+     *
+     * @param array{method: string, url: string, options: array<string, mixed>, parseResponse: \Closure(ResponseInterface, int): array} $spec
+     * @return array{method: string, url: string, options: array<string, mixed>, parseResponse: \Closure(ResponseInterface, int): array}
+     */
+    private function withRequestDelay(array $spec, int $delaySeconds): array
+    {
+        $spec['options']['delay'] = max(0, $delaySeconds) * 1000;
+
+        return $spec;
+    }
+
+    /**
+     * Handle a rejected async request: retry on transient errors, otherwise
+     * map to an `AnalysisException` and rethrow.
+     *
+     * @param array{method: string, url: string, options: array<string, mixed>, parseResponse: \Closure(ResponseInterface, int): array} $spec
+     */
+    private function handleAsyncFailure(
+        \Throwable $reason,
+        array $spec,
+        int $assetId,
+        int $attempt,
+        int $startTime,
+    ): PromiseInterface {
+        $elapsed = (int) ((hrtime(true) - $startTime) / 1_000_000);
+
+        if ($reason instanceof ConnectException) {
+            $sanitizedMessage = $this->sanitizeErrorMessage($reason->getMessage());
+
+            if ($attempt < self::MAX_RETRIES) {
+                $delay = (int) (2 ** ($attempt + 1));
+                Logger::apiCall(
+                    provider: $this->getName(),
+                    message: 'Connection failed, attempt ' . ($attempt + 1) . '/' . (self::MAX_RETRIES + 1) . " - retrying in {$delay}s: {$sanitizedMessage}",
+                    assetId: $assetId,
+                    responseTimeMs: $elapsed,
+                    httpStatusCode: null,
+                    level: LogLevel::Warning->value,
+                );
+                return $this->dispatchAsyncRequest($this->withRequestDelay($spec, $delay), $assetId, $attempt + 1);
+            }
+
+            Logger::apiCall(
+                provider: $this->getName(),
+                message: 'Connection failed: ' . $sanitizedMessage,
+                assetId: $assetId,
+                responseTimeMs: $elapsed,
+                httpStatusCode: null,
+                level: LogLevel::Error->value,
+            );
+
+            return Create::rejectionFor(AnalysisException::apiError(
+                $this->getDisplayName(),
+                'Connection failed: ' . $sanitizedMessage,
+                $assetId,
+            ));
+        }
+
+        if ($reason instanceof RequestException) {
+            $statusCode = $reason->hasResponse() ? $reason->getResponse()->getStatusCode() : null;
+            $errorMessage = $this->extractErrorMessage($reason) ?? $this->getDefaultErrorMessage($statusCode);
+
+            if ($statusCode !== null && in_array($statusCode, self::RETRYABLE_STATUS_CODES, true) && $attempt < self::MAX_RETRIES) {
+                $delay = $this->getRetryDelay($reason, $attempt);
+                Logger::apiCall(
+                    provider: $this->getName(),
+                    message: "Retryable error (HTTP {$statusCode}), attempt " . ($attempt + 1) . '/' . (self::MAX_RETRIES + 1) . " - retrying in {$delay}s: {$errorMessage}",
+                    assetId: $assetId,
+                    responseTimeMs: $elapsed,
+                    httpStatusCode: $statusCode,
+                    level: LogLevel::Warning->value,
+                );
+                return $this->dispatchAsyncRequest($this->withRequestDelay($spec, $delay), $assetId, $attempt + 1);
+            }
+
+            Logger::apiCall(
+                provider: $this->getName(),
+                message: $errorMessage,
+                assetId: $assetId,
+                responseTimeMs: $elapsed,
+                httpStatusCode: $statusCode,
+                level: LogLevel::Error->value,
+            );
+
+            return Create::rejectionFor(AnalysisException::apiError(
+                $this->getDisplayName(),
+                $errorMessage,
+                $assetId,
+                $statusCode,
+            ));
+        }
+
+        if ($reason instanceof GuzzleException) {
+            $sanitizedMessage = $this->sanitizeErrorMessage($reason->getMessage());
+            Logger::apiCall(
+                provider: $this->getName(),
+                message: $sanitizedMessage,
+                assetId: $assetId,
+                responseTimeMs: $elapsed,
+                httpStatusCode: null,
+                level: LogLevel::Error->value,
+            );
+
+            return Create::rejectionFor(AnalysisException::apiError(
+                $this->getDisplayName(),
+                $sanitizedMessage,
+                $assetId,
+            ));
+        }
+
+        return Create::rejectionFor($reason);
     }
 
     /**

@@ -13,6 +13,7 @@ use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\exceptions\ConfigurationException;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\jobs\BulkAnalyzeAssetsJob;
+use vitordiniz22\craftlens\jobs\ProCompletionAnalysisJob;
 use vitordiniz22\craftlens\Plugin;
 use vitordiniz22\craftlens\records\AssetAnalysisRecord;
 use yii\web\Response;
@@ -76,6 +77,7 @@ class BulkController extends Controller
             $projection = Plugin::getInstance()->statistics->getCostProjection($actionableCount);
             $templateVars['estimatedCost'] = $projection['estimatedCost'];
             $templateVars['costPerImage'] = $projection['avgCostPerAsset'];
+            $templateVars['proSyncCount'] = Plugin::getInstance()->statistics->getProSyncCandidatesCount();
 
             try {
                 $templateVars['modelName'] = $this->getProviderModelName();
@@ -269,6 +271,47 @@ class BulkController extends Controller
 
         Craft::$app->getSession()->setNotice(
             Craft::t('lens', '{count} failed analyses queued for retry.', ['count' => count($failedAssetIds)])
+        );
+        return $this->redirect('lens/bulk');
+    }
+
+    /**
+     * Backfill Pro-only metadata onto Lite-analyzed assets after a Pro upgrade.
+     *
+     * Mirrors `actionRetryFailed`: pulls the candidate IDs, opens a scoped
+     * bulk session so progress and cancel work the same way, and queues a
+     * `ProCompletionAnalysisJob` restricted to those IDs.
+     */
+    public function actionSyncProMetadata(): Response
+    {
+        $this->requireCpRequest();
+        $this->requirePostRequest();
+        $this->requirePermission('accessPlugin-lens');
+        Plugin::getInstance()->requireProEdition();
+
+        try {
+            Plugin::getInstance()->aiProvider->testConnection();
+        } catch (ConfigurationException $e) {
+            Craft::$app->getSession()->setError($e->getMessage());
+            return $this->redirect('lens/bulk');
+        }
+
+        $candidateIds = Plugin::getInstance()->statistics->getProSyncCandidateIds();
+
+        if (empty($candidateIds)) {
+            Craft::$app->getSession()->setNotice(Craft::t('lens', 'No assets need Pro metadata sync.'));
+            return $this->redirect('lens/bulk');
+        }
+
+        $statusService = Plugin::getInstance()->bulkProcessingStatus;
+        $statusService->startSession(null, $candidateIds);
+
+        Queue::push(new ProCompletionAnalysisJob(['assetIds' => $candidateIds]));
+
+        Logger::info(LogCategory::JobStarted, 'Pro metadata sync started from CP', context: ['candidateCount' => count($candidateIds)]);
+
+        Craft::$app->getSession()->setNotice(
+            Craft::t('lens', '{count} assets queued for Pro metadata sync.', ['count' => count($candidateIds)])
         );
         return $this->redirect('lens/bulk');
     }

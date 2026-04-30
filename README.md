@@ -32,7 +32,7 @@ Multi-provider by design: bring your own API key for **OpenAI**, **Google Gemini
 ### Search & Discovery
 
 - **Search by what's in the picture.** `[Pro]` Type *"outdoor"*, *"team meeting"*, into Craft's asset search and Lens ranks results by AI-generated tags, descriptions, alt text, and OCR, alongside Craft's native title and filename matching. The same smart search powers every image picker on every entry, so editors find the right photo without leaving the entry they're writing.
-- **Pre-built views in your asset library.** Not Analysed, Failed Analyses, Missing Alt Text, NSFW Flagged, Missing Focal Point, Contains People, Has Watermark, Has Brand Logo. Build your own with Lens condition rules.
+- **Pre-built views in your asset library.** Not Analyzed, Failed Analyses, Missing Alt Text, NSFW Flagged, Missing Focal Point, Contains People, Has Watermark, Has Brand Logo. Build your own with Lens condition rules.
 - **Duplicate detection** `[Pro]` surfaces visually similar images so you stop re-uploading the same file, flags duplicates on each asset's edit page, and lets you find similar images to any asset on demand.
 
 ### Automatic Tagging & Descriptions
@@ -46,7 +46,7 @@ Multi-provider by design: bring your own API key for **OpenAI**, **Google Gemini
 
 - **Faces and people** with 6-tier detection: no people, people without visible faces, individual, duo, small group, large group
 - **NSFW scoring** with category breakdown (adult, violence, hate, self-harm, drugs) to catch unsafe content before it goes live
-- **Watermarks** identified by type (text, logo, stock, copyright, and more) to flag assets that may need review before publishing
+- **Watermarks** identified by type (text, logo, stock, copyright) to flag assets that may need review before publishing
 - **Brand/logo recognition** names the specific brands in each image and lets you filter by brand in custom views, with full search-box ranking on Pro
 - **Focal point detection** generates a focal point suggestion on the primary subject and applies it to assets that don't already have one, so Craft's image transforms crop around what matters
 - **OCR** `[Pro]` extracts text from images, fully searchable
@@ -70,14 +70,14 @@ Multi-provider by design: bring your own API key for **OpenAI**, **Google Gemini
 
 ### Lite, for single editors and small libraries
 
-Every image gets AI-generated alt text, focal points, NSFW and watermark flags, brand recognition and much more. Craft's asset library gets 9 pre-built filtered views and 14 condition rules so you can navigate by what's actually in the picture, not just the filename. Free. Always.
+Every image gets AI-generated alt text, focal points, NSFW and watermark flags, brand recognition and much more. Craft's asset library gets 9 pre-built filtered views and 13 condition rules so you can navigate by what's actually in the picture, not just the filename. Free. Always.
 
 **Lite includes:**
 
 - AI analysis on every upload: alt text, titles, focal points, people and face detection, NSFW scoring, watermark and brand recognition, image quality assessment
 - Per-site translations for multisite installs (English site gets English alt text, Spanish site gets Spanish, automatically)
 - 9 pre-built views in Craft's asset library
-- 14 condition rules to build your own custom views
+- 13 condition rules to build your own custom views
 - All three AI providers: OpenAI, Gemini, Claude
 
 ### Pro, for teams and libraries that grow
@@ -92,7 +92,7 @@ Pro turns your image library into a searchable knowledge base. Search across alt
 - **Bulk processing** of entire volumes with real-time progress, cost estimates, and retry for failed assets
 - **Duplicate detection** via perceptual hashing, flagged on every asset edit page and findable on demand
 - **Cost tracking** by provider, asset, and month so you always know what your AI usage is costing
-- **1 extra pre-built view and 7 extra condition rules** for sharper filtering (status, stock provider, text-in-image, tags, duplicates, similarity)
+- **1 extra pre-built view and 7 extra condition rules** for sharper filtering (status, stock provider, text-in-image, tags, duplicates, etc)
 
 Available on the <a href="https://plugins.craftcms.com/lens" target="_blank" rel="noopener">Craft Plugin Store</a>.
 

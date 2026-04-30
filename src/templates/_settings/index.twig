@@ -127,6 +127,19 @@
         on: settings.autoProcessOnUpload,
     }) }}
 
+    {{ forms.textField({
+        label: 'Bulk Processing Concurrency'|t('lens'),
+        instructions: 'How many AI requests to run in parallel during bulk processing. Higher values are faster but more likely to hit provider rate limits. Range: 1 to 20.'|t('lens'),
+        id: 'bulkConcurrency',
+        name: 'settings[bulkConcurrency]',
+        type: 'number',
+        size: 5,
+        min: 1,
+        max: 20,
+        value: settings.bulkConcurrency,
+        errors: settings.getErrors('bulkConcurrency'),
+    }) }}
+
     {% if not lens.isPro %}
         {{ forms.lightswitchField({
             label: 'Pre-generate Pro Metadata'|t('lens'),

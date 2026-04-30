@@ -8,17 +8,18 @@ use Craft;
 use craft\base\Batchable;
 use craft\db\QueryBatcher;
 use craft\elements\Asset;
-use craft\queue\BaseBatchedJob;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
-use vitordiniz22\craftlens\helpers\Logger;
-use vitordiniz22\craftlens\models\Settings;
 use vitordiniz22\craftlens\Plugin;
 use vitordiniz22\craftlens\records\AssetAnalysisRecord;
 
 /**
- * Queue job for analyzing multiple assets in batches.
+ * Queue job for analyzing all unprocessed assets in a volume (or every volume).
+ *
+ * Drives a `BulkProcessingStatusService` session — clearing the session is the
+ * authoritative cancel signal, consulted both per-item (skip) and inside the
+ * concurrent flush (halt prep, fail in-flight at the cancellation checkpoint).
  */
-class BulkAnalyzeAssetsJob extends BaseBatchedJob
+class BulkAnalyzeAssetsJob extends BatchedAnalysisJob
 {
     public int|array|null $volumeId = null;
     public bool $reprocess = false;
@@ -30,12 +31,6 @@ class BulkAnalyzeAssetsJob extends BaseBatchedJob
      * @var int[]
      */
     public array $assetIds = [];
-
-    public function init(): void
-    {
-        parent::init();
-        $this->batchSize = Settings::BATCH_SIZE;
-    }
 
     protected function loadData(): Batchable
     {
@@ -67,13 +62,11 @@ class BulkAnalyzeAssetsJob extends BaseBatchedJob
         return new QueryBatcher($query);
     }
 
-    protected function processItem(mixed $item): void
+    protected function shouldQueueItem(Asset $item): bool
     {
-        /** @var Asset $item */
-
         // Stop processing if the session was cleared (user cancelled)
         if (Plugin::getInstance()->bulkProcessingStatus->getSessionData() === null) {
-            return;
+            return false;
         }
 
         // Skip already-processed assets unless reprocessing
@@ -82,23 +75,15 @@ class BulkAnalyzeAssetsJob extends BaseBatchedJob
             ->andWhere(['not in', 'status', AnalysisStatus::unprocessedStatuses()])
             ->exists()
         ) {
-            return;
+            return false;
         }
 
-        try {
-            Plugin::getInstance()->assetAnalysis->processAsset($item);
-        } catch (\Throwable $e) {
-            Logger::jobFailure(
-                jobType: 'BulkAnalyzeAssetsJob',
-                message: sprintf('Failed to process asset %d in bulk job: %s', $item->id, $e->getMessage()),
-                assetId: $item->id,
-                retryJobData: [
-                    'class' => AnalyzeAssetJob::class,
-                    'params' => ['assetId' => $item->id],
-                ],
-                exception: $e,
-            );
-        }
+        return true;
+    }
+
+    protected function getCancelSignal(): ?callable
+    {
+        return static fn(): bool => Plugin::getInstance()->bulkProcessingStatus->getSessionData() === null;
     }
 
     protected function defaultDescription(): ?string
