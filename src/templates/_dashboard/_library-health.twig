@@ -58,7 +58,7 @@
         } only %}
 
         {# Pro Metadata Coverage (tags + long description + OCR) — transitional, hides at 100% #}
-        {% if proMetadataCoverage is defined and proMetadataCoverage.total > 0 and proMetadataCoverage.withProMetadata < proMetadataCoverage.total %}
+        {% if lens.isPro and proMetadataCoverage is defined and proMetadataCoverage.total > 0 and proMetadataCoverage.withProMetadata < proMetadataCoverage.total %}
             {% include 'lens/_dashboard/_coverage-metric' with {
                 label: 'Pro Metadata'|t('lens'),
                 percentage: proMetadataCoverage.percentage,
