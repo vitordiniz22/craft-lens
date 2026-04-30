@@ -26,8 +26,10 @@ class DashboardController extends Controller
         $this->requirePermission('accessPlugin-lens');
         $this->requireAcceptsJson();
 
-        $bulkStatus = Plugin::getInstance()->bulkProcessingStatus;
-        $stats = $bulkStatus->getStats();
+        $plugin = Plugin::getInstance();
+        $bulkStatus = $plugin->bulkProcessingStatus;
+        $volumeIds = $plugin->getSettings()->getEnabledVolumeIds();
+        $stats = $bulkStatus->getStats($volumeIds ?: null);
 
         $total = $stats['totalImages'];
         $completed = $stats['analyzed'];
@@ -56,7 +58,8 @@ class DashboardController extends Controller
             // Get processing status for Section 2
             $bulkStatus = $plugin->bulkProcessingStatus;
             $processingStatus = $bulkStatus->getStatus();
-            $processingStats = $bulkStatus->getStats();
+            $volumeIds = $plugin->getSettings()->getEnabledVolumeIds();
+            $processingStats = $bulkStatus->getStats($volumeIds ?: null);
 
             return $this->renderTemplate('lens/_dashboard/index', [
                 // Setup status
