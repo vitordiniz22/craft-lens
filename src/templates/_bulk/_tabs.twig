@@ -1,0 +1,41 @@
+{# Tab bar is visible when the Pro flow is meaningful: there's still
+   backfill work to do, or the user is currently on the Pro view (covers
+   mid-run when the counter has dropped to 0, the post-run complete state,
+   and direct navigation to the focused page). #}
+{% set showProTab = lens.isPro and ((proSyncCount ?? 0) > 0 or activeTab == 'pro-metadata') %}
+
+{# A running session dictates which view the page shows, so the inactive tab
+   is rendered as a non-link during processing/complete to avoid a dead click
+   that would change the URL but not the UI. #}
+{% set tabsLocked = state == 'processing' or state == 'complete' %}
+
+{% if showProTab %}
+    <nav class="lens-bulk-tabs" aria-label="{{ 'Bulk processing views'|t('lens') }}">
+        {% set bulkActive = activeTab == 'bulk' %}
+        {% set proActive = activeTab == 'pro-metadata' %}
+
+        {% if bulkActive or not tabsLocked %}
+            <a href="{{ cpUrl('lens/bulk') }}"
+               class="lens-bulk-tabs__tab{{ bulkActive ? ' lens-bulk-tabs__tab--active' : '' }}">
+                {{ 'Bulk Processing'|t('lens') }}
+            </a>
+        {% else %}
+            <span class="lens-bulk-tabs__tab lens-bulk-tabs__tab--disabled" aria-disabled="true">
+                {{ 'Bulk Processing'|t('lens') }}
+            </span>
+        {% endif %}
+
+        {% if proActive or not tabsLocked %}
+            <a href="{{ cpUrl('lens/bulk', {focus: 'pro-metadata'}) }}"
+               class="lens-bulk-tabs__tab{{ proActive ? ' lens-bulk-tabs__tab--active' : '' }}">
+                {{ 'Pro Metadata'|t('lens') }}
+                <span class="lens-bulk-tabs__count">{{ proSyncCount }}</span>
+            </a>
+        {% else %}
+            <span class="lens-bulk-tabs__tab lens-bulk-tabs__tab--disabled" aria-disabled="true">
+                {{ 'Pro Metadata'|t('lens') }}
+                <span class="lens-bulk-tabs__count">{{ proSyncCount }}</span>
+            </span>
+        {% endif %}
+    </nav>
+{% endif %}

@@ -7,11 +7,13 @@ namespace vitordiniz22\craftlens\services;
 use Craft;
 use craft\elements\Asset;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
+use vitordiniz22\craftlens\enums\BulkSessionMode;
 use vitordiniz22\craftlens\enums\ErrorCode;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\jobs\AnalyzeAssetJob;
 use vitordiniz22\craftlens\jobs\BulkAnalyzeAssetsJob;
+use vitordiniz22\craftlens\jobs\ProCompletionAnalysisJob;
 use vitordiniz22\craftlens\migrations\Install;
 use vitordiniz22\craftlens\records\AssetAnalysisRecord;
 use yii\base\Component;
@@ -100,36 +102,56 @@ class BulkProcessingStatusService extends Component
     }
 
     /**
-     * Start a new processing session. Two modes:
-     *   - Bulk (default): scopes to $volumeId and counts all currently unprocessed
-     *     image assets within that scope.
-     *   - Retry: if $retriedFailedAssetIds is non-empty, scopes strictly to those
-     *     asset IDs. On cancel, cancelProcessing restores these IDs to Failed
-     *     so the retry can be re-initiated.
+     * Start a new processing session. The mode shapes how progress, cost,
+     * and cancel are computed:
+     *   - {@see BulkSessionMode::Bulk} (default): scopes to $volumeId and
+     *     counts all currently unprocessed image assets within that scope.
+     *   - {@see BulkSessionMode::Retry}: scopes strictly to $scopedAssetIds.
+     *     On cancel, `cancelProcessing` restores these IDs to Failed so the
+     *     retry can be re-initiated.
+     *   - {@see BulkSessionMode::ProCompletion}: scopes to $scopedAssetIds.
+     *     Records stay Completed throughout; progress is tracked via
+     *     longDescriptionAi presence and cost is reported as a delta off a
+     *     pre-session baseline (since `actualCost` accumulates).
      *
-     * @param int|null $volumeId Scope to a specific volume (bulk mode only)
-     * @param int[] $retriedFailedAssetIds Asset IDs being retried after previous failure
+     * Mode defaults to Retry when $scopedAssetIds is non-empty and no mode
+     * is supplied, and to Bulk otherwise.
+     *
+     * @param int|null|int[] $volumeId Scope to a specific volume (bulk mode only)
+     * @param int[] $scopedAssetIds Asset IDs being processed for retry or pro-completion
      */
-    public function startSession(null|int|array $volumeId = null, array $retriedFailedAssetIds = []): void
+    public function startSession(null|int|array $volumeId = null, array $scopedAssetIds = [], ?BulkSessionMode $mode = null): void
     {
-        $isRetry = !empty($retriedFailedAssetIds);
-        $initialCount = $isRetry
-            ? count($retriedFailedAssetIds)
+        $isScoped = !empty($scopedAssetIds);
+        $resolvedMode = $mode ?? ($isScoped ? BulkSessionMode::Retry : BulkSessionMode::Bulk);
+
+        $initialCount = $isScoped
+            ? count($scopedAssetIds)
             : $this->getUnprocessedCount($volumeId);
 
         // Snapshot how many assets in scope were already in a terminal state
         // (Completed, Failed). Progress is computed as
         // (currentTerminal - initialTerminal), so the counter advances only
         // when a session asset actually finishes.
-        $initialTerminalCount = $isRetry
+        $initialTerminalCount = $isScoped
             ? 0
             : $this->countByStatus(AnalysisStatus::terminalValues(), $volumeId);
+
+        // Pro-completion records keep their original processedAt timestamp, so
+        // the time-based session cost query misses them entirely. Snapshot the
+        // pre-session cost on these records and report (current - baseline) as
+        // the session's spend.
+        $proCompletionBaseline = ($resolvedMode === BulkSessionMode::ProCompletion && $isScoped)
+            ? (float) (AssetAnalysisRecord::find()
+                ->where(['in', 'assetId', $scopedAssetIds])
+                ->sum('actualCost') ?? 0.0)
+            : null;
 
         Logger::info(LogCategory::JobStarted, 'Bulk processing session started', context: [
             'volumeId' => $volumeId,
             'initialUnprocessed' => $initialCount,
             'initialTerminalCount' => $initialTerminalCount,
-            'isRetry' => $isRetry,
+            'mode' => $resolvedMode->value,
         ]);
 
         Craft::$app->getCache()->set($this->getSessionCacheKey(), [
@@ -137,7 +159,9 @@ class BulkProcessingStatusService extends Component
             'volumeId' => $volumeId,
             'initialUnprocessed' => $initialCount,
             'initialTerminalCount' => $initialTerminalCount,
-            'retriedFailedAssetIds' => $retriedFailedAssetIds,
+            'retriedFailedAssetIds' => $scopedAssetIds,
+            'mode' => $resolvedMode->value,
+            'proCompletionBaseline' => $proCompletionBaseline,
             'completedAt' => null,
         ], self::SESSION_TTL);
     }
@@ -188,6 +212,7 @@ class BulkProcessingStatusService extends Component
                 ->from('{{%queue}}')
                 ->where(['like', 'job', BulkAnalyzeAssetsJob::class])
                 ->orWhere(['like', 'job', AnalyzeAssetJob::class])
+                ->orWhere(['like', 'job', ProCompletionAnalysisJob::class])
                 ->count();
 
             return (int) $count > 0;
@@ -207,6 +232,7 @@ class BulkProcessingStatusService extends Component
                 'or',
                 ['like', 'job', BulkAnalyzeAssetsJob::class],
                 ['like', 'job', AnalyzeAssetJob::class],
+                ['like', 'job', ProCompletionAnalysisJob::class],
             ];
 
             $allJobs = (new Query())
@@ -279,8 +305,22 @@ class BulkProcessingStatusService extends Component
     public function getProgress(?array $session, array $stats): array
     {
         $retriedIds = $session['retriedFailedAssetIds'] ?? [];
+        $mode = BulkSessionMode::tryFrom((string) ($session['mode'] ?? ''));
 
-        if (!empty($retriedIds)) {
+        if ($mode === BulkSessionMode::ProCompletion && !empty($retriedIds)) {
+            // Pro-completion session: records stay Completed throughout, so
+            // status-based progress is meaningless. Track remaining via the
+            // canonical Pro signal: rows still missing longDescriptionAi.
+            $initialUnprocessed = count($retriedIds);
+            $remaining = (int) AssetAnalysisRecord::find()
+                ->where(['in', 'assetId', $retriedIds])
+                ->andWhere(['or',
+                    ['longDescriptionAi' => null],
+                    ['longDescriptionAi' => ''],
+                ])
+                ->count();
+            $completed = max(0, $initialUnprocessed - $remaining);
+        } elseif (!empty($retriedIds)) {
             // Retry session: total and remaining are strictly the retried IDs.
             // "Remaining" = retried assets still in Pending or Processing; once
             // they reach any terminal status (Completed, Failed, etc.) they
@@ -397,7 +437,7 @@ class BulkProcessingStatusService extends Component
         }
 
         $startedAt = $session['startedAt'] ?? 0;
-        $actualCost = $this->getSessionCost($startedAt);
+        $actualCost = $this->getSessionCost($startedAt, $session);
 
         $endedAt = $session['completedAt'] ?? time();
         $duration = $endedAt - $startedAt;
@@ -438,10 +478,29 @@ class BulkProcessingStatusService extends Component
     }
 
     /**
-     * Get the total cost of analyses since session started.
+     * Get the total cost of analyses since the session started.
+     *
+     * For Pro-completion sessions, `actualCost` on each record is additive
+     * (Lite cost + Pro-completion cost) and `processedAt` stays at the
+     * original Lite timestamp, so the time-based filter misses every row.
+     * Use the pre-session baseline snapshot and report the delta instead.
      */
-    private function getSessionCost(int $startedAt): float
+    private function getSessionCost(int $startedAt, ?array $session = null): float
     {
+        $mode = BulkSessionMode::tryFrom((string) ($session['mode'] ?? ''));
+        $scopedIds = $session['retriedFailedAssetIds'] ?? [];
+
+        // The baseline is required: without it, summing scoped `actualCost`
+        // would include the pre-session Lite cost and over-report the run.
+        if ($mode === BulkSessionMode::ProCompletion && !empty($scopedIds) && isset($session['proCompletionBaseline'])) {
+            $current = (float) (AssetAnalysisRecord::find()
+                ->where(['in', 'assetId', $scopedIds])
+                ->sum('actualCost') ?? 0.0);
+            $baseline = (float) $session['proCompletionBaseline'];
+
+            return max(0.0, $current - $baseline);
+        }
+
         return (float) (AssetAnalysisRecord::find()
             ->where(['>=', 'processedAt', gmdate('Y-m-d H:i:s', $startedAt)])
             ->sum('actualCost') ?? 0.0);
@@ -609,6 +668,7 @@ class BulkProcessingStatusService extends Component
                 ->from('{{%queue}}')
                 ->where(['like', 'job', BulkAnalyzeAssetsJob::class])
                 ->orWhere(['like', 'job', AnalyzeAssetJob::class])
+                ->orWhere(['like', 'job', ProCompletionAnalysisJob::class])
                 ->column();
 
             if (!empty($jobIds)) {

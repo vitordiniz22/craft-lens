@@ -197,6 +197,7 @@
             </a>
         {% endif %}
 
-        <a href="{{ cpUrl('lens/bulk/dismiss') }}" class="btn">{{ 'Back to Overview'|t('lens') }}</a>
+        {% set dismissParams = (focus is defined and focus == 'pro-metadata') ? {focus: 'pro-metadata'} : {} %}
+        <a href="{{ cpUrl('lens/bulk/dismiss', dismissParams) }}" class="btn">{{ 'Back to Overview'|t('lens') }}</a>
     </div>
 </div>

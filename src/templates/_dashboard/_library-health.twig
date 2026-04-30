@@ -64,8 +64,8 @@
                 percentage: proMetadataCoverage.percentage,
                 covered: proMetadataCoverage.withProMetadata,
                 total: proMetadataCoverage.total,
-                linkUrl: null,
-                linkText: null,
+                linkUrl: cpUrl('lens/bulk', {focus: 'pro-metadata'}),
+                linkText: 'Backfill missing'|t('lens'),
             } only %}
         {% endif %}
     </div>

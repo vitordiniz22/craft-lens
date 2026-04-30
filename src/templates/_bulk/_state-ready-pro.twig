@@ -1,0 +1,84 @@
+{% set coverage = proCoverage ?? {percentage: 0, withProMetadata: 0, total: 0} %}
+{% set count = proSyncCount ?? 0 %}
+
+<div class="pane">
+
+    <div class="lens-bulk-pro-header">
+        <h2>{{ 'Backfill Pro Metadata'|t('lens') }}</h2>
+        <p class="lens-bulk-pro-subtitle">
+            {{ 'Some analyses were generated before Pro was enabled, so they\'re missing long description, tags, and OCR text. Backfill makes one AI call per analysis to add those three fields. Existing data stays as it is. Once every analysis has all three, this tab disappears.'|t('lens') }}
+        </p>
+    </div>
+
+    {% if coverage.total > 0 %}
+        <div class="lens-coverage-bar">
+            <div class="lens-coverage-bar__header">
+                <span class="lens-field-label">{{ 'Coverage'|t('lens') }}</span>
+                <span class="lens-coverage-bar__summary">
+                    {{ '{covered} of {total} ({percent}%)'|t('lens', {
+                        covered: coverage.withProMetadata|number_format,
+                        total: coverage.total|number_format,
+                        percent: coverage.percentage,
+                    }) }}
+                </span>
+            </div>
+            <div class="lens-progress">
+                <div class="lens-progress__fill" style="width: {{ coverage.percentage }}%"></div>
+            </div>
+        </div>
+    {% endif %}
+
+    {% if count == 0 %}
+
+        <hr>
+
+        {% include 'lens/_components/empty-state' with {
+            heading: 'All Caught Up'|t('lens'),
+            description: 'Every analysis includes long descriptions, tags, and OCR text.'|t('lens'),
+        } only %}
+
+    {% else %}
+
+        <hr>
+
+        <div class="lens-ready-hero">
+            <span class="lens-ready-hero__value">{{ count|number_format }}</span>
+            <span class="lens-ready-hero__label">{{ 'incomplete analyses'|t('lens') }}</span>
+        </div>
+
+        {% if estimatedCost is defined and estimatedCost > 0 %}
+            <div class="lens-stat-strip">
+                <div class="lens-stat-strip__cell">
+                    <div class="lens-stat-strip__icon">{{ iconSvg('coins')|attr({width: 16, height: 16, fill: 'currentColor'}) }}</div>
+                    <div class="lens-stat-strip__value">${{ estimatedCost|number_format(estimatedCost < 0.01 ? 4 : 2) }}</div>
+                    <div class="lens-stat-strip__label">{{ 'estimated cost'|t('lens') }}</div>
+                </div>
+                {% if costPerImage is defined and costPerImage > 0 %}
+                    <div class="lens-stat-strip__cell">
+                        <div class="lens-stat-strip__icon">{{ iconSvg('gauge')|attr({width: 16, height: 16, fill: 'currentColor'}) }}</div>
+                        <div class="lens-stat-strip__value">${{ costPerImage|number_format(costPerImage < 0.01 ? 4 : 2) }}</div>
+                        <div class="lens-stat-strip__label">{{ 'per image'|t('lens') }}</div>
+                    </div>
+                {% endif %}
+                {% if modelName is defined and modelName %}
+                    <div class="lens-stat-strip__cell">
+                        <div class="lens-stat-strip__icon">{{ iconSvg('microchip')|attr({width: 16, height: 16, fill: 'currentColor'}) }}</div>
+                        <div class="lens-stat-strip__value">{{ modelName }}</div>
+                        <div class="lens-stat-strip__label">{{ 'model'|t('lens') }}</div>
+                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        <div class="lens-complete-actions">
+            <form method="post">
+                {{ csrfInput() }}
+                {{ actionInput('lens/bulk/sync-pro-metadata') }}
+                <button type="submit" class="btn submit" data-lens-action="bulk-submit">
+                    {{ 'Backfill {count} Analyses'|t('lens', {count: count|number_format}) }}
+                </button>
+            </form>
+        </div>
+
+    {% endif %}
+</div>

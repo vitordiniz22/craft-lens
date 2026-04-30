@@ -125,15 +125,6 @@
                     </button>
                 </form>
             {% endif %}
-            {% if proSyncCount is defined and proSyncCount > 0 %}
-                <form method="post" class="lens-bulk-inline-form">
-                    {{ csrfInput() }}
-                    {{ actionInput('lens/bulk/sync-pro-metadata') }}
-                    <button type="submit" class="btn" data-lens-action="bulk-submit">
-                        {{ 'Sync Pro Metadata for {count} Assets'|t('lens', {count: proSyncCount|number_format}) }}
-                    </button>
-                </form>
-            {% endif %}
         </div>
 
     {% endif %}

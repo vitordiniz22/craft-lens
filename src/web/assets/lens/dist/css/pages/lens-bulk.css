@@ -20,6 +20,79 @@
   margin-top: 20px;
 }
 
+.lens-bulk-pro-header {
+  margin-bottom: 20px;
+}
+
+.lens-bulk-pro-subtitle {
+  margin: 4px 0 0;
+  color: var(--medium-text-color);
+}
+
+
+/* =========================================================================
+   Tab Bar
+   ========================================================================= */
+
+.lens-bulk-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--hairline-color);
+  margin-top: 4px;
+}
+
+.lens-bulk-tabs__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  margin-bottom: -1px;
+  color: var(--medium-text-color);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  font-weight: 500;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.lens-bulk-tabs__tab:hover {
+  color: var(--text-color);
+  text-decoration: none;
+}
+
+.lens-bulk-tabs__tab--active {
+  color: var(--text-color);
+  border-bottom-color: var(--text-color);
+}
+
+.lens-bulk-tabs__tab--disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.lens-bulk-tabs__tab--disabled:hover {
+  color: var(--medium-text-color);
+}
+
+.lens-bulk-tabs__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 9px;
+  background-color: var(--gray-200);
+  color: var(--text-color);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.lens-bulk-tabs__tab--active .lens-bulk-tabs__count {
+  background-color: var(--text-color);
+  color: var(--white);
+}
+
 
 /* =========================================================================
    Coverage Bar

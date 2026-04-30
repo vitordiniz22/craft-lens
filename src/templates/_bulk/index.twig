@@ -6,11 +6,14 @@
 {% block content %}
     <div class="lens-bulk-page">
 
-        {# Render only the current state #}
+        {% include 'lens/_bulk/_tabs' %}
+
         {% if state == 'processing' %}
             {% include 'lens/_bulk/_state-processing' %}
         {% elseif state == 'complete' %}
             {% include 'lens/_bulk/_state-complete' %}
+        {% elseif activeTab == 'pro-metadata' %}
+            {% include 'lens/_bulk/_state-ready-pro' %}
         {% else %}
             {% include 'lens/_bulk/_state-ready' %}
         {% endif %}

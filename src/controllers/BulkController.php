@@ -9,6 +9,8 @@ use craft\helpers\Queue;
 use craft\web\Controller;
 use vitordiniz22\craftlens\controllers\traits\RequiresAiProviderTrait;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
+use vitordiniz22\craftlens\enums\BulkPageView;
+use vitordiniz22\craftlens\enums\BulkSessionMode;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\exceptions\ConfigurationException;
 use vitordiniz22\craftlens\helpers\Logger;
@@ -33,6 +35,7 @@ class BulkController extends Controller
 
         $volumeId = $this->request->getQueryParam('volumeId');
         $volumeId = $volumeId ? (int) $volumeId : null;
+        $focus = BulkPageView::tryFrom((string) $this->request->getQueryParam('focus'));
 
         $settings = Plugin::getInstance()->getSettings();
         $allVolumes = Craft::$app->getVolumes()->getAllVolumes();
@@ -64,20 +67,44 @@ class BulkController extends Controller
         $stats = $statusService->getStats($statsVolumeScope);
         $state = $statusService->determineState($stats);
 
+        $proSyncCount = Plugin::getInstance()->statistics->getProSyncCandidatesCount();
+
+        // Active tab: when a session is mid-flight (processing or complete),
+        // the tab must match the session's mode so the user knows which flow
+        // they're watching. Otherwise the URL focus param drives it.
+        $sessionMode = BulkSessionMode::tryFrom((string) ($session['mode'] ?? ''));
+        if ($state === 'processing' || $state === 'complete') {
+            $activeTab = $sessionMode === BulkSessionMode::ProCompletion
+                ? BulkPageView::ProMetadata
+                : BulkPageView::Default;
+        } else {
+            $activeTab = $focus === BulkPageView::ProMetadata
+                ? BulkPageView::ProMetadata
+                : BulkPageView::Default;
+        }
+
         $templateVars = [
             'stats' => $stats,
             'volumes' => $volumes,
             'state' => $state,
             'selectedVolumeId' => $volumeId,
             'autoProcessOnUpload' => $settings->autoProcessOnUpload,
+            'focus' => $focus?->value,
+            'proSyncCount' => $proSyncCount,
+            'activeTab' => $activeTab->value,
         ];
 
         if ($state === 'ready') {
-            $actionableCount = $stats['unprocessed'] + $stats['failed'];
-            $projection = Plugin::getInstance()->statistics->getCostProjection($actionableCount);
+            $costInputCount = $activeTab === BulkPageView::ProMetadata
+                ? $proSyncCount
+                : $stats['unprocessed'] + $stats['failed'];
+            $projection = Plugin::getInstance()->statistics->getCostProjection($costInputCount);
             $templateVars['estimatedCost'] = $projection['estimatedCost'];
             $templateVars['costPerImage'] = $projection['avgCostPerAsset'];
-            $templateVars['proSyncCount'] = Plugin::getInstance()->statistics->getProSyncCandidatesCount();
+
+            if ($activeTab === BulkPageView::ProMetadata) {
+                $templateVars['proCoverage'] = Plugin::getInstance()->statistics->getProMetadataCoverage();
+            }
 
             try {
                 $templateVars['modelName'] = $this->getProviderModelName();
@@ -145,7 +172,24 @@ class BulkController extends Controller
         Plugin::getInstance()->bulkProcessingStatus->clearSession();
 
         $volumeId = $this->request->getQueryParam('volumeId');
-        $url = $volumeId ? 'lens/bulk?volumeId=' . $volumeId : 'lens/bulk';
+        $focus = BulkPageView::tryFrom((string) $this->request->getQueryParam('focus'));
+
+        // Stay on the focused page only if there's still backfill work to do.
+        // Once a Pro-completion run finishes with everything backfilled, the
+        // user belongs back on the regular bulk page rather than a transient
+        // "all caught up" view they no longer need.
+        $stickFocus = $focus === BulkPageView::ProMetadata
+            && Plugin::getInstance()->statistics->getProSyncCandidatesCount() > 0;
+
+        $params = [];
+        if ($volumeId) {
+            $params['volumeId'] = $volumeId;
+        }
+        if ($stickFocus) {
+            $params['focus'] = BulkPageView::ProMetadata->value;
+        }
+
+        $url = $params ? 'lens/bulk?' . http_build_query($params) : 'lens/bulk';
 
         return $this->redirect($url);
     }
@@ -289,31 +333,41 @@ class BulkController extends Controller
         $this->requirePermission('accessPlugin-lens');
         Plugin::getInstance()->requireProEdition();
 
+        $statusService = Plugin::getInstance()->bulkProcessingStatus;
+        $existingSession = $statusService->getSessionData();
+        if ($existingSession !== null && !isset($existingSession['completedAt'])) {
+            Craft::$app->getSession()->setError(
+                Craft::t('lens', 'A bulk job is already running. Wait for it to finish or cancel it before starting a Pro metadata backfill.')
+            );
+            return $this->redirect('lens/bulk');
+        }
+
+        $focusedUrl = 'lens/bulk?focus=' . BulkPageView::ProMetadata->value;
+
         try {
-            Plugin::getInstance()->aiProvider->testConnection();
+            Plugin::getInstance()->aiProvider->validateCredentials();
         } catch (ConfigurationException $e) {
             Craft::$app->getSession()->setError($e->getMessage());
-            return $this->redirect('lens/bulk');
+            return $this->redirect($focusedUrl);
         }
 
         $candidateIds = Plugin::getInstance()->statistics->getProSyncCandidateIds();
 
         if (empty($candidateIds)) {
-            Craft::$app->getSession()->setNotice(Craft::t('lens', 'No assets need Pro metadata sync.'));
-            return $this->redirect('lens/bulk');
+            Craft::$app->getSession()->setNotice(Craft::t('lens', 'No analyses need backfill.'));
+            return $this->redirect($focusedUrl);
         }
 
-        $statusService = Plugin::getInstance()->bulkProcessingStatus;
-        $statusService->startSession(null, $candidateIds);
+        $statusService->startSession(null, $candidateIds, BulkSessionMode::ProCompletion);
 
         Queue::push(new ProCompletionAnalysisJob(['assetIds' => $candidateIds]));
 
         Logger::info(LogCategory::JobStarted, 'Pro metadata sync started from CP', context: ['candidateCount' => count($candidateIds)]);
 
         Craft::$app->getSession()->setNotice(
-            Craft::t('lens', '{count} assets queued for Pro metadata sync.', ['count' => count($candidateIds)])
+            Craft::t('lens', '{count} analyses queued for backfill.', ['count' => count($candidateIds)])
         );
-        return $this->redirect('lens/bulk');
+        return $this->redirect($focusedUrl);
     }
 
     /**
