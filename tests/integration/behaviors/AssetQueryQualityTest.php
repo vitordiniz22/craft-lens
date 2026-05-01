@@ -242,7 +242,7 @@ class AssetQueryQualityTest extends Unit
     public function testLensTooBrightTrueRequiresExposureAndHighlightClipping(): void
     {
         $this->assertSame(0.85, ImageMetricsAnalyzer::BRIGHTNESS_BRIGHT_MEDIAN);
-        $this->assertSame(0.40, ImageMetricsAnalyzer::HIGHLIGHT_CLIP_RATIO);
+        $this->assertSame(0.30, ImageMetricsAnalyzer::HIGHLIGHT_CLIP_RATIO);
 
         $bright = $this->createAssetFixture('bright.jpg', [
             'exposureScore' => 0.95, 'highlightClipRatio' => 0.50,
