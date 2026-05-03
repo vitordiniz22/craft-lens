@@ -78,7 +78,7 @@
 } only %}
 
 {# Brand Detection Toggle #}
-{% set brandNames = (analysis.containsBrandLogo and analysis.detectedBrands|length) ? analysis.detectedBrands|map(b => b.brand) : [] %}
+{% set brandNames = analysis.detectedBrands|length ? analysis.detectedBrands|map(b => b.brand) : [] %}
 {% set brandFlaggedLabel = brandNames|length
     ? (brandNames|slice(0, 2)|join(', ') ~ (brandNames|length > 2 ? ' +' ~ (brandNames|length - 2) : ''))
     : null %}
@@ -96,6 +96,7 @@
     falseValue: 0,
     confidence: analysis.containsBrandLogoConfidence ?? null,
     hideConfidence: hideConfidence ?? false,
+    details: brandNames,
     flaggedLabel: brandFlaggedLabel,
     flaggedHelp: 'Identifiable brand logos detected. Verify trademark and usage rights for commercial use.'|t('lens')
 } only %}
