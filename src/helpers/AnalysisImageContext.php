@@ -10,23 +10,13 @@ use Imagick;
 /**
  * Per-asset image I/O cache shared by every step of the analysis pipeline.
  *
- * Reads the asset file once, decodes it once, and downscales it once to a
- * working size that every consumer (metrics, AI preprocessing, perceptual
- * hash) can reuse. JPEG sources use libjpeg's DCT-block scaling (free) via
- * the `jpeg:size` Imagick option; PNG/WebP/etc. fall back to a full decode
- * followed by a single Lanczos resize. The destructor clears the Imagick
- * handle and removes the local temp copy.
+ * Reads the asset file once and decodes it once at the asset's native
+ * resolution. Consumers (metrics, AI preprocessing, perceptual hash) clone
+ * the source handle and do their own resizing as needed. The destructor
+ * clears the Imagick handle and removes the local temp copy.
  */
 final class AnalysisImageContext
 {
-    /**
-     * Longest-edge cap for the shared decoded buffer. 1568 matches the AI
-     * preprocessing target so the same handle can be re-encoded for upload
-     * without further resizing. Sharpness's internal 500px cap downscales
-     * from this buffer (cheap), not from the raw file.
-     */
-    public const WORKING_MAX_DIMENSION = 1568;
-
     private ?string $rawBytes = null;
     private bool $rawBytesLoaded = false;
 
@@ -90,11 +80,10 @@ final class AnalysisImageContext
      * Returns null if the Imagick extension is missing or the asset has no
      * usable local copy.
      *
-     * The handle is decoded at most `WORKING_MAX_DIMENSION` per edge:
-     * - For JPEG: libjpeg's `jpeg:size` hint triggers DCT-block scaling at
-     *   read time, so the full-size pixel buffer is never allocated.
-     * - For everything else: full decode followed by one Lanczos resize when
-     *   the source exceeds the cap.
+     * The handle is decoded at the asset's native resolution. Quality
+     * measurements (sharpness, brightness, contrast) need full-resolution
+     * input to produce stable scores; AI preprocessing clones this handle
+     * and does its own Lanczos resize to 1568 for the upload.
      */
     public function getImagick(): ?Imagick
     {
@@ -115,27 +104,7 @@ final class AnalysisImageContext
         }
 
         try {
-            $imagick = new Imagick();
-            $imagick->setOption(
-                'jpeg:size',
-                self::WORKING_MAX_DIMENSION . 'x' . self::WORKING_MAX_DIMENSION,
-            );
-            $imagick->readImage($path);
-
-            $width = $imagick->getImageWidth();
-            $height = $imagick->getImageHeight();
-
-            if (max($width, $height) > self::WORKING_MAX_DIMENSION) {
-                $imagick->resizeImage(
-                    self::WORKING_MAX_DIMENSION,
-                    self::WORKING_MAX_DIMENSION,
-                    Imagick::FILTER_LANCZOS,
-                    1,
-                    true,
-                );
-            }
-
-            $this->imagick = $imagick;
+            $this->imagick = new Imagick($path);
         } catch (\Throwable) {
             $this->imagick = null;
         }

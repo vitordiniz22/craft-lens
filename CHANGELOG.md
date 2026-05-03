@@ -1,5 +1,11 @@
 # Release Notes for Lens
 
+## 1.0.0-beta.4 - 2026-05-04
+
+- Improved sharpness scoring accuracy; brightness and contrast now run on a downscaled working buffer for speed without changing scores
+- Cancelling a bulk run now clears Pending records so cancelled assets immediately show "ready for analysis" again
+- UI polish: removed the dead Bulk Concurrency setting from settings
+
 ## 1.0.0-beta.3 - 2026-05-04
 
 - Per-asset wall time roughly halved: one job per asset, single shared image decode for metrics and AI preprocessing

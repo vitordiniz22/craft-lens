@@ -44,6 +44,15 @@ class ImageMetricsAnalyzer
     private const SHARPNESS_DECAY_SIGMOID_MIDPOINT = 0.71;
     private const SHARPNESS_MIN_DIMENSION = 100;
     private const SHARPNESS_ANALYSIS_MAX_SIZE = 500;
+
+    /**
+     * Working-buffer cap for brightness and contrast measurements. These two
+     * use rank-based percentiles of the luma histogram (p5 / p50 / p95),
+     * which are stable down to a few hundred thousand samples — well below
+     * what a 1568px buffer produces. Sharpness is NOT downscaled here; it
+     * needs full-resolution input to detect fine detail loss under blur.
+     */
+    private const BRIGHTNESS_CONTRAST_WORKING_MAX = 1568;
     // Below this stdDev, image is near-featureless and decay curve is unreliable
     private const SHARPNESS_MIN_DETAIL_STDDEV = 0.015;
     // Sobel gradient stdDev below this = noise, not real edges
@@ -82,27 +91,46 @@ class ImageMetricsAnalyzer
         }
 
         $originalColorspace = $sourceImagick->getImageColorspace();
-        $workingClone = null;
+        $cmykClone = null;
+        $brightnessContrastClone = null;
 
         try {
             // CMYK sources are converted to SRGB on a working clone so the
             // shared context handle stays untouched for downstream consumers.
             if ($originalColorspace === Imagick::COLORSPACE_CMYK) {
-                $workingClone = clone $sourceImagick;
-                $workingClone->transformImageColorspace(Imagick::COLORSPACE_SRGB);
-                $imagick = $workingClone;
+                $cmykClone = clone $sourceImagick;
+                $cmykClone->transformImageColorspace(Imagick::COLORSPACE_SRGB);
+                $imagick = $cmykClone;
             } else {
                 $imagick = $sourceImagick;
             }
 
-            $brightness = self::measureBrightness($imagick);
+            // Sharpness runs on the full-resolution handle (its internal 500px
+            // cap downscales from native, matching pre-refactor behavior).
+            // Brightness and contrast use rank-based percentiles, so they get
+            // a downscaled working clone — same scores at a fraction of the cost.
+            $brightnessContrastClone = clone $imagick;
+            if (max(
+                $brightnessContrastClone->getImageWidth(),
+                $brightnessContrastClone->getImageHeight(),
+            ) > self::BRIGHTNESS_CONTRAST_WORKING_MAX) {
+                $brightnessContrastClone->resizeImage(
+                    self::BRIGHTNESS_CONTRAST_WORKING_MAX,
+                    self::BRIGHTNESS_CONTRAST_WORKING_MAX,
+                    Imagick::FILTER_LANCZOS,
+                    1,
+                    true,
+                );
+            }
+
+            $brightness = self::measureBrightness($brightnessContrastClone);
 
             $raw = [
                 'sharpnessScore' => self::measureSharpness($imagick),
                 'exposureScore' => $brightness['exposureScore'],
                 'shadowClipRatio' => $brightness['shadowClipRatio'],
                 'highlightClipRatio' => $brightness['highlightClipRatio'],
-                'contrastScore' => self::measureContrast($imagick),
+                'contrastScore' => self::measureContrast($brightnessContrastClone),
                 'compressionQuality' => self::measureCompressionQuality($sourceImagick, $asset, $tempPath),
                 'colorProfile' => self::detectColorProfile($sourceImagick, $originalColorspace),
             ];
@@ -120,7 +148,8 @@ class ImageMetricsAnalyzer
 
             return null;
         } finally {
-            $workingClone?->clear();
+            $cmykClone?->clear();
+            $brightnessContrastClone?->clear();
         }
     }
 

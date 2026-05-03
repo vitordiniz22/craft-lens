@@ -115,9 +115,6 @@ final class ImagePreprocessor
 
             $clone = clone $sourceImagick;
 
-            // The shared handle is capped at AnalysisImageContext::WORKING_MAX_DIMENSION
-            // (1568) which already matches the AI provider target. Re-resize defensively
-            // in case a smaller cap was requested.
             if (max($clone->getImageWidth(), $clone->getImageHeight()) > $maxDimension) {
                 $clone->resizeImage(
                     $maxDimension,
