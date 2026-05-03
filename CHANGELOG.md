@@ -1,5 +1,12 @@
 # Release Notes for Lens
 
+## 1.0.0-beta.3 - 2026-05-04
+
+- Per-asset wall time roughly halved: one job per asset, single shared image decode for metrics and AI preprocessing
+- Added Sync Pro Metadata backfill for filling Pro-only fields on Lite-analyzed assets, with progress and cost tracking
+- Duplicate detection now surfaces as a dashboard attention card and a dedicated Pro asset source
+- Stability and UI polish
+
 ## 1.0.0-beta.2 - 2026-04-22
 
 - Retired the custom Asset Browser in favor of the native Craft asset index, with Lens filters, quick-access sources (Needs Review, Not Analysed, Missing Alt Text, NSFW Flagged, etc.), sort options, and table columns merged into the native experience
