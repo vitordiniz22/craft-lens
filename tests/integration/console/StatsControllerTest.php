@@ -39,7 +39,7 @@ class StatsControllerTest extends Unit
     public function testIndexPrintsUnprocessedCount(): void
     {
         $assetAnalysis = new class extends AssetAnalysisService {
-            public function getUnprocessedCount(): int
+            public function getUnprocessedCount(null|int|array $volumeId = null): int
             {
                 return 7;
             }

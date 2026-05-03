@@ -6,7 +6,6 @@ namespace vitordiniz22\craftlenstests\unit\helpers;
 
 use Codeception\Test\Unit;
 use craft\elements\Asset;
-use ReflectionClass;
 use ReflectionMethod;
 use vitordiniz22\craftlens\helpers\ImagePreprocessor;
 
@@ -25,26 +24,6 @@ class ImagePreprocessorTest extends Unit
     {
         parent::_before();
         ImagePreprocessor::resetStaticState();
-    }
-
-    // -- resetStaticState() -----------------------------------------------
-
-    public function testResetStaticStateClearsBothFlags(): void
-    {
-        $class = new ReflectionClass(ImagePreprocessor::class);
-
-        $driverCache = $class->getProperty('driverCache');
-        $driverCache->setAccessible(true);
-        $driverCache->setValue(null, false);
-
-        $warning = $class->getProperty('driverWarningEmitted');
-        $warning->setAccessible(true);
-        $warning->setValue(null, true);
-
-        ImagePreprocessor::resetStaticState();
-
-        $this->assertNull($driverCache->getValue());
-        $this->assertFalse($warning->getValue());
     }
 
     // -- shouldSkip() via reflection --------------------------------------

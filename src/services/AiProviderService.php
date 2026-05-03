@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace vitordiniz22\craftlens\services;
 
-use craft\elements\Asset;
 use vitordiniz22\craftlens\dto\AnalysisResult;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\exceptions\ConfigurationException;
+use vitordiniz22\craftlens\helpers\AnalysisImageContext;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\models\Settings;
 use vitordiniz22\craftlens\Plugin;
 use vitordiniz22\craftlens\providers\AiProviderInterface;
+use vitordiniz22\craftlens\providers\BaseAiProvider;
 use vitordiniz22\craftlens\providers\ClaudeProvider;
 use vitordiniz22\craftlens\providers\GeminiProvider;
 use vitordiniz22\craftlens\providers\OpenAiProvider;
@@ -38,14 +39,33 @@ class AiProviderService extends Component
      * @param string[] $additionalLanguages Extra languages for per-site alt text and title
      */
     public function analyzeAsset(
-        Asset $asset,
+        AnalysisImageContext $context,
         string $primaryLanguage,
         array $additionalLanguages = [],
     ): AnalysisResult {
         $settings = $this->getSettings();
         $provider = $this->getDefaultProvider();
 
-        return $provider->analyze($asset, $settings, $primaryLanguage, $additionalLanguages);
+        return $provider->analyze($context, $settings, $primaryLanguage, $additionalLanguages);
+    }
+
+    /**
+     * Run only the Pro-only metadata fields against the configured AI provider.
+     * Used to backfill `longDescription`, AI tags, and `extractedText` on
+     * records originally analyzed under Lite.
+     */
+    public function analyzeAssetProCompletion(
+        AnalysisImageContext $context,
+        string $primaryLanguage,
+    ): AnalysisResult {
+        $settings = $this->getSettings();
+        $provider = $this->getDefaultProvider();
+
+        if (!($provider instanceof BaseAiProvider)) {
+            return $provider->analyze($context, $settings, $primaryLanguage);
+        }
+
+        return $provider->analyzeProCompletion($context, $settings, $primaryLanguage);
     }
 
     /**

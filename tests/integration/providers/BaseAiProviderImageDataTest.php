@@ -8,6 +8,7 @@ use Codeception\Test\Unit;
 use craft\elements\Asset;
 use ReflectionMethod;
 use vitordiniz22\craftlens\exceptions\AnalysisException;
+use vitordiniz22\craftlens\helpers\AnalysisImageContext;
 use vitordiniz22\craftlens\helpers\ImagePreprocessor;
 use vitordiniz22\craftlens\providers\BaseAiProvider;
 use vitordiniz22\craftlenstests\integration\providers\_support\TestAiProvider;
@@ -170,7 +171,7 @@ class BaseAiProviderImageDataTest extends Unit
         $method = new ReflectionMethod(BaseAiProvider::class, 'getBase64ImageData');
         $method->setAccessible(true);
 
-        return $method->invoke($provider, $asset);
+        return $method->invoke($provider, new AnalysisImageContext($asset));
     }
 
     /**

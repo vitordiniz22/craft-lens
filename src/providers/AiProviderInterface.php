@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace vitordiniz22\craftlens\providers;
 
-use craft\elements\Asset;
 use vitordiniz22\craftlens\dto\AnalysisResult;
+use vitordiniz22\craftlens\helpers\AnalysisImageContext;
 use vitordiniz22\craftlens\models\Settings;
 
 /**
@@ -31,7 +31,7 @@ interface AiProviderInterface
      * @throws \vitordiniz22\craftlens\exceptions\AnalysisException
      */
     public function analyze(
-        Asset $asset,
+        AnalysisImageContext $context,
         Settings $settings,
         string $primaryLanguage,
         array $additionalLanguages = [],

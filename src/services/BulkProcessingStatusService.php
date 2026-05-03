@@ -12,6 +12,7 @@ use vitordiniz22\craftlens\enums\ErrorCode;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\jobs\AnalyzeAssetJob;
+use vitordiniz22\craftlens\jobs\AnalyzeAssetProCompletionJob;
 use vitordiniz22\craftlens\jobs\BulkAnalyzeAssetsJob;
 use vitordiniz22\craftlens\jobs\ProCompletionAnalysisJob;
 use vitordiniz22\craftlens\migrations\Install;
@@ -129,14 +130,6 @@ class BulkProcessingStatusService extends Component
             ? count($scopedAssetIds)
             : $this->getUnprocessedCount($volumeId);
 
-        // Snapshot how many assets in scope were already in a terminal state
-        // (Completed, Failed). Progress is computed as
-        // (currentTerminal - initialTerminal), so the counter advances only
-        // when a session asset actually finishes.
-        $initialTerminalCount = $isScoped
-            ? 0
-            : $this->countByStatus(AnalysisStatus::terminalValues(), $volumeId);
-
         // Pro-completion records keep their original processedAt timestamp, so
         // the time-based session cost query misses them entirely. Snapshot the
         // pre-session cost on these records and report (current - baseline) as
@@ -150,7 +143,6 @@ class BulkProcessingStatusService extends Component
         Logger::info(LogCategory::JobStarted, 'Bulk processing session started', context: [
             'volumeId' => $volumeId,
             'initialUnprocessed' => $initialCount,
-            'initialTerminalCount' => $initialTerminalCount,
             'mode' => $resolvedMode->value,
         ]);
 
@@ -158,7 +150,6 @@ class BulkProcessingStatusService extends Component
             'startedAt' => time(),
             'volumeId' => $volumeId,
             'initialUnprocessed' => $initialCount,
-            'initialTerminalCount' => $initialTerminalCount,
             'retriedFailedAssetIds' => $scopedAssetIds,
             'mode' => $resolvedMode->value,
             'proCompletionBaseline' => $proCompletionBaseline,
@@ -212,6 +203,7 @@ class BulkProcessingStatusService extends Component
                 ->from('{{%queue}}')
                 ->where(['like', 'job', BulkAnalyzeAssetsJob::class])
                 ->orWhere(['like', 'job', AnalyzeAssetJob::class])
+                ->orWhere(['like', 'job', AnalyzeAssetProCompletionJob::class])
                 ->orWhere(['like', 'job', ProCompletionAnalysisJob::class])
                 ->count();
 
@@ -232,6 +224,7 @@ class BulkProcessingStatusService extends Component
                 'or',
                 ['like', 'job', BulkAnalyzeAssetsJob::class],
                 ['like', 'job', AnalyzeAssetJob::class],
+                ['like', 'job', AnalyzeAssetProCompletionJob::class],
                 ['like', 'job', ProCompletionAnalysisJob::class],
             ];
 
@@ -301,6 +294,12 @@ class BulkProcessingStatusService extends Component
 
     /**
      * Calculate progress based on session data and current stats.
+     *
+     * Each per-asset job lands its record in a terminal status when it
+     * finishes (Completed or Failed), so progress is the count of session
+     * assets that have reached a terminal state. Pro-completion sessions
+     * track remaining via the canonical Pro signal (`longDescriptionAi`)
+     * because those records stay Completed throughout.
      */
     public function getProgress(?array $session, array $stats): array
     {
@@ -308,9 +307,6 @@ class BulkProcessingStatusService extends Component
         $mode = BulkSessionMode::tryFrom((string) ($session['mode'] ?? ''));
 
         if ($mode === BulkSessionMode::ProCompletion && !empty($retriedIds)) {
-            // Pro-completion session: records stay Completed throughout, so
-            // status-based progress is meaningless. Track remaining via the
-            // canonical Pro signal: rows still missing longDescriptionAi.
             $initialUnprocessed = count($retriedIds);
             $remaining = (int) AssetAnalysisRecord::find()
                 ->where(['in', 'assetId', $retriedIds])
@@ -321,10 +317,6 @@ class BulkProcessingStatusService extends Component
                 ->count();
             $completed = max(0, $initialUnprocessed - $remaining);
         } elseif (!empty($retriedIds)) {
-            // Retry session: total and remaining are strictly the retried IDs.
-            // "Remaining" = retried assets still in Pending or Processing; once
-            // they reach any terminal status (Completed, Failed, etc.) they
-            // count as done for this session.
             $initialUnprocessed = count($retriedIds);
             $remaining = (int) AssetAnalysisRecord::find()
                 ->where(['in', 'assetId', $retriedIds])
@@ -335,22 +327,17 @@ class BulkProcessingStatusService extends Component
                 ->count();
             $completed = max(0, $initialUnprocessed - $remaining);
         } else {
-            // Bulk session: completed = assets that reached a terminal state
-            // since this session started. Mid-flight (Processing) assets are
-            // still "remaining" until they actually finish.
             $initialUnprocessed = $session['initialUnprocessed'] ?? $stats['unprocessed'];
-            $initialTerminalCount = $session['initialTerminalCount'] ?? 0;
             $volumeId = $session['volumeId'] ?? null;
+            $startedAt = $session['startedAt'] ?? time();
 
-            $currentTerminalCount = $this->countByStatus(
-                AnalysisStatus::terminalValues(),
-                $volumeId,
-            );
+            $query = AssetAnalysisRecord::find()
+                ->where(['in', 'status', AnalysisStatus::terminalValues()])
+                ->andWhere(['>=', 'processedAt', gmdate('Y-m-d H:i:s', $startedAt)]);
 
-            $completed = max(0, min(
-                $initialUnprocessed,
-                $currentTerminalCount - $initialTerminalCount,
-            ));
+            $this->applyVolumeFilter($query, $volumeId);
+
+            $completed = min($initialUnprocessed, (int) $query->count());
             $remaining = max(0, $initialUnprocessed - $completed);
         }
 
@@ -668,6 +655,7 @@ class BulkProcessingStatusService extends Component
                 ->from('{{%queue}}')
                 ->where(['like', 'job', BulkAnalyzeAssetsJob::class])
                 ->orWhere(['like', 'job', AnalyzeAssetJob::class])
+                ->orWhere(['like', 'job', AnalyzeAssetProCompletionJob::class])
                 ->orWhere(['like', 'job', ProCompletionAnalysisJob::class])
                 ->column();
 

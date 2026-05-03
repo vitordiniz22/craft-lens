@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace vitordiniz22\craftlens\helpers;
 
-use Craft;
 use craft\elements\Asset;
-use craft\helpers\Assets;
+use Imagick;
 use vitordiniz22\craftlens\enums\LogCategory;
 
 /**
@@ -65,11 +64,8 @@ final class ImagePreprocessor
         'cr2', 'nef', 'dng', 'arw', 'rw2', 'orf', 'crw', 'raf',
     ];
 
-    private static ?bool $driverCache = null;
-    private static bool $driverWarningEmitted = false;
-
     public static function preprocess(
-        Asset $asset,
+        AnalysisImageContext $context,
         int $maxDimension = self::DEFAULT_MAX_DIMENSION,
         int $quality = self::DEFAULT_QUALITY,
     ): PreprocessResult {
@@ -77,63 +73,70 @@ final class ImagePreprocessor
         $maxDimension = max(256, min(4096, $maxDimension));
         $quality = max(50, min(100, $quality));
 
+        $asset = $context->asset;
         $mimeType = $asset->getMimeType() ?? 'application/octet-stream';
 
-        $rawBytes = self::readRawBytes($asset);
-       
+        $rawBytes = $context->getRawBytes();
+
         if ($rawBytes === null) {
             return PreprocessResult::passthrough('', $mimeType, 'stream_unavailable');
         }
 
-        if (!self::hasDriver()) {
+        if (!extension_loaded('imagick')) {
             return PreprocessResult::passthrough($rawBytes, $mimeType, 'no_driver');
         }
 
         $skipReason = self::shouldSkip($asset, $mimeType, strlen($rawBytes), $maxDimension);
-       
+
         if ($skipReason !== null) {
             return PreprocessResult::passthrough($rawBytes, $mimeType, $skipReason);
         }
 
-        $inputPath = null;
-        $outputPath = null;
+        $sourceImagick = $context->getImagick();
+
+        if ($sourceImagick === null) {
+            return PreprocessResult::passthrough($rawBytes, $mimeType, 'imagick_unavailable');
+        }
+
+        $clone = null;
 
         try {
-            $inputPath = $asset->getCopyOfFile();
-
-            $keepAsPng = str_starts_with($mimeType, 'image/png');
-            $outputExt = $keepAsPng ? 'png' : 'jpg';
-            $outputPath = Assets::tempFilePath($outputExt);
-
-            $image = Craft::$app->getImages()->loadImage($inputPath);
-
-            $originalWidth = $image->getWidth();
-            $originalHeight = $image->getHeight();
+            // Use the original asset dimensions for the pixel-budget guard and
+            // for reporting; the shared context handle is already downscaled.
+            $originalWidth = (int) ($asset->getWidth() ?? $sourceImagick->getImageWidth());
+            $originalHeight = (int) ($asset->getHeight() ?? $sourceImagick->getImageHeight());
 
             if ($originalWidth * $originalHeight > self::PIXEL_BUDGET) {
                 return PreprocessResult::passthrough($rawBytes, $mimeType, 'pixel_budget_exceeded');
             }
 
-            $image->scaleToFit($maxDimension, $maxDimension);
-            $image->setQuality($quality);
-
-            $imagineImage = $image->getImagineImage();
-            
-            if ($imagineImage !== null) {
-                $imagineImage->strip();
-            }
-
-            if (!$image->saveAs($outputPath)) {
-                return PreprocessResult::passthrough($rawBytes, $mimeType, 'save_failed');
-            }
-
-            $processedBytes = @file_get_contents($outputPath);
-            
-            if ($processedBytes === false || $processedBytes === '') {
-                return PreprocessResult::passthrough($rawBytes, $mimeType, 'read_failed');
-            }
-
+            $keepAsPng = str_starts_with($mimeType, 'image/png');
             $outMime = $keepAsPng ? 'image/png' : 'image/jpeg';
+
+            $clone = clone $sourceImagick;
+
+            // The shared handle is capped at AnalysisImageContext::WORKING_MAX_DIMENSION
+            // (1568) which already matches the AI provider target. Re-resize defensively
+            // in case a smaller cap was requested.
+            if (max($clone->getImageWidth(), $clone->getImageHeight()) > $maxDimension) {
+                $clone->resizeImage(
+                    $maxDimension,
+                    $maxDimension,
+                    Imagick::FILTER_LANCZOS,
+                    1,
+                    true,
+                );
+            }
+
+            $clone->setImageFormat($keepAsPng ? 'png' : 'jpeg');
+            $clone->setImageCompressionQuality($quality);
+            $clone->stripImage();
+
+            $processedBytes = $clone->getImageBlob();
+
+            if ($processedBytes === '') {
+                return PreprocessResult::passthrough($rawBytes, $mimeType, 'encode_failed');
+            }
 
             return PreprocessResult::processed(
                 bytes: $processedBytes,
@@ -142,8 +145,8 @@ final class ImagePreprocessor
                 processedBytes: strlen($processedBytes),
                 originalWidth: $originalWidth,
                 originalHeight: $originalHeight,
-                processedWidth: $image->getWidth(),
-                processedHeight: $image->getHeight(),
+                processedWidth: $clone->getImageWidth(),
+                processedHeight: $clone->getImageHeight(),
             );
         } catch (\Throwable $e) {
             Logger::warning(
@@ -156,61 +159,18 @@ final class ImagePreprocessor
 
             return PreprocessResult::passthrough($rawBytes, $mimeType, 'exception');
         } finally {
-            if ($inputPath !== null && file_exists($inputPath)) {
-                @unlink($inputPath);
-            }
-            if ($outputPath !== null && file_exists($outputPath)) {
-                @unlink($outputPath);
-            }
+            $clone?->clear();
         }
     }
 
     /**
-     * Primarily for tests: resets the cached driver + warning state so each
-     * test can exercise the driver-absent branch independently.
+     * Kept for backwards compatibility with existing test setUp() calls.
+     * The cached driver state was removed when preprocessing moved to the
+     * shared `AnalysisImageContext` Imagick handle.
      */
     public static function resetStaticState(): void
     {
-        self::$driverCache = null;
-        self::$driverWarningEmitted = false;
-    }
-
-    private static function readRawBytes(Asset $asset): ?string
-    {
-        $stream = $asset->getStream();
-        if ($stream === null) {
-            return null;
-        }
-
-        try {
-            $contents = stream_get_contents($stream);
-            return $contents === false ? null : $contents;
-        } finally {
-            if (is_resource($stream)) {
-                fclose($stream);
-            }
-        }
-    }
-
-    private static function hasDriver(): bool
-    {
-        if (self::$driverCache !== null) {
-            return self::$driverCache;
-        }
-
-        $images = Craft::$app->getImages();
-        $available = $images->getCanUseImagick() || $images->getIsGd();
-
-        if (!$available && !self::$driverWarningEmitted) {
-            self::$driverWarningEmitted = true;
-            
-            Logger::warning(
-                LogCategory::AssetProcessing,
-                'Image preprocessing disabled: neither Imagick nor GD available',
-            );
-        }
-
-        return self::$driverCache = $available;
+        // No state to reset.
     }
 
     private static function shouldSkip(

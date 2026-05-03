@@ -5,46 +5,70 @@ declare(strict_types=1);
 namespace vitordiniz22\craftlens\jobs;
 
 use Craft;
-use craft\base\Batchable;
-use craft\db\QueryBatcher;
 use craft\elements\Asset;
+use craft\helpers\Queue;
+use craft\queue\BaseJob;
+use vitordiniz22\craftlens\enums\LogCategory;
+use vitordiniz22\craftlens\helpers\Logger;
+use vitordiniz22\craftlens\Plugin;
 
 /**
- * Queue job for analyzing a specific set of assets selected by the user.
+ * Dispatcher for analyzing a specific set of user-selected assets.
  *
- * Assets are loaded from the DB in batches (no in-memory list of all IDs),
- * then dispatched concurrently via the shared `BatchedAnalysisJob` machinery.
- * Selected runs have no session/cancel concept — once queued, they run to
- * completion (or until the queue worker is cancelled).
+ * Walks the selected asset IDs and enqueues one `AnalyzeAssetJob` per asset.
+ * Selected runs have no session/cancel concept — once queued, each per-asset
+ * job runs through the queue independently.
  */
-class AnalyzeSelectedAssetsJob extends BatchedAnalysisJob
+class AnalyzeSelectedAssetsJob extends BaseJob
 {
     /** @var int[] */
     public array $assetIds = [];
 
-    protected function loadData(): Batchable
+    public int $ttr = 600;
+
+    private const CHUNK_SIZE = 200;
+
+    public function execute($queue): void
     {
+        if (empty($this->assetIds)) {
+            return;
+        }
+
+        $assetAnalysis = Plugin::getInstance()->assetAnalysis;
+        $enqueued = 0;
+
         $query = Asset::find()
             ->id($this->assetIds)
+            ->kind(Asset::KIND_IMAGE)
             ->orderBy(['elements.id' => SORT_ASC]);
 
-        return new QueryBatcher($query);
-    }
+        foreach ($query->each(self::CHUNK_SIZE) as $asset) {
+            /** @var Asset $asset */
+            $record = $assetAnalysis->createOrUpdatePendingRecord($asset, resetTerminal: true);
 
-    protected function shouldQueueItem(Asset $item): bool
-    {
-        return true;
-    }
+            $jobId = Queue::push(new AnalyzeAssetJob([
+                'assetId' => $asset->id,
+            ]));
 
-    protected function getCancelSignal(): ?callable
-    {
-        return null;
+            if ($jobId !== null) {
+                $record->queueJobId = (string) $jobId;
+                $record->save();
+            }
+
+            $enqueued++;
+        }
+
+        Logger::info(
+            LogCategory::JobStarted,
+            'Selected assets analysis dispatched',
+            context: ['enqueued' => $enqueued],
+        );
     }
 
     protected function defaultDescription(): ?string
     {
         $count = count($this->assetIds);
 
-        return Craft::t('lens', 'Lens: Analyzing {count} selected assets', ['count' => $count]);
+        return Craft::t('lens', 'Lens: Queueing {count} selected assets', ['count' => $count]);
     }
 }

@@ -62,33 +62,37 @@ class ImageMetricsAnalyzer
     }
 
     /**
-     * Run full Imagick analysis on an asset file.
+     * Run full Imagick analysis on an asset using the shared image context.
      * Returns raw scores for DB storage and display-ready checks.
      *
      * @return array{raw: array{sharpnessScore: ?float, exposureScore: float, shadowClipRatio: float, highlightClipRatio: float, contrastScore: float, compressionQuality: int|null, colorProfile: string|null}, checks: array}|null
      */
-    public static function analyze(Asset $asset): ?array
+    public static function analyze(AnalysisImageContext $context): ?array
     {
         if (!self::isAvailable()) {
             return null;
         }
 
-        $tempPath = null;
-        $imagick = null;
+        $asset = $context->asset;
+        $sourceImagick = $context->getImagick();
+        $tempPath = $context->getLocalPath();
+
+        if ($sourceImagick === null || $tempPath === null) {
+            return null;
+        }
+
+        $originalColorspace = $sourceImagick->getImageColorspace();
+        $workingClone = null;
 
         try {
-            $tempPath = $asset->getCopyOfFile();
-
-            if ($tempPath === null || !file_exists($tempPath)) {
-                return null;
-            }
-
-            $imagick = new Imagick($tempPath);
-
-            // Ensure we work in RGB colorspace for consistent metrics
-            $originalColorspace = $imagick->getImageColorspace();
+            // CMYK sources are converted to SRGB on a working clone so the
+            // shared context handle stays untouched for downstream consumers.
             if ($originalColorspace === Imagick::COLORSPACE_CMYK) {
-                $imagick->transformImageColorspace(Imagick::COLORSPACE_SRGB);
+                $workingClone = clone $sourceImagick;
+                $workingClone->transformImageColorspace(Imagick::COLORSPACE_SRGB);
+                $imagick = $workingClone;
+            } else {
+                $imagick = $sourceImagick;
             }
 
             $brightness = self::measureBrightness($imagick);
@@ -99,8 +103,8 @@ class ImageMetricsAnalyzer
                 'shadowClipRatio' => $brightness['shadowClipRatio'],
                 'highlightClipRatio' => $brightness['highlightClipRatio'],
                 'contrastScore' => self::measureContrast($imagick),
-                'compressionQuality' => self::measureCompressionQuality($imagick, $asset, $tempPath),
-                'colorProfile' => self::detectColorProfile($imagick, $originalColorspace),
+                'compressionQuality' => self::measureCompressionQuality($sourceImagick, $asset, $tempPath),
+                'colorProfile' => self::detectColorProfile($sourceImagick, $originalColorspace),
             ];
 
             return [
@@ -116,11 +120,7 @@ class ImageMetricsAnalyzer
 
             return null;
         } finally {
-            $imagick?->clear();
-
-            if ($tempPath !== null && file_exists($tempPath)) {
-                unlink($tempPath);
-            }
+            $workingClone?->clear();
         }
     }
 

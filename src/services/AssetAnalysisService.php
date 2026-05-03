@@ -9,9 +9,6 @@ use craft\elements\Asset;
 use craft\helpers\DateTimeHelper;
 use craft\helpers\ElementHelper;
 use craft\helpers\Queue;
-use GuzzleHttp\Pool;
-use GuzzleHttp\Promise\Create;
-use GuzzleHttp\Promise\PromiseInterface;
 use vitordiniz22\craftlens\dto\AnalysisResult;
 use vitordiniz22\craftlens\enums\AiProvider;
 use vitordiniz22\craftlens\enums\AnalysisStatus;
@@ -21,6 +18,7 @@ use vitordiniz22\craftlens\enums\WatermarkType;
 use vitordiniz22\craftlens\exceptions\AnalysisCancelledException;
 use vitordiniz22\craftlens\exceptions\AnalysisException;
 use vitordiniz22\craftlens\exceptions\ConfigurationException;
+use vitordiniz22\craftlens\helpers\AnalysisImageContext;
 use vitordiniz22\craftlens\helpers\AssetTitleHelper;
 use vitordiniz22\craftlens\helpers\DuplicateSupport;
 use vitordiniz22\craftlens\helpers\ImageMetricsAnalyzer;
@@ -31,7 +29,6 @@ use vitordiniz22\craftlens\jobs\AnalyzeAssetJob;
 use vitordiniz22\craftlens\jobs\BulkAnalyzeAssetsJob;
 use vitordiniz22\craftlens\models\Settings;
 use vitordiniz22\craftlens\Plugin;
-use vitordiniz22\craftlens\providers\BaseAiProvider;
 use vitordiniz22\craftlens\records\AssetAnalysisRecord;
 use vitordiniz22\craftlens\records\AssetTagRecord;
 use vitordiniz22\craftlens\records\DuplicateGroupRecord;
@@ -152,369 +149,58 @@ class AssetAnalysisService extends Component
     }
 
     /**
-     * Process a batch of assets concurrently, dispatching up to `$concurrency`
-     * AI requests in parallel through `\GuzzleHttp\Pool`.
-     *
-     * Each asset's record is set to `Processing` up front (cheap DB op).
-     * Per-asset preparation (Imagick metrics, language context) and the AI
-     * request itself run lazily as the pool opens slots, so memory stays
-     * bounded to roughly `$concurrency` in-flight image payloads.
-     *
-     * `$cancelSignal`, if provided, is consulted before each per-asset record
-     * save AND before each per-asset AI dispatch. When it returns true the
-     * remaining work is skipped — already-in-flight requests still drain to
-     * `assertNotCancelled` inside `finalizeImageAnalysis`, which rolls back
-     * any record that was deleted by the cancel handler.
-     *
-     * Falls back to sequential `processAsset()` calls if the configured
-     * provider is not a `BaseAiProvider` (custom third-party providers without
-     * the async hook).
-     *
-     * @param iterable<Asset> $assets
-     * @param (callable(): bool)|null $cancelSignal Returns true once the run is cancelled.
-     */
-    public function processAssetsConcurrent(iterable $assets, int $concurrency, ?callable $cancelSignal = null): void
-    {
-        $assetList = is_array($assets) ? array_values($assets) : iterator_to_array($assets, preserve_keys: false);
-
-        if (empty($assetList)) {
-            return;
-        }
-
-        $provider = Plugin::getInstance()->aiProvider->getDefaultProvider();
-
-        if (!($provider instanceof BaseAiProvider) || $concurrency < 2) {
-            foreach ($assetList as $asset) {
-                if ($cancelSignal !== null && $cancelSignal()) {
-                    return;
-                }
-                $this->processAsset($asset);
-            }
-            return;
-        }
-
-        $settings = $this->getSettings();
-
-        try {
-            $provider->validateCredentials($settings);
-        } catch (ConfigurationException $e) {
-            Logger::error(LogCategory::Configuration, "Provider credentials invalid: {$e->getMessage()}", exception: $e);
-            throw $e;
-        }
-
-        // Per-asset state, keyed by asset ID. Populated up front for the record
-        // transition; the heavy prep (Imagick + language lookup) happens lazily
-        // inside the promise factory below.
-        $contexts = [];
-        foreach ($assetList as $asset) {
-            // Halt mid-prep if cancel fires — otherwise we'd keep recreating
-            // Processing records that cancelProcessing() just deleted.
-            if ($cancelSignal !== null && $cancelSignal()) {
-                break;
-            }
-
-            try {
-                $record = $this->getOrCreateRecord($asset);
-                $previousStatus = $record->status;
-                $hadExistingData = $previousStatus === AnalysisStatus::Completed->value;
-                $record->status = AnalysisStatus::Processing->value;
-
-                if (!$record->save()) {
-                    throw new \RuntimeException(
-                        "Failed to save analysis record for asset {$asset->id}: " . implode(', ', $record->getErrorSummary(true))
-                    );
-                }
-
-                $contexts[$asset->id] = [
-                    'asset' => $asset,
-                    'record' => $record,
-                    'previousStatus' => $previousStatus,
-                    'hadExistingData' => $hadExistingData,
-                    'sites' => [],
-                    'localMetrics' => null,
-                ];
-            } catch (\Throwable $e) {
-                Logger::error(
-                    LogCategory::AssetProcessing,
-                    "Failed to prepare asset {$asset->id} for concurrent analysis: {$e->getMessage()}",
-                    $asset->id,
-                    $e,
-                );
-            }
-        }
-
-        if (empty($contexts)) {
-            return;
-        }
-
-        // Snapshot keys before iteration. The generator yields lazily and the
-        // fulfilled/rejected handlers unset entries from $contexts as work
-        // completes — iterating $contexts directly would be undefined.
-        $assetIds = array_keys($contexts);
-        $service = $this;
-
-        $dispatch = static function (int $assetId) use (&$contexts, $provider, $settings): PromiseInterface {
-            if (!isset($contexts[$assetId])) {
-                return Create::promiseFor(null);
-            }
-
-            Plugin::getInstance()->analysisCancellation->assertNotCancelled($assetId);
-
-            $ctx = &$contexts[$assetId];
-            $asset = $ctx['asset'];
-
-            $primaryLanguage = MultisiteHelper::getPrimarySiteLanguage();
-            $additionalLanguages = MultisiteHelper::getAdditionalLanguages($asset);
-            $ctx['sites'] = MultisiteHelper::getSitesNeedingContent($asset);
-            $ctx['localMetrics'] = ImageMetricsAnalyzer::analyze($asset);
-
-            return $provider->analyzeAsync($asset, $settings, $primaryLanguage, $additionalLanguages);
-        };
-
-        $onSuccess = function (int $assetId, AnalysisResult $result) use (&$contexts, $service): void {
-            if (!isset($contexts[$assetId])) {
-                return;
-            }
-
-            $ctx = $contexts[$assetId];
-            unset($contexts[$assetId]);
-
-            try {
-                $service->finalizeImageAnalysisFromPool(
-                    $ctx['asset'],
-                    $ctx['record'],
-                    $result,
-                    $ctx['sites'],
-                    $ctx['localMetrics'],
-                );
-            } catch (AnalysisCancelledException) {
-                Logger::info(
-                    LogCategory::Cancellation,
-                    "Analysis cancelled for asset {$ctx['asset']->id}",
-                    assetId: $ctx['asset']->id,
-                );
-            } catch (\Throwable $e) {
-                $service->handleConcurrentFailure($ctx, $e);
-            }
-        };
-
-        $onFailure = function (int $assetId, \Throwable $reason) use (&$contexts, $service): void {
-            if (!isset($contexts[$assetId])) {
-                return;
-            }
-
-            $ctx = $contexts[$assetId];
-            unset($contexts[$assetId]);
-
-            if ($reason instanceof AnalysisCancelledException) {
-                Logger::info(
-                    LogCategory::Cancellation,
-                    "Analysis cancelled for asset {$ctx['asset']->id}",
-                    assetId: $ctx['asset']->id,
-                );
-                return;
-            }
-
-            $service->handleConcurrentFailure($ctx, $reason);
-        };
-
-        $this->runAnalysisPool($provider, $assetIds, $concurrency, $cancelSignal, $dispatch, $onSuccess, $onFailure);
-    }
-
-    /**
-     * Drive a `\GuzzleHttp\Pool` over a list of asset IDs.
-     *
-     * Wraps each yielded callable with cancel-signal honoring and a try/catch
-     * that converts thrown exceptions into rejected promises so the Pool's
-     * `rejected` handler always sees them.
-     *
-     * @param int[] $assetIds
-     * @param (callable(): bool)|null $cancelSignal
-     * @param callable(int): PromiseInterface $dispatch          Per-asset promise builder.
-     * @param callable(int, AnalysisResult): void $onSuccess     Per-asset success sink.
-     * @param callable(int, \Throwable): void $onFailure         Per-asset failure sink.
-     */
-    private function runAnalysisPool(
-        BaseAiProvider $provider,
-        array $assetIds,
-        int $concurrency,
-        ?callable $cancelSignal,
-        callable $dispatch,
-        callable $onSuccess,
-        callable $onFailure,
-    ): void {
-        $promiseFactory = function () use ($assetIds, $cancelSignal, $dispatch) {
-            foreach ($assetIds as $assetId) {
-                yield $assetId => static function (array $opts = []) use ($assetId, $cancelSignal, $dispatch): PromiseInterface {
-                    if ($cancelSignal !== null && $cancelSignal()) {
-                        return Create::rejectionFor(new AnalysisCancelledException(
-                            "Run cancelled before dispatching asset {$assetId}"
-                        ));
-                    }
-
-                    try {
-                        return $dispatch($assetId);
-                    } catch (\Throwable $e) {
-                        return Create::rejectionFor($e);
-                    }
-                };
-            }
-        };
-
-        $pool = new Pool($provider->getHttpClient(), $promiseFactory(), [
-            'concurrency' => $concurrency,
-            'fulfilled' => static function ($result, $assetId) use ($onSuccess): void {
-                if ($result instanceof AnalysisResult) {
-                    $onSuccess($assetId, $result);
-                }
-            },
-            'rejected' => static function ($reason, $assetId) use ($onFailure): void {
-                $onFailure(
-                    $assetId,
-                    $reason instanceof \Throwable ? $reason : new \RuntimeException((string) $reason),
-                );
-            },
-        ]);
-
-        $pool->promise()->wait();
-    }
-
-    /**
-     * Process a batch of assets concurrently to extract ONLY the Pro-only
-     * metadata fields (`longDescription`, AI tags, `extractedText`) for
-     * records that were originally analyzed under Lite. Existing fields are
-     * untouched; cost/tokens accumulate into the existing record values.
+     * Backfill Pro-only metadata (`longDescription`, AI tags, `extractedText`)
+     * onto an asset whose record was originally analyzed under Lite.
      *
      * Records keep their `Completed` status throughout — this is a backfill,
-     * not a re-analysis. Per-asset failures are logged but do not change
-     * record status (the record's prior data is still valid and the user
-     * can re-run the sync to pick them up).
-     *
-     * @param iterable<Asset> $assets
-     * @param (callable(): bool)|null $cancelSignal Returns true once the run is cancelled.
+     * not a re-analysis. The single-asset shape mirrors `processAsset`: build
+     * one image context, hit the provider once, apply, log timing.
      */
-    public function processAssetsForProCompletion(iterable $assets, int $concurrency, ?callable $cancelSignal = null): void
+    public function processAssetForProCompletion(Asset $asset): void
     {
-        $assetList = is_array($assets) ? array_values($assets) : iterator_to_array($assets, preserve_keys: false);
+        $record = $this->getAnalysis($asset->id);
 
-        if (empty($assetList)) {
-            return;
-        }
-
-        $provider = Plugin::getInstance()->aiProvider->getDefaultProvider();
-        $settings = $this->getSettings();
-
-        if (!($provider instanceof BaseAiProvider) || $concurrency < 2) {
-            foreach ($assetList as $asset) {
-                if ($cancelSignal !== null && $cancelSignal()) {
-                    return;
-                }
-                $record = $this->getAnalysis($asset->id);
-                if ($record === null || !empty($record->longDescriptionAi)) {
-                    continue;
-                }
-                try {
-                    $primaryLanguage = MultisiteHelper::getPrimarySiteLanguage();
-                    $result = $provider instanceof BaseAiProvider
-                        ? $provider->analyzeProCompletionAsync($asset, $settings, $primaryLanguage)->wait()
-                        : Plugin::getInstance()->aiProvider->analyzeAsset($asset, $primaryLanguage);
-                    $this->applyProCompletionResult($asset, $record, $result);
-                } catch (\Throwable $e) {
-                    Logger::error(
-                        LogCategory::AssetProcessing,
-                        "Pro completion failed for asset {$asset->id}: {$e->getMessage()}",
-                        $asset->id,
-                        $e,
-                    );
-                }
-            }
+        if ($record === null || !empty($record->longDescriptionAi)) {
             return;
         }
 
         try {
-            $provider->validateCredentials($settings);
-        } catch (ConfigurationException $e) {
-            Logger::error(LogCategory::Configuration, "Provider credentials invalid: {$e->getMessage()}", exception: $e);
-            throw $e;
-        }
+            $context = new AnalysisImageContext($asset);
+            $primaryLanguage = MultisiteHelper::getPrimarySiteLanguage();
 
-        // Index records by asset ID. No status transition — they stay Completed.
-        // Skip any asset whose record has been filled since the controller queued
-        // the job (race protection at intake).
-        $records = [];
-        foreach ($assetList as $asset) {
-            if ($cancelSignal !== null && $cancelSignal()) {
-                break;
-            }
-            $record = $this->getAnalysis($asset->id);
-            if ($record === null || !empty($record->longDescriptionAi)) {
-                continue;
-            }
-            $records[$asset->id] = ['asset' => $asset, 'record' => $record];
-        }
+            $aiStart = hrtime(true);
+            $result = Plugin::getInstance()->aiProvider->analyzeAssetProCompletion($context, $primaryLanguage);
+            $aiMs = (int) round((hrtime(true) - $aiStart) / 1_000_000);
 
-        if (empty($records)) {
-            return;
-        }
+            $applyStart = hrtime(true);
+            $this->applyProCompletionResult($asset, $record, $result);
+            $applyMs = (int) round((hrtime(true) - $applyStart) / 1_000_000);
 
-        $assetIds = array_keys($records);
-        $primaryLanguage = MultisiteHelper::getPrimarySiteLanguage();
-        $service = $this;
-
-        $dispatch = static function (int $assetId) use (&$records, $provider, $settings, $primaryLanguage): PromiseInterface {
-            if (!isset($records[$assetId])) {
-                return Create::promiseFor(null);
-            }
-            $asset = $records[$assetId]['asset'];
-            return $provider->analyzeProCompletionAsync($asset, $settings, $primaryLanguage);
-        };
-
-        $onSuccess = function (int $assetId, AnalysisResult $result) use (&$records, $service): void {
-            if (!isset($records[$assetId])) {
-                return;
-            }
-            $entry = $records[$assetId];
-            unset($records[$assetId]);
-            try {
-                $service->applyProCompletionResult($entry['asset'], $entry['record'], $result);
-            } catch (\Throwable $e) {
-                Logger::error(
-                    LogCategory::AssetProcessing,
-                    "Pro completion finalize failed for asset {$entry['asset']->id}: {$e->getMessage()}",
-                    $entry['asset']->id,
-                    $e,
-                );
-            }
-        };
-
-        $onFailure = static function (int $assetId, \Throwable $reason) use (&$records): void {
-            if (!isset($records[$assetId])) {
-                return;
-            }
-            $entry = $records[$assetId];
-            unset($records[$assetId]);
-
-            if ($reason instanceof AnalysisCancelledException) {
-                Logger::info(
-                    LogCategory::Cancellation,
-                    "Pro completion cancelled for asset {$entry['asset']->id}",
-                    assetId: $entry['asset']->id,
-                );
-                return;
-            }
-
-            // No status flip: the record's existing data is still valid.
-            // The asset will simply remain a candidate for the next sync run.
-            $message = $reason instanceof AnalysisException ? $reason->getUserMessage() : $reason->getMessage();
+            Logger::info(
+                LogCategory::AssetProcessing,
+                'Pro completion timing',
+                assetId: $asset->id,
+                context: [
+                    'aiMs' => $aiMs,
+                    'applyMs' => $applyMs,
+                    'totalMs' => $aiMs + $applyMs,
+                ],
+            );
+        } catch (AnalysisCancelledException) {
+            Logger::info(
+                LogCategory::Cancellation,
+                "Pro completion cancelled for asset {$asset->id}",
+                assetId: $asset->id,
+            );
+        } catch (\Throwable $e) {
+            $message = $e instanceof AnalysisException ? $e->getUserMessage() : $e->getMessage();
             Logger::error(
                 LogCategory::AssetProcessing,
-                "Pro completion failed for asset {$entry['asset']->id}: {$message}",
-                $entry['asset']->id,
-                $reason,
+                "Pro completion failed for asset {$asset->id}: {$message}",
+                $asset->id,
+                $e,
             );
-        };
-
-        $this->runAnalysisPool($provider, $assetIds, $concurrency, $cancelSignal, $dispatch, $onSuccess, $onFailure);
+        }
     }
 
     /**
@@ -590,54 +276,6 @@ class AssetAnalysisService extends Component
                 assetId: $asset->id,
             );
         }
-    }
-
-    /**
-     * Bridge for the Pool's `fulfilled` callback to reach the private
-     * `finalizeImageAnalysis` helper. Kept on this class (not exposed as a
-     * top-level public API) since it relies on per-asset context the Pool
-     * carries forward.
-     */
-    public function finalizeImageAnalysisFromPool(
-        Asset $asset,
-        AssetAnalysisRecord $record,
-        AnalysisResult $result,
-        array $sites,
-        ?array $localMetrics,
-    ): void {
-        $this->finalizeImageAnalysis($asset, $record, $result, $sites, $localMetrics);
-    }
-
-    /**
-     * Surface a concurrent-path failure through the same status/error pipeline
-     * the synchronous path uses.
-     *
-     * @param array{record: AssetAnalysisRecord, previousStatus: ?string, hadExistingData: bool, asset: Asset} $ctx
-     */
-    public function handleConcurrentFailure(array $ctx, \Throwable $reason): void
-    {
-        if ($reason instanceof AnalysisException) {
-            $userMessage = $reason->getUserMessage();
-            $errorCode = $reason->errorCode ?? ErrorCode::Unknown;
-        } else {
-            $userMessage = 'Analysis failed due to an unexpected error. Please try again later or contact support.';
-            $errorCode = ErrorCode::Unknown;
-        }
-
-        $this->handleAnalysisFailure(
-            $ctx['record'],
-            $ctx['previousStatus'],
-            $ctx['hadExistingData'],
-            $userMessage,
-            $errorCode,
-        );
-
-        Logger::error(
-            LogCategory::AssetProcessing,
-            "Concurrent analysis failed for asset {$ctx['asset']->id}: {$reason->getMessage()}",
-            $ctx['asset']->id,
-            $reason,
-        );
     }
 
     /**
@@ -801,10 +439,10 @@ class AssetAnalysisService extends Component
         }
 
         $existingRecord = $this->getAnalysis($asset->id);
-        $newHash = $this->computeFileContentHash($asset);
+        $newHash = (new AnalysisImageContext($asset))->getFileContentHash();
 
         // Skip if content hasn't actually changed
-        if ($existingRecord?->fileContentHash === $newHash) {
+        if ($newHash !== null && $existingRecord?->fileContentHash === $newHash) {
             Logger::info(
                 LogCategory::AssetProcessing,
                 "Skipping reprocess for asset {$asset->id}: file content unchanged",
@@ -820,22 +458,6 @@ class AssetAnalysisService extends Component
             "Queued asset {$asset->id} for reprocessing due to file replacement",
             $asset->id,
         );
-    }
-
-    /**
-     * Compute SHA-256 hash of asset file content.
-     */
-    public function computeFileContentHash(Asset $asset): string
-    {
-        $tempPath = $asset->getCopyOfFile();
-
-        try {
-            return hash_file('sha256', $tempPath);
-        } finally {
-            if (file_exists($tempPath)) {
-                unlink($tempPath);
-            }
-        }
     }
 
     /**
@@ -856,18 +478,27 @@ class AssetAnalysisService extends Component
 
     /**
      * Get count of unprocessed assets: images with no analysis record, or with
-     * a status in AnalysisStatus::unprocessedStatuses().
+     * a status in AnalysisStatus::unprocessedStatuses(). Optionally scoped to
+     * one or more volumes — pass `getEnabledVolumeIds()` here when displaying
+     * counts that should match the bulk processing UI.
+     *
+     * @param int|int[]|null $volumeId
      */
-    public function getUnprocessedCount(): int
+    public function getUnprocessedCount(null|int|array $volumeId = null): int
     {
         $handledSubQuery = AssetAnalysisRecord::find()
             ->select('assetId')
             ->where(['not in', 'status', AnalysisStatus::unprocessedStatuses()]);
 
-        return (int) Asset::find()
+        $query = Asset::find()
             ->kind(Asset::KIND_IMAGE)
-            ->andWhere(['not in', 'elements.id', $handledSubQuery])
-            ->count();
+            ->andWhere(['not in', 'elements.id', $handledSubQuery]);
+
+        if ($volumeId !== null) {
+            $query->volumeId($volumeId);
+        }
+
+        return (int) $query->count();
     }
 
     /**
@@ -900,51 +531,70 @@ class AssetAnalysisService extends Component
 
     private function processImageAsset(Asset $asset, AssetAnalysisRecord $record): void
     {
-        // Determine language context for AI call
+        // One image context owns every read/decode for this asset:
+        // raw bytes (for preprocessing), local temp file (for SHA-256 + GD
+        // perceptual hash), and a single Imagick handle (for metrics).
+        $context = new AnalysisImageContext($asset);
+
         $primaryLanguage = MultisiteHelper::getPrimarySiteLanguage();
         $additionalLanguages = MultisiteHelper::getAdditionalLanguages($asset);
         $sites = MultisiteHelper::getSitesNeedingContent($asset);
 
-        // Local image quality analysis via Imagick (before AI to avoid holding temp file)
-        $localMetrics = ImageMetricsAnalyzer::analyze($asset);
+        $prepStart = hrtime(true);
+        $localMetrics = ImageMetricsAnalyzer::analyze($context);
+        $prepMs = (int) round((hrtime(true) - $prepStart) / 1_000_000);
 
-        // Checkpoint 1: abort before expensive AI call if cancelled
         Plugin::getInstance()->analysisCancellation->assertNotCancelled($asset->id);
 
-        // AI call is external HTTP — keep outside transaction to avoid long-held locks
-        $result = Plugin::getInstance()->aiProvider->analyzeAsset($asset, $primaryLanguage, $additionalLanguages);
+        $aiStart = hrtime(true);
+        $result = Plugin::getInstance()->aiProvider->analyzeAsset($context, $primaryLanguage, $additionalLanguages);
+        $aiMs = (int) round((hrtime(true) - $aiStart) / 1_000_000);
 
-        $this->finalizeImageAnalysis($asset, $record, $result, $sites, $localMetrics);
+        $finalizeStart = hrtime(true);
+        $this->finalizeImageAnalysis($context, $record, $result, $sites, $localMetrics);
+        $finalizeMs = (int) round((hrtime(true) - $finalizeStart) / 1_000_000);
+
+        Logger::info(
+            LogCategory::AssetProcessing,
+            'Asset analysis timing',
+            assetId: $asset->id,
+            context: [
+                'prepMs' => $prepMs,
+                'aiMs' => $aiMs,
+                'finalizeMs' => $finalizeMs,
+                'totalMs' => $prepMs + $aiMs + $finalizeMs,
+            ],
+        );
     }
 
     /**
-     * Apply an AI analysis result to the record, run all post-AI side effects,
-     * and finalize the record's status. Shared between the synchronous path
-     * (`processImageAsset`) and the concurrent path (`processAssetsConcurrent`).
+     * Apply an AI analysis result to the record and run every post-AI side
+     * effect: dual-write of editable fields, local Imagick metrics, content
+     * storage, Pro fields, per-site translations, perceptual hash, duplicate
+     * detection, search index, native-field auto-apply.
      *
      * @param array<int, array{siteId: int, language: string, ...}> $sites Sites needing translated content
      * @param array{raw: array<string, mixed>, ...}|null $localMetrics Result of `ImageMetricsAnalyzer::analyze()`
      */
     private function finalizeImageAnalysis(
-        Asset $asset,
+        AnalysisImageContext $context,
         AssetAnalysisRecord $record,
         AnalysisResult $result,
         array $sites,
         ?array $localMetrics,
     ): void {
+        $asset = $context->asset;
         $settings = $this->getSettings();
         $providerModel = $this->getProviderModel();
         $contentStorage = $this->getContentStorage();
-        $fileContentHash = $this->computeFileContentHash($asset);
+        $fileContentHash = $context->getFileContentHash();
 
         // Wrap all DB writes in a transaction so a mid-way failure doesn't leave partial data
         $transaction = Craft::$app->getDb()->beginTransaction();
 
         try {
-            // Checkpoint 2: abort before committing results if cancelled
             Plugin::getInstance()->analysisCancellation->assertNotCancelled($asset->id);
 
-            // Apply AI results with dual-write pattern (respects user edits)
             $record->status = AnalysisStatus::Completed->value;
             $record->previousStatus = null;
             $record->queueJobId = null;
@@ -955,7 +605,6 @@ class AssetAnalysisService extends Component
             $record->actualCost = $this->calculateActualCost($result, $settings, $providerModel);
             $this->applyAiResultToRecord($record, $result);
 
-            // Apply local Imagick metrics (overwrites AI quality scores with reliable local data)
             if ($localMetrics !== null) {
                 $record->sharpnessScore = $localMetrics['raw']['sharpnessScore'];
                 $record->exposureScore = $localMetrics['raw']['exposureScore'];
@@ -985,7 +634,6 @@ class AssetAnalysisService extends Component
                 $this->syncTagsFromAiResult($record, $result->tags);
             }
 
-            // Save per-site content (translated alt text and title for non-primary sites)
             if (!empty($sites) && !empty($result->siteContent)) {
                 $volumeId = $asset->getVolume()->id;
                 Plugin::getInstance()->siteContent->saveFromAnalysisResult(
@@ -997,7 +645,7 @@ class AssetAnalysisService extends Component
                 );
             }
 
-            $this->computePerceptualHash($asset, $record);
+            $this->computePerceptualHash($context, $record);
             $this->findDuplicatesForAsset($asset, $record);
 
             $transaction->commit();
@@ -1021,12 +669,52 @@ class AssetAnalysisService extends Component
             Logger::warning(LogCategory::AssetProcessing, 'Search index update failed (non-fatal): ' . $e->getMessage(), assetId: $asset->id);
         }
 
-        // Auto-apply title, alt text and focal point when asset fields are empty/meaningless
         try {
             $this->autoApplyEmptyNativeFields($asset, $result, $record->id);
         } catch (\Throwable $e) {
             Logger::warning(LogCategory::AssetProcessing, 'Auto-apply empty fields failed (non-fatal): ' . $e->getMessage(), assetId: $asset->id);
         }
+    }
+
+    /**
+     * Stamp an analysis record as Pending and return it. Used by the bulk
+     * dispatcher to mark each asset as queued before enqueuing its
+     * `AnalyzeAssetJob`. Unlike `createPendingRecord`, this also flips
+     * Completed records back to Pending (used for reprocess flows).
+     */
+    public function createOrUpdatePendingRecord(Asset $asset, bool $resetTerminal = false): AssetAnalysisRecord
+    {
+        $record = $this->getAnalysis($asset->id);
+
+        if ($record !== null) {
+            if ($resetTerminal && $record->status !== AnalysisStatus::Pending->value) {
+                $record->previousStatus = $record->status;
+                $record->status = AnalysisStatus::Pending->value;
+                $record->save();
+            } elseif (!in_array($record->status, [
+                AnalysisStatus::Processing->value,
+                AnalysisStatus::Completed->value,
+            ], true)) {
+                $record->status = AnalysisStatus::Pending->value;
+                $record->save();
+            }
+            return $record;
+        }
+
+        try {
+            $record = new AssetAnalysisRecord();
+            $record->assetId = $asset->id;
+            $record->status = AnalysisStatus::Pending->value;
+            $record->save();
+        } catch (IntegrityException) {
+            $record = $this->getAnalysis($asset->id);
+
+            if ($record === null) {
+                throw new \RuntimeException("Failed to create or find analysis record for asset {$asset->id}");
+            }
+        }
+
+        return $record;
     }
 
     private function createPendingRecord(Asset $asset): AssetAnalysisRecord
@@ -1072,8 +760,10 @@ class AssetAnalysisService extends Component
         return $record;
     }
 
-private function computePerceptualHash(Asset $asset, AssetAnalysisRecord $record): void
+    private function computePerceptualHash(AnalysisImageContext $context, AssetAnalysisRecord $record): void
     {
+        $asset = $context->asset;
+
         if ($asset->kind !== Asset::KIND_IMAGE) {
             return;
         }
@@ -1082,28 +772,25 @@ private function computePerceptualHash(Asset $asset, AssetAnalysisRecord $record
             return;
         }
 
-        $tempPath = $asset->getCopyOfFile();
+        $localPath = $context->getLocalPath();
 
-        try {
-            $newHash = PerceptualHashHelper::compute($tempPath);
-
-            // If hash changed, clear existing duplicate group records
-            // They will be regenerated on next duplicate scan
-            if ($record->perceptualHash !== null && $record->perceptualHash !== $newHash) {
-                DuplicateGroupRecord::deleteAll([
-                    'or',
-                    ['canonicalAssetId' => $asset->id],
-                    ['duplicateAssetId' => $asset->id],
-                ]);
-            }
-
-            $record->perceptualHash = $newHash;
-            $record->save();
-        } finally {
-            if (file_exists($tempPath)) {
-                unlink($tempPath);
-            }
+        if ($localPath === null) {
+            return;
         }
+
+        $newHash = PerceptualHashHelper::compute($localPath);
+
+        // If hash changed, clear existing duplicate pairs; they regenerate on the next scan.
+        if ($record->perceptualHash !== null && $record->perceptualHash !== $newHash) {
+            DuplicateGroupRecord::deleteAll([
+                'or',
+                ['canonicalAssetId' => $asset->id],
+                ['duplicateAssetId' => $asset->id],
+            ]);
+        }
+
+        $record->perceptualHash = $newHash;
+        $record->save();
     }
 
     private function findDuplicatesForAsset(Asset $asset, AssetAnalysisRecord $record): void

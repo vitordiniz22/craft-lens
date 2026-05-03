@@ -42,6 +42,13 @@ Multi-provider by design: bring your own API key for **OpenAI**, **Google Gemini
 - **Long descriptions** `[Pro]` that give images rich context and feed the search index for better discoverability
 - **Semantic tags** `[Pro]` that actually describe what's in the image, 35-40 per asset, each scored by confidence
 
+### Editorial Control
+
+- **Inline editing** for every AI-generated field on the asset edit page: alt text, titles, descriptions, tags, focal points, and detection flags (people, NSFW, watermark, brand)
+- **Custom tags** added by editors live alongside AI tags, with autocomplete from tags already in your library
+- **Revert to AI** restores any field to its original AI value in one click
+- **Edits survive re-analysis**: re-running an asset only overwrites AI-only output, never the corrections you've made
+
 ### Content Detection
 
 - **Faces and people** with 6-tier detection: no people, people without visible faces, individual, duo, small group, large group

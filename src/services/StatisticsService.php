@@ -109,7 +109,9 @@ class StatisticsService extends Component
 
     private function getUnprocessedCount(): int
     {
-        return Plugin::getInstance()->assetAnalysis->getUnprocessedCount();
+        $volumeIds = Plugin::getInstance()->getSettings()->getEnabledVolumeIds();
+
+        return Plugin::getInstance()->assetAnalysis->getUnprocessedCount($volumeIds ?: null);
     }
 
     public function getFailedCount(): int

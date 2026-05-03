@@ -10,14 +10,13 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Promise\Create;
-use GuzzleHttp\Promise\PromiseInterface;
 use Psr\Http\Message\ResponseInterface;
 use vitordiniz22\craftlens\dto\AnalysisResult;
 use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\enums\LogLevel;
 use vitordiniz22\craftlens\exceptions\AnalysisException;
 use vitordiniz22\craftlens\exceptions\ConfigurationException;
+use vitordiniz22\craftlens\helpers\AnalysisImageContext;
 use vitordiniz22\craftlens\helpers\ImagePreprocessor;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\helpers\PreprocessResult;
@@ -86,8 +85,7 @@ abstract class BaseAiProvider implements AiProviderInterface
      * Build the provider-specific HTTP request specification.
      *
      * Returns an array describing the outgoing request and how to parse a
-     * successful response. The same spec is consumed by both the synchronous
-     * path (`sendRequest`) and the concurrent path (`analyzeAsync`).
+     * successful response.
      *
      * @param array{base64: string, mimeType: string} $imageData
      * @return array{method: string, url: string, options: array<string, mixed>, parseResponse: \Closure(ResponseInterface, int): array}
@@ -116,83 +114,40 @@ abstract class BaseAiProvider implements AiProviderInterface
     }
 
     /**
-     * Returns the underlying Guzzle client.
-     *
-     * Exposed so the bulk concurrent path can drive a `\GuzzleHttp\Pool` against
-     * the same client instance the synchronous path uses.
-     */
-    public function getHttpClient(): Client
-    {
-        return $this->client;
-    }
-
-    /**
      * Analyze an image asset using this provider's API.
      */
     final public function analyze(
-        Asset $asset,
+        AnalysisImageContext $context,
         Settings $settings,
         string $primaryLanguage,
         array $additionalLanguages = [],
     ): AnalysisResult {
         $this->validateCredentials($settings);
 
-        $imageData = $this->getBase64ImageData($asset);
+        $imageData = $this->getBase64ImageData($context);
         $prompt = $this->buildPrompt($primaryLanguage, $additionalLanguages);
-        $response = $this->sendRequest($settings, $imageData, $prompt, $asset->id);
+        $response = $this->sendRequest($settings, $imageData, $prompt, $context->asset->id);
 
         return $this->parseResponse($response);
     }
 
     /**
-     * Asynchronously analyze an image asset, returning a promise that resolves
-     * to an `AnalysisResult`.
-     *
-     * Used by the bulk concurrent path to fan out N requests at once via
-     * `\GuzzleHttp\Pool`. Local prep (image preprocessing, prompt build) runs
-     * eagerly when the promise is created — the pool throttles how many
-     * promises are active by invoking the factory callable lazily.
+     * Request only the Pro-only metadata fields for an asset whose existing
+     * analysis is missing them. Same retry/error semantics as `analyze` —
+     * only the prompt differs.
      */
-    final public function analyzeAsync(
-        Asset $asset,
+    final public function analyzeProCompletion(
+        AnalysisImageContext $context,
         Settings $settings,
         string $primaryLanguage,
-        array $additionalLanguages = [],
-    ): PromiseInterface {
-        try {
-            $this->validateCredentials($settings);
-            $imageData = $this->getBase64ImageData($asset);
-            $prompt = $this->buildPrompt($primaryLanguage, $additionalLanguages);
-            $spec = $this->buildHttpRequest($settings, $imageData, $prompt, $asset->id);
-        } catch (\Throwable $e) {
-            return Create::rejectionFor($e);
-        }
+    ): AnalysisResult {
+        $this->validateCredentials($settings);
 
-        return $this->dispatchAsyncRequest($spec, $asset->id, 0)
-            ->then(fn(array $response) => $this->parseResponse($response));
-    }
+        $imageData = $this->getBase64ImageData($context);
+        $prompt = $this->buildProCompletionPrompt($primaryLanguage);
+        $response = $this->sendRequest($settings, $imageData, $prompt, $context->asset->id);
 
-    /**
-     * Asynchronously request only the Pro-only metadata fields for an asset
-     * whose existing analysis is missing them. Same retry/Pool semantics as
-     * `analyzeAsync` — only the prompt differs.
-     */
-    final public function analyzeProCompletionAsync(
-        Asset $asset,
-        Settings $settings,
-        string $primaryLanguage,
-    ): PromiseInterface {
-        try {
-            $this->validateCredentials($settings);
-            $imageData = $this->getBase64ImageData($asset);
-            $prompt = $this->buildProCompletionPrompt($primaryLanguage);
-            $spec = $this->buildHttpRequest($settings, $imageData, $prompt, $asset->id);
-        } catch (\Throwable $e) {
-            return Create::rejectionFor($e);
-        }
-
-        return $this->dispatchAsyncRequest($spec, $asset->id, 0)
-            ->then(fn(array $response) => $this->parseResponse($response));
+        return $this->parseResponse($response);
     }
 
     /**
@@ -535,13 +490,14 @@ abstract class BaseAiProvider implements AiProviderInterface
     }
 
     /**
-     * Get base64-encoded image data from an asset.
+     * Get base64-encoded image data from the shared analysis context.
      *
      * @return array{base64: string, mimeType: string}
      * @throws AnalysisException
      */
-    protected function getBase64ImageData(Asset $asset): array
+    protected function getBase64ImageData(AnalysisImageContext $context): array
     {
+        $asset = $context->asset;
         $fileSize = $asset->size;
         $maxSize = $this->getMaxFileSizeBytes();
 
@@ -557,7 +513,7 @@ abstract class BaseAiProvider implements AiProviderInterface
             );
         }
 
-        $result = ImagePreprocessor::preprocess($asset);
+        $result = ImagePreprocessor::preprocess($context);
 
         if ($result->bytes === '') {
             throw AnalysisException::assetNotReadable($asset->id);
@@ -729,147 +685,6 @@ abstract class BaseAiProvider implements AiProviderInterface
             ? $this->sanitizeErrorMessage($lastException->getMessage())
             : 'Request failed after retries';
         throw AnalysisException::apiError($this->getDisplayName(), $errorMessage, $assetId);
-    }
-
-    /**
-     * Dispatch a request asynchronously, with retry semantics mirroring
-     * `executeApiRequest`. Returns a promise that resolves to the parsed body
-     * or rejects with an `AnalysisException`.
-     *
-     * Backoff between retries is non-blocking: the next attempt is dispatched
-     * immediately with Guzzle's `delay` request option set, so the cURL
-     * multi-handler defers just that one request while every other in-flight
-     * pool request keeps progressing.
-     *
-     * @param array{method: string, url: string, options: array<string, mixed>, parseResponse: \Closure(ResponseInterface, int): array} $spec
-     */
-    private function dispatchAsyncRequest(array $spec, int $assetId, int $attempt): PromiseInterface
-    {
-        $startTime = hrtime(true);
-
-        return $this->client->requestAsync($spec['method'], $spec['url'], $spec['options'])->then(
-            fn(ResponseInterface $response) => ($spec['parseResponse'])($response, $startTime),
-            function (\Throwable $reason) use ($spec, $assetId, $attempt, $startTime) {
-                return $this->handleAsyncFailure($reason, $spec, $assetId, $attempt, $startTime);
-            },
-        );
-    }
-
-    /**
-     * Returns a copy of the request spec with the Guzzle `delay` option set
-     * to `$delaySeconds * 1000` ms. The cURL multi-handler holds the request
-     * for that long before sending, without blocking the event loop.
-     *
-     * @param array{method: string, url: string, options: array<string, mixed>, parseResponse: \Closure(ResponseInterface, int): array} $spec
-     * @return array{method: string, url: string, options: array<string, mixed>, parseResponse: \Closure(ResponseInterface, int): array}
-     */
-    private function withRequestDelay(array $spec, int $delaySeconds): array
-    {
-        $spec['options']['delay'] = max(0, $delaySeconds) * 1000;
-
-        return $spec;
-    }
-
-    /**
-     * Handle a rejected async request: retry on transient errors, otherwise
-     * map to an `AnalysisException` and rethrow.
-     *
-     * @param array{method: string, url: string, options: array<string, mixed>, parseResponse: \Closure(ResponseInterface, int): array} $spec
-     */
-    private function handleAsyncFailure(
-        \Throwable $reason,
-        array $spec,
-        int $assetId,
-        int $attempt,
-        int $startTime,
-    ): PromiseInterface {
-        $elapsed = (int) ((hrtime(true) - $startTime) / 1_000_000);
-
-        if ($reason instanceof ConnectException) {
-            $sanitizedMessage = $this->sanitizeErrorMessage($reason->getMessage());
-
-            if ($attempt < self::MAX_RETRIES) {
-                $delay = (int) (2 ** ($attempt + 1));
-                Logger::apiCall(
-                    provider: $this->getName(),
-                    message: 'Connection failed, attempt ' . ($attempt + 1) . '/' . (self::MAX_RETRIES + 1) . " - retrying in {$delay}s: {$sanitizedMessage}",
-                    assetId: $assetId,
-                    responseTimeMs: $elapsed,
-                    httpStatusCode: null,
-                    level: LogLevel::Warning->value,
-                );
-                return $this->dispatchAsyncRequest($this->withRequestDelay($spec, $delay), $assetId, $attempt + 1);
-            }
-
-            Logger::apiCall(
-                provider: $this->getName(),
-                message: 'Connection failed: ' . $sanitizedMessage,
-                assetId: $assetId,
-                responseTimeMs: $elapsed,
-                httpStatusCode: null,
-                level: LogLevel::Error->value,
-            );
-
-            return Create::rejectionFor(AnalysisException::apiError(
-                $this->getDisplayName(),
-                'Connection failed: ' . $sanitizedMessage,
-                $assetId,
-            ));
-        }
-
-        if ($reason instanceof RequestException) {
-            $statusCode = $reason->hasResponse() ? $reason->getResponse()->getStatusCode() : null;
-            $errorMessage = $this->extractErrorMessage($reason) ?? $this->getDefaultErrorMessage($statusCode);
-
-            if ($statusCode !== null && in_array($statusCode, self::RETRYABLE_STATUS_CODES, true) && $attempt < self::MAX_RETRIES) {
-                $delay = $this->getRetryDelay($reason, $attempt);
-                Logger::apiCall(
-                    provider: $this->getName(),
-                    message: "Retryable error (HTTP {$statusCode}), attempt " . ($attempt + 1) . '/' . (self::MAX_RETRIES + 1) . " - retrying in {$delay}s: {$errorMessage}",
-                    assetId: $assetId,
-                    responseTimeMs: $elapsed,
-                    httpStatusCode: $statusCode,
-                    level: LogLevel::Warning->value,
-                );
-                return $this->dispatchAsyncRequest($this->withRequestDelay($spec, $delay), $assetId, $attempt + 1);
-            }
-
-            Logger::apiCall(
-                provider: $this->getName(),
-                message: $errorMessage,
-                assetId: $assetId,
-                responseTimeMs: $elapsed,
-                httpStatusCode: $statusCode,
-                level: LogLevel::Error->value,
-            );
-
-            return Create::rejectionFor(AnalysisException::apiError(
-                $this->getDisplayName(),
-                $errorMessage,
-                $assetId,
-                $statusCode,
-            ));
-        }
-
-        if ($reason instanceof GuzzleException) {
-            $sanitizedMessage = $this->sanitizeErrorMessage($reason->getMessage());
-            Logger::apiCall(
-                provider: $this->getName(),
-                message: $sanitizedMessage,
-                assetId: $assetId,
-                responseTimeMs: $elapsed,
-                httpStatusCode: null,
-                level: LogLevel::Error->value,
-            );
-
-            return Create::rejectionFor(AnalysisException::apiError(
-                $this->getDisplayName(),
-                $sanitizedMessage,
-                $assetId,
-            ));
-        }
-
-        return Create::rejectionFor($reason);
     }
 
     /**
