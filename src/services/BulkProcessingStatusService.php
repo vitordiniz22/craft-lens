@@ -682,12 +682,21 @@ class BulkProcessingStatusService extends Component
                 );
             }
 
-            // Delete any remaining Processing records (these are non-retried
-            // assets that were mid-flight when cancelled) so they become truly
-            // unprocessed and will be picked up by the next bulk run.
-            AssetAnalysisRecord::deleteAll(
-                ['status' => AnalysisStatus::Processing->value]
-            );
+            // Delete any remaining Pending/Processing records — they're orphans
+            // now that the queue rows are gone. Without this, assets the dispatcher
+            // had already stamped Pending would render "Awaiting Analysis" forever
+            // even though no job is left to process them. The retry-failed assets
+            // restored above are excluded.
+            $orphanCondition = [
+                'and',
+                ['in', 'status', [AnalysisStatus::Pending->value, AnalysisStatus::Processing->value]],
+            ];
+
+            if (!empty($retriedFailedAssetIds)) {
+                $orphanCondition[] = ['not in', 'assetId', $retriedFailedAssetIds];
+            }
+
+            AssetAnalysisRecord::deleteAll($orphanCondition);
         } catch (\Throwable $e) {
             Logger::error(LogCategory::AssetProcessing, 'Failed to cancel processing', exception: $e);
         }
