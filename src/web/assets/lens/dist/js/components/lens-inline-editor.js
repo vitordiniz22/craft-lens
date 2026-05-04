@@ -564,7 +564,7 @@
             var confidenceBadge = header.querySelector('[data-lens-target="confidence-badge"]');
             if (confidenceBadge) {
                 var badgeTooltip = confidenceBadge.closest('craft-tooltip');
-                (badgeTooltip || confidenceBadge).remove();
+                window.Lens.core.DOM.hide(badgeTooltip || confidenceBadge);
             }
 
             if (!header.querySelector('[data-lens-target="lock-icon"]')) {
@@ -595,6 +595,12 @@
             if (aiBadge) {
                 var aiBadgeTooltip = aiBadge.closest('craft-tooltip');
                 window.Lens.core.DOM.show(aiBadgeTooltip || aiBadge);
+            }
+
+            var confidenceBadge = fieldEl.querySelector('[data-lens-target="confidence-badge"]');
+            if (confidenceBadge) {
+                var badgeTooltip = confidenceBadge.closest('craft-tooltip');
+                window.Lens.core.DOM.show(badgeTooltip || confidenceBadge);
             }
         },
 
