@@ -261,6 +261,7 @@
                             );
                             this._updateBridgeAfterApply(btn, response.data.title);
                             this._syncNativeField('title', response.data.title);
+                            this._syncElementEditorTimestamp(btn, response.data.updatedTimestamp);
                         }
                     });
                 },
@@ -292,6 +293,7 @@
                             this._updateBridgeAfterApply(btn, response.data.alt);
                             this._updateProxyDisplayAfterApply(btn, response.data.alt);
                             this._syncNativeField('alt', response.data.alt);
+                            this._syncElementEditorTimestamp(btn, response.data.updatedTimestamp);
                         }
                     });
                 },
@@ -472,7 +474,6 @@
 
             if (input) {
                 input.value = value;
-                input.dispatchEvent(new Event('input', { bubbles: true }));
                 window.Lens.core.DOM.resetFormBaseline(input);
             }
 
@@ -517,10 +518,23 @@
                             Craft.cp.displayNotice(
                                 Craft.t('lens', 'Focal point applied to asset.'),
                             );
+                            this._syncElementEditorTimestamp(btn, response.data.updatedTimestamp);
                         }
                     });
                 },
             );
+        },
+
+        _syncElementEditorTimestamp: function (btn, updatedTimestamp) {
+            if (!updatedTimestamp || !window.jQuery) return;
+            var $form = window.jQuery(btn).closest('form');
+            var editor = $form.length ? $form.data('elementEditor') : null;
+            if (!editor) {
+                editor = window.jQuery('#main-form').data('elementEditor');
+            }
+            if (!editor || !editor.settings) return;
+            editor.settings.updatedTimestamp = updatedTimestamp;
+            editor.settings.canonicalUpdatedTimestamp = updatedTimestamp;
         },
 
         // ================================================================

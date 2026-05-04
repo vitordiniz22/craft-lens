@@ -132,6 +132,7 @@ class AnalysisController extends Controller
             return $this->asJson([
                 'success' => $success,
                 'title' => $title,
+                'updatedTimestamp' => $success ? $asset->dateUpdated?->getTimestamp() : null,
             ]);
         }
 
@@ -186,6 +187,7 @@ class AnalysisController extends Controller
             return $this->asJson([
                 'success' => $success,
                 'alt' => $altText,
+                'updatedTimestamp' => $success ? $asset->dateUpdated?->getTimestamp() : null,
             ]);
         }
 
@@ -249,6 +251,7 @@ class AnalysisController extends Controller
             return $this->asJson([
                 'success' => $success,
                 'focalPoint' => ['x' => $analysis->focalPointX, 'y' => $analysis->focalPointY],
+                'updatedTimestamp' => $success ? $asset->dateUpdated?->getTimestamp() : null,
             ]);
         }
 
