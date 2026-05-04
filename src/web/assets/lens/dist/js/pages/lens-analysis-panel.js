@@ -502,14 +502,17 @@
                 btn,
                 Craft.t('lens', 'Applying…'),
                 () => {
+                    var section = btn.closest('[data-lens-target="focal-point-section"]');
                     return window.Lens.core.API.applyFocalPoint(assetId, {
                         x: focalX,
                         y: focalY,
                     }).then((response) => {
                         if (response.data.success) {
-                            // Swap link for Applied indicator
                             var applied = this._cloneAppliedIndicator();
                             if (applied) btn.replaceWith(applied);
+
+                            var current = section && section.querySelector('[data-lens-target="focal-current"]');
+                            if (current) current.remove();
 
                             Craft.cp.displayNotice(
                                 Craft.t('lens', 'Focal point applied to asset.'),

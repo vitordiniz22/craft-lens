@@ -17,7 +17,7 @@
         and (analysis.focalPointX|round(4) != analysis.focalPointXAi|round(4)
         or analysis.focalPointY|round(4) != analysis.focalPointYAi|round(4)) %}
 
-    <div class="lens-accent-bar">
+    <div class="lens-accent-bar" data-lens-target="focal-point-section">
         <div class="lens-field-header" data-lens-target="field-header">
             {% if fpEdited %}
                 {% include 'lens/_components/analysis/_tooltip-lock' only %}
@@ -27,6 +27,15 @@
                 {{ confidenceBadge(analysis.focalPointConfidence) }}
             {% endif %}
         </div>
+
+        {% if fieldState == 'unlocked' and asset is defined and currentFp and not fpAlreadyApplied %}
+            <div class="lens-field-display" data-lens-target="focal-current">
+                <span class="light">{{ 'Current: X: {x}, Y: {y}'|t('lens', {
+                    x: (currentFp.x * 100)|round ~ '%',
+                    y: (currentFp.y * 100)|round ~ '%'
+                }) }}</span>
+            </div>
+        {% endif %}
 
         <div class="lens-ai-suggestion-inline">
             {% include 'lens/_components/analysis/_tooltip-ai' only %}
