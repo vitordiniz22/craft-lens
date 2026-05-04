@@ -217,6 +217,7 @@ class AnalysisController extends Controller
             return $this->asJson([
                 'success' => $success,
                 'alt' => $value,
+                'updatedTimestamp' => $success ? $asset->dateUpdated?->getTimestamp() : null,
             ]);
         }
 

@@ -393,6 +393,7 @@
                             Craft.cp.displayNotice(
                                 Craft.t('lens', 'Alt text updated.'),
                             );
+                            this._syncElementEditorTimestamp(btn, response.data.updatedTimestamp);
 
                             // Hide edit area
                             var editArea = proxy.querySelector('[data-lens-target="alt-proxy-edit-area"]');
