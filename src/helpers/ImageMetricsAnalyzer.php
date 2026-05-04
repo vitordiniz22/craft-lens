@@ -53,8 +53,19 @@ class ImageMetricsAnalyzer
      * needs full-resolution input to detect fine detail loss under blur.
      */
     private const BRIGHTNESS_CONTRAST_WORKING_MAX = 1568;
-    // Below this stdDev, image is near-featureless and decay curve is unreliable
-    private const SHARPNESS_MIN_DETAIL_STDDEV = 0.015;
+    // Absolute Laplacian baseStdDev ramp. Decay is a relative metric and
+    // becomes unreliable when the image has almost no Laplacian energy: a
+    // tiny variance dying under blur reads as high decay even though the
+    // image is featureless. The ramp dampens the post-sigmoid score by
+    // absolute edge energy: factor 0 below LOW (always Blurry), factor 1
+    // above HIGH (no change), linear in between.
+    //
+    // Endpoints calibrated against a 60-image labeled dataset (20 sharp,
+    // 20 partial-blur, 20 blur). LOW=0.020 sits below every confirmed-blur
+    // image; HIGH=0.030 saturates by the time partial-blur subjects with
+    // moderate fine detail can be rescued by the patch-best signal.
+    private const SHARPNESS_DETAIL_RAMP_LOW = 0.020;
+    private const SHARPNESS_DETAIL_RAMP_HIGH = 0.030;
     // Sobel gradient stdDev below this = noise, not real edges
     private const SHARPNESS_NOISE_SOBEL_THRESHOLD = 0.03;
     // Patch analysis blend zone: patches contribute 0% below low, 30% above high
@@ -126,7 +137,7 @@ class ImageMetricsAnalyzer
             $brightness = self::measureBrightness($brightnessContrastClone);
 
             $raw = [
-                'sharpnessScore' => self::measureSharpness($imagick),
+                'sharpnessScore' => self::measureSharpness($imagick, $asset->id),
                 'exposureScore' => $brightness['exposureScore'],
                 'shadowClipRatio' => $brightness['shadowClipRatio'],
                 'highlightClipRatio' => $brightness['highlightClipRatio'],
@@ -193,13 +204,25 @@ class ImageMetricsAnalyzer
      *
      * Returns null for images with shortest side < 100px.
      */
-    private static function measureSharpness(Imagick $imagick): ?float
+    private static function measureSharpness(Imagick $imagick, ?int $assetId): ?float
     {
         $width = $imagick->getImageWidth();
         $height = $imagick->getImageHeight();
         $minDim = \min($width, $height);
 
         if ($minDim < self::SHARPNESS_MIN_DIMENSION) {
+            Logger::info(
+                LogCategory::AssetProcessing,
+                'Sharpness skipped: dimensions below floor',
+                assetId: $assetId,
+                context: [
+                    'sourceWidth' => $width,
+                    'sourceHeight' => $height,
+                    'minDimension' => $minDim,
+                    'minDimensionFloor' => self::SHARPNESS_MIN_DIMENSION,
+                    'sharpnessScore' => null,
+                ],
+            );
             return null;
         }
 
@@ -216,17 +239,30 @@ class ImageMetricsAnalyzer
             );
         }
 
+        $analysisWidth = $gray->getImageWidth();
+        $analysisHeight = $gray->getImageHeight();
+
         $baseVariance = self::laplacianVarianceRaw($gray);
         if ($baseVariance <= 0) {
             $gray->clear();
+            Logger::info(
+                LogCategory::AssetProcessing,
+                'Sharpness short-circuit: zero base variance',
+                assetId: $assetId,
+                context: [
+                    'sourceWidth' => $width,
+                    'sourceHeight' => $height,
+                    'analysisWidth' => $analysisWidth,
+                    'analysisHeight' => $analysisHeight,
+                    'baseVariance' => $baseVariance,
+                    'sharpnessScore' => 0.0,
+                    'verdict' => self::verdictFromScore(0.0),
+                ],
+            );
             return 0.0;
         }
 
-        // Near-featureless images produce unreliable decay curves; short-circuit with low score
-        if (\sqrt($baseVariance) < self::SHARPNESS_MIN_DETAIL_STDDEV) {
-            $gray->clear();
-            return 0.05;
-        }
+        $baseStdDev = \sqrt($baseVariance);
 
         // Measure variance retention after progressive blur at 3 sigma levels
         // Explicit radius = ceil(3 * sigma) for full Gaussian coverage
@@ -242,27 +278,30 @@ class ImageMetricsAnalyzer
         }
 
         // Decay score: sigma 0.7 is the primary discriminator, sigma 0.3 has minimal weight
-        $decayScore = 0.05 * (1.0 - $retentions[0])
-                    + 0.65 * (1.0 - $retentions[1])
-                    + 0.30 * (1.0 - $retentions[2]);
+        $decayScoreGlobal = 0.05 * (1.0 - $retentions[0])
+                          + 0.65 * (1.0 - $retentions[1])
+                          + 0.30 * (1.0 - $retentions[2]);
+        $decayScore = $decayScoreGlobal;
+
+        $patchAnalysisRan = false;
+        $patchScores = [];
+        $patchBest = null;
+        $patchWeight = 0.0;
+        $patchSkipReason = null;
 
         // Patch-based analysis using actual width/height for full image coverage
-        $actualWidth = $gray->getImageWidth();
-        $actualHeight = $gray->getImageHeight();
-        $patchMinSide = \min($actualWidth, $actualHeight);
+        $patchMinSide = \min($analysisWidth, $analysisHeight);
 
         // Blend zone: patches contribute 0% below BLEND_LOW, up to PATCH_MAX_WEIGHT above BLEND_HIGH
         if ($patchMinSide >= self::SHARPNESS_PATCH_BLEND_LOW) {
-            $patchW = (int) ($actualWidth / 3);
-            $patchH = (int) ($actualHeight / 3);
+            $patchW = (int) ($analysisWidth / 3);
+            $patchH = (int) ($analysisHeight / 3);
 
             // Only analyze if patches are large enough to be meaningful (min side >= 50px)
             if ($patchW >= 50 && $patchH >= 50) {
                 // Pre-blur at full resolution, then crop patches from both original and blurred
                 $grayBlurred = clone $gray;
                 $grayBlurred->gaussianBlurImage((int) \ceil(0.5 * 3), 0.5);
-
-                $patchScores = [];
 
                 for ($row = 0; $row < 3; $row++) {
                     for ($col = 0; $col < 3; $col++) {
@@ -290,8 +329,14 @@ class ImageMetricsAnalyzer
 
                 if (\count($patchScores) >= 5) {
                     sort($patchScores);
-                    // 25th percentile catches "sharp center, blurry edges"
-                    $patchDecay = $patchScores[(int) (\count($patchScores) * 0.25)];
+                    // Best-patch rescue: when at least one 1/9-of-frame region
+                    // is sharper than the global decay (e.g. shallow depth-of-
+                    // field portraits with bokeh backgrounds), blend that in.
+                    // When the best patch is *worse* than the global decay (a
+                    // uniform image, or a sharp image with one soft region),
+                    // do nothing — the global decay already reflects the
+                    // image. Patches can only rescue, never penalize.
+                    $patchBest = $patchScores[\count($patchScores) - 1];
 
                     $patchWeight = self::SHARPNESS_PATCH_MAX_WEIGHT;
                     if ($patchMinSide < self::SHARPNESS_PATCH_BLEND_HIGH) {
@@ -300,21 +345,91 @@ class ImageMetricsAnalyzer
                         $patchWeight *= $t;
                     }
 
-                    $decayScore = (1.0 - $patchWeight) * $decayScore + $patchWeight * $patchDecay;
+                    $blendedDecay = (1.0 - $patchWeight) * $decayScore + $patchWeight * $patchBest;
+                    $decayScore = \max($decayScore, $blendedDecay);
+                    $patchAnalysisRan = true;
+                } else {
+                    $patchSkipReason = 'fewer than 5 patches with non-zero variance';
                 }
+            } else {
+                $patchSkipReason = 'patch dimensions below 50px';
             }
+        } else {
+            $patchSkipReason = 'image min side below patch blend threshold';
         }
+
+        $decayScoreBlended = $decayScore;
 
         // Sobel gradient check: high Laplacian decay + low Sobel stdDev = noise, not detail
         $sobelScore = self::sobelMagnitude($gray);
         $gray->clear();
 
+        $noisePenaltyTriggered = false;
+        $noisePenaltyFactor = 1.0;
         if ($decayScore > 0.3 && $sobelScore < self::SHARPNESS_NOISE_SOBEL_THRESHOLD) {
             $noisePenalty = 1.0 - ($sobelScore / self::SHARPNESS_NOISE_SOBEL_THRESHOLD);
-            $decayScore *= (1.0 - 0.4 * $noisePenalty);
+            $noisePenaltyFactor = 1.0 - 0.4 * $noisePenalty;
+            $decayScore *= $noisePenaltyFactor;
+            $noisePenaltyTriggered = true;
         }
 
-        return 1.0 / (1.0 + \exp(-self::SHARPNESS_DECAY_SIGMOID_RATE * ($decayScore - self::SHARPNESS_DECAY_SIGMOID_MIDPOINT)));
+        $sigmoidScore = 1.0 / (1.0 + \exp(-self::SHARPNESS_DECAY_SIGMOID_RATE * ($decayScore - self::SHARPNESS_DECAY_SIGMOID_MIDPOINT)));
+
+        $detailFactor = \max(0.0, \min(1.0,
+            ($baseStdDev - self::SHARPNESS_DETAIL_RAMP_LOW)
+            / (self::SHARPNESS_DETAIL_RAMP_HIGH - self::SHARPNESS_DETAIL_RAMP_LOW),
+        ));
+        $sharpnessScore = $sigmoidScore * $detailFactor;
+
+        Logger::info(
+            LogCategory::AssetProcessing,
+            'Sharpness metric breakdown',
+            assetId: $assetId,
+            context: [
+                'sourceWidth' => $width,
+                'sourceHeight' => $height,
+                'analysisWidth' => $analysisWidth,
+                'analysisHeight' => $analysisHeight,
+                'baseVariance' => $baseVariance,
+                'baseStdDev' => $baseStdDev,
+                'retentionSigma0_3' => $retentions[0],
+                'retentionSigma0_7' => $retentions[1],
+                'retentionSigma1_5' => $retentions[2],
+                'decayScoreGlobal' => $decayScoreGlobal,
+                'patchAnalysisRan' => $patchAnalysisRan,
+                'patchScoresSorted' => $patchScores,
+                'patchBest' => $patchBest,
+                'patchWeight' => $patchWeight,
+                'patchSkipReason' => $patchSkipReason,
+                'decayScoreBlended' => $decayScoreBlended,
+                'sobelScore' => $sobelScore,
+                'sobelNoiseThreshold' => self::SHARPNESS_NOISE_SOBEL_THRESHOLD,
+                'noisePenaltyTriggered' => $noisePenaltyTriggered,
+                'noisePenaltyFactor' => $noisePenaltyFactor,
+                'decayScoreFinal' => $decayScore,
+                'sigmoidMidpoint' => self::SHARPNESS_DECAY_SIGMOID_MIDPOINT,
+                'sigmoidRate' => self::SHARPNESS_DECAY_SIGMOID_RATE,
+                'sigmoidScore' => $sigmoidScore,
+                'detailRampLow' => self::SHARPNESS_DETAIL_RAMP_LOW,
+                'detailRampHigh' => self::SHARPNESS_DETAIL_RAMP_HIGH,
+                'detailFactor' => $detailFactor,
+                'sharpnessScore' => $sharpnessScore,
+                'verdict' => self::verdictFromScore($sharpnessScore),
+            ],
+        );
+
+        return $sharpnessScore;
+    }
+
+    private static function verdictFromScore(float $score): string
+    {
+        if ($score < self::SHARPNESS_BLURRY) {
+            return 'Blurry';
+        }
+        if ($score < self::SHARPNESS_SOFT) {
+            return 'Soft';
+        }
+        return 'Sharp';
     }
 
     /**
