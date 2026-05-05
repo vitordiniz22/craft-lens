@@ -1,5 +1,12 @@
 # Release Notes for Lens
 
+## 1.0.0-beta.5 - 2026-05-05
+
+- Recalibrated sharpness scoring: replaced the hard-cliff floor and worst-patch penalty with an absolute-energy ramp and best-patch rescue for more accurate scores on textured and partially soft images
+- Suppressed Craft's "asset has been updated" reload banner after Lens apply and inline-edit actions
+- Focal point editor now shows the asset's current focal point alongside the AI suggestion when they differ
+- Fixed the confidence badge disappearing when reverting a detection toggle to its AI value
+
 ## 1.0.0-beta.4 - 2026-05-04
 
 - Improved sharpness scoring accuracy; brightness and contrast now run on a downscaled working buffer for speed without changing scores
