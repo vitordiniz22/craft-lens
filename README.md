@@ -81,11 +81,13 @@ Every image gets AI-generated alt text, focal points, NSFW and watermark flags, 
 
 **Lite includes:**
 
-- AI analysis on every upload: alt text, titles, focal points, people and face detection, NSFW scoring, watermark and brand recognition, image quality assessment
-- Per-site translations for multisite installs (English site gets English alt text, Spanish site gets Spanish, automatically)
-- 9 pre-built views in Craft's asset library
-- 11 condition rules to build your own custom views
-- All three AI providers: OpenAI, Gemini, Claude
+- Generates alt text, descriptive titles, and focal points for every uploaded image
+- Analysis panel on the asset editor to review, edit, or revert any AI-generated field inline
+- Detects what's in the image: people and faces, unsafe content, watermarks, and named brand logos
+- Audits image quality: blur, exposure, low contrast, heavy compression, and non-sRGB color profiles, with a recommendation per issue
+- Multisite-ready: each site gets alt text and titles in its own language
+- Adds 9 pre-built views and 11 condition rules to Craft's native asset library
+- Bring your own API key: OpenAI, Google Gemini, or Anthropic Claude
 
 ### Pro, for teams and libraries that grow
 
@@ -93,13 +95,15 @@ Pro turns your image library into a searchable knowledge base. Search across alt
 
 **Pro adds:**
 
-- **Semantic search** across every field the analysis produces, ranking results in Craft's asset library and in the image picker on every entry
-- **OCR text extraction** so the words inside screenshots, signs, and document images are searchable
-- **35+ semantic tags per asset**, each scored by confidence, all searchable
-- **Bulk processing** of entire volumes with real-time progress, cost estimates, and retry for failed assets
-- **Duplicate detection** via perceptual hashing, flagged on every asset edit page and findable on demand
-- **Cost tracking** by provider, asset, and month so you always know what your AI usage is costing
-- **1 extra pre-built view and 7 extra condition rules** for sharper filtering (status, stock provider, text-in-image, tags, duplicates, etc)
+- Searches across alt text, long descriptions, tags, and OCR text in Craft's asset library and every image picker
+- Generates long descriptions and 35+ semantic tags per image
+- Extracts text from screenshots, signs, and document images
+- Inline tag editing on the analysis panel to add or remove tags
+- Bulk-processes entire volumes with progress, cost estimates, and retry for failed assets
+- "Analyze with Lens" bulk action in the asset index for queueing analysis on selected images
+- Detects duplicate images via perceptual hashing
+- Tracks AI spend by month and provider/model, with token usage and per-asset averages
+- Adds 1 more view and 7 more condition rules to Craft's native asset library
 
 Available on the <a href="https://plugins.craftcms.com/lens" target="_blank" rel="noopener">Craft Plugin Store</a>.
 
