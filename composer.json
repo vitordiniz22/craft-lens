@@ -1,18 +1,25 @@
 {
   "name": "vitordiniz22/craft-lens",
-  "description": "AI-powered image analysis, tagging, and search for Craft CMS assets.",
+  "description": "Content-aware image search and analysis for assets.",
   "keywords": [
     "craftcms",
     "craft-plugin",
     "image-analysis",
+    "image-recognition",
+    "image-search",
+    "image-quality",
+    "image-seo",
     "alt-text",
     "accessibility",
-    "ai",
-    "tagging",
+    "auto-tagging",
     "asset-management",
-    "seo",
     "duplicate-detection",
-    "ocr"
+    "ocr",
+    "focal-point",
+    "nsfw-detection",
+    "face-detection",
+    "watermark-detection",
+    "logo-detection"
   ],
   "type": "craft-plugin",
   "license": "proprietary",
@@ -68,19 +75,30 @@
     "editions": [
       {
         "name": "Lite",
-        "handle": "lite"
+        "handle": "lite",
+        "features": [
+          "Generates alt text, descriptive titles, and focal points for every uploaded image",
+          "Analysis panel on the asset editor to review, edit, or revert any AI-generated field inline",
+          "Detects what's in the image: people and faces, unsafe content, watermarks, and named brand logos",
+          "Audits image quality: blur, exposure, low contrast, heavy compression, and non-sRGB color profiles, with a recommendation per issue",
+          "Multisite-ready: each site gets alt text and titles in its own language",
+          "Adds 9 pre-built views and 11 condition rules to Craft's native asset library",
+          "Bring your own API key: OpenAI, Google Gemini, or Anthropic Claude"
+        ]
       },
       {
         "name": "Pro",
         "handle": "pro",
         "features": [
-          "Find any asset instantly with smart search and advanced filters",
-          "Analyze your entire media library in one click",
-          "Detect duplicate and near-identical images automatically",
-          "AI-powered semantic search in the native asset picker",
-          "Full dashboard with usage stats, insights, and attention alerts",
-          "Custom condition rules for stock photos and text-in-image filtering",
-          "Edit AI-generated tags and extracted text per asset"
+          "Searches across alt text, long descriptions, tags, and OCR text in Craft's asset library and every image picker",
+          "Generates long descriptions and 35+ semantic tags per image",
+          "Extracts text from screenshots, signs, and document images",
+          "Inline tag editing on the analysis panel to add or remove tags",
+          "Bulk-processes entire volumes with progress, cost estimates, and retry for failed assets",
+          "\"Analyze with Lens\" bulk action in the asset index for queueing analysis on selected images",
+          "Detects duplicate images via perceptual hashing",
+          "Tracks AI spend by month and provider/model, with token usage and per-asset averages",
+          "Adds 1 more view and 7 more condition rules to Craft's native asset library"
         ]
       }
     ]
