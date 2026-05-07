@@ -1,5 +1,9 @@
 # Release Notes for Lens
 
+## 1.0.0-beta.6 - 2026-05-07
+
+- Fixed Image Assessment section not appearing on some Imagick builds
+
 ## 1.0.0-beta.5 - 2026-05-05
 
 - Recalibrated sharpness scoring: replaced the hard-cliff floor and worst-patch penalty with an absolute-energy ramp and best-patch rescue for more accurate scores on textured and partially soft images
