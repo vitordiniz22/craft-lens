@@ -152,9 +152,9 @@
         }) }}
     {% endif %}
 
-    <hr>
-
     {% if lens.isPro %}
+        <hr>
+
         <h2>{{ 'Semantic Search'|t('lens') }}</h2>
         <p>{{ "Lens makes Craft's asset search smarter by looking through the descriptions, tags, and text extracted from every image, so editors find what they need by content. Works in the Assets section and in every asset picker."|t('lens') }}</p>
 
@@ -165,6 +165,28 @@
             id: 'enableSemanticSearch',
             name: 'settings[enableSemanticSearch]',
             on: settings.enableSemanticSearch,
+        }) }}
+    {% endif %}
+
+    {% if lens.isLoggingEnabled %}
+        <hr>
+
+        <h2>{{ 'Logging'|t('lens') }}</h2>
+        <p>{{ 'Old log entries are deleted automatically once per day as new ones are written.'|t('lens') }}</p>
+
+        {{ forms.textField({
+            first: true,
+            label: 'Log Retention (days)'|t('lens'),
+            instructions: 'Logs older than this many days are deleted.'|t('lens'),
+            id: 'logRetentionDays',
+            name: 'settings[logRetentionDays]',
+            value: settings.logRetentionDays,
+            type: 'number',
+            min: 1,
+            max: 365,
+            size: 5,
+            required: true,
+            errors: settings.getErrors('logRetentionDays'),
         }) }}
     {% endif %}
 

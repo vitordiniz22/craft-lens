@@ -126,6 +126,11 @@ class LensTwigGlobal
         return Plugin::getInstance()->getIsLite();
     }
 
+    public function getIsLoggingEnabled(): bool
+    {
+        return Plugin::isLoggingEnabled();
+    }
+
     public function getHasQualitySupport(): bool
     {
         return QualitySupport::isAvailable();

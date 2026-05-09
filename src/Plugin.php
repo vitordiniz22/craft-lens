@@ -29,7 +29,6 @@ use craft\helpers\UrlHelper;
 use craft\log\MonologTarget;
 use craft\models\FieldLayout;
 use craft\services\Assets;
-use craft\services\Gc;
 use craft\services\Search as SearchService_Craft;
 use craft\web\UrlManager;
 use craft\web\View;
@@ -300,7 +299,6 @@ class Plugin extends BasePlugin
         $this->registerElementActions();
         $this->registerSemanticSearch();
         $this->registerAssetBundle();
-        $this->registerGarbageCollection();
     }
 
     /**
@@ -363,21 +361,6 @@ class Plugin extends BasePlugin
                 if ($html !== null) {
                     $event->html = $html;
                 }
-            }
-        );
-    }
-
-    private function registerGarbageCollection(): void
-    {
-        if (!self::isLoggingEnabled()) {
-            return;
-        }
-
-        Event::on(
-            Gc::class,
-            Gc::EVENT_RUN,
-            function() {
-                $this->log->cleanup(30);
             }
         );
     }

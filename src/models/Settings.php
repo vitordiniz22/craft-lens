@@ -35,6 +35,9 @@ class Settings extends Model
     // Semantic Search
     public bool $enableSemanticSearch = false;
 
+    // Logging
+    public int $logRetentionDays = 15;
+
     // Supported models per provider (single source of truth for validation and defaults)
     public const OPENAI_MODELS = ['gpt-5.4', 'gpt-5.4-mini', 'gpt-5.4-nano'];
     public const GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.5-pro'];
@@ -69,6 +72,10 @@ class Settings extends Model
 
             // Arrays
             [['enabledVolumes'], 'safe'],
+
+            // Logging
+            [['logRetentionDays'], 'integer', 'min' => 1, 'max' => 365],
+            [['logRetentionDays'], 'default', 'value' => 15],
         ];
     }
 
@@ -85,6 +92,7 @@ class Settings extends Model
             'autoProcessOnUpload' => Craft::t('lens', 'Auto-Process on Upload'),
             'enabledVolumes' => Craft::t('lens', 'Enabled Volumes'),
             'enableSemanticSearch' => Craft::t('lens', 'Semantic Asset Search'),
+            'logRetentionDays' => Craft::t('lens', 'Log Retention (days)'),
         ];
     }
 

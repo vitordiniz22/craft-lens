@@ -88,6 +88,35 @@ class LogService extends Component
                 $record->save(false);
             }
         }
+
+        $this->maybeCleanup();
+    }
+
+    /**
+     * Runs cleanup at most once per 24 hours, gated by an atomic cache claim.
+     * Called inline from log() so cleanup happens naturally as logs are written,
+     * with no dependency on Craft's garbage collection or a queue worker.
+     */
+    private function maybeCleanup(): void
+    {
+        static $checkedThisRequest = false;
+
+        if ($checkedThisRequest) {
+            return;
+        }
+
+        $checkedThisRequest = true;
+
+        try {
+            if (!Craft::$app->getCache()->add('lens.logCleanupAt', 1, 86400)) {
+                return;
+            }
+
+            $days = Plugin::getInstance()->getSettings()->logRetentionDays ?: 15;
+            $this->cleanup($days);
+        } catch (\Throwable $e) {
+            // never break a log write
+        }
     }
 
     public function info(string $category, string $message, ?int $assetId = null, ?array $context = null): void
@@ -232,11 +261,15 @@ class LogService extends Component
     }
 
     /**
-     * Delete logs older than the given number of days.
+     * Delete logs older than the given number of days. Cutoff is anchored in UTC
+     * because dateCreated is stored in UTC by Craft's record save.
      */
-    public function cleanup(int $retainDays = 30): int
+    public function cleanup(int $retainDays = 15): int
     {
-        $cutoff = (new \DateTime())->modify("-{$retainDays} days")->format('Y-m-d H:i:s');
+        $retainDays = max(1, min(365, $retainDays));
+        $cutoff = (new \DateTime('now', new \DateTimeZone('UTC')))
+            ->modify("-{$retainDays} days")
+            ->format('Y-m-d H:i:s');
 
         return LogRecord::deleteAll(['<', 'dateCreated', $cutoff]);
     }

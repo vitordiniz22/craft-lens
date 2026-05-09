@@ -4,6 +4,7 @@
 
 - Fixed Image Assessment section disappearing on ImageMagick 7 builds.
 - Database logging is now opt-in via the `LENS_LOGS` env variable, with richer diagnostic context on each entry.
+- Old Lens log entries are now auto-deleted daily. Retention is configurable on the Settings page (default 15 days).
 - Disabled-volume notice on the asset edit page now offers a shortcut to edit the volume's field layout alongside the link to Lens settings.
 
 ## 1.0.0-beta.6 - 2026-05-07
