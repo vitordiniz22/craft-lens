@@ -6,7 +6,6 @@ namespace vitordiniz22\craftlens\migrations;
 
 use craft\db\Migration;
 use craft\db\Table;
-use vitordiniz22\craftlens\Plugin;
 
 /**
  * Install migration for the Lens plugin.
@@ -192,30 +191,7 @@ class Install extends Migration
             'uid' => $this->uid(),
         ]);
 
-        if (Plugin::isDevInstall()) {
-            $this->createTable(self::TABLE_LOGS, [
-                'id' => $this->primaryKey(),
-                'level' => $this->string(10)->notNull(),
-                'category' => $this->string(40)->notNull(),
-                'message' => $this->text()->notNull(),
-                'assetId' => $this->integer()->null(),
-                'provider' => $this->string(50)->null(),
-                'jobType' => $this->string(100)->null(),
-                'isRetryable' => $this->boolean()->notNull()->defaultValue(false),
-                'retryJobData' => $this->json()->null(),
-                'httpStatusCode' => $this->smallInteger()->null(),
-                'responseTimeMs' => $this->integer()->null(),
-                'inputTokens' => $this->integer()->null(),
-                'outputTokens' => $this->integer()->null(),
-                'requestPayload' => $this->json()->null(),
-                'responsePayload' => $this->json()->null(),
-                'stackTrace' => $this->text()->null(),
-                'context' => $this->json()->null(),
-                'dateCreated' => $this->dateTime()->notNull(),
-                'dateUpdated' => $this->dateTime()->notNull(),
-                'uid' => $this->uid(),
-            ]);
-        }
+        self::createLogsTable($this);
 
         // Full-text search index (pre-stemmed tokens with BM25 scoring data)
         $this->createTable(self::TABLE_SEARCH_INDEX, [
@@ -271,14 +247,7 @@ class Install extends Migration
         $this->createIndex(null, self::TABLE_DUPLICATE_GROUPS, ['resolution']);
         $this->createIndex(null, self::TABLE_DUPLICATE_GROUPS, ['clusterKey']);
 
-        // Logs indexes — only in development environments
-        if (Plugin::isDevInstall()) {
-            $this->createIndex(null, self::TABLE_LOGS, ['level']);
-            $this->createIndex(null, self::TABLE_LOGS, ['category']);
-            $this->createIndex(null, self::TABLE_LOGS, ['assetId']);
-            $this->createIndex(null, self::TABLE_LOGS, ['dateCreated']);
-            $this->createIndex(null, self::TABLE_LOGS, ['level', 'category', 'dateCreated']);
-        }
+        self::createLogsIndexes($this);
 
         // Search index indexes — token is the primary lookup column
         $this->createIndex(null, self::TABLE_SEARCH_INDEX, ['token']);
@@ -384,18 +353,7 @@ class Install extends Migration
             'CASCADE'
         );
 
-        // Logs foreign keys — only in development environments
-        if (Plugin::isDevInstall()) {
-            $this->addForeignKey(
-                null,
-                self::TABLE_LOGS,
-                ['assetId'],
-                Table::ELEMENTS,
-                ['id'],
-                'SET NULL',
-                'CASCADE'
-            );
-        }
+        self::addLogsForeignKey($this);
 
         // Search index foreign keys
         $this->addForeignKey(
@@ -415,6 +373,54 @@ class Install extends Migration
             self::TABLE_ASSET_ANALYSES,
             ['id'],
             'CASCADE',
+            'CASCADE'
+        );
+    }
+
+    public static function createLogsTable(Migration $m): void
+    {
+        $m->createTable(self::TABLE_LOGS, [
+            'id' => $m->primaryKey(),
+            'level' => $m->string(10)->notNull(),
+            'category' => $m->string(40)->notNull(),
+            'message' => $m->text()->notNull(),
+            'assetId' => $m->integer()->null(),
+            'provider' => $m->string(50)->null(),
+            'jobType' => $m->string(100)->null(),
+            'isRetryable' => $m->boolean()->notNull()->defaultValue(false),
+            'retryJobData' => $m->json()->null(),
+            'httpStatusCode' => $m->smallInteger()->null(),
+            'responseTimeMs' => $m->integer()->null(),
+            'inputTokens' => $m->integer()->null(),
+            'outputTokens' => $m->integer()->null(),
+            'requestPayload' => $m->json()->null(),
+            'responsePayload' => $m->json()->null(),
+            'stackTrace' => $m->text()->null(),
+            'context' => $m->json()->null(),
+            'dateCreated' => $m->dateTime()->notNull(),
+            'dateUpdated' => $m->dateTime()->notNull(),
+            'uid' => $m->uid(),
+        ]);
+    }
+
+    public static function createLogsIndexes(Migration $m): void
+    {
+        $m->createIndex(null, self::TABLE_LOGS, ['level']);
+        $m->createIndex(null, self::TABLE_LOGS, ['category']);
+        $m->createIndex(null, self::TABLE_LOGS, ['assetId']);
+        $m->createIndex(null, self::TABLE_LOGS, ['dateCreated']);
+        $m->createIndex(null, self::TABLE_LOGS, ['level', 'category', 'dateCreated']);
+    }
+
+    public static function addLogsForeignKey(Migration $m): void
+    {
+        $m->addForeignKey(
+            null,
+            self::TABLE_LOGS,
+            ['assetId'],
+            Table::ELEMENTS,
+            ['id'],
+            'SET NULL',
             'CASCADE'
         );
     }

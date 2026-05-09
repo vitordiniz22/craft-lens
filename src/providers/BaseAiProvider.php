@@ -106,11 +106,12 @@ abstract class BaseAiProvider implements AiProviderInterface
     protected function sendRequest(Settings $settings, array $imageData, string $prompt, int $assetId): array
     {
         $spec = $this->buildHttpRequest($settings, $imageData, $prompt, $assetId);
+        $payloadSizeBytes = strlen($imageData['base64']);
 
         return $this->executeApiRequest(function (int $startTime) use ($spec) {
             $response = $this->client->request($spec['method'], $spec['url'], $spec['options']);
             return ($spec['parseResponse'])($response, $startTime);
-        }, $assetId);
+        }, $assetId, $payloadSizeBytes);
     }
 
     /**
@@ -586,7 +587,7 @@ abstract class BaseAiProvider implements AiProviderInterface
      * @param callable(int): array $request Receives start time (hrtime), returns parsed response body
      * @throws AnalysisException
      */
-    protected function executeApiRequest(callable $request, int $assetId): array
+    protected function executeApiRequest(callable $request, int $assetId, ?int $payloadSizeBytes = null): array
     {
         $lastException = null;
 
@@ -608,6 +609,7 @@ abstract class BaseAiProvider implements AiProviderInterface
                         responseTimeMs: $elapsed,
                         httpStatusCode: null,
                         level: LogLevel::Warning->value,
+                        context: $this->buildApiCallContext($attempt + 1, null, $payloadSizeBytes, 'timeout'),
                     );
                     $lastException = $e;
                     sleep($delay);
@@ -621,6 +623,7 @@ abstract class BaseAiProvider implements AiProviderInterface
                     responseTimeMs: $elapsed,
                     httpStatusCode: null,
                     level: LogLevel::Error->value,
+                    context: $this->buildApiCallContext($attempt + 1, null, $payloadSizeBytes, 'timeout'),
                 );
                 throw AnalysisException::apiError(
                     $this->getDisplayName(),
@@ -630,7 +633,13 @@ abstract class BaseAiProvider implements AiProviderInterface
             } catch (RequestException $e) {
                 $elapsed = (int) ((hrtime(true) - $startTime) / 1_000_000);
                 $statusCode = $e->hasResponse() ? $e->getResponse()->getStatusCode() : null;
-                $errorMessage = $this->extractErrorMessage($e) ?? $this->getDefaultErrorMessage($statusCode);
+                $parsedBody = $this->parseErrorResponseBody($e);
+                $errorMessage = ($parsedBody['message'] ?? null) ?: $this->getDefaultErrorMessage($statusCode);
+                $providerError = [
+                    'providerErrorCode' => $parsedBody['code'] ?? null,
+                    'providerErrorType' => $parsedBody['type'] ?? null,
+                ];
+                $errorType = $this->errorTypeFromStatus($statusCode, $errorMessage);
 
                 if ($statusCode !== null && in_array($statusCode, self::RETRYABLE_STATUS_CODES, true) && $attempt < self::MAX_RETRIES) {
                     $delay = $this->getRetryDelay($e, $attempt);
@@ -641,6 +650,10 @@ abstract class BaseAiProvider implements AiProviderInterface
                         responseTimeMs: $elapsed,
                         httpStatusCode: $statusCode,
                         level: LogLevel::Warning->value,
+                        context: array_merge(
+                            $this->buildApiCallContext($attempt + 1, $statusCode, $payloadSizeBytes, $errorType),
+                            $providerError,
+                        ),
                     );
                     $lastException = $e;
                     sleep($delay);
@@ -654,6 +667,10 @@ abstract class BaseAiProvider implements AiProviderInterface
                     responseTimeMs: $elapsed,
                     httpStatusCode: $statusCode,
                     level: LogLevel::Error->value,
+                    context: array_merge(
+                        $this->buildApiCallContext($attempt + 1, $statusCode, $payloadSizeBytes, $errorType),
+                        $providerError,
+                    ),
                 );
                 throw AnalysisException::apiError(
                     $this->getDisplayName(),
@@ -671,6 +688,7 @@ abstract class BaseAiProvider implements AiProviderInterface
                     responseTimeMs: $elapsed,
                     httpStatusCode: null,
                     level: LogLevel::Error->value,
+                    context: $this->buildApiCallContext($attempt + 1, null, $payloadSizeBytes, 'unknown'),
                 );
                 throw AnalysisException::apiError(
                     $this->getDisplayName(),
@@ -839,5 +857,94 @@ abstract class BaseAiProvider implements AiProviderInterface
         } catch (GuzzleException $e) {
             throw ConfigurationException::connectionFailed($this->getDisplayName());
         }
+    }
+
+    /**
+     * Parse a provider's error response body once (Guzzle response streams are
+     * single-use). Returns the sanitized message plus the structured `code`
+     * and `type` keys when the body decodes as JSON in the standard
+     * `{"error": {...}}` envelope shape, all of which feed the log details
+     * panel for failure diagnosis.
+     *
+     * @return array{message: ?string, code: mixed, type: mixed}
+     */
+    protected function parseErrorResponseBody(RequestException $e): array
+    {
+        $empty = ['message' => null, 'code' => null, 'type' => null];
+
+        if (!$e->hasResponse()) {
+            return $empty;
+        }
+
+        try {
+            $bodyContents = (string) $e->getResponse()->getBody();
+        } catch (\RuntimeException) {
+            return $empty;
+        }
+
+        $body = json_decode($bodyContents, true);
+
+        if (!is_array($body) || !isset($body['error'])) {
+            return $empty;
+        }
+
+        $error = $body['error'];
+        $message = is_array($error) ? ($error['message'] ?? null) : null;
+
+        return [
+            'message' => is_string($message) ? $this->sanitizeErrorMessage($message) : null,
+            'code' => is_array($error) ? ($error['code'] ?? null) : null,
+            'type' => is_array($error) ? ($error['type'] ?? null) : null,
+        ];
+    }
+
+    /**
+     * Standard context fields attached to every apiCall log entry: model,
+     * attempt counter, payload size, and a coarse error category.
+     *
+     * @return array<string, mixed>
+     */
+    protected function buildApiCallContext(int $attemptNumber, ?int $statusCode, ?int $payloadSizeBytes, ?string $errorType): array
+    {
+        return [
+            'model' => $this->getCurrentModel(),
+            'attemptNumber' => $attemptNumber,
+            'payloadSizeBytes' => $payloadSizeBytes,
+            'errorType' => $errorType,
+        ];
+    }
+
+    /**
+     * Map an HTTP status code to the same coarse error category that
+     * AssetAnalysisService uses, so log details panels show the same
+     * vocabulary regardless of where the error originated.
+     */
+    protected function errorTypeFromStatus(?int $statusCode, string $message): string
+    {
+        if ($statusCode === 401 || $statusCode === 403) {
+            return 'auth';
+        }
+
+        if ($statusCode === 429) {
+            return 'rate_limit';
+        }
+
+        if ($statusCode !== null && $statusCode >= 400 && $statusCode < 500) {
+            if (stripos($message, 'quota') !== false) {
+                return 'quota';
+            }
+            return 'provider_error';
+        }
+
+        if ($statusCode !== null && $statusCode >= 500) {
+            return 'provider_error';
+        }
+
+        return 'unknown';
+    }
+
+    protected function getCurrentModel(): string
+    {
+        return Plugin::getInstance()->getSettings()->getCurrentModel();
     }
 }

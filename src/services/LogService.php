@@ -33,7 +33,9 @@ class LogService extends Component
     ];
     /**
      * Core log method. Writes to Craft's file log, then to the database.
-     * Dev-only fields are silently ignored when not in dev mode.
+     * Database writes are gated by the LENS_LOGS env var; the file logger
+     * always receives warning/error rows so a forensic trail survives even
+     * when DB logging is off.
      */
     public function log(
         string $level,
@@ -55,7 +57,7 @@ class LogService extends Component
     ): void {
         $this->forwardToCraftLogger($level, $message, $category, $assetId, $stackTrace, $context);
 
-        if (!Plugin::isDevInstall()) {
+        if (!Plugin::isLoggingEnabled()) {
             return;
         }
 
@@ -131,6 +133,7 @@ class LogService extends Component
         ?array $requestPayload = null,
         ?array $responsePayload = null,
         string $level = 'info',
+        ?array $context = null,
     ): void {
         $this->log(
             level: $level,
@@ -144,6 +147,7 @@ class LogService extends Component
             outputTokens: $outputTokens,
             requestPayload: $requestPayload,
             responsePayload: $responsePayload,
+            context: $context,
         );
     }
 
@@ -192,15 +196,6 @@ class LogService extends Component
 
         if ($assetId !== null) {
             $query->andWhere(['assetId' => $assetId]);
-        }
-
-        if (!Plugin::isDevInstall()) {
-            $query->select([
-                'id', 'level', 'category', 'message', 'assetId',
-                'provider', 'jobType', 'isRetryable', 'retryJobData',
-                'stackTrace', 'context',
-                'dateCreated', 'dateUpdated', 'uid',
-            ]);
         }
 
         $total = (int) $query->count();

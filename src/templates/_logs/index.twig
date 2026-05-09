@@ -4,6 +4,10 @@
 {% set selectedSubnavItem = 'logs' %}
 
 {% block content %}
+    <div class="lens-log-banner">
+        {{ 'Logging is enabled by the LENS_LOGS environment variable. Set LENS_LOGS=false to stop writing entries to this table.'|t('lens') }}
+    </div>
+
     {# Filters #}
     <div class="lens-log-filters">
         <form method="get" action="{{ cpUrl('lens/logs') }}">
@@ -79,13 +83,18 @@
                             <span class="lens-log-message-text">{{ log.message|truncate(200) }}</span>
                         </td>
                         <td>
+                            {% set ctxFilename = log.context.assetFilename ?? null %}
                             {% if log.assetId %}
                                 {% set asset = craft.assets.id(log.assetId).one() %}
                                 {% if asset %}
                                     <a href="{{ asset.cpEditUrl }}">{{ asset.filename|truncate(20) }}</a>
+                                {% elseif ctxFilename %}
+                                    <span class="lens-log-missing-asset" title="{{ 'Asset deleted'|t('lens') }}">{{ ctxFilename|truncate(20) }}</span>
                                 {% else %}
                                     <span class="lens-log-missing-asset">#{{ log.assetId }}</span>
                                 {% endif %}
+                            {% elseif ctxFilename %}
+                                <span class="lens-log-missing-asset">{{ ctxFilename|truncate(20) }}</span>
                             {% else %}
                                 <span class="lens-log-placeholder">—</span>
                             {% endif %}
@@ -109,6 +118,37 @@
                     {% if log.stackTrace or log.context or log.requestPayload or log.responsePayload %}
                         <tr data-lens-detail-id="lens-detail-{{ log.id }}" class="lens-log-detail">
                             <td colspan="6" class="lens-log-detail-cell">
+                                {% set ctx = log.context ?? {} %}
+                                {% set diagnosticsRows = [
+                                    { label: 'Error type'|t('lens'), value: ctx.errorType ?? null },
+                                    { label: 'Model'|t('lens'), value: ctx.model ?? null },
+                                    { label: 'Attempt'|t('lens'), value: ctx.attemptNumber ?? null },
+                                    { label: 'HTTP status'|t('lens'), value: log.httpStatusCode },
+                                    { label: 'Response time'|t('lens'), value: log.responseTimeMs ? log.responseTimeMs ~ ' ms' : null },
+                                    { label: 'Provider'|t('lens'), value: log.provider },
+                                    { label: 'Provider error code'|t('lens'), value: ctx.providerErrorCode ?? null },
+                                    { label: 'Provider error type'|t('lens'), value: ctx.providerErrorType ?? null },
+                                    { label: 'Payload size'|t('lens'), value: ctx.payloadSizeBytes ?? null ? (ctx.payloadSizeBytes ~ ' B') : null },
+                                    { label: 'Asset filename'|t('lens'), value: ctx.assetFilename ?? null },
+                                    { label: 'Dimensions'|t('lens'), value: (ctx.assetWidth ?? null) and (ctx.assetHeight ?? null) ? (ctx.assetWidth ~ ' x ' ~ ctx.assetHeight) : null },
+                                    { label: 'File size'|t('lens'), value: ctx.assetSize ?? null ? (ctx.assetSize ~ ' B') : null },
+                                    { label: 'Mime type'|t('lens'), value: ctx.assetMimeType ?? null },
+                                    { label: 'Prep time'|t('lens'), value: ctx.prepMs is defined ? (ctx.prepMs ~ ' ms') : null },
+                                    { label: 'AI time'|t('lens'), value: ctx.aiMs is defined ? (ctx.aiMs ~ ' ms') : null },
+                                    { label: 'Finalize time'|t('lens'), value: ctx.finalizeMs is defined ? (ctx.finalizeMs ~ ' ms') : null },
+                                    { label: 'Exception class'|t('lens'), value: ctx.exceptionClass ?? null },
+                                ]|filter(row => row.value is not null and row.value is not same as(false) and row.value != '') %}
+                                {% if diagnosticsRows|length %}
+                                    <div class="lens-log-detail-section">
+                                        <strong>{{ 'Diagnostics'|t('lens') }}</strong>
+                                        <dl class="lens-log-diagnostics">
+                                            {% for row in diagnosticsRows %}
+                                                <dt>{{ row.label }}</dt>
+                                                <dd>{{ row.value }}</dd>
+                                            {% endfor %}
+                                        </dl>
+                                    </div>
+                                {% endif %}
                                 {% if log.stackTrace %}
                                     <div class="lens-log-detail-section">
                                         <strong>{{ 'Stack Trace'|t('lens') }}</strong>

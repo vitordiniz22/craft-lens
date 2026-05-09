@@ -110,7 +110,8 @@ class AssetAnalysisService extends Component
                 LogCategory::Configuration,
                 "Configuration error: {$e->getMessage()}",
                 $asset->id,
-                $e
+                $e,
+                $this->buildErrorLogContext($asset, $e),
             );
 
             throw $e;
@@ -119,6 +120,7 @@ class AssetAnalysisService extends Component
                 LogCategory::Cancellation,
                 "Analysis cancelled for asset {$asset->id}",
                 assetId: $asset->id,
+                context: $this->buildErrorLogContext($asset, $e),
             );
         } catch (AnalysisException $e) {
             $this->handleAnalysisFailure($record, $previousStatus, $hadExistingData, $e->getUserMessage(), $e->errorCode ?? ErrorCode::Unknown);
@@ -128,10 +130,13 @@ class AssetAnalysisService extends Component
                 "Analysis failed: {$e->getMessage()}",
                 $asset->id,
                 $e,
-                [
-                    'provider' => $e->provider,
-                    'statusCode' => $e->statusCode,
-                ]
+                array_merge(
+                    [
+                        'provider' => $e->provider,
+                        'statusCode' => $e->statusCode,
+                    ],
+                    $this->buildErrorLogContext($asset, $e),
+                ),
             );
         } catch (\Throwable $e) {
             $userMessage = "Analysis failed due to an unexpected error. Please try again later or contact support.";
@@ -141,7 +146,8 @@ class AssetAnalysisService extends Component
                 LogCategory::AssetProcessing,
                 "Unexpected analysis error: {$e->getMessage()}",
                 $asset->id,
-                $e
+                $e,
+                $this->buildErrorLogContext($asset, $e),
             );
         }
 
@@ -558,13 +564,100 @@ class AssetAnalysisService extends Component
             LogCategory::AssetProcessing,
             'Asset analysis timing',
             assetId: $asset->id,
-            context: [
-                'prepMs' => $prepMs,
-                'aiMs' => $aiMs,
-                'finalizeMs' => $finalizeMs,
-                'totalMs' => $prepMs + $aiMs + $finalizeMs,
+            context: array_merge(
+                $this->buildAssetContext($asset),
+                [
+                    'model' => $this->getProviderModel(),
+                    'prepMs' => $prepMs,
+                    'aiMs' => $aiMs,
+                    'finalizeMs' => $finalizeMs,
+                    'totalMs' => $prepMs + $aiMs + $finalizeMs,
+                ],
+            ),
+        );
+    }
+
+    /**
+     * Build the standard asset metadata bag included in every analysis log.
+     * Surfaces filename/dimensions/size/mime so a row remains diagnosable
+     * even after the asset element is deleted (assetId becomes NULL).
+     *
+     * @return array<string, mixed>
+     */
+    private function buildAssetContext(Asset $asset): array
+    {
+        return [
+            'assetFilename' => $asset->filename,
+            'assetWidth' => $asset->width,
+            'assetHeight' => $asset->height,
+            'assetSize' => $asset->size,
+            'assetMimeType' => $asset->mimeType,
+        ];
+    }
+
+    /**
+     * Build the context for an analysis-failure log entry: asset metadata plus
+     * a categorized errorType so the details panel can summarize the failure.
+     *
+     * @return array<string, mixed>
+     */
+    private function buildErrorLogContext(Asset $asset, \Throwable $e): array
+    {
+        return array_merge(
+            $this->buildAssetContext($asset),
+            [
+                'model' => $this->getProviderModel(),
+                'errorType' => $this->classifyError($e),
+                'exceptionClass' => get_class($e),
             ],
         );
+    }
+
+    /**
+     * Map an exception to a coarse error category. Both site owners (skim
+     * "auth", "rate_limit" badges) and developers (filter on errorType) read
+     * the same value.
+     */
+    private function classifyError(\Throwable $e): string
+    {
+        if ($e instanceof ConfigurationException) {
+            return 'config';
+        }
+
+        if ($e instanceof AnalysisCancelledException) {
+            return 'cancelled';
+        }
+
+        if ($e instanceof AnalysisException) {
+            $status = $e->statusCode;
+
+            if ($status === 401 || $status === 403) {
+                return 'auth';
+            }
+
+            if ($status === 429) {
+                return 'rate_limit';
+            }
+
+            if ($status !== null && $status >= 400 && $status < 500) {
+                if (stripos($e->getMessage(), 'quota') !== false) {
+                    return 'quota';
+                }
+                return 'provider_error';
+            }
+
+            if ($status !== null && $status >= 500) {
+                return 'provider_error';
+            }
+
+            return 'provider_error';
+        }
+
+        if ($e instanceof \RuntimeException && stripos($e->getMessage(), 'image') !== false) {
+            return 'bad_image';
+        }
+
+        return 'unknown';
     }
 
     /**

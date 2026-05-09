@@ -132,6 +132,7 @@ class OpenAiProvider extends BaseAiProvider
                     outputTokens: $usage['outputTokens'],
                     requestPayload: $logPayload,
                     responsePayload: $body,
+                    context: $this->buildApiCallContext(1, $response->getStatusCode(), $imageBytes, null),
                 );
 
                 return $body;

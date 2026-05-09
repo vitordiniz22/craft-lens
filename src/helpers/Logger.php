@@ -56,10 +56,11 @@ class Logger
         ?array $requestPayload = null,
         ?array $responsePayload = null,
         string $level = 'info',
+        ?array $context = null,
     ): void {
         self::service()->logApiCall(
             $provider, $message, $assetId, $responseTimeMs, $httpStatusCode,
-            $inputTokens, $outputTokens, $requestPayload, $responsePayload, $level,
+            $inputTokens, $outputTokens, $requestPayload, $responsePayload, $level, $context,
         );
     }
 

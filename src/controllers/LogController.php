@@ -24,8 +24,8 @@ class LogController extends Controller
 
     public function actionIndex(): Response
     {
-        if (!Plugin::isDevInstall()) {
-            throw new ForbiddenHttpException('Logs are only available in development mode.');
+        if (!Plugin::isLoggingEnabled()) {
+            throw new ForbiddenHttpException('Logs are disabled. Set LENS_LOGS=true to enable.');
         }
 
         $this->requireCpRequest();
@@ -62,7 +62,6 @@ class LogController extends Controller
             'logs' => $result['logs'],
             'total' => $result['total'],
             'pageInfo' => $pageInfo,
-            'isDevMode' => Plugin::isDevInstall(),
             'filters' => $filters,
             'levels' => array_column(LogLevel::cases(), 'value'),
             'categories' => array_column(LogCategory::cases(), 'value'),
@@ -71,8 +70,8 @@ class LogController extends Controller
 
     public function actionRetry(): Response
     {
-        if (!Plugin::isDevInstall()) {
-            throw new ForbiddenHttpException('Logs are only available in development mode.');
+        if (!Plugin::isLoggingEnabled()) {
+            throw new ForbiddenHttpException('Logs are disabled. Set LENS_LOGS=true to enable.');
         }
 
         $this->requireCpRequest();
@@ -93,8 +92,8 @@ class LogController extends Controller
 
     public function actionDeleteAll(): Response
     {
-        if (!Plugin::isDevInstall()) {
-            throw new ForbiddenHttpException('Logs are only available in development mode.');
+        if (!Plugin::isLoggingEnabled()) {
+            throw new ForbiddenHttpException('Logs are disabled. Set LENS_LOGS=true to enable.');
         }
 
         $this->requireCpRequest();

@@ -129,6 +129,7 @@ class GeminiProvider extends BaseAiProvider
                     outputTokens: (int) ($usage['candidatesTokenCount'] ?? 0),
                     requestPayload: $logPayload,
                     responsePayload: $body,
+                    context: $this->buildApiCallContext(1, $response->getStatusCode(), $imageBytes, null),
                 );
 
                 return $body;

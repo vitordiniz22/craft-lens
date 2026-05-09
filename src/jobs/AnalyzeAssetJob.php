@@ -41,6 +41,13 @@ class AnalyzeAssetJob extends BaseJob
                 "Failed to analyze asset {$this->assetId}: {$e->getMessage()}",
                 $this->assetId,
                 $e,
+                [
+                    'jobType' => self::class,
+                    'exceptionClass' => get_class($e),
+                    'assetFilename' => $asset->filename,
+                    'assetSize' => $asset->size,
+                    'assetMimeType' => $asset->mimeType,
+                ],
             );
             throw $e;
         }

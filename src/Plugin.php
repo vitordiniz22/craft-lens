@@ -24,6 +24,7 @@ use craft\events\RegisterElementTableAttributesEvent;
 use craft\events\RegisterUrlRulesEvent;
 use craft\events\ReplaceAssetEvent;
 use craft\events\TemplateEvent;
+use craft\helpers\App;
 use craft\helpers\UrlHelper;
 use craft\log\MonologTarget;
 use craft\models\FieldLayout;
@@ -178,10 +179,9 @@ class Plugin extends BasePlugin
         }
     }
 
-    public static function isDevInstall(): bool
+    public static function isLoggingEnabled(): bool
     {
-        $basePath = self::getInstance()->getBasePath();
-        return str_contains($basePath, DIRECTORY_SEPARATOR . 'plugins' . DIRECTORY_SEPARATOR);
+        return (bool) App::parseBooleanEnv('$LENS_LOGS');
     }
 
     public static function config(): array
@@ -263,7 +263,7 @@ class Plugin extends BasePlugin
             'url' => 'lens/settings',
         ];
 
-        if (self::isDevInstall()) {
+        if (self::isLoggingEnabled()) {
             $item['subnav']['logs'] = [
                 'label' => Craft::t('lens', 'Logs'),
                 'url' => 'lens/logs',
@@ -369,7 +369,7 @@ class Plugin extends BasePlugin
 
     private function registerGarbageCollection(): void
     {
-        if (!self::isDevInstall()) {
+        if (!self::isLoggingEnabled()) {
             return;
         }
 

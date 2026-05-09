@@ -155,6 +155,14 @@ class ImageMetricsAnalyzer
                 LogCategory::AssetProcessing,
                 'Local image metrics analysis failed: ' . $e->getMessage(),
                 assetId: $asset->id,
+                context: [
+                    'exceptionClass' => get_class($e),
+                    'assetFilename' => $asset->filename,
+                    'assetWidth' => $asset->width,
+                    'assetHeight' => $asset->height,
+                    'assetSize' => $asset->size,
+                    'assetMimeType' => $asset->mimeType,
+                ],
             );
 
             return null;
