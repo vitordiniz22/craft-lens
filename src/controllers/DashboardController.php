@@ -69,6 +69,7 @@ class DashboardController extends Controller
                 'unresolvedIssues' => $plugin->setupStatus->getUnresolvedIssues(),
                 'hasCriticalIssues' => $plugin->setupStatus->hasCriticalIssues(),
                 'hasUnresolvedIssues' => $plugin->setupStatus->hasUnresolvedIssues(),
+                'enabledVolumesStatus' => $plugin->setupStatus->getEnabledVolumesStatus(),
 
                 // Section 1: Needs Attention
                 'attentionItems' => $stats->getAttentionItems($overviewStats),

@@ -10,7 +10,7 @@
     {{ actionInput('lens/settings/save') }}
     {{ redirectInput('lens/settings') }}
 
-    <h2>{{ 'AI Provider'|t('lens') }}</h2>
+    <h2 id="provider">{{ 'AI Provider'|t('lens') }}</h2>
     <p>{{ 'Choose the AI provider for image analysis. All providers offer the same features, so pick based on pricing and the API key you already have.'|t('lens') }}</p>
 
     {{ forms.radioGroupField({
@@ -115,7 +115,7 @@
 
     <hr>
 
-    <h2>{{ 'Asset Processing'|t('lens') }}</h2>
+    <h2 id="volumes">{{ 'Asset Processing'|t('lens') }}</h2>
     <p>{{ 'Configure how Lens analyzes your assets. Processing always runs in the background, so uploads are never delayed.'|t('lens') }}</p>
 
     {{ forms.lightswitchField({

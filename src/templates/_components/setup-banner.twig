@@ -4,6 +4,7 @@
  #
  # Parameters:
  #   - checks: array of setup check objects from SetupStatusService
+ #   - volumesStatus: (optional) array of per-volume rows from SetupStatusService::getEnabledVolumesStatus()
  #   - title: (optional) Banner title, defaults to "Setup Required"
  #   - description: (optional) Banner description
  #   - showIcon: (optional) Whether to show the header icon, defaults to true
@@ -50,6 +51,15 @@
             {% set isLocked = unmetPrereqs|length > 0 %}
             {% set unmetPrereqLabels = unmetPrereqs|map(k => prereqLabels[k] ?? k) %}
 
+            {% set missingVolumes = [] %}
+            {% set totalVolumes = (volumesStatus ?? [])|length %}
+            {% if check.key == 'analysis_panel_added' and not isLocked %}
+                {% set missingVolumes = (volumesStatus ?? [])|filter(r => not r.hasField) %}
+            {% endif %}
+            {% set missingCount = missingVolumes|length %}
+            {% set hasVolumeList = missingCount > 0 %}
+            {% set hideMainAction = hasVolumeList %}
+
             <div class="lens-setup-banner__item {{ isLocked ? 'lens-setup-banner__item--locked' }}">
                 <div class="lens-setup-banner__item-content">
                     <div class="lens-setup-banner__item-status">
@@ -72,6 +82,24 @@
                                 {{ 'Requires {list}'|t('lens', { list: unmetPrereqLabels|join(', ') }) }}
                             </p>
                         {% endif %}
+                        {% if hasVolumeList %}
+                            <p class="lens-setup-banner__volume-summary">
+                                {{ '{missing} of {total} volumes still need the Lens Analysis panel:'|t('lens', { missing: missingCount, total: totalVolumes }) }}
+                            </p>
+                            <ul class="lens-setup-banner__volume-chips">
+                                {% for row in missingVolumes %}
+                                    <li>
+                                        <craft-tooltip text="{{ 'Edit field layout for {name}'|t('lens', { name: row.volume.name }) }}">
+                                            <a href="{{ row.fieldLayoutUrl }}" class="chip">
+                                                <div class="chip-content">
+                                                    <div class="chip-label">{{ row.volume.name }}</div>
+                                                </div>
+                                            </a>
+                                        </craft-tooltip>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
                     </div>
                 </div>
                 <div class="lens-setup-banner__item-action">
@@ -80,7 +108,7 @@
                             {{ 'Learn more'|t('lens') }}
                         </a>
                     {% endif %}
-                    {% if check.actionUrl ?? false %}
+                    {% if (check.actionUrl ?? false) and not hideMainAction %}
                         {% if isLocked %}
                             <button type="button" class="btn small disabled" disabled aria-disabled="true">
                                 {{ check.actionLabel }}

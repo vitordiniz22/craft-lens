@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace vitordiniz22\craftlens\services;
 
 use Craft;
+use craft\helpers\UrlHelper;
+use craft\models\Volume;
 use vitordiniz22\craftlens\enums\AiProvider;
 use vitordiniz22\craftlens\enums\SetupSeverity;
 use vitordiniz22\craftlens\fieldlayoutelements\LensAnalysisElement;
@@ -28,6 +30,8 @@ class SetupStatusService extends Component
     private const DOCS_BASE_URL = 'https://github.com/vitordiniz22/craft-lens/wiki/';
 
     private ?array $cachedStatus = null;
+
+    private ?array $cachedVolumesStatus = null;
 
     /**
      * Get all setup status checks.
@@ -177,17 +181,52 @@ class SetupStatusService extends Component
     }
 
     /**
-     * Check if Lens Analysis is added to at least one enabled volume's field layout.
+     * Check if Lens Analysis is added to every enabled volume's field layout.
+     * One configured volume isn't enough — partial setup leaves the user
+     * with assets that silently never expose AI metadata.
      */
     public function isAnalysisPanelConfigured(): bool
     {
-        $enabledVolumeIds = $this->getSettings()->getEnabledVolumeIds();
+        $rows = $this->getEnabledVolumesStatus();
 
-        if (empty($enabledVolumeIds)) {
+        if (empty($rows)) {
             return false;
         }
 
+        foreach ($rows as $row) {
+            if (!$row['hasField']) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Get a per-volume status row for every enabled volume, used to render the
+     * dashboard setup banner sub-list. Volumes that have been deleted since
+     * being saved in settings are skipped.
+     *
+     * @return array<int, array{
+     *     volume: Volume,
+     *     hasField: bool,
+     *     fieldLayoutUrl: string,
+     * }>
+     */
+    public function getEnabledVolumesStatus(): array
+    {
+        if ($this->cachedVolumesStatus !== null) {
+            return $this->cachedVolumesStatus;
+        }
+
+        $enabledVolumeIds = $this->getSettings()->getEnabledVolumeIds();
+
+        if (empty($enabledVolumeIds)) {
+            return $this->cachedVolumesStatus = [];
+        }
+
         $volumesService = Craft::$app->getVolumes();
+        $rows = [];
 
         foreach ($enabledVolumeIds as $volumeId) {
             $volume = $volumesService->getVolumeById($volumeId);
@@ -196,17 +235,28 @@ class SetupStatusService extends Component
                 continue;
             }
 
-            $fieldLayout = $volume->getFieldLayout();
+            $rows[] = [
+                'volume' => $volume,
+                'hasField' => $this->volumeHasLensElement($volume),
+                'fieldLayoutUrl' => UrlHelper::cpUrl("settings/assets/volumes/{$volume->id}") . '#field-layout',
+            ];
+        }
 
-            if ($fieldLayout === null) {
-                continue;
-            }
+        return $this->cachedVolumesStatus = $rows;
+    }
 
-            foreach ($fieldLayout->getTabs() as $tab) {
-                foreach ($tab->getElements() as $element) {
-                    if ($element instanceof LensAnalysisElement) {
-                        return true;
-                    }
+    private function volumeHasLensElement(Volume $volume): bool
+    {
+        $fieldLayout = $volume->getFieldLayout();
+
+        if ($fieldLayout === null) {
+            return false;
+        }
+
+        foreach ($fieldLayout->getTabs() as $tab) {
+            foreach ($tab->getElements() as $element) {
+                if ($element instanceof LensAnalysisElement) {
+                    return true;
                 }
             }
         }
@@ -338,6 +388,12 @@ class SetupStatusService extends Component
         $isResolved = $stats['analyzed'] > 0;
         $isPro = $plugin->getIsPro();
 
+        $enabledRows = $this->getEnabledVolumesStatus();
+        $firstVolume = !empty($enabledRows) ? $enabledRows[0]['volume'] : null;
+        $assetsUrl = $firstVolume !== null
+            ? 'assets/' . $firstVolume->handle
+            : 'assets';
+
         return [
             'key' => 'first_analysis_complete',
             'category' => self::CATEGORY_VOLUMES,
@@ -346,7 +402,7 @@ class SetupStatusService extends Component
             'actionLabel' => $isPro
                 ? Craft::t('lens', 'Bulk Process')
                 : Craft::t('lens', 'Go to Assets'),
-            'actionUrl' => $isPro ? 'lens/bulk' : 'assets',
+            'actionUrl' => $isPro ? 'lens/bulk' : $assetsUrl,
             'docsUrl' => self::DOCS_BASE_URL . 'Getting-Started#analyzing-your-first-image',
             'isResolved' => $isResolved,
             'prerequisites' => ['ai_provider_api_key', 'volumes_enabled'],

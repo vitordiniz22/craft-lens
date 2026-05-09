@@ -185,3 +185,19 @@
 .lens-setup-banner__item-docs:hover {
   color: var(--text-color);
 }
+
+.lens-setup-banner__volume-summary {
+  margin: 6px 0 6px;
+  font-size: 13px;
+  color: var(--medium-text-color);
+}
+
+.lens-setup-banner__volume-chips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
