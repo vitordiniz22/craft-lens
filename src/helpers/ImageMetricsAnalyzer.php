@@ -454,13 +454,54 @@ class ImageMetricsAnalyzer
     }
 
     /**
+     * Apply a convolution kernel across the two incompatible Imagick signatures.
+     *
+     * PECL Imagick exposes one of two signatures for convolveImage depending on
+     * the ImageMagick major version it was compiled against:
+     *   - IM7-linked builds: convolveImage(ImagickKernel $kernel)
+     *   - IM6-linked builds: convolveImage(array $kernel)
+     *
+     * Same PECL version, different signature. ImagickKernel exists in both, so
+     * class_exists is not a discriminator. We read the declared parameter type
+     * via reflection and pick the matching call shape.
+     */
+    private static function applyConvolution(Imagick $image, array $kernel, int $size): void
+    {
+        if (self::convolveImageWantsKernel()) {
+            $matrix = array_chunk($kernel, $size);
+            $image->convolveImage(\ImagickKernel::fromMatrix($matrix));
+            return;
+        }
+
+        $image->convolveImage($kernel);
+    }
+
+    private static function convolveImageWantsKernel(): bool
+    {
+        static $cached = null;
+        if ($cached !== null) {
+            return $cached;
+        }
+
+        try {
+            $type = (new \ReflectionMethod(Imagick::class, 'convolveImage'))
+                ->getParameters()[0]
+                ->getType();
+
+            return $cached = ($type !== null && \str_contains((string) $type, 'ImagickKernel'));
+        } catch (\Throwable) {
+            return $cached = false;
+        }
+    }
+
+    /**
      * Compute Laplacian variance by convolving the image in-place.
      * The image pixel data is mutated (convolved) but NOT freed -- the caller
      * is responsible for clearing the Imagick object when done with it.
      */
     private static function laplacianVarianceInPlace(Imagick $grayImage): float
     {
-        $grayImage->convolveImage([0, -1, 0, -1, 4, -1, 0, -1, 0]);
+        self::applyConvolution($grayImage, [0, -1, 0, -1, 4, -1, 0, -1, 0], 3);
 
         $stats = $grayImage->getImageChannelMean(Imagick::CHANNEL_GRAY);
         $stdDev = $stats['standardDeviation'] ?? 0.0;
@@ -483,8 +524,8 @@ class ImageMetricsAnalyzer
         $cloneX = clone $grayImage;
         $cloneY = clone $grayImage;
 
-        $cloneX->convolveImage([-1, 0, 1, -2, 0, 2, -1, 0, 1]);
-        $cloneY->convolveImage([-1, -2, -1, 0, 0, 0, 1, 2, 1]);
+        self::applyConvolution($cloneX, [-1, 0, 1, -2, 0, 2, -1, 0, 1], 3);
+        self::applyConvolution($cloneY, [-1, -2, -1, 0, 0, 0, 1, 2, 1], 3);
 
         $statsX = $cloneX->getImageChannelMean(Imagick::CHANNEL_GRAY);
         $statsY = $cloneY->getImageChannelMean(Imagick::CHANNEL_GRAY);

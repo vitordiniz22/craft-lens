@@ -1,5 +1,10 @@
 # Release Notes for Lens
 
+## 1.0.0-beta.7 - 2026-05-09
+
+- Fixed Image Assessment section disappearing on ImageMagick 7 builds.
+- Database logging is now opt-in via the `LENS_LOGS` env variable, with richer diagnostic context on each entry.
+
 ## 1.0.0-beta.6 - 2026-05-07
 
 - Fixed Image Assessment section not appearing on some Imagick builds
