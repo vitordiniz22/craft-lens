@@ -4,6 +4,7 @@
 
 - Fixed Image Assessment section disappearing on ImageMagick 7 builds.
 - Database logging is now opt-in via the `LENS_LOGS` env variable, with richer diagnostic context on each entry.
+- Disabled-volume notice on the asset edit page now offers a shortcut to edit the volume's field layout alongside the link to Lens settings.
 
 ## 1.0.0-beta.6 - 2026-05-07
 

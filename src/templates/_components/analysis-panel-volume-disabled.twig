@@ -1,19 +1,26 @@
 {#
  # Rendered in place of the full analysis panel when the asset's volume is
- # not enabled in Lens settings. No action buttons are shown because analysis
- # cannot run against a disabled volume; the CTA points the user to the
- # settings page where the volume can be opted in.
+ # not enabled in Lens settings. Offers two paths: enable the volume in Lens
+ # settings, or remove the panel from the volume's field layout if it isn't
+ # wanted here at all.
  #}
 <div class="lens-analysis-panel lens-analysis-panel--volume-disabled">
     {% include 'lens/_components/analysis/header' with {analysis: null, asset: asset, static: true} %}
 
-    {% include 'lens/_components/inline-notice' with {
+    {% embed 'lens/_components/inline-notice' with {
         type: 'warning',
         title: 'Volume not enabled for Lens'|t('lens'),
-        message: 'Assets in this volume are not analyzed by Lens. Enable the volume in Lens settings to start generating AI descriptions, tags, and more.'|t('lens'),
-        cta: {
-            label: 'Go to Lens Settings'|t('lens'),
-            url: 'lens/settings#volumes',
-        },
+        message: 'The Lens panel is in this volume\'s field layout, but the volume isn\'t enabled in Lens settings, so its assets aren\'t analyzed. Enable the volume to start analyzing assets here, or remove the Lens panel from this volume\'s field layout if you don\'t want it here.'|t('lens'),
     } %}
+        {% block action %}
+            <div class="lens-inline-notice__action">
+                <a href="{{ url(asset.volume.cpEditUrl) }}" class="btn small">
+                    {{ 'Edit volume field layout'|t('lens') }}
+                </a>
+                <a href="{{ cpUrl('lens/settings') }}" class="btn small submit">
+                    {{ 'Go to Lens Settings'|t('lens') }}
+                </a>
+            </div>
+        {% endblock %}
+    {% endembed %}
 </div>
