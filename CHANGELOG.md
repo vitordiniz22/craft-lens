@@ -1,5 +1,9 @@
 # Release Notes for Lens
 
+## 1.0.0 - 2026-06-10
+
+- First stable release.
+
 ## 1.0.0-beta.7 - 2026-05-09
 
 - Fixed Image Assessment section disappearing on ImageMagick 7 builds.

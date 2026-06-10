@@ -1,16 +1,20 @@
 {
   "name": "vitordiniz22/craft-lens",
-  "description": "Content-aware image search and analysis for assets.",
+  "description": "Generates alt text, titles, and focal points for every image, flags quality issues, and makes your library searchable by what's in each photo.",
   "keywords": [
     "craftcms",
     "craft-plugin",
+    "ai",
+    "alt-text",
+    "alt-text-generator",
+    "accessibility",
+    "a11y",
     "image-analysis",
     "image-recognition",
     "image-search",
+    "image-tagging",
     "image-quality",
     "image-seo",
-    "alt-text",
-    "accessibility",
     "auto-tagging",
     "asset-management",
     "duplicate-detection",
@@ -71,7 +75,7 @@
     "developer": "Vitor Diniz",
     "developerUrl": "https://github.com/vitordiniz22",
     "documentationUrl": "https://github.com/vitordiniz22/craft-lens/wiki",
-    "changelogUrl": "https://raw.githubusercontent.com/vitordiniz22/craft-lens/main/CHANGELOG.md",
+    "changelogUrl": "https://raw.githubusercontent.com/vitordiniz22/craft-lens/master/CHANGELOG.md",
     "editions": [
       {
         "name": "Lite",

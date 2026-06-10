@@ -15,11 +15,11 @@
   <a href="https://github.com/vitordiniz22/craft-lens/actions/workflows/tests.yml"><img src="https://github.com/vitordiniz22/craft-lens/actions/workflows/tests.yml/badge.svg" alt="Tests"></a>
 </p>
 
-Lens uses AI to analyze every image in your asset library and indexes the results (tags, descriptions, alt text, OCR'd text) into Craft's native search and every asset picker. Editors find images by what's in them instead of relying on filenames or folder structure.
+Lens runs every image in your asset library through an AI model and fills in the metadata that should have been there: alt text in each of your site's languages, a descriptive title, a focal point on the actual subject, and flags for NSFW content, visible watermarks, named brand logos, and people in the shot. It also audits each image for blur, exposure, contrast, compression, and color profile issues. All of that is free in the Lite edition.
 
-Beyond search, Lens flags duplicates before they pile up, identifies brands and people, sets focal points so Craft's image transforms crop around the subject, catches NSFW content and watermarks, audits image quality, and includes pre-built filtered views so editors browse by what's in the picture.
+Pro makes the library searchable by what's actually in each image: long descriptions, semantic tags, and OCR'd text are indexed into Craft's native search and every image picker, so editors find photos by content instead of filenames or folder structure. Pro also bulk-processes entire volumes, catches visually duplicate uploads, and tracks AI spend.
 
-Multi-provider by design: bring your own API key for **OpenAI**, **Google Gemini**, or **Anthropic Claude**, and switch whenever. No middleman, no vendor lock-in.
+Bring your own API key for **OpenAI**, **Google Gemini**, or **Anthropic Claude**, and switch whenever. You pay the provider directly; there's no middleman.
 
 ## How It Works
 
