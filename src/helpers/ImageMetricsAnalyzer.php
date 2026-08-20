@@ -456,42 +456,27 @@ class ImageMetricsAnalyzer
     /**
      * Apply a convolution kernel across the two incompatible Imagick signatures.
      *
-     * PECL Imagick exposes one of two signatures for convolveImage depending on
-     * the ImageMagick major version it was compiled against:
-     *   - IM7-linked builds: convolveImage(ImagickKernel $kernel)
-     *   - IM6-linked builds: convolveImage(array $kernel)
+     * PECL Imagick exposes one of two signatures for convolveImage:
+     *   - convolveImage(ImagickKernel $kernel) on IM7-linked builds
+     *   - convolveImage(array $kernel) on IM6-linked builds
      *
-     * Same PECL version, different signature. ImagickKernel exists in both, so
-     * class_exists is not a discriminator. We read the declared parameter type
-     * via reflection and pick the matching call shape.
+     * The build picks one at compile time from the ImageMagick major version it
+     * links against, so that version is the discriminator. The declared
+     * parameter type is not: a build's arginfo can disagree with the
+     * implementation behind it. `getVersion()` reports the linked version as a
+     * MagickLibVersion int, 0x6xx for IM6 and 0x7xx for IM7.
      */
     private static function applyConvolution(Imagick $image, array $kernel, int $size): void
     {
-        if (self::convolveImageWantsKernel()) {
-            $matrix = array_chunk($kernel, $size);
-            $image->convolveImage(\ImagickKernel::fromMatrix($matrix));
+        static $isImageMagick7 = null;
+        $isImageMagick7 ??= Imagick::getVersion()['versionNumber'] >= 0x700;
+
+        if ($isImageMagick7) {
+            $image->convolveImage(\ImagickKernel::fromMatrix(array_chunk($kernel, $size)));
             return;
         }
 
         $image->convolveImage($kernel);
-    }
-
-    private static function convolveImageWantsKernel(): bool
-    {
-        static $cached = null;
-        if ($cached !== null) {
-            return $cached;
-        }
-
-        try {
-            $type = (new \ReflectionMethod(Imagick::class, 'convolveImage'))
-                ->getParameters()[0]
-                ->getType();
-
-            return $cached = ($type !== null && \str_contains((string) $type, 'ImagickKernel'));
-        } catch (\Throwable) {
-            return $cached = false;
-        }
     }
 
     /**
