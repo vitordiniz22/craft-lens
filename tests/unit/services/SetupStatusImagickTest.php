@@ -7,7 +7,8 @@ namespace vitordiniz22\craftlenstests\unit\services;
 use Codeception\Test\Unit;
 use ReflectionMethod;
 use vitordiniz22\craftlens\enums\SetupSeverity;
-use vitordiniz22\craftlens\helpers\ImageMetricsAnalyzer;
+use vitordiniz22\craftlens\helpers\QualitySupport;
+use vitordiniz22\craftlens\Plugin;
 use vitordiniz22\craftlens\services\SetupStatusService;
 
 /**
@@ -22,11 +23,21 @@ use vitordiniz22\craftlens\services\SetupStatusService;
 class SetupStatusImagickTest extends Unit
 {
     private SetupStatusService $service;
+    private bool $originalQualityAnalysis;
 
     protected function _before(): void
     {
         parent::_before();
+        $settings = Plugin::getInstance()->getSettings();
+        $this->originalQualityAnalysis = $settings->enableQualityAnalysis;
+        $settings->enableQualityAnalysis = true;
         $this->service = new SetupStatusService();
+    }
+
+    protected function _after(): void
+    {
+        Plugin::getInstance()->getSettings()->enableQualityAnalysis = $this->originalQualityAnalysis;
+        parent::_after();
     }
 
     private function invokeCheck(bool $isResolved): array
@@ -108,24 +119,32 @@ class SetupStatusImagickTest extends Unit
     public function testSetupStatusReflectsRealHostImagickState(): void
     {
         // This test locks the call-site contract: getSetupStatus() must feed
-        // ImageMetricsAnalyzer::isAvailable() into checkImagickAvailable().
+        // QualitySupport::isSupported() into checkImagickAvailable().
         // If someone hardcoded `true` at the call site, this test would fail
         // on a host without Imagick (and vice versa).
         $check = $this->findImagickCheck($this->service->getSetupStatus());
         $this->assertNotNull($check);
 
         $this->assertSame(
-            ImageMetricsAnalyzer::isAvailable(),
+            QualitySupport::isSupported(),
             $check['isResolved'],
-            'isResolved in getSetupStatus() must track ImageMetricsAnalyzer::isAvailable() on the current host'
+            'isResolved in getSetupStatus() must track QualitySupport::isSupported() on the current host'
         );
+    }
+
+    public function testDisabledQualityAnalysisOmitsImagickCheck(): void
+    {
+        Plugin::getInstance()->getSettings()->enableQualityAnalysis = false;
+        $service = new SetupStatusService();
+
+        $this->assertNull($this->findImagickCheck($service->getSetupStatus()));
     }
 
     // -- Aggregate bucket contributions: real filtering, no hook to spoof --
 
     public function testAggregateBucketsMatchHostImagickState(): void
     {
-        $hostHasImagick = ImageMetricsAnalyzer::isAvailable();
+        $hostHasImagick = QualitySupport::isSupported();
         $warningKeys = array_column($this->service->getWarnings(), 'key');
         $criticalKeys = array_column($this->service->getCriticalIssues(), 'key');
 
