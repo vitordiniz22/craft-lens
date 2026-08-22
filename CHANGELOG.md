@@ -1,11 +1,12 @@
 # Release Notes for Lens
 
-## Unreleased
+## 1.0.1 - 2026-08-22
 
 - Fixed Image Assessment failures on some ImageMagick 7 servers.
 - Image Assessment is now optional and disabled by default; enable it on servers with Imagick and sufficient memory.
 - Reduced image-analysis memory usage, removed low-resolution upload substitutions, and added recovery for interrupted queue jobs.
 - Duplicate hashing is now Imagick-only. After updating, run `php craft lens/duplicates/rebuild-hashes` once to refresh existing hashes.
+- Fixed bulk completion status and limited failed-asset retries to the selected volume.
 
 ## 1.0.0 - 2026-06-10
 
