@@ -5,9 +5,8 @@ declare(strict_types=1);
 namespace vitordiniz22\craftlens\helpers;
 
 /**
- * Gates duplicate detection. Perceptual hashing is implemented in pure GD
- * (imagescale + per-pixel read), so without GD there is no way to compute
- * the aHash used by DuplicateDetectionService.
+ * Gates duplicate detection. Hashing uses the same bounded Imagick handle as
+ * metrics and preprocessing; no second driver or full-resolution decode.
  */
 class DuplicateSupport
 {
@@ -15,6 +14,6 @@ class DuplicateSupport
 
     public static function isAvailable(): bool
     {
-        return self::$available ??= extension_loaded('gd');
+        return self::$available ??= extension_loaded('imagick');
     }
 }

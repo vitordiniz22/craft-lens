@@ -18,6 +18,7 @@ use vitordiniz22\craftlens\jobs\ProCompletionAnalysisJob;
 use vitordiniz22\craftlens\migrations\Install;
 use vitordiniz22\craftlens\records\AssetAnalysisRecord;
 use yii\base\Component;
+use yii\db\ActiveQuery;
 use yii\db\Query;
 
 /**
@@ -100,6 +101,22 @@ class BulkProcessingStatusService extends Component
             'failed' => $this->getFailedCount($volumeId),
             'processing' => $this->getProcessingCount($volumeId),
         ];
+    }
+
+    /**
+     * Get failed asset IDs within the active volume scope.
+     *
+     * @return int[]
+     */
+    public function getFailedAssetIds(null|int|array $volumeId = null): array
+    {
+        $query = AssetAnalysisRecord::find()
+            ->select(['assetId'])
+            ->where(['status' => AnalysisStatus::Failed->value]);
+
+        $this->applyVolumeFilter($query, $volumeId);
+
+        return array_map('intval', $query->column());
     }
 
     /**
@@ -186,7 +203,7 @@ class BulkProcessingStatusService extends Component
             }
         }
 
-        if ($this->isRecentlyCompleted($stats)) {
+        if ($this->isRecentlyCompleted()) {
             return 'complete';
         }
 
@@ -349,14 +366,7 @@ class BulkProcessingStatusService extends Component
             ? (int) ($remaining / $rate)
             : null;
 
-        // Count failures from this session only, not historical ones
-        $sessionFailed = 0;
-        if ($session !== null && isset($session['startedAt'])) {
-            $sessionFailed = (int) AssetAnalysisRecord::find()
-                ->where(['status' => AnalysisStatus::Failed->value])
-                ->andWhere(['>=', 'processedAt', gmdate('Y-m-d H:i:s', $session['startedAt'])])
-                ->count();
-        }
+        $sessionFailed = (int) $this->getSessionFailedQuery($session)->count();
 
         return [
             'total' => $total,
@@ -496,7 +506,7 @@ class BulkProcessingStatusService extends Component
     /**
      * Check if processing recently completed (within COMPLETE_STATE_DURATION).
      */
-    private function isRecentlyCompleted(array $stats): bool
+    private function isRecentlyCompleted(): bool
     {
         $session = $this->getSessionData();
 
@@ -513,7 +523,7 @@ class BulkProcessingStatusService extends Component
             return false;
         }
 
-        if (($stats['failed'] ?? 0) > 0) {
+        if ($this->getSessionFailedQuery($session)->exists()) {
             return true;
         }
 
@@ -728,15 +738,9 @@ class BulkProcessingStatusService extends Component
     public function getFailureReasons(): array
     {
         $session = $this->getSessionData();
-        $query = AssetAnalysisRecord::find()
+        $failedAnalysisIds = $this->getSessionFailedQuery($session)
             ->select(['id'])
-            ->where(['status' => AnalysisStatus::Failed->value]);
-
-        if ($session !== null && isset($session['startedAt'])) {
-            $query->andWhere(['>=', 'processedAt', gmdate('Y-m-d H:i:s', $session['startedAt'])]);
-        }
-
-        $failedAnalysisIds = $query->column();
+            ->column();
 
         if (empty($failedAnalysisIds)) {
             return ['groups' => [], 'totalFailed' => 0];
@@ -745,7 +749,7 @@ class BulkProcessingStatusService extends Component
         $failedDetails = (new Query())
             ->select(['a.assetId', 'c.errorCode'])
             ->from([Install::TABLE_ASSET_ANALYSES . ' a'])
-            ->innerJoin(Install::TABLE_ANALYSIS_CONTENT . ' c', 'c.[[analysisId]] = a.[[id]]')
+            ->leftJoin(Install::TABLE_ANALYSIS_CONTENT . ' c', 'c.[[analysisId]] = a.[[id]]')
             ->where(['in', 'a.id', $failedAnalysisIds])
             ->limit(5000)
             ->all();
@@ -808,7 +812,7 @@ class BulkProcessingStatusService extends Component
                         'filename' => $asset->filename,
                         'editUrl' => $asset->getCpEditUrl(),
                         'size' => $asset->size !== null ? (int) $asset->size : null,
-                        'volume' => $volume?->name,
+                        'volume' => $volume->name,
                         'dimensions' => $dimensions,
                         'thumbUrl' => $thumbUrl,
                     ];
@@ -844,11 +848,29 @@ class BulkProcessingStatusService extends Component
     }
 
     /**
-     * Apply volume filter to a query by filtering asset IDs.
-     *
-     * @param \yii\db\ActiveQuery $query The query to filter
-     * @param int|array|null $volumeId Volume ID(s) to filter by (null = no filter)
+     * Build the canonical query for failures produced by one bulk session.
      */
+    private function getSessionFailedQuery(?array $session): ActiveQuery
+    {
+        $query = AssetAnalysisRecord::find()
+            ->where(['status' => AnalysisStatus::Failed->value]);
+
+        if ($session === null || !isset($session['startedAt'])) {
+            return $query->andWhere('1 = 0');
+        }
+
+        $query->andWhere(['>=', 'processedAt', gmdate('Y-m-d H:i:s', $session['startedAt'])]);
+
+        $scopedAssetIds = $session['retriedFailedAssetIds'] ?? [];
+        if (!empty($scopedAssetIds)) {
+            return $query->andWhere(['in', 'assetId', $scopedAssetIds]);
+        }
+
+        $this->applyVolumeFilter($query, $session['volumeId'] ?? null);
+
+        return $query;
+    }
+
     /**
      * Count analysis records matching one or more statuses, optionally filtered by volume.
      *
@@ -864,7 +886,10 @@ class BulkProcessingStatusService extends Component
         return (int) $query->count();
     }
 
-    private function applyVolumeFilter($query, null|int|array $volumeId): void
+    /**
+     * Apply a volume filter to an analysis-record query.
+     */
+    private function applyVolumeFilter(ActiveQuery $query, null|int|array $volumeId): void
     {
         if ($volumeId === null) {
             return;

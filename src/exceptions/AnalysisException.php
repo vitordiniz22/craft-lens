@@ -131,6 +131,16 @@ class AnalysisException extends Exception
         );
     }
 
+    public static function imageProcessingFailed(int $assetId, string $reason): self
+    {
+        return new self(
+            message: "Image processing failed for asset {$assetId}: {$reason}",
+            assetId: $assetId,
+            userMessage: 'This image could not be prepared safely within the server memory limits.',
+            errorCode: ErrorCode::ImageProcessingFailed,
+        );
+    }
+
     public static function fileTooLarge(
         string $providerName,
         int $assetId,

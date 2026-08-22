@@ -9,7 +9,7 @@ use craft\elements\Asset;
 use ReflectionMethod;
 use vitordiniz22\craftlens\exceptions\AnalysisException;
 use vitordiniz22\craftlens\helpers\AnalysisImageContext;
-use vitordiniz22\craftlens\helpers\ImagePreprocessor;
+use vitordiniz22\craftlens\helpers\MemoryBudget;
 use vitordiniz22\craftlens\providers\BaseAiProvider;
 use vitordiniz22\craftlenstests\integration\providers\_support\TestAiProvider;
 
@@ -18,12 +18,8 @@ use vitordiniz22\craftlenstests\integration\providers\_support\TestAiProvider;
  *
  * These tests lock in the preprocessing contract:
  *   - When preprocessing succeeds, the post-size check uses the processed bytes.
- *   - When preprocessing fails, we fall back to the original bytes WITHOUT
- *     throwing fileTooLarge, even if the original exceeds the provider cap.
- *     This is the load-bearing guarantee: preprocessing failures never break
- *     analysis.
- *   - The decode-cost guard rejects pathological originals before any attempt
- *     at decode.
+ *   - A failed normalization uses the original only after size and memory guards.
+ *   - Unsafe originals fail before their contents are loaded.
  */
 class BaseAiProviderImageDataTest extends Unit
 {
@@ -34,12 +30,13 @@ class BaseAiProviderImageDataTest extends Unit
     protected function _before(): void
     {
         parent::_before();
-        ImagePreprocessor::resetStaticState();
 
         $this->tempDir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'lens-preproc-test-' . bin2hex(random_bytes(6));
         if (!is_dir($this->tempDir)) {
             mkdir($this->tempDir, 0777, true);
         }
+
+        MemoryBudget::forceUploadHeadroomForTesting(true);
     }
 
     protected function _after(): void
@@ -57,12 +54,14 @@ class BaseAiProviderImageDataTest extends Unit
             @rmdir($this->tempDir);
         }
 
+        MemoryBudget::resetCache();
+
         parent::_after();
     }
 
-    // -- Load-bearing: failure fallback must NOT throw fileTooLarge --------
+    // -- Original uploads are guarded --------------------------------------
 
-    public function testFailedPreprocessingDoesNotThrowFileTooLargeOnFallback(): void
+    public function testOriginalOverProviderLimitFailsBeforeUpload(): void
     {
         // 600 KB of random bytes labelled as .jpg — loadImage() will throw,
         // the helper catches, and we fall back to the raw 600 KB bytes.
@@ -78,17 +77,51 @@ class BaseAiProviderImageDataTest extends Unit
             extension: 'jpg',
         );
 
-        // Provider cap is 500 KB; raw is 600 KB and would fail the cap if
-        // the post-check ran on fallback bytes. It must NOT.
         $provider = new TestAiProvider(maxFileSizeBytes: 500_000);
+
+        $this->expectException(AnalysisException::class);
+        $this->expectExceptionMessage('exceeds Test Provider limit');
+        $this->invokeGetBase64ImageData($provider, $asset);
+    }
+
+    public function testNormalizationFailureUsesGuardedOriginal(): void
+    {
+        $rawBytes = random_bytes(600_000);
+        $path = $this->writeTempFile('corrupt-safe.jpg', $rawBytes);
+        $asset = $this->stubAsset(
+            path: $path,
+            mimeType: 'image/jpeg',
+            size: strlen($rawBytes),
+            width: 6000,
+            height: 4000,
+            extension: 'jpg',
+        );
+        $provider = new TestAiProvider(maxFileSizeBytes: 1_000_000);
 
         $result = $this->invokeGetBase64ImageData($provider, $asset);
 
-        $this->assertSame(
-            base64_encode($rawBytes),
-            $result['base64'],
-            'Failed preprocessing must fall through to raw bytes unchanged, even when raw exceeds the provider cap'
+        $this->assertSame($rawBytes, base64_decode($result['base64'], true));
+        $this->assertSame('image/jpeg', $result['mimeType']);
+    }
+
+    public function testOriginalUploadIsRejectedWhenRequestMemoryIsUnsafe(): void
+    {
+        $rawBytes = random_bytes(600_000);
+        $path = $this->writeTempFile('corrupt.jpg', $rawBytes);
+        $asset = $this->stubAsset(
+            path: $path,
+            mimeType: 'image/jpeg',
+            size: strlen($rawBytes),
+            width: 6000,
+            height: 4000,
+            extension: 'jpg',
         );
+        $provider = new TestAiProvider(maxFileSizeBytes: 10 * 1024 * 1024);
+        MemoryBudget::forceUploadHeadroomForTesting(false);
+
+        $this->expectException(AnalysisException::class);
+        $this->expectExceptionMessage('insufficient_request_memory');
+        $this->invokeGetBase64ImageData($provider, $asset);
     }
 
     // -- Post-check applies when preprocessing succeeded -------------------
@@ -200,7 +233,7 @@ class BaseAiProviderImageDataTest extends Unit
                 static fn() => fopen($path, 'rb') ?: null
             );
             $asset->method('getCopyOfFile')->willReturnCallback(
-                function () use ($path): string {
+                function() use ($path): string {
                     $copy = $this->tempDir . DIRECTORY_SEPARATOR . 'copy-' . bin2hex(random_bytes(6)) . '.bin';
                     copy($path, $copy);
                     $this->tempFiles[] = $copy;
@@ -248,5 +281,4 @@ class BaseAiProviderImageDataTest extends Unit
 
         return $data;
     }
-
 }

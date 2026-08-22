@@ -23,7 +23,6 @@ class ImagePreprocessorTest extends Unit
     protected function _before(): void
     {
         parent::_before();
-        ImagePreprocessor::resetStaticState();
     }
 
     // -- shouldSkip() via reflection --------------------------------------
@@ -32,49 +31,49 @@ class ImagePreprocessorTest extends Unit
     {
         $asset = $this->stubAsset(kind: Asset::KIND_VIDEO);
 
-        $this->assertSame('not_image', $this->invokeShouldSkip($asset, 'video/mp4', 1_000_000, 1568));
+        $this->assertSame('not_image', $this->invokeShouldSkip($asset, 'video/mp4'));
     }
 
     public function testShouldSkipReturnsMimeUnsupportedForSvg(): void
     {
         $asset = $this->stubAsset(kind: Asset::KIND_IMAGE, extension: 'svg');
 
-        $this->assertSame('mime_unsupported', $this->invokeShouldSkip($asset, 'image/svg+xml', 5_000, 1568));
+        $this->assertSame('mime_unsupported', $this->invokeShouldSkip($asset, 'image/svg+xml'));
     }
 
     public function testShouldSkipReturnsMimeUnsupportedForAnimatedGif(): void
     {
         $asset = $this->stubAsset(kind: Asset::KIND_IMAGE, extension: 'gif');
 
-        $this->assertSame('mime_unsupported', $this->invokeShouldSkip($asset, 'image/gif', 10_000, 1568));
+        $this->assertSame('mime_unsupported', $this->invokeShouldSkip($asset, 'image/gif'));
     }
 
     public function testShouldSkipReturnsMimeUnsupportedForPdf(): void
     {
         $asset = $this->stubAsset(kind: Asset::KIND_IMAGE, extension: 'pdf');
 
-        $this->assertSame('mime_unsupported', $this->invokeShouldSkip($asset, 'application/pdf', 50_000, 1568));
+        $this->assertSame('mime_unsupported', $this->invokeShouldSkip($asset, 'application/pdf'));
     }
 
     public function testShouldSkipReturnsRawFormatUnsupportedForCr2(): void
     {
         $asset = $this->stubAsset(kind: Asset::KIND_IMAGE, extension: 'cr2');
 
-        $this->assertSame('raw_format_unsupported', $this->invokeShouldSkip($asset, 'image/x-canon-cr2', 20_000_000, 1568));
+        $this->assertSame('raw_format_unsupported', $this->invokeShouldSkip($asset, 'image/x-canon-cr2'));
     }
 
     public function testShouldSkipIsCaseInsensitiveForExtension(): void
     {
         $asset = $this->stubAsset(kind: Asset::KIND_IMAGE, extension: 'NEF');
 
-        $this->assertSame('raw_format_unsupported', $this->invokeShouldSkip($asset, 'image/x-nikon-nef', 20_000_000, 1568));
+        $this->assertSame('raw_format_unsupported', $this->invokeShouldSkip($asset, 'image/x-nikon-nef'));
     }
 
     public function testShouldSkipReturnsEmptyFileForZeroBytes(): void
     {
         $asset = $this->stubAsset(kind: Asset::KIND_IMAGE, extension: 'jpg', size: 0);
 
-        $this->assertSame('empty_file', $this->invokeShouldSkip($asset, 'image/jpeg', 0, 1568));
+        $this->assertSame('empty_file', $this->invokeShouldSkip($asset, 'image/jpeg'));
     }
 
     public function testShouldSkipReturnsAlreadySmallWhenUnderBothThresholds(): void
@@ -87,7 +86,7 @@ class ImagePreprocessorTest extends Unit
             height: 800,
         );
 
-        $this->assertSame('already_small', $this->invokeShouldSkip($asset, 'image/jpeg', 200_000, 1568));
+        $this->assertSame('already_small', $this->invokeShouldSkip($asset, 'image/jpeg'));
     }
 
     public function testShouldSkipDoesNotSkipWhenOverBytesButUnderDimensions(): void
@@ -101,7 +100,7 @@ class ImagePreprocessorTest extends Unit
         );
 
         // 1500x1500 PNG at 2 MB: dimensions under 1568 but bytes over 500K threshold → should process.
-        $this->assertNull($this->invokeShouldSkip($asset, 'image/png', 2_000_000, 1568));
+        $this->assertNull($this->invokeShouldSkip($asset, 'image/png'));
     }
 
     public function testShouldSkipDoesNotSkipLargePhoto(): void
@@ -114,7 +113,7 @@ class ImagePreprocessorTest extends Unit
             height: 4000,
         );
 
-        $this->assertNull($this->invokeShouldSkip($asset, 'image/jpeg', 6_000_000, 1568));
+        $this->assertNull($this->invokeShouldSkip($asset, 'image/jpeg'));
     }
 
     public function testShouldSkipDoesNotSkipWhenDimensionsMissing(): void
@@ -129,7 +128,26 @@ class ImagePreprocessorTest extends Unit
             height: 0,
         );
 
-        $this->assertNull($this->invokeShouldSkip($asset, 'image/jpeg', 100_000, 1568));
+        $this->assertNull($this->invokeShouldSkip($asset, 'image/jpeg'));
+    }
+
+    // -- detectMimeType() via reflection ----------------------------------
+
+    public function testDetectMimeTypeReadsTheBytesNotTheExtension(): void
+    {
+        // A JPEG saved as .png: the asset reports image/png, the payload is
+        // JPEG, and providers reject the mismatch.
+        $this->assertSame('image/jpeg', $this->invokeDetectMimeType($this->jpegBytes(), 'image/png'));
+    }
+
+    public function testDetectMimeTypeFallsBackOnEmptyBytes(): void
+    {
+        $this->assertSame('image/png', $this->invokeDetectMimeType('', 'image/png'));
+    }
+
+    public function testDetectMimeTypeFallsBackWhenBytesAreNotAnImage(): void
+    {
+        $this->assertSame('image/gif', $this->invokeDetectMimeType('not an image at all', 'image/gif'));
     }
 
     // -- Helpers ----------------------------------------------------------
@@ -154,11 +172,31 @@ class ImagePreprocessorTest extends Unit
         return $asset;
     }
 
-    private function invokeShouldSkip(Asset $asset, string $mimeType, int $byteLength, int $maxDimension): ?string
+    private function invokeShouldSkip(Asset $asset, string $mimeType, int $maxDimension = 1568): ?string
     {
         $method = new ReflectionMethod(ImagePreprocessor::class, 'shouldSkip');
         $method->setAccessible(true);
 
-        return $method->invoke(null, $asset, $mimeType, $byteLength, $maxDimension);
+        return $method->invoke(null, $asset, $mimeType, $maxDimension);
+    }
+
+    private function invokeDetectMimeType(string $bytes, string $fallback): string
+    {
+        $method = new ReflectionMethod(ImagePreprocessor::class, 'detectMimeType');
+        $method->setAccessible(true);
+
+        return $method->invoke(null, $bytes, $fallback);
+    }
+
+    /** Smallest thing finfo will call a JPEG. */
+    private function jpegBytes(): string
+    {
+        $image = imagecreatetruecolor(4, 4);
+        ob_start();
+        imagejpeg($image);
+        $bytes = (string) ob_get_clean();
+        imagedestroy($image);
+
+        return $bytes;
     }
 }

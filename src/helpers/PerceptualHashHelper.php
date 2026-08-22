@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace vitordiniz22\craftlens\helpers;
 
-use vitordiniz22\craftlens\enums\LogCategory;
-
 /**
  * Perceptual hash helper using average hash (aHash) algorithm.
  *
@@ -17,71 +15,58 @@ class PerceptualHashHelper
     private const HASH_SIZE = 16;
 
     /**
-     * Compute a perceptual hash for an image file.
+     * Hash from an already-decoded handle, so the pipeline pays a 16x16 resize
+     * instead of a second full decode.
      *
-     * @param string $imagePath Path to the image file
-     * @return string 64-character hex string (256-bit hash)
-     * @throws \RuntimeException If the image cannot be loaded or processed
+     * @throws \RuntimeException If the pixels cannot be read
      */
-    public static function compute(string $imagePath): string
+    public static function computeFromImagick(\Imagick $image): string
     {
-        if (!DuplicateSupport::isAvailable()) {
-            throw new \RuntimeException('Perceptual hashing requires the GD PHP extension');
-        }
-
-        if (!file_exists($imagePath) || !is_readable($imagePath)) {
-            throw new \RuntimeException("Image file not found or not readable: {$imagePath}");
-        }
-
-        $image = self::loadImage($imagePath);
-
-        // Resize to 16x16
-        $resized = imagescale($image, self::HASH_SIZE, self::HASH_SIZE);
-
-        if ($resized === false) {
-            imagedestroy($image);
-            Logger::warning(LogCategory::AssetProcessing, "Failed to resize image for perceptual hash: {$imagePath}");
-            throw new \RuntimeException("Failed to resize image: {$imagePath}");
-        }
-
-        imagedestroy($image);
+        $thumb = clone $image;
 
         try {
-            // Convert to grayscale
-            imagefilter($resized, IMG_FILTER_GRAYSCALE);
+            $thumb->resizeImage(self::HASH_SIZE, self::HASH_SIZE, \Imagick::FILTER_LANCZOS, 1, false);
+            $thumb->transformImageColorspace(\Imagick::COLORSPACE_GRAY);
 
-            // Collect pixel values and compute average
-            $pixels = [];
-            $total = 0;
+            $pixels = $thumb->exportImagePixels(
+                0,
+                0,
+                self::HASH_SIZE,
+                self::HASH_SIZE,
+                'I',
+                \Imagick::PIXEL_CHAR,
+            );
 
-            for ($y = 0; $y < self::HASH_SIZE; $y++) {
-                for ($x = 0; $x < self::HASH_SIZE; $x++) {
-                    $rgb = imagecolorat($resized, $x, $y);
-                    $gray = $rgb & 0xFF; // Already grayscale, R=G=B
-                    $pixels[] = $gray;
-                    $total += $gray;
-                }
+            if (count($pixels) !== self::HASH_SIZE * self::HASH_SIZE) {
+                throw new \RuntimeException('Unexpected pixel count for perceptual hash');
             }
 
-            $average = $total / count($pixels);
-
-            // Build binary hash: 1 if pixel >= average, 0 otherwise
-            $bitArray = [];
-            foreach ($pixels as $pixel) {
-                $bitArray[] = $pixel >= $average ? '1' : '0';
-            }
-            $bits = implode('', $bitArray);
-
-            // Convert binary string to hex (256 bits -> 64 hex chars)
-            $hexArray = [];
-            for ($i = 0; $i < 256; $i += 4) {
-                $hexArray[] = dechex(bindec(substr($bits, $i, 4)));
-            }
-
-            return implode('', $hexArray);
+            return self::hashFromPixels($pixels);
         } finally {
-            imagedestroy($resized);
+            $thumb->clear();
         }
+    }
+
+    /**
+     * One bit per pixel, set at or above the mean, packed into 64 hex chars.
+     *
+     * @param int[] $pixels 256 grayscale values, 0-255
+     */
+    private static function hashFromPixels(array $pixels): string
+    {
+        $average = array_sum($pixels) / count($pixels);
+
+        $bits = '';
+        foreach ($pixels as $pixel) {
+            $bits .= $pixel >= $average ? '1' : '0';
+        }
+
+        $hexArray = [];
+        for ($i = 0; $i < 256; $i += 4) {
+            $hexArray[] = dechex(bindec(substr($bits, $i, 4)));
+        }
+
+        return implode('', $hexArray);
     }
 
     /**
@@ -113,37 +98,5 @@ class PerceptualHashHelper
     public static function similarity(string $hash1, string $hash2): float
     {
         return 1.0 - (self::hammingDistance($hash1, $hash2) / 256);
-    }
-
-    /**
-     * Load an image file using GD based on its MIME type.
-     *
-     * @throws \RuntimeException If the image format is unsupported or cannot be loaded
-     */
-    private static function loadImage(string $path): \GdImage
-    {
-        $finfo = new \finfo(FILEINFO_MIME_TYPE);
-        $mimeType = $finfo->file($path);
-
-        if ($mimeType === false) {
-            Logger::warning(LogCategory::AssetProcessing, "Cannot detect MIME type for perceptual hash: {$path}");
-            throw new \RuntimeException("Cannot detect MIME type for: {$path}");
-        }
-
-        $image = match ($mimeType) {
-            'image/jpeg', 'image/jpg' => imagecreatefromjpeg($path),
-            'image/png' => imagecreatefrompng($path),
-            'image/gif' => imagecreatefromgif($path),
-            'image/webp' => imagecreatefromwebp($path),
-            'image/bmp', 'image/x-ms-bmp' => imagecreatefrombmp($path),
-            default => throw new \RuntimeException("Unsupported image format: {$mimeType}"),
-        };
-
-        if ($image === false) {
-            Logger::warning(LogCategory::AssetProcessing, "Failed to load image for perceptual hash: {$path}");
-            throw new \RuntimeException("Failed to load image: {$path}");
-        }
-
-        return $image;
     }
 }

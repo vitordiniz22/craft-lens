@@ -11,10 +11,8 @@ use vitordiniz22\craftlens\helpers\PreprocessResult;
  * Unit tests for the PreprocessResult DTO.
  *
  * PreprocessResult is a readonly value object produced by ImagePreprocessor.
- * Its two factories encode the two possible outcomes of preprocessing: a
- * successful resize (processed) or a passthrough of the original bytes
- * (passthrough). Anything reading the result in BaseAiProvider relies on
- * wasProcessed + reason to decide whether to log success, skip, or failure.
+ * Its factories distinguish processed bytes, immediate passthrough bytes,
+ * deferred original reads, and failures.
  */
 class PreprocessResultTest extends Unit
 {
@@ -25,6 +23,7 @@ class PreprocessResultTest extends Unit
         $this->assertSame('raw-bytes', $result->bytes);
         $this->assertSame('image/jpeg', $result->mimeType);
         $this->assertFalse($result->wasProcessed);
+        $this->assertFalse($result->useOriginal);
         $this->assertSame('no_driver', $result->reason);
         $this->assertNull($result->originalBytes);
         $this->assertNull($result->processedBytes);
@@ -40,6 +39,17 @@ class PreprocessResultTest extends Unit
 
         $this->assertNull($result->reason);
         $this->assertFalse($result->wasProcessed);
+        $this->assertFalse($result->useOriginal);
+    }
+
+    public function testOriginalDefersReadingBytesUntilProviderGuardsPass(): void
+    {
+        $result = PreprocessResult::original('image/jpeg', 'normalization_failed');
+
+        $this->assertSame('', $result->bytes);
+        $this->assertFalse($result->wasProcessed);
+        $this->assertTrue($result->useOriginal);
+        $this->assertSame('normalization_failed', $result->reason);
     }
 
     public function testProcessedPopulatesAllDimensionAndByteFields(): void
@@ -58,6 +68,7 @@ class PreprocessResultTest extends Unit
         $this->assertSame('new-bytes', $result->bytes);
         $this->assertSame('image/jpeg', $result->mimeType);
         $this->assertTrue($result->wasProcessed);
+        $this->assertFalse($result->useOriginal);
         $this->assertNull($result->reason);
         $this->assertSame(6_000_000, $result->originalBytes);
         $this->assertSame(300_000, $result->processedBytes);

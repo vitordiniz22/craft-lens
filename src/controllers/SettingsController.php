@@ -58,6 +58,7 @@ class SettingsController extends Controller
             'claudeApiKey',
             'claudeModel',
             'autoProcessOnUpload',
+            'enableQualityAnalysis',
             'enabledVolumes',
             'enableSemanticSearch',
             'logRetentionDays',
@@ -89,6 +90,7 @@ class SettingsController extends Controller
         Logger::info(LogCategory::Configuration, 'Plugin settings saved', context: [
             'provider' => $settings->aiProvider,
             'autoProcess' => $settings->autoProcessOnUpload,
+            'qualityAnalysis' => $settings->enableQualityAnalysis,
         ]);
 
         Craft::$app->getSession()->setNotice(Craft::t('lens', 'Settings saved.'));

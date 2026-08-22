@@ -25,6 +25,7 @@ use vitordiniz22\craftlens\helpers\ImageMetricsAnalyzer;
 use vitordiniz22\craftlens\helpers\Logger;
 use vitordiniz22\craftlens\helpers\MultisiteHelper;
 use vitordiniz22\craftlens\helpers\PerceptualHashHelper;
+use vitordiniz22\craftlens\helpers\QualitySupport;
 use vitordiniz22\craftlens\jobs\AnalyzeAssetJob;
 use vitordiniz22\craftlens\jobs\BulkAnalyzeAssetsJob;
 use vitordiniz22\craftlens\models\Settings;
@@ -86,7 +87,7 @@ class AssetAnalysisService extends Component
     public function processAsset(Asset $asset): AssetAnalysisRecord
     {
         $record = $this->getOrCreateRecord($asset);
-        $previousStatus = $record->status;
+        $previousStatus = $record->previousStatus ?? $record->status;
         $hadExistingData = $previousStatus === AnalysisStatus::Completed->value;
         $record->status = AnalysisStatus::Processing->value;
 
@@ -324,6 +325,40 @@ class AssetAnalysisService extends Component
     }
 
     /**
+     * Resolve the Processing record left behind when a queue worker vanished.
+     */
+    public function recoverInterruptedAnalysis(AssetAnalysisRecord $record): void
+    {
+        $hadCompletedData = $record->previousStatus === AnalysisStatus::Completed->value;
+        $record->status = $hadCompletedData
+            ? AnalysisStatus::Completed->value
+            : AnalysisStatus::Failed->value;
+        $record->previousStatus = null;
+        $record->queueJobId = null;
+
+        if (!$hadCompletedData) {
+            $record->processedAt = DateTimeHelper::now();
+        }
+
+        if (!$record->save()) {
+            throw new \RuntimeException(
+                "Failed to recover interrupted analysis for asset {$record->assetId}: "
+                . implode(', ', $record->getErrorSummary(true)),
+            );
+        }
+
+        $message = 'The queue worker stopped before analysis completed. The analysis can be retried safely.';
+        $this->getContentStorage()->saveErrorMessage($record, $message, ErrorCode::WorkerInterrupted);
+
+        Logger::warning(
+            LogCategory::JobFailed,
+            'Recovered analysis left behind by an interrupted queue worker',
+            (int) $record->assetId,
+            context: ['restoredCompletedData' => $hadCompletedData],
+        );
+    }
+
+    /**
      * Get analysis records for multiple assets in a single query.
      *
      * @param int[] $assetIds
@@ -538,8 +573,8 @@ class AssetAnalysisService extends Component
     private function processImageAsset(Asset $asset, AssetAnalysisRecord $record): void
     {
         // One image context owns every read/decode for this asset:
-        // raw bytes (for preprocessing), local temp file (for SHA-256 + GD
-        // perceptual hash), and a single Imagick handle (for metrics).
+        // raw bytes, local temp file, and one bounded Imagick handle shared by
+        // metrics, upload preprocessing, and perceptual hashing.
         $context = new AnalysisImageContext($asset);
 
         $primaryLanguage = MultisiteHelper::getPrimarySiteLanguage();
@@ -547,17 +582,46 @@ class AssetAnalysisService extends Component
         $sites = MultisiteHelper::getSitesNeedingContent($asset);
 
         $prepStart = hrtime(true);
-        $localMetrics = ImageMetricsAnalyzer::analyze($context);
+
+        try {
+            // Prepare the exact AI input first. Quality work is optional and
+            // must never decide which image reaches the provider.
+            $preparedImage = Plugin::getInstance()->aiProvider->prepareAssetImage($context);
+            $localMetrics = QualitySupport::isAvailable()
+                ? ImageMetricsAnalyzer::analyze($context)
+                : null;
+            $perceptualHash = $this->computeHash($context);
+            $fileContentHash = $context->getFileContentHash();
+        } finally {
+            // The provider receives bytes only; no pixel cache survives into
+            // JSON/base64 construction or the network request.
+            $context->releaseImageResources();
+        }
+
         $prepMs = (int) round((hrtime(true) - $prepStart) / 1_000_000);
 
         Plugin::getInstance()->analysisCancellation->assertNotCancelled($asset->id);
 
         $aiStart = hrtime(true);
-        $result = Plugin::getInstance()->aiProvider->analyzeAsset($context, $primaryLanguage, $additionalLanguages);
+        $result = Plugin::getInstance()->aiProvider->analyzePreparedAsset(
+            $context,
+            $preparedImage,
+            $primaryLanguage,
+            $additionalLanguages,
+        );
+        unset($preparedImage);
         $aiMs = (int) round((hrtime(true) - $aiStart) / 1_000_000);
 
         $finalizeStart = hrtime(true);
-        $this->finalizeImageAnalysis($context, $record, $result, $sites, $localMetrics);
+        $this->finalizeImageAnalysis(
+            $context,
+            $record,
+            $result,
+            $sites,
+            $localMetrics,
+            $perceptualHash,
+            $fileContentHash,
+        );
         $finalizeMs = (int) round((hrtime(true) - $finalizeStart) / 1_000_000);
 
         Logger::info(
@@ -675,13 +739,13 @@ class AssetAnalysisService extends Component
         AnalysisResult $result,
         array $sites,
         ?array $localMetrics,
+        ?string $perceptualHash,
+        ?string $fileContentHash,
     ): void {
         $asset = $context->asset;
         $settings = $this->getSettings();
         $providerModel = $this->getProviderModel();
         $contentStorage = $this->getContentStorage();
-        $fileContentHash = $context->getFileContentHash();
-
         // Wrap all DB writes in a transaction so a mid-way failure doesn't leave partial data
         $transaction = Craft::$app->getDb()->beginTransaction();
 
@@ -706,6 +770,14 @@ class AssetAnalysisService extends Component
                 $record->noiseScore = $localMetrics['raw']['contrastScore'];
                 $record->compressionQuality = $localMetrics['raw']['compressionQuality'];
                 $record->colorProfile = $localMetrics['raw']['colorProfile'];
+            } else {
+                $record->sharpnessScore = null;
+                $record->exposureScore = null;
+                $record->shadowClipRatio = null;
+                $record->highlightClipRatio = null;
+                $record->noiseScore = null;
+                $record->compressionQuality = null;
+                $record->colorProfile = null;
             }
 
             $record->processedAt = DateTimeHelper::now();
@@ -738,9 +810,6 @@ class AssetAnalysisService extends Component
                 );
             }
 
-            $this->computePerceptualHash($context, $record);
-            $this->findDuplicatesForAsset($asset, $record);
-
             $transaction->commit();
         } catch (AnalysisCancelledException $e) {
             $transaction->rollBack();
@@ -749,6 +818,19 @@ class AssetAnalysisService extends Component
             $transaction->rollBack();
             Logger::warning(LogCategory::AssetProcessing, 'Transaction rolled back during analysis', assetId: $asset->id, exception: $e);
             throw $e;
+        }
+
+        // Past the commit the analysis is delivered, so everything below is
+        // enrichment: it may fail, warn, and leave the result standing.
+        try {
+            $this->storePerceptualHash($context->asset, $record, $perceptualHash);
+            $this->findDuplicatesForAsset($asset, $record);
+        } catch (\Throwable $e) {
+            Logger::warning(
+                LogCategory::Duplicate,
+                'Duplicate detection skipped: ' . $e->getMessage(),
+                assetId: $asset->id,
+            );
         }
 
         Logger::info(LogCategory::AssetProcessing, 'Analysis completed', assetId: $asset->id, context: array_merge(
@@ -853,37 +935,62 @@ class AssetAnalysisService extends Component
         return $record;
     }
 
-    private function computePerceptualHash(AnalysisImageContext $context, AssetAnalysisRecord $record): void
+    private function storePerceptualHash(Asset $asset, AssetAnalysisRecord $record, ?string $newHash): void
     {
-        $asset = $context->asset;
+        if ($newHash === null) {
+            if ($record->perceptualHash !== null) {
+                $this->deleteDuplicateGroups($asset->id);
+                $record->perceptualHash = null;
+                $record->save();
+            }
 
-        if ($asset->kind !== Asset::KIND_IMAGE) {
             return;
         }
-
-        if (!DuplicateSupport::isAvailable()) {
-            return;
-        }
-
-        $localPath = $context->getLocalPath();
-
-        if ($localPath === null) {
-            return;
-        }
-
-        $newHash = PerceptualHashHelper::compute($localPath);
 
         // If hash changed, clear existing duplicate pairs; they regenerate on the next scan.
         if ($record->perceptualHash !== null && $record->perceptualHash !== $newHash) {
-            DuplicateGroupRecord::deleteAll([
-                'or',
-                ['canonicalAssetId' => $asset->id],
-                ['duplicateAssetId' => $asset->id],
-            ]);
+            $this->deleteDuplicateGroups($asset->id);
         }
 
         $record->perceptualHash = $newHash;
         $record->save();
+    }
+
+    private function deleteDuplicateGroups(int $assetId): void
+    {
+        DuplicateGroupRecord::deleteAll([
+            'or',
+            ['canonicalAssetId' => $assetId],
+            ['duplicateAssetId' => $assetId],
+        ]);
+    }
+
+    /**
+     * Hash from the bounded shared Imagick handle before preprocessing releases
+     * the pixel cache. A missing handle means hashing is skipped.
+     */
+    private function computeHash(AnalysisImageContext $context): ?string
+    {
+        try {
+            if (!DuplicateSupport::isAvailable()) {
+                return null;
+            }
+
+            $imagick = $context->getWorkingImagick();
+
+            return $imagick === null ? null : PerceptualHashHelper::computeFromImagick($imagick);
+        } catch (\Throwable $e) {
+            // Runs after the provider has answered, so bubbling here would
+            // throw away a paid-for analysis over a duplicate-detection detail.
+            Logger::warning(
+                LogCategory::Duplicate,
+                'Perceptual hash skipped: ' . $e->getMessage(),
+                $context->asset->id,
+                $e,
+            );
+
+            return null;
+        }
     }
 
     private function findDuplicatesForAsset(Asset $asset, AssetAnalysisRecord $record): void

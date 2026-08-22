@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace vitordiniz22\craftlens\helpers;
 
+use vitordiniz22\craftlens\Plugin;
+
 /**
  * Gates image-quality features (sharpness, exposure, contrast, compression, color
  * profile). These metrics are Imagick-exclusive — sharpness needs Laplacian/Sobel
@@ -15,6 +17,12 @@ class QualitySupport
     private static ?bool $available = null;
 
     public static function isAvailable(): bool
+    {
+        return self::isSupported()
+            && Plugin::getInstance()->getSettings()->enableQualityAnalysis;
+    }
+
+    public static function isSupported(): bool
     {
         return self::$available ??= extension_loaded('imagick');
     }

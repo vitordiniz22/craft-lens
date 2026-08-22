@@ -11,8 +11,8 @@ use vitordiniz22\craftlens\helpers\PerceptualHashHelper;
  * Unit tests for PerceptualHashHelper.
  *
  * Tests the pure-math methods (hammingDistance, similarity) which have
- * zero external dependencies. The compute() method requires GD + real
- * images and is better suited for integration tests.
+ * zero external dependencies, plus computeFromImagick() against generated
+ * images.
  */
 class PerceptualHashHelperTest extends Unit
 {
@@ -86,5 +86,86 @@ class PerceptualHashHelperTest extends Unit
 
         $this->assertSame(4, $distance);
         $this->assertEqualsWithDelta($expected, PerceptualHashHelper::similarity($hash1, $hash2), 0.001);
+    }
+
+    // -- computeFromImagick() --
+
+    private function solidImage(string $color, int $width = 64, int $height = 64): \Imagick
+    {
+        $image = new \Imagick();
+        $image->newImage($width, $height, new \ImagickPixel($color));
+        $image->setImageFormat('png');
+
+        return $image;
+    }
+
+    public function testComputeFromImagickReturnsHexHash(): void
+    {
+        if (!extension_loaded('imagick')) {
+            $this->markTestSkipped('Imagick is not installed');
+        }
+
+        $image = $this->solidImage('gray50');
+        $hash = PerceptualHashHelper::computeFromImagick($image);
+        $image->clear();
+
+        $this->assertSame(64, strlen($hash));
+        $this->assertMatchesRegularExpression('/^[0-9a-f]{64}$/', $hash);
+    }
+
+    public function testComputeFromImagickIsDeterministic(): void
+    {
+        if (!extension_loaded('imagick')) {
+            $this->markTestSkipped('Imagick is not installed');
+        }
+
+        $image = $this->solidImage('gray50');
+        $image->addNoiseImage(\Imagick::NOISE_IMPULSE);
+
+        $first = PerceptualHashHelper::computeFromImagick($image);
+        $second = PerceptualHashHelper::computeFromImagick($image);
+        $image->clear();
+
+        $this->assertSame($first, $second);
+    }
+
+    public function testComputeFromImagickLeavesSourceUntouched(): void
+    {
+        if (!extension_loaded('imagick')) {
+            $this->markTestSkipped('Imagick is not installed');
+        }
+
+        $image = $this->solidImage('gray50', 320, 240);
+        PerceptualHashHelper::computeFromImagick($image);
+
+        $this->assertSame(320, $image->getImageWidth());
+        $this->assertSame(240, $image->getImageHeight());
+
+        $image->clear();
+    }
+
+    public function testComputeFromImagickSeparatesDifferentImages(): void
+    {
+        if (!extension_loaded('imagick')) {
+            $this->markTestSkipped('Imagick is not installed');
+        }
+
+        $gradient = new \Imagick();
+        $gradient->newPseudoImage(64, 64, 'gradient:black-white');
+
+        $rotated = clone $gradient;
+        $rotated->rotateImage(new \ImagickPixel('black'), 90);
+
+        $hashGradient = PerceptualHashHelper::computeFromImagick($gradient);
+        $hashRotated = PerceptualHashHelper::computeFromImagick($rotated);
+
+        $gradient->clear();
+        $rotated->clear();
+
+        $this->assertGreaterThan(
+            10,
+            PerceptualHashHelper::hammingDistance($hashGradient, $hashRotated),
+            'A rotated gradient should not hash within the duplicate threshold',
+        );
     }
 }

@@ -127,6 +127,14 @@
         on: settings.autoProcessOnUpload,
     }) }}
 
+    {{ forms.lightswitchField({
+        label: 'Enable Image Assessment'|t('lens'),
+        instructions: 'Run local sharpness, exposure, contrast, compression, and color-profile checks. This requires Imagick and enough free memory to decode a 1568px working image. Leave disabled on memory-constrained servers; AI metadata analysis will continue, but local quality scores will be unavailable.'|t('lens'),
+        id: 'enableQualityAnalysis',
+        name: 'settings[enableQualityAnalysis]',
+        on: settings.enableQualityAnalysis,
+    }) }}
+
     {% if volumeOptions is empty %}
         {{ forms.field({
             label: 'Volumes to Process'|t('lens'),

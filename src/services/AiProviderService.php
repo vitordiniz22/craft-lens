@@ -9,6 +9,7 @@ use vitordiniz22\craftlens\enums\LogCategory;
 use vitordiniz22\craftlens\exceptions\ConfigurationException;
 use vitordiniz22\craftlens\helpers\AnalysisImageContext;
 use vitordiniz22\craftlens\helpers\Logger;
+use vitordiniz22\craftlens\helpers\PreprocessResult;
 use vitordiniz22\craftlens\models\Settings;
 use vitordiniz22\craftlens\Plugin;
 use vitordiniz22\craftlens\providers\AiProviderInterface;
@@ -47,6 +48,29 @@ class AiProviderService extends Component
         $provider = $this->getDefaultProvider();
 
         return $provider->analyze($context, $settings, $primaryLanguage, $additionalLanguages);
+    }
+
+    public function prepareAssetImage(AnalysisImageContext $context): PreprocessResult
+    {
+        return $this->getBaseProvider()->prepareImage($context);
+    }
+
+    /**
+     * @param string[] $additionalLanguages
+     */
+    public function analyzePreparedAsset(
+        AnalysisImageContext $context,
+        PreprocessResult $preparedImage,
+        string $primaryLanguage,
+        array $additionalLanguages = [],
+    ): AnalysisResult {
+        return $this->getBaseProvider()->analyze(
+            $context,
+            $this->getSettings(),
+            $primaryLanguage,
+            $additionalLanguages,
+            $preparedImage,
+        );
     }
 
     /**
@@ -150,6 +174,19 @@ class AiProviderService extends Component
         $this->registerProvider(new OpenAiProvider());
         $this->registerProvider(new GeminiProvider());
         $this->registerProvider(new ClaudeProvider());
+    }
+
+    private function getBaseProvider(): BaseAiProvider
+    {
+        $provider = $this->getDefaultProvider();
+
+        if (!$provider instanceof BaseAiProvider) {
+            throw new ConfigurationException(
+                "AI provider '{$provider->getName()}' does not support prepared image payloads",
+            );
+        }
+
+        return $provider;
     }
 
     private function getSettings(): Settings

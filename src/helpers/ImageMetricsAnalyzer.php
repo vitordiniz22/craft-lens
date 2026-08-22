@@ -94,18 +94,19 @@ class ImageMetricsAnalyzer
         }
 
         $asset = $context->asset;
-        $sourceImagick = $context->getImagick();
-        $tempPath = $context->getLocalPath();
-
-        if ($sourceImagick === null || $tempPath === null) {
-            return null;
-        }
-
-        $originalColorspace = $sourceImagick->getImageColorspace();
         $cmykClone = null;
         $brightnessContrastClone = null;
 
+        // Setup included: nothing here may stop the asset reaching the provider.
         try {
+            $sourceImagick = $context->getWorkingImagick();
+            $tempPath = $context->getLocalPath();
+
+            if ($sourceImagick === null || $tempPath === null) {
+                return null;
+            }
+
+            $originalColorspace = $sourceImagick->getImageColorspace();
             // CMYK sources are converted to SRGB on a working clone so the
             // shared context handle stays untouched for downstream consumers.
             if ($originalColorspace === Imagick::COLORSPACE_CMYK) {
@@ -116,10 +117,7 @@ class ImageMetricsAnalyzer
                 $imagick = $sourceImagick;
             }
 
-            // Sharpness runs on the full-resolution handle (its internal 500px
-            // cap downscales from native, matching pre-refactor behavior).
-            // Brightness and contrast use rank-based percentiles, so they get
-            // a downscaled working clone — same scores at a fraction of the cost.
+            // Sharpness works at 500px, brightness and contrast at 1568.
             $brightnessContrastClone = clone $imagick;
             if (max(
                 $brightnessContrastClone->getImageWidth(),
@@ -162,6 +160,10 @@ class ImageMetricsAnalyzer
                     'assetHeight' => $asset->height,
                     'assetSize' => $asset->size,
                     'assetMimeType' => $asset->mimeType,
+                    // Separates a host out of room from a pathological image.
+                    'imagickMemoryLimit' => Imagick::getResourceLimit(Imagick::RESOURCETYPE_MEMORY),
+                    'containerMemoryLimit' => MemoryBudget::containerLimit(),
+                    'containerMemoryUsage' => MemoryBudget::containerUsage(),
                 ],
             );
 
@@ -654,6 +656,10 @@ class ImageMetricsAnalyzer
         }
 
         $clone->transformImageColorspace(Imagick::COLORSPACE_GRAY);
+
+        // A Q16 histogram is one ImagickPixel per luma value: hundreds of MB.
+        // 256 levels leave the p95-p5 spread unchanged to five decimals.
+        $clone->setImageDepth(8);
 
         return $clone;
     }

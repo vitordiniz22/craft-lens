@@ -13,9 +13,8 @@ use vitordiniz22\craftlens\enums\LogCategory;
  * provider. Targets are set by the caller (typically 1568 px longest edge,
  * JPEG q85) to reduce token cost and avoid provider file-size rejections.
  *
- * The helper never throws. On any failure (no image driver, corrupt file,
- * unsupported format, IO error) it returns a PreprocessResult carrying the
- * original bytes and a reason string, so downstream analysis still runs.
+ * The helper never throws. Images that cannot or need not be transformed are
+ * marked for provider-aware original-file checks before any bytes are read.
  */
 final class ImagePreprocessor
 {
@@ -40,8 +39,7 @@ final class ImagePreprocessor
 
     /**
      * Decoded-pixel ceiling. Files whose actual (post-decode) dimensions
-     * exceed this are treated as decompression bombs and passed through
-     * without resize.
+     * exceed this are rejected as decompression bombs.
      */
     private const PIXEL_BUDGET = 100_000_000;
 
@@ -55,7 +53,7 @@ final class ImagePreprocessor
     ];
 
     /**
-     * Extensions Imagine / Imagick / GD handle unreliably. Raw camera
+     * Extensions Imagick handles unreliably. Raw camera
      * formats routinely fail or produce garbage through the standard
      * image pipeline.
      */
@@ -69,6 +67,14 @@ final class ImagePreprocessor
         int $maxDimension = self::DEFAULT_MAX_DIMENSION,
         int $quality = self::DEFAULT_QUALITY,
     ): PreprocessResult {
+        return self::process($context, $maxDimension, $quality);
+    }
+
+    private static function process(
+        AnalysisImageContext $context,
+        int $maxDimension,
+        int $quality,
+    ): PreprocessResult {
         // Defensive clamps in case a caller passes an out-of-range value.
         $maxDimension = max(256, min(4096, $maxDimension));
         $quality = max(50, min(100, $quality));
@@ -76,26 +82,24 @@ final class ImagePreprocessor
         $asset = $context->asset;
         $mimeType = $asset->getMimeType() ?? 'application/octet-stream';
 
-        $rawBytes = $context->getRawBytes();
-
-        if ($rawBytes === null) {
-            return PreprocessResult::passthrough('', $mimeType, 'stream_unavailable');
+        if ($context->getLocalPath() === null) {
+            return PreprocessResult::failed($mimeType, 'stream_unavailable');
         }
 
         if (!extension_loaded('imagick')) {
-            return PreprocessResult::passthrough($rawBytes, $mimeType, 'no_driver');
+            return PreprocessResult::original($mimeType, 'no_driver');
         }
 
-        $skipReason = self::shouldSkip($asset, $mimeType, strlen($rawBytes), $maxDimension);
+        $skipReason = self::shouldSkip($asset, $mimeType, $maxDimension);
 
         if ($skipReason !== null) {
-            return PreprocessResult::passthrough($rawBytes, $mimeType, $skipReason);
+            return PreprocessResult::original($mimeType, $skipReason);
         }
 
-        $sourceImagick = $context->getImagick();
+        $sourceImagick = $context->getWorkingImagick();
 
         if ($sourceImagick === null) {
-            return PreprocessResult::passthrough($rawBytes, $mimeType, 'imagick_unavailable');
+            return PreprocessResult::original($mimeType, 'normalization_failed');
         }
 
         $clone = null;
@@ -107,7 +111,7 @@ final class ImagePreprocessor
             $originalHeight = (int) ($asset->getHeight() ?? $sourceImagick->getImageHeight());
 
             if ($originalWidth * $originalHeight > self::PIXEL_BUDGET) {
-                return PreprocessResult::passthrough($rawBytes, $mimeType, 'pixel_budget_exceeded');
+                return PreprocessResult::original($mimeType, 'pixel_budget_exceeded');
             }
 
             $keepAsPng = str_starts_with($mimeType, 'image/png');
@@ -132,13 +136,13 @@ final class ImagePreprocessor
             $processedBytes = $clone->getImageBlob();
 
             if ($processedBytes === '') {
-                return PreprocessResult::passthrough($rawBytes, $mimeType, 'encode_failed');
+                return PreprocessResult::original($mimeType, 'encode_failed');
             }
 
             return PreprocessResult::processed(
                 bytes: $processedBytes,
                 mimeType: $outMime,
-                originalBytes: strlen($rawBytes),
+                originalBytes: (int) ($asset->size ?? 0),
                 processedBytes: strlen($processedBytes),
                 originalWidth: $originalWidth,
                 originalHeight: $originalHeight,
@@ -148,32 +152,37 @@ final class ImagePreprocessor
         } catch (\Throwable $e) {
             Logger::warning(
                 LogCategory::AssetProcessing,
-                'Image preprocessing failed, using original bytes',
+                'Image preprocessing failed',
                 $asset->id,
                 $e,
                 ['mimeType' => $mimeType],
             );
 
-            return PreprocessResult::passthrough($rawBytes, $mimeType, 'exception');
+            return PreprocessResult::original($mimeType, 'exception');
         } finally {
             $clone?->clear();
         }
     }
 
     /**
-     * Kept for backwards compatibility with existing test setUp() calls.
-     * The cached driver state was removed when preprocessing moved to the
-     * shared `AnalysisImageContext` Imagick handle.
+     * Passthrough ships the file as-is while the asset type comes from its
+     * extension. Providers validate the declared type against the payload, so
+     * a JPEG saved as .png would be rejected.
      */
-    public static function resetStaticState(): void
+    public static function detectMimeType(string $bytes, string $fallback): string
     {
-        // No state to reset.
+        if ($bytes === '' || !class_exists(\finfo::class)) {
+            return $fallback;
+        }
+
+        $detected = (new \finfo(FILEINFO_MIME_TYPE))->buffer($bytes);
+
+        return is_string($detected) && str_starts_with($detected, 'image/') ? $detected : $fallback;
     }
 
     private static function shouldSkip(
         Asset $asset,
         string $mimeType,
-        int $byteLength,
         int $maxDimension,
     ): ?string {
         if ($asset->kind !== Asset::KIND_IMAGE) {
@@ -184,19 +193,21 @@ final class ImagePreprocessor
             return 'mime_unsupported';
         }
 
-        $extension = strtolower($asset->getExtension() ?? '');
-        
+        $extension = strtolower($asset->getExtension());
+
         if ($extension !== '' && in_array($extension, self::UNSUPPORTED_EXTENSIONS, true)) {
             return 'raw_format_unsupported';
         }
 
-        if (($asset->size ?? 0) === 0 || $byteLength === 0) {
+        $byteLength = (int) ($asset->size ?? 0);
+
+        if ($byteLength === 0) {
             return 'empty_file';
         }
 
         $width = (int) ($asset->getWidth() ?? 0);
         $height = (int) ($asset->getHeight() ?? 0);
-        
+
         if ($width > 0 && $height > 0
             && max($width, $height) <= $maxDimension
             && $byteLength <= self::SKIP_BYTE_THRESHOLD

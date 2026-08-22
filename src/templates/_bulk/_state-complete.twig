@@ -1,11 +1,12 @@
-{% set hasFailed = (stats.failed ?? 0) > 0 %}
+{% set hasLibraryFailures = (stats.failed ?? 0) > 0 %}
 {% set hasUnprocessed = (stats.unprocessed ?? 0) > 0 %}
 {% set hasNonFailedRemaining = (stats.unprocessed ?? 0) - (stats.failed ?? 0) > 0 %}
 {% set initialCount = session.initialUnprocessed ?? 0 %}
 {% set sessionFailed = failureReasons is defined and failureReasons.totalFailed is defined ? failureReasons.totalFailed : 0 %}
+{% set hasSessionFailures = sessionFailed > 0 %}
 {% set analyzedThisRun = max(0, initialCount > 0 ? initialCount - sessionFailed : stats.analyzed) %}
-{% set allFailed = hasFailed and initialCount > 0 and analyzedThisRun == 0 %}
-{% set paneModifier = hasFailed ? 'lens-bulk-pane--error' : 'lens-bulk-pane--success' %}
+{% set allFailed = hasSessionFailures and initialCount > 0 and analyzedThisRun == 0 %}
+{% set paneModifier = hasSessionFailures ? 'lens-bulk-pane--error' : 'lens-bulk-pane--success' %}
 {% set groups = failureReasons is defined ? failureReasons.groups : [] %}
 {% set soloGroup = groups|length == 1 %}
 
@@ -13,14 +14,14 @@
 
     {# Header: icon and title reflect the run outcome (all success,
        partial failure, or total failure). #}
-    <div class="lens-complete-header{% if hasFailed %} lens-complete-header--error{% endif %}">
+    <div class="lens-complete-header{% if hasSessionFailures %} lens-complete-header--error{% endif %}">
         <span class="lens-complete-icon">
-            {{ iconSvg(hasFailed ? 'circle-exclamation' : 'check') }}
+            {{ iconSvg(hasSessionFailures ? 'circle-exclamation' : 'check') }}
         </span>
         <h2>
             {% if allFailed %}
                 {{ 'Processing Failed'|t('lens') }}
-            {% elseif hasFailed %}
+            {% elseif hasSessionFailures %}
                 {{ 'Processing Completed with Errors'|t('lens') }}
             {% else %}
                 {{ 'Processing Complete'|t('lens') }}
@@ -30,17 +31,17 @@
 
     {# Hero result #}
     <div class="lens-complete-hero">
-        <span class="lens-complete-hero__value{% if hasFailed %} lens-complete-hero__value--error{% endif %}">
-            {% if hasFailed %}
+        <span class="lens-complete-hero__value{% if hasSessionFailures %} lens-complete-hero__value--error{% endif %}">
+            {% if hasSessionFailures %}
                 {{ analyzedThisRun|number_format }} / {{ initialCount|number_format }}
             {% else %}
                 {{ analyzedThisRun|number_format }}
             {% endif %}
         </span>
         <span class="lens-complete-hero__label">
-            {% if analyzedThisRun == 0 and hasFailed %}
+            {% if analyzedThisRun == 0 and hasSessionFailures %}
                 {{ 'all images failed'|t('lens') }}
-            {% elseif hasFailed %}
+            {% elseif hasSessionFailures %}
                 {{ 'images analyzed successfully'|t('lens') }}
             {% else %}
                 {{ 'images analyzed'|t('lens') }}
@@ -181,17 +182,24 @@
             </form>
         {% endif %}
 
-        {% if hasFailed %}
+        {% if hasLibraryFailures %}
             <form method="post" class="lens-bulk-inline-form">
                 {{ csrfInput() }}
                 {{ actionInput('lens/bulk/retry-failed') }}
+                {% if selectedVolumeId is defined and selectedVolumeId %}
+                    <input type="hidden" name="volumeId" value="{{ selectedVolumeId }}">
+                {% endif %}
                 <button type="submit" class="btn{{ not hasUnprocessed ? ' submit' : '' }}" data-lens-action="bulk-submit">
-                    {{ 'Retry {count} Failed'|t('lens', {count: stats.failed|number_format}) }}
+                    {% if hasSessionFailures %}
+                        {{ 'Retry All {count} Failed'|t('lens', {count: stats.failed|number_format}) }}
+                    {% else %}
+                        {{ 'Retry {count} Previously Failed'|t('lens', {count: stats.failed|number_format}) }}
+                    {% endif %}
                 </button>
             </form>
         {% endif %}
 
-        {% if not hasUnprocessed and not hasFailed %}
+        {% if not hasUnprocessed and not hasLibraryFailures %}
             <a href="{{ cpUrl('lens') }}" class="btn submit">
                 {{ 'Back to Dashboard'|t('lens') }}
             </a>

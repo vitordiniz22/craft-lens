@@ -19,6 +19,7 @@ use vitordiniz22\craftlens\exceptions\ConfigurationException;
 use vitordiniz22\craftlens\helpers\AnalysisImageContext;
 use vitordiniz22\craftlens\helpers\ImagePreprocessor;
 use vitordiniz22\craftlens\helpers\Logger;
+use vitordiniz22\craftlens\helpers\MemoryBudget;
 use vitordiniz22\craftlens\helpers\PreprocessResult;
 use vitordiniz22\craftlens\helpers\ResponseNormalizer;
 use vitordiniz22\craftlens\models\Settings;
@@ -32,17 +33,6 @@ use vitordiniz22\craftlens\Plugin;
  */
 abstract class BaseAiProvider implements AiProviderInterface
 {
-    /**
-     * Hard ceiling on raw asset size before preprocessing is attempted.
-     *
-     * Decoding a large JPEG into raw pixels allocates roughly 10x the file
-     * size in RAM (a 30 MB photo becomes ~150-300 MB of pixel buffer inside
-     * Imagick). We cap the input here to protect queue worker memory,
-     * independent of whatever size the provider itself would accept after
-     * preprocessing.
-     */
-    public const DECODE_CEILING_BYTES = 30 * 1024 * 1024;
-
     protected Client $client;
 
     public function __construct()
@@ -108,7 +98,7 @@ abstract class BaseAiProvider implements AiProviderInterface
         $spec = $this->buildHttpRequest($settings, $imageData, $prompt, $assetId);
         $payloadSizeBytes = strlen($imageData['base64']);
 
-        return $this->executeApiRequest(function (int $startTime) use ($spec) {
+        return $this->executeApiRequest(function(int $startTime) use ($spec) {
             $response = $this->client->request($spec['method'], $spec['url'], $spec['options']);
             return ($spec['parseResponse'])($response, $startTime);
         }, $assetId, $payloadSizeBytes);
@@ -122,10 +112,11 @@ abstract class BaseAiProvider implements AiProviderInterface
         Settings $settings,
         string $primaryLanguage,
         array $additionalLanguages = [],
+        ?PreprocessResult $preparedImage = null,
     ): AnalysisResult {
         $this->validateCredentials($settings);
 
-        $imageData = $this->getBase64ImageData($context);
+        $imageData = $this->getBase64ImageData($context, $preparedImage);
         $prompt = $this->buildPrompt($primaryLanguage, $additionalLanguages);
         $response = $this->sendRequest($settings, $imageData, $prompt, $context->asset->id);
 
@@ -149,6 +140,14 @@ abstract class BaseAiProvider implements AiProviderInterface
         $response = $this->sendRequest($settings, $imageData, $prompt, $context->asset->id);
 
         return $this->parseResponse($response);
+    }
+
+    final public function prepareImage(AnalysisImageContext $context): PreprocessResult
+    {
+        $result = ImagePreprocessor::preprocess($context);
+        $this->logPreprocessingOutcome($context->asset, $result);
+
+        return $result;
     }
 
     /**
@@ -496,48 +495,106 @@ abstract class BaseAiProvider implements AiProviderInterface
      * @return array{base64: string, mimeType: string}
      * @throws AnalysisException
      */
-    protected function getBase64ImageData(AnalysisImageContext $context): array
+    protected function getBase64ImageData(
+        AnalysisImageContext $context,
+        ?PreprocessResult $preparedImage = null,
+    ): array
     {
         $asset = $context->asset;
-        $fileSize = $asset->size;
         $maxSize = $this->getMaxFileSizeBytes();
+        $ownsImageResources = $preparedImage === null;
 
-        // Decode-cost guard: refuse anything over DECODE_CEILING_BYTES before
-        // attempting to decode it. The post-preprocess check below is the
-        // authoritative size cap for the provider itself.
-        if ($fileSize !== null && $fileSize > self::DECODE_CEILING_BYTES) {
+        try {
+            $result = $preparedImage ?? $this->prepareImage($context);
+
+            if ($result->useOriginal) {
+                [$payloadBytes, $mimeType] = $this->readOriginalPayload($context, $result, $maxSize);
+            } else {
+                $payloadBytes = $result->bytes;
+                $mimeType = $result->mimeType;
+            }
+
+            if ($payloadBytes === '') {
+                if ($result->reason === 'stream_unavailable') {
+                    throw AnalysisException::assetNotReadable($asset->id);
+                }
+
+                throw AnalysisException::imageProcessingFailed(
+                    $asset->id,
+                    $result->reason ?? 'unknown',
+                );
+            }
+
+            $payloadSize = strlen($payloadBytes);
+
+            if ($payloadSize > $maxSize) {
+                throw AnalysisException::fileTooLarge(
+                    providerName: $this->getDisplayName(),
+                    assetId: $asset->id,
+                    fileSize: $payloadSize,
+                    maxSize: $maxSize,
+                );
+            }
+
+            if (!MemoryBudget::hasUploadHeadroom($payloadSize, payloadLoaded: true)) {
+                throw AnalysisException::imageProcessingFailed($asset->id, 'insufficient_request_memory');
+            }
+
+            $base64 = base64_encode($payloadBytes);
+            $context->releaseRawBytes();
+            unset($payloadBytes);
+
+            return [
+                'base64' => $base64,
+                'mimeType' => $mimeType,
+            ];
+        } finally {
+            if ($ownsImageResources) {
+                $context->releaseImageResources();
+            }
+        }
+    }
+
+    /**
+     * @return array{0: string, 1: string}
+     */
+    private function readOriginalPayload(
+        AnalysisImageContext $context,
+        PreprocessResult $result,
+        int $maxSize,
+    ): array {
+        $asset = $context->asset;
+        $path = $context->getLocalPath();
+
+        if ($path === null) {
+            throw AnalysisException::assetNotReadable($asset->id);
+        }
+
+        $fileSize = @filesize($path);
+        $fileSize = $fileSize === false ? (int) ($asset->size ?? 0) : $fileSize;
+
+        if ($fileSize > $maxSize) {
             throw AnalysisException::fileTooLarge(
                 providerName: $this->getDisplayName(),
                 assetId: $asset->id,
                 fileSize: $fileSize,
-                maxSize: self::DECODE_CEILING_BYTES,
-            );
-        }
-
-        $result = ImagePreprocessor::preprocess($context);
-
-        if ($result->bytes === '') {
-            throw AnalysisException::assetNotReadable($asset->id);
-        }
-
-        $this->logPreprocessingOutcome($asset, $result);
-
-        // Authoritative cap check: only enforce when preprocessing ran. If
-        // preprocessing was skipped or failed, the provider gets the original
-        // bytes and may surface its own size error. This preserves the
-        // safety-net contract that preprocessing failures never block analysis.
-        if ($result->wasProcessed && strlen($result->bytes) > $maxSize) {
-            throw AnalysisException::fileTooLarge(
-                providerName: $this->getDisplayName(),
-                assetId: $asset->id,
-                fileSize: strlen($result->bytes),
                 maxSize: $maxSize,
             );
         }
 
+        if (!MemoryBudget::hasUploadHeadroom($fileSize)) {
+            throw AnalysisException::imageProcessingFailed($asset->id, 'insufficient_request_memory');
+        }
+
+        $bytes = $context->getRawBytes();
+
+        if ($bytes === null || $bytes === '') {
+            throw AnalysisException::assetNotReadable($asset->id);
+        }
+
         return [
-            'base64' => base64_encode($result->bytes),
-            'mimeType' => $result->mimeType,
+            $bytes,
+            ImagePreprocessor::detectMimeType($bytes, $result->mimeType),
         ];
     }
 

@@ -33,18 +33,35 @@ class AssetQueryQualityTest extends Unit
 {
     use AnalysisRecordFixtures;
 
+    private bool $originalQualityAnalysis;
+
     protected function _before(): void
     {
         parent::_before();
         Plugin::getInstance()->edition = Plugin::EDITION_PRO;
+        $this->originalQualityAnalysis = Plugin::getInstance()->getSettings()->enableQualityAnalysis;
+        Plugin::getInstance()->getSettings()->enableQualityAnalysis = true;
         (new ReflectionProperty(AssetQueryBehavior::class, 'schemaValid'))->setValue(null, null);
         (new ReflectionProperty(AssetQueryBehavior::class, 'flashShown'))->setValue(null, false);
     }
 
     protected function _after(): void
     {
+        Plugin::getInstance()->getSettings()->enableQualityAnalysis = $this->originalQualityAnalysis;
         $this->cleanupAnalysisRecords();
         parent::_after();
+    }
+
+    public function testQualityFilterIsDisabledWithImageAssessment(): void
+    {
+        $below = $this->createAssetFixture('disabled-below.jpg', ['sharpnessScore' => 0.1]);
+        $above = $this->createAssetFixture('disabled-above.jpg', ['sharpnessScore' => 0.9]);
+        Plugin::getInstance()->getSettings()->enableQualityAnalysis = false;
+
+        $ids = Asset::find()->volume('lenstest')->lensSharpnessBelow(0.3)->ids();
+
+        $this->assertContains($below->assetId, $ids);
+        $this->assertContains($above->assetId, $ids);
     }
 
     // ---------- lensSharpnessBelow ----------

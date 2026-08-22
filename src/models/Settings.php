@@ -28,6 +28,7 @@ class Settings extends Model
 
     // Processing Options
     public bool $autoProcessOnUpload = true;
+    public bool $enableQualityAnalysis = false;
 
     // Volume Settings
     public array $enabledVolumes = [];
@@ -67,6 +68,7 @@ class Settings extends Model
             // Boolean toggles
             [[
                 'autoProcessOnUpload',
+                'enableQualityAnalysis',
                 'enableSemanticSearch',
             ], 'boolean'],
 
@@ -90,6 +92,7 @@ class Settings extends Model
             'claudeApiKey' => Craft::t('lens', 'Claude API Key'),
             'claudeModel' => Craft::t('lens', 'Claude Model'),
             'autoProcessOnUpload' => Craft::t('lens', 'Auto-Process on Upload'),
+            'enableQualityAnalysis' => Craft::t('lens', 'Enable Image Assessment'),
             'enabledVolumes' => Craft::t('lens', 'Enabled Volumes'),
             'enableSemanticSearch' => Craft::t('lens', 'Semantic Asset Search'),
             'logRetentionDays' => Craft::t('lens', 'Log Retention (days)'),

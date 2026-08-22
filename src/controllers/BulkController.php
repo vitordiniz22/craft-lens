@@ -64,6 +64,7 @@ class BulkController extends Controller
         $statsVolumeScope = $volumeId
             ?? $sessionScope
             ?? (count($volumes) < count($allVolumes) ? $enabledVolumeIds : null);
+        $selectedVolumeId = $volumeId ?? (is_int($sessionScope) ? $sessionScope : null);
         $stats = $statusService->getStats($statsVolumeScope);
         $state = $statusService->determineState($stats);
 
@@ -87,7 +88,7 @@ class BulkController extends Controller
             'stats' => $stats,
             'volumes' => $volumes,
             'state' => $state,
-            'selectedVolumeId' => $volumeId,
+            'selectedVolumeId' => $selectedVolumeId,
             'autoProcessOnUpload' => $settings->autoProcessOnUpload,
             'focus' => $focus?->value,
             'proSyncCount' => $proSyncCount,
@@ -274,14 +275,27 @@ class BulkController extends Controller
             return $this->redirect('lens/bulk');
         }
 
-        $failedAssetIds = AssetAnalysisRecord::find()
-            ->select('assetId')
-            ->where(['status' => AnalysisStatus::Failed->value])
-            ->column();
+        $volumeId = $this->request->getBodyParam('volumeId');
+        $volumeId = $volumeId ? (int) $volumeId : null;
+        $enabledVolumeIds = Plugin::getInstance()->getSettings()->getEnabledVolumeIds();
+
+        if ($volumeId !== null && !in_array($volumeId, $enabledVolumeIds, true)) {
+            Craft::$app->getSession()->setError(Craft::t('lens', 'The selected volume is not enabled for analysis.'));
+            return $this->redirect('lens/bulk');
+        }
+
+        $scope = $volumeId;
+        if ($scope === null && count($enabledVolumeIds) < count(Craft::$app->getVolumes()->getAllVolumes())) {
+            $scope = $enabledVolumeIds;
+        }
+
+        $statusService = Plugin::getInstance()->bulkProcessingStatus;
+        $failedAssetIds = $statusService->getFailedAssetIds($scope);
+        $redirectUrl = $volumeId !== null ? 'lens/bulk?volumeId=' . $volumeId : 'lens/bulk';
 
         if (empty($failedAssetIds)) {
             Craft::$app->getSession()->setNotice(Craft::t('lens', 'No failed analyses to retry.'));
-            return $this->redirect('lens/bulk');
+            return $this->redirect($redirectUrl);
         }
 
         $transaction = Craft::$app->getDb()->beginTransaction();
@@ -289,7 +303,11 @@ class BulkController extends Controller
         try {
             AssetAnalysisRecord::updateAll(
                 ['status' => AnalysisStatus::Pending->value],
-                ['status' => AnalysisStatus::Failed->value]
+                [
+                    'and',
+                    ['status' => AnalysisStatus::Failed->value],
+                    ['in', 'assetId', $failedAssetIds],
+                ]
             );
 
             $retriedIds = array_map('intval', $failedAssetIds);
@@ -298,8 +316,7 @@ class BulkController extends Controller
             // these IDs, so other unprocessed assets in the library are not
             // swept in. If the user cancels, cancelProcessing restores these
             // to Failed so the retry can be re-initiated.
-            $statusService = Plugin::getInstance()->bulkProcessingStatus;
-            $statusService->startSession(null, $retriedIds);
+            $statusService->startSession($scope, $retriedIds);
 
             // Queue job scoped to the same IDs so Craft's queue progress
             // matches the Lens session counter (N/N retried, not N/total).
@@ -311,12 +328,15 @@ class BulkController extends Controller
             throw $e;
         }
 
-        Logger::info(LogCategory::JobStarted, 'Retry failed analyses started from CP', context: ['failedCount' => count($failedAssetIds)]);
+        Logger::info(LogCategory::JobStarted, 'Retry failed analyses started from CP', context: [
+            'failedCount' => count($failedAssetIds),
+            'volumeId' => $scope,
+        ]);
 
         Craft::$app->getSession()->setNotice(
             Craft::t('lens', '{count} failed analyses queued for retry.', ['count' => count($failedAssetIds)])
         );
-        return $this->redirect('lens/bulk');
+        return $this->redirect($redirectUrl);
     }
 
     /**

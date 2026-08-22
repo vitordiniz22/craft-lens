@@ -20,6 +20,8 @@ enum ErrorCode: string
     case ConnectionFailed = 'connection_failed';
     case InvalidResponse = 'invalid_response';
     case AssetNotReadable = 'asset_not_readable';
+    case ImageProcessingFailed = 'image_processing_failed';
+    case WorkerInterrupted = 'worker_interrupted';
     case MissingApiKey = 'missing_api_key';
     case MissingConfigField = 'missing_config_field';
     case ProviderNotRegistered = 'provider_not_registered';
@@ -38,6 +40,8 @@ enum ErrorCode: string
             self::ConnectionFailed => Craft::t('lens', 'Connection failed'),
             self::InvalidResponse => Craft::t('lens', 'Invalid response'),
             self::AssetNotReadable => Craft::t('lens', 'Asset not readable'),
+            self::ImageProcessingFailed => Craft::t('lens', 'Image processing failed'),
+            self::WorkerInterrupted => Craft::t('lens', 'Worker interrupted'),
             self::MissingApiKey => Craft::t('lens', 'Missing API key'),
             self::MissingConfigField => Craft::t('lens', 'Missing configuration'),
             self::ProviderNotRegistered => Craft::t('lens', 'Provider not registered'),
@@ -58,6 +62,8 @@ enum ErrorCode: string
             self::ConnectionFailed => Craft::t('lens', 'Could not reach the AI provider. Check your internet connection and try again.'),
             self::InvalidResponse => Craft::t('lens', 'The AI provider returned an unreadable response. Retry, or try a different model or provider.'),
             self::AssetNotReadable => Craft::t('lens', 'These assets could not be read from storage. The files may be missing or corrupted.'),
+            self::ImageProcessingFailed => Craft::t('lens', 'These images could not be prepared safely within the server memory limits.'),
+            self::WorkerInterrupted => Craft::t('lens', 'The queue worker stopped before these analyses completed. They can be retried safely.'),
             self::MissingApiKey => Craft::t('lens', 'No API key is configured for this AI provider. Add one in Settings before retrying.'),
             self::MissingConfigField => Craft::t('lens', 'A required configuration field is missing. Update your plugin settings and retry.'),
             self::ProviderNotRegistered => Craft::t('lens', 'The configured AI provider is not registered. Pick a supported provider in Settings.'),
@@ -83,6 +89,8 @@ enum ErrorCode: string
         return match ($this) {
             self::FileTooLarge,
             self::AssetNotReadable,
+            self::ImageProcessingFailed,
+            self::WorkerInterrupted,
             self::InvalidResponse,
             self::Unknown => true,
             default => false,

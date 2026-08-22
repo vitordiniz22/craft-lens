@@ -10,7 +10,6 @@ use craft\models\Volume;
 use vitordiniz22\craftlens\enums\AiProvider;
 use vitordiniz22\craftlens\enums\SetupSeverity;
 use vitordiniz22\craftlens\fieldlayoutelements\LensAnalysisElement;
-use vitordiniz22\craftlens\helpers\DuplicateSupport;
 use vitordiniz22\craftlens\helpers\QualitySupport;
 use vitordiniz22\craftlens\models\Settings;
 use vitordiniz22\craftlens\Plugin;
@@ -48,9 +47,11 @@ class SetupStatusService extends Component
             $this->checkAiProviderConfigured(),
             $this->checkVolumesEnabled(),
             $this->checkAnalysisPanelConfigured(),
-            $this->checkImagickAvailable(QualitySupport::isAvailable()),
-            $this->checkGdAvailable(DuplicateSupport::isAvailable()),
         ];
+
+        if ($this->getSettings()->enableQualityAnalysis) {
+            $this->cachedStatus[] = $this->checkImagickAvailable(QualitySupport::isSupported());
+        }
 
         if (Plugin::getInstance()->getIsPro()) {
             $this->cachedStatus[] = $this->checkSemanticSearchEnabled();
@@ -344,21 +345,6 @@ class SetupStatusService extends Component
             'actionLabel' => '',
             'actionUrl' => '',
             'docsUrl' => self::DOCS_BASE_URL . 'Getting-Started#enabling-imagick-recommended',
-            'isResolved' => $isResolved,
-            'prerequisites' => [],
-        ];
-    }
-
-    private function checkGdAvailable(bool $isResolved): array
-    {
-        return [
-            'key' => 'gd_available',
-            'category' => self::CATEGORY_EXTENSIONS,
-            'severity' => SetupSeverity::Warning->value,
-            'message' => Craft::t('lens', 'Install the GD PHP extension to unlock perceptual-hash duplicate detection. Without it, duplicate detection is disabled and related UI is hidden.'),
-            'actionLabel' => '',
-            'actionUrl' => '',
-            'docsUrl' => self::DOCS_BASE_URL . 'Getting-Started#enabling-gd-recommended',
             'isResolved' => $isResolved,
             'prerequisites' => [],
         ];
