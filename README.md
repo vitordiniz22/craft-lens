@@ -15,7 +15,7 @@
   <a href="https://github.com/vitordiniz22/craft-lens/actions/workflows/tests.yml"><img src="https://github.com/vitordiniz22/craft-lens/actions/workflows/tests.yml/badge.svg" alt="Tests"></a>
 </p>
 
-Lens runs every image in your asset library through an AI model and fills in the metadata that should have been there: alt text in each of your site's languages, a descriptive title, a focal point on the actual subject, and flags for NSFW content, visible watermarks, named brand logos, and people in the shot. It also audits each image for blur, exposure, contrast, compression, and color profile issues. All of that is free in the Lite edition.
+Lens runs every image in your asset library through an AI model and fills in the metadata that should have been there: alt text in each of your site's languages, a descriptive title, a focal point on the actual subject, and flags for NSFW content, visible watermarks, named brand logos, and people in the shot. It can also audit images locally for blur, exposure, contrast, compression, and color profile issues when Image Assessment is enabled. All of that is free in the Lite edition.
 
 Pro makes the library searchable by what's actually in each image: long descriptions, semantic tags, and OCR'd text are indexed into Craft's native search and every image picker, so editors find photos by content instead of filenames or folder structure. Pro also bulk-processes entire volumes, catches visually duplicate uploads, and tracks AI spend.
 
@@ -60,11 +60,11 @@ Bring your own API key for **OpenAI**, **Google Gemini**, or **Anthropic Claude*
 
 ### Image Assessment
 
-- **Quality analysis** flags blurry or soft images, ones that are too dark or too bright, low-contrast (flat) shots, heavily compressed files, and non-sRGB color profiles, with a recommendation for each issue
+- **Quality analysis** flags blurry or soft images, ones that are too dark or too bright, low-contrast (flat) shots, heavily compressed files, and non-sRGB color profiles, with a recommendation for each issue. Disabled by default; requires Imagick.
 
 ### Bulk Processing `[Pro]`
 
-- **Analyze entire volumes** with real-time progress tracking, cost estimation, and retry for failed assets
+- **Analyze entire volumes** with real-time progress tracking, cost estimation, and volume-scoped retry for failed assets
 
 ### Language & Multisite
 
@@ -136,8 +136,9 @@ php craft plugin/install lens
 2. Select your AI provider (OpenAI, Gemini, or Claude)
 3. Enter your API key (supports environment variables like `$OPENAI_API_KEY`, `$GEMINI_API_KEY`, or `$ANTHROPIC_API_KEY`) and choose a model
 4. Choose which volumes to enable for analysis
-5. In each enabled volume's field layout (**Settings** &rarr; **Assets** &rarr; *[Volume]* &rarr; **Field Layout**), drag the **Lens Analysis** UI component into the layout so AI results appear on the asset editor
-6. Upload an image. Lens analyzes it automatically and displays results in the **Lens Analysis** panel on the asset editor.
+5. Optionally enable **Image Assessment** if Imagick is available
+6. In each enabled volume's field layout (**Settings** &rarr; **Assets** &rarr; *[Volume]* &rarr; **Field Layout**), drag the **Lens Analysis** UI component into the layout so AI results appear on the asset editor
+7. Upload an image. Lens analyzes it automatically and displays results in the **Lens Analysis** panel on the asset editor.
 
 ## Documentation
 
