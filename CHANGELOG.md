@@ -1,5 +1,10 @@
 # Release Notes for Lens
 
+## 1.0.2 - 2026-09-04
+
+- Added the GPT-5.6 OpenAI models (Sol, Terra, Luna) alongside the existing GPT-5.4 models, and refreshed pricing for both. New installs default to GPT-5.6 Luna; existing sites keep whatever model they are already set to.
+- The OpenAI model menu is now grouped by generation, and the GPT-5.4 Mini option shows its correct price.
+
 ## 1.0.1 - 2026-08-22
 
 - Fixed Image Assessment failures on some ImageMagick 7 servers.

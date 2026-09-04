@@ -90,11 +90,15 @@ class OpenAiProvider extends BaseAiProvider
 
         $payload['response_format'] = ['type' => 'json_object'];
 
-        if ($this->isReasoningModel($settings->openaiModel)) {
-            $payload['max_completion_tokens'] = self::REASONING_MAX_TOKENS;
-        } else {
+        if ($settings->openaiModel === 'gpt-5.4') {
             $payload['temperature'] = 0.1;
             $payload['reasoning_effort'] = 'none';
+        } else {
+            $payload['max_completion_tokens'] = self::REASONING_MAX_TOKENS;
+
+            if (str_starts_with($settings->openaiModel, 'gpt-5.6-')) {
+                $payload['reasoning_effort'] = 'none';
+            }
         }
 
         return [
@@ -138,14 +142,6 @@ class OpenAiProvider extends BaseAiProvider
                 return $body;
             },
         ];
-    }
-
-    /**
-     * Models that require internal reasoning tokens.
-     */
-    private function isReasoningModel(string $model): bool
-    {
-        return in_array($model, ['gpt-5.4-mini', 'gpt-5.4-nano'], true);
     }
 
     private const REASONING_MAX_TOKENS = 16000;

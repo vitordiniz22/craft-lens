@@ -27,10 +27,31 @@ class PricingService extends Component
 {
     /**
      * OpenAI pricing and token estimates.
-     * Prices verified against https://openai.com/api/pricing/ on 2026-04-15.
-     * Token estimates calibrated from real runs on 2026-04-18.
+     * Prices per https://developers.openai.com/api/docs/pricing.
+     *
+     * Rates are the short-context tier. OpenAI charges 2x input and 1.5x output on
+     * requests above 272k input tokens, but Lens image-analysis prompts are a few
+     * thousand tokens, so the single-rate approximation keeps the table flat.
      */
     private const OPENAI_PRICING = [
+        'gpt-5.6-sol' => [
+            'input' => 4.00,
+            'output' => 20.00,
+            'estInputTokens' => 3284,
+            'estOutputTokens' => 1075,
+        ],
+        'gpt-5.6-terra' => [
+            'input' => 2.00,
+            'output' => 12.00,
+            'estInputTokens' => 3603,
+            'estOutputTokens' => 992,
+        ],
+        'gpt-5.6-luna' => [
+            'input' => 0.20,
+            'output' => 1.20,
+            'estInputTokens' => 3888,
+            'estOutputTokens' => 1027,
+        ],
         'gpt-5.4' => [
             'input' => 2.50,
             'output' => 15.00,
@@ -53,8 +74,7 @@ class PricingService extends Component
 
     /**
      * Gemini pricing and token estimates.
-     * Prices verified against https://ai.google.dev/pricing on 2026-04-15 (paid tier).
-     * Token estimates calibrated from real runs on 2026-04-18.
+     * Prices per https://ai.google.dev/pricing (paid tier).
      *
      * Note: gemini-2.5-pro uses the ≤200k-token tier rates. Vendor also charges
      * $2.50 input / $15.00 output for prompts >200k tokens, but Lens image-analysis
@@ -85,7 +105,6 @@ class PricingService extends Component
     /**
      * Claude (Anthropic) pricing and token estimates.
      * Prices per https://www.anthropic.com/pricing.
-     * Token estimates calibrated from real runs on 2026-04-18.
      */
     private const CLAUDE_PRICING = [
         'claude-sonnet-4-6' => [

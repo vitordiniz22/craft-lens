@@ -18,7 +18,7 @@ class Settings extends Model
     // API Configuration
     public string $aiProvider = 'openai';
     public string $openaiApiKey = '';
-    public string $openaiModel = 'gpt-5.4-mini';
+    public string $openaiModel = 'gpt-5.6-luna';
     public string $geminiApiKey = '';
     public string $geminiModel = 'gemini-2.5-flash';
 
@@ -40,7 +40,10 @@ class Settings extends Model
     public int $logRetentionDays = 15;
 
     // Supported models per provider (single source of truth for validation and defaults)
-    public const OPENAI_MODELS = ['gpt-5.4', 'gpt-5.4-mini', 'gpt-5.4-nano'];
+    public const OPENAI_MODELS = [
+        'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna',
+        'gpt-5.4', 'gpt-5.4-mini', 'gpt-5.4-nano',
+    ];
     public const GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.5-pro'];
     public const CLAUDE_MODELS = ['claude-sonnet-4-6', 'claude-opus-4-6', 'claude-haiku-4-5-20251001'];
 
