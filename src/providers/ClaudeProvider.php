@@ -49,7 +49,21 @@ class ClaudeProvider extends BaseAiProvider
 
     protected function extractContentText(array $response): string
     {
-        return $response['content'][0]['text'] ?? '';
+        return $this->findTextBlock($response) ?? '';
+    }
+
+    /**
+     * Opus 5.5 always thinks, so the text block is not necessarily first.
+     */
+    private function findTextBlock(array $response): ?string
+    {
+        foreach ($response['content'] ?? [] as $block) {
+            if (($block['type'] ?? null) === 'text' && isset($block['text'])) {
+                return $block['text'];
+            }
+        }
+
+        return null;
     }
 
     protected function isResponseTruncated(array $response): bool
@@ -74,7 +88,7 @@ class ClaudeProvider extends BaseAiProvider
     {
         $payload = [
             'model' => $settings->claudeModel,
-            'max_tokens' => 4096,
+            'max_tokens' => 16000,
             'messages' => [
                 [
                     'role' => 'user',
@@ -91,8 +105,14 @@ class ClaudeProvider extends BaseAiProvider
                     ],
                 ],
             ],
-            'temperature' => 0.1,
         ];
+
+        // Claude 5 models reject sampling params; Opus 5.5 cannot disable thinking, only lower effort.
+        match ($settings->claudeModel) {
+            'claude-sonnet-5' => $payload['thinking'] = ['type' => 'disabled'],
+            'claude-opus-5-5' => $payload['output_config'] = ['effort' => 'low'],
+            default => $payload['temperature'] = 0.1,
+        };
 
         return [
             'method' => 'POST',
@@ -111,7 +131,7 @@ class ClaudeProvider extends BaseAiProvider
 
                 $this->checkApiError($body, $assetId);
 
-                if (!isset($body['content'][0]['text'])) {
+                if ($this->findTextBlock($body) === null) {
                     throw AnalysisException::invalidResponse($this->getDisplayName(), $assetId);
                 }
 

@@ -76,12 +76,35 @@ class PricingService extends Component
      * Gemini pricing and token estimates.
      * Prices per https://ai.google.dev/pricing (paid tier).
      *
-     * Note: gemini-2.5-pro uses the ≤200k-token tier rates. Vendor also charges
-     * $2.50 input / $15.00 output for prompts >200k tokens, but Lens image-analysis
-     * prompts are far below that threshold, so the single-rate approximation is
-     * used to keep the pricing table flat.
+     * Note: the Pro models use the ≤200k-token tier rates. Vendor charges more for
+     * prompts >200k tokens (3.1 Pro: $4.00 / $18.00, 2.5 Pro: $2.50 / $15.00), but
+     * Lens image-analysis prompts are far below that threshold, so the single-rate
+     * approximation is used to keep the pricing table flat.
+     *
+     * gemini-3.8-flash is on introductory pricing until 2026-12-31; from 2027-01-01
+     * it is $1.50 input / $7.50 output.
+     *
+     * Output rates include thinking tokens, which Gemini 3 models always spend.
      */
     private const GEMINI_PRICING = [
+        'gemini-3.8-flash' => [
+            'input' => 0.75,
+            'output' => 3.75,
+            'estInputTokens' => 3292,
+            'estOutputTokens' => 1241,
+        ],
+        'gemini-3.1-pro-preview' => [
+            'input' => 2.00,
+            'output' => 12.00,
+            'estInputTokens' => 3292,
+            'estOutputTokens' => 1246,
+        ],
+        'gemini-3.5-flash-lite' => [
+            'input' => 0.30,
+            'output' => 2.50,
+            'estInputTokens' => 3292,
+            'estOutputTokens' => 1425,
+        ],
         'gemini-2.5-flash' => [
             'input' => 0.30,
             'output' => 2.50,
@@ -107,6 +130,18 @@ class PricingService extends Component
      * Prices per https://www.anthropic.com/pricing.
      */
     private const CLAUDE_PRICING = [
+        'claude-sonnet-5' => [
+            'input' => 2.00,
+            'output' => 10.00,
+            'estInputTokens' => 3732,
+            'estOutputTokens' => 1802,
+        ],
+        'claude-opus-5-5' => [
+            'input' => 4.00,
+            'output' => 20.00,
+            'estInputTokens' => 3734,
+            'estOutputTokens' => 1497,
+        ],
         'claude-sonnet-4-6' => [
             'input' => 3.00,
             'output' => 15.00,

@@ -1,10 +1,14 @@
 # Release Notes for Lens
 
-## Unreleased
+## 1.1.0 - 2026-09-26
 
 - Added a Custom Instructions setting for site context and style guide rules. They are applied to every analysis, including translations. ([#2](https://github.com/vitordiniz22/craft-lens/issues/2))
 - The AI is now told to only mention objects, people, text, and details that are visible in the image.
 - Long descriptions now open directly with what is happening and no longer list what is missing from the image.
+- Added the Claude Sonnet 5 and Opus 5.5 models alongside the existing Claude 4 models. New installs default to Sonnet 5; existing sites keep whatever model they are already set to.
+- The Claude and Gemini model menus are now grouped by generation, like the OpenAI one.
+- Added the Gemini 3.8 Flash, 3.1 Pro, and 3.5 Flash Lite models alongside the existing Gemini 2.5 models. New installs default to Gemini 3.8 Flash; existing sites keep whatever model they are already set to.
+- Gemini costs now include thinking tokens, which Gemini bills as output.
 
 ## 1.0.2 - 2026-09-04
 

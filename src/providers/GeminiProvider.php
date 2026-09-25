@@ -60,8 +60,16 @@ class GeminiProvider extends BaseAiProvider
 
         return [
             'inputTokens' => (int) ($usage['promptTokenCount'] ?? 0),
-            'outputTokens' => (int) ($usage['candidatesTokenCount'] ?? 0),
+            'outputTokens' => $this->countOutputTokens($usage),
         ];
+    }
+
+    /**
+     * Thinking tokens are billed as output but reported separately from candidates.
+     */
+    private function countOutputTokens(array $usage): int
+    {
+        return (int) ($usage['candidatesTokenCount'] ?? 0) + (int) ($usage['thoughtsTokenCount'] ?? 0);
     }
 
     /**
@@ -88,11 +96,19 @@ class GeminiProvider extends BaseAiProvider
                 ],
             ],
             'generationConfig' => [
-                'temperature' => 0.1,
                 'responseMimeType' => 'application/json',
                 'mediaResolution' => 'MEDIA_RESOLUTION_HIGH',
             ],
         ];
+
+        // Gemini 3 always thinks and Google advises keeping its default temperature.
+        if (str_starts_with($model, 'gemini-3')) {
+            $payload['generationConfig']['thinkingConfig'] = [
+                'thinkingLevel' => str_contains($model, '-flash-lite') ? 'minimal' : 'low',
+            ];
+        } else {
+            $payload['generationConfig']['temperature'] = 0.1;
+        }
 
         return [
             'method' => 'POST',
@@ -126,7 +142,7 @@ class GeminiProvider extends BaseAiProvider
                     responseTimeMs: $elapsed,
                     httpStatusCode: $response->getStatusCode(),
                     inputTokens: (int) ($usage['promptTokenCount'] ?? 0),
-                    outputTokens: (int) ($usage['candidatesTokenCount'] ?? 0),
+                    outputTokens: $this->countOutputTokens($usage),
                     requestPayload: $logPayload,
                     responsePayload: $body,
                     context: $this->buildApiCallContext(1, $response->getStatusCode(), $imageBytes, null),

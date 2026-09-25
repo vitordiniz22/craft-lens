@@ -20,11 +20,11 @@ class Settings extends Model
     public string $openaiApiKey = '';
     public string $openaiModel = 'gpt-5.6-luna';
     public string $geminiApiKey = '';
-    public string $geminiModel = 'gemini-2.5-flash';
+    public string $geminiModel = 'gemini-3.8-flash';
 
     // Claude (Anthropic) Configuration
     public string $claudeApiKey = '';
-    public string $claudeModel = 'claude-sonnet-4-6';
+    public string $claudeModel = 'claude-sonnet-5';
 
     // Processing Options
     public bool $autoProcessOnUpload = true;
@@ -45,8 +45,14 @@ class Settings extends Model
         'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna',
         'gpt-5.4', 'gpt-5.4-mini', 'gpt-5.4-nano',
     ];
-    public const GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.5-pro'];
-    public const CLAUDE_MODELS = ['claude-sonnet-4-6', 'claude-opus-4-6', 'claude-haiku-4-5-20251001'];
+    public const GEMINI_MODELS = [
+        'gemini-3.8-flash', 'gemini-3.1-pro-preview', 'gemini-3.5-flash-lite',
+        'gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.5-pro',
+    ];
+    public const CLAUDE_MODELS = [
+        'claude-sonnet-5', 'claude-opus-5-5', 'claude-haiku-4-5-20251001',
+        'claude-sonnet-4-6', 'claude-opus-4-6',
+    ];
 
     public function rules(): array
     {
