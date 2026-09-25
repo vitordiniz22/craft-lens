@@ -140,6 +140,18 @@
         on: settings.enableQualityAnalysis,
     }) }}
 
+    {{ forms.textareaField({
+        label: 'Custom Instructions'|t('lens'),
+        instructions: 'Added to every analysis. Describe your site and how text should read, such as tone, terminology, or what to leave out. Do not ask for other fields, formats, or output languages: Lens expects a fixed response and analyses may fail.'|t('lens'),
+        id: 'customInstructions',
+        name: 'settings[customInstructions]',
+        value: settings.customInstructions,
+        placeholder: 'Photos are from a veterinary clinic; most animals are cats and dogs. Use British English. Neutral tone, no mood words. Refer to people only as "a person", never describing age, gender, appearance or clothing.'|t('lens'),
+        rows: 6,
+        maxlength: 5000,
+        errors: settings.getErrors('customInstructions'),
+    }) }}
+
     {% if volumeOptions is empty %}
         {{ forms.field({
             label: 'Volumes to Process'|t('lens'),

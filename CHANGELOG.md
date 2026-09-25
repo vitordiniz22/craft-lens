@@ -1,5 +1,11 @@
 # Release Notes for Lens
 
+## Unreleased
+
+- Added a Custom Instructions setting for site context and style guide rules. They are applied to every analysis, including translations. ([#2](https://github.com/vitordiniz22/craft-lens/issues/2))
+- The AI is now told to only mention objects, people, text, and details that are visible in the image.
+- Long descriptions now open directly with what is happening and no longer list what is missing from the image.
+
 ## 1.0.2 - 2026-09-04
 
 - Added the GPT-5.6 OpenAI models (Sol, Terra, Luna) alongside the existing GPT-5.4 models, and refreshed pricing for both. New installs default to GPT-5.6 Luna; existing sites keep whatever model they are already set to.

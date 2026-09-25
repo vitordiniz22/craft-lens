@@ -29,6 +29,7 @@ class Settings extends Model
     // Processing Options
     public bool $autoProcessOnUpload = true;
     public bool $enableQualityAnalysis = false;
+    public string $customInstructions = '';
 
     // Volume Settings
     public array $enabledVolumes = [];
@@ -78,6 +79,10 @@ class Settings extends Model
             // Arrays
             [['enabledVolumes'], 'safe'],
 
+            // Prompt
+            [['customInstructions'], 'trim'],
+            [['customInstructions'], 'string', 'max' => 5000],
+
             // Logging
             [['logRetentionDays'], 'integer', 'min' => 1, 'max' => 365],
             [['logRetentionDays'], 'default', 'value' => 15],
@@ -96,6 +101,7 @@ class Settings extends Model
             'claudeModel' => Craft::t('lens', 'Claude Model'),
             'autoProcessOnUpload' => Craft::t('lens', 'Auto-Process on Upload'),
             'enableQualityAnalysis' => Craft::t('lens', 'Enable Image Assessment'),
+            'customInstructions' => Craft::t('lens', 'Custom Instructions'),
             'enabledVolumes' => Craft::t('lens', 'Enabled Volumes'),
             'enableSemanticSearch' => Craft::t('lens', 'Semantic Asset Search'),
             'logRetentionDays' => Craft::t('lens', 'Log Retention (days)'),

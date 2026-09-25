@@ -33,6 +33,8 @@ use vitordiniz22\craftlens\Plugin;
  */
 abstract class BaseAiProvider implements AiProviderInterface
 {
+    private const ACCURACY_RULE = 'ACCURACY: Only mention objects, people, text, and details that are visible in the image.';
+
     protected Client $client;
 
     public function __construct()
@@ -173,7 +175,12 @@ abstract class BaseAiProvider implements AiProviderInterface
             $languageNote
         )];
 
-        $instructions[] = sprintf('- "altText": A natural, descriptive alt text for accessibility (1-2 sentences, in %s)', $primaryName);
+        array_push($instructions, ...$this->buildCustomInstructions());
+        array_push($instructions, '', self::ACCURACY_RULE, '');
+
+        $voice = $this->customVoiceNote();
+
+        $instructions[] = sprintf('- "altText": An alt text for accessibility (1-2 sentences, in %s)%s', $primaryName, $voice);
         $instructions[] = '- "altTextConfidence": Your confidence in the alt text (0.0-1.0)';
 
         if ($includeProMetadata) {
@@ -182,7 +189,7 @@ abstract class BaseAiProvider implements AiProviderInterface
 
         $instructions[] = sprintf('- "suggestedTitle": A concise title (2-6 words, Title Case, specific not generic, in %s)', $primaryName);
         $instructions[] = '- "titleConfidence": Your confidence in the title (0.0-1.0)';
-        $instructions[] = '  Title rules: NO "Image of/Photo of" prefixes, NO file extensions, be SPECIFIC';
+        $instructions[] = '  Title rules: NO "Image of/Photo of" prefixes, NO file extensions';
 
         if ($includeProMetadata) {
             array_push($instructions, ...$this->buildTagsAndOcrInstructions($primaryName));
@@ -239,9 +246,10 @@ abstract class BaseAiProvider implements AiProviderInterface
             foreach ($additionalLanguages as $lang) {
                 $langName = $this->languageDisplayName($lang);
                 $instructions[] = sprintf(
-                    '  "%s": {"altText": "... (in %s)", "altTextConfidence": 0.0-1.0, "suggestedTitle": "... (in %s)", "titleConfidence": 0.0-1.0},',
+                    '  "%s": {"altText": "... (in %s%s)", "altTextConfidence": 0.0-1.0, "suggestedTitle": "... (in %s)", "titleConfidence": 0.0-1.0},',
                     $lang,
                     $langName,
+                    $voice === '' ? '' : ', following the site owner\'s tone',
                     $langName
                 );
             }
@@ -272,6 +280,8 @@ abstract class BaseAiProvider implements AiProviderInterface
             $primaryLanguage,
         )];
 
+        array_push($instructions, ...$this->buildCustomInstructions());
+        array_push($instructions, '', self::ACCURACY_RULE, '');
         array_push($instructions, ...$this->buildLongDescriptionInstructions($primaryName));
         array_push($instructions, ...$this->buildTagsAndOcrInstructions($primaryName));
 
@@ -290,7 +300,7 @@ abstract class BaseAiProvider implements AiProviderInterface
     private function buildLongDescriptionInstructions(string $primaryName): array
     {
         return [
-            sprintf('- "longDescription": A detailed, comprehensive description (6-8 sentences, roughly 130-200 words) providing rich context about the image content, composition, subjects, setting, mood, lighting, color palette, notable details, spatial relationships, and any relevant background elements. Lead with the primary subject and what is happening, then expand into setting, style, and supporting detail. Use concrete nouns rather than vague modifiers. Avoid speculation about people\'s names, intentions, or off-frame context. Be thorough and descriptive to maximize searchability (in %s)', $primaryName),
+            sprintf('- "longDescription": A detailed description (6-8 sentences, roughly 130-200 words). Start directly with what is happening, then expand into the surroundings and supporting detail. Avoid speculation about people\'s names, intentions, or off-frame context. Describe what is present; do not mention what is absent. (in %s)%s', $primaryName, $this->customVoiceNote()),
             '- "longDescriptionConfidence": Your confidence in the long description (0.0-1.0)',
         ];
     }
@@ -314,6 +324,39 @@ abstract class BaseAiProvider implements AiProviderInterface
             '  • Prioritize tags that describe WHAT is in the image, not HOW it was made (avoid "bokeh", "long exposure", "f/2.8" unless these are the main subject)',
             '- "extractedText": Array of text transcribed from the image. Group all text on the same physical sign, panel, or board into ONE entry (all its lines together, separated by "\n"). Start a new entry only for text on a different sign or surface. Only include text that is fully visible and clearly readable. If any part of the text is cut off, occluded, or unreadable, omit that entry entirely; do NOT guess, complete, or infer missing letters or words, and do NOT transcribe partial fragments. Skip entries that would contain only an isolated digit, single letter, or disconnected fragment with no meaningful context on its own. Use [] if no fully readable text remains.',
         ];
+    }
+
+    /**
+     * Site owner's custom instructions from settings, placed before the field
+     * rules so the voice is set before the model reads them.
+     *
+     * @return string[]
+     */
+    private function buildCustomInstructions(): array
+    {
+        $custom = trim(Plugin::getInstance()->getSettings()->customInstructions);
+
+        if ($custom === '') {
+            return [];
+        }
+
+        return [
+            '',
+            '--- INSTRUCTIONS FROM THE SITE OWNER ---',
+            'Apply these to every text field, including translations. The JSON structure, field names, value types, and languages stay as specified in the rest of this prompt.',
+            $custom,
+        ];
+    }
+
+    /**
+     * Reminder appended to prose fields so the site owner's tone sits next to
+     * each field's own rules.
+     */
+    private function customVoiceNote(): string
+    {
+        return trim(Plugin::getInstance()->getSettings()->customInstructions) !== ''
+            ? ". Follow the site owner's tone."
+            : '';
     }
 
     /**

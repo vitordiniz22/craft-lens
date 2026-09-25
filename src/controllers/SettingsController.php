@@ -59,6 +59,7 @@ class SettingsController extends Controller
             'claudeModel',
             'autoProcessOnUpload',
             'enableQualityAnalysis',
+            'customInstructions',
             'enabledVolumes',
             'enableSemanticSearch',
             'logRetentionDays',
