@@ -23,8 +23,8 @@ final class AnalysisImageContext
     /** Above every consumer working resolution, below the cost of a native decode. */
     public const WORKING_MAX_DIMENSION = 1568;
 
-    /** Used when the host reports no container limit. */
-    private const PIXEL_CACHE_FALLBACK_BYTES = 64 * 1024 * 1024;
+    /** Used when the host reports neither a container limit nor free memory. */
+    private const PIXEL_CACHE_FALLBACK_BYTES = 384 * 1024 * 1024;
 
     private const IMAGE_LOCK_NAME = 'lens:image-processing';
 
@@ -151,8 +151,11 @@ final class AnalysisImageContext
                     'assetHeight' => $this->asset->height,
                     'assetSize' => $this->asset->size,
                     'imagickMemoryLimit' => Imagick::getResourceLimit(Imagick::RESOURCETYPE_MEMORY),
+                    'imagickAreaLimit' => Imagick::getResourceLimit(Imagick::RESOURCETYPE_AREA),
+                    'imagickVersion' => Imagick::getVersion()['versionString'],
                     'containerMemoryLimit' => MemoryBudget::containerLimit(),
                     'containerMemoryUsage' => MemoryBudget::containerUsage(),
+                    'systemMemoryAvailable' => MemoryBudget::systemAvailable(),
                 ],
             );
         }

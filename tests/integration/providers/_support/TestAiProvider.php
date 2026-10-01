@@ -47,6 +47,11 @@ final class TestAiProvider extends BaseAiProvider
         return $this->maxFileSizeBytes;
     }
 
+    protected function getAcceptedMimeTypes(): array
+    {
+        return ['image/jpeg', 'image/png'];
+    }
+
     protected function buildHttpRequest(Settings $settings, array $imageData, string $prompt, int $assetId): array
     {
         throw new \LogicException('TestAiProvider::buildHttpRequest should not be called by these tests');

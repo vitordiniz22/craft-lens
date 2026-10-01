@@ -155,4 +155,9 @@ class OpenAiProvider extends BaseAiProvider
     {
         return 15 * 1024 * 1024;
     }
+
+    protected function getAcceptedMimeTypes(): array
+    {
+        return ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    }
 }

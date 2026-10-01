@@ -159,13 +159,18 @@ class ClaudeProvider extends BaseAiProvider
     }
 
     /**
-     * Claude API limit: 5MB base64 encoded
-     * With 33% encoding overhead: 5MB / 1.33 ≈ 3.75MB original
-     * Using 3MB to be safe
+     * Claude API limit: 10MB base64 encoded
+     * With 33% encoding overhead: 10MB / 1.33 ≈ 7.5MB original
+     * Using 7MB to be safe
      */
 
     protected function getMaxFileSizeBytes(): int
     {
-        return 3 * 1024 * 1024;
+        return 7 * 1024 * 1024;
+    }
+
+    protected function getAcceptedMimeTypes(): array
+    {
+        return ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
     }
 }

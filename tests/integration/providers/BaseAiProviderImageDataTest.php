@@ -104,6 +104,25 @@ class BaseAiProviderImageDataTest extends Unit
         $this->assertSame('image/jpeg', $result['mimeType']);
     }
 
+    public function testUnconvertibleOriginalInRefusedFormatFailsBeforeUpload(): void
+    {
+        $rawBytes = random_bytes(600_000);
+        $path = $this->writeTempFile('corrupt.avif', $rawBytes);
+        $asset = $this->stubAsset(
+            path: $path,
+            mimeType: 'image/avif',
+            size: strlen($rawBytes),
+            width: 2070,
+            height: 1380,
+            extension: 'avif',
+        );
+        $provider = new TestAiProvider(maxFileSizeBytes: 1_000_000);
+
+        $this->expectException(AnalysisException::class);
+        $this->expectExceptionMessage('does not accept image/avif');
+        $this->invokeGetBase64ImageData($provider, $asset);
+    }
+
     public function testOriginalUploadIsRejectedWhenRequestMemoryIsUnsafe(): void
     {
         $rawBytes = random_bytes(600_000);

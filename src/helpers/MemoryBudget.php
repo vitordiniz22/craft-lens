@@ -21,8 +21,11 @@ final class MemoryBudget
 
     private const UPLOAD_FIXED_OVERHEAD = 1024 * 1024;
 
-    /** One bounded 1568px pipeline fits below this; larger limits add risk, not quality. */
-    private const MAX_BYTES = 64 * 1024 * 1024;
+    /**
+     * A resize holds the source, a half-resized intermediate, and the result
+     * at once, at up to 16 bytes per pixel on HDRI builds.
+     */
+    private const MAX_BYTES = 384 * 1024 * 1024;
 
     /** cgroup v1's "no limit" sentinel. */
     private const V1_UNLIMITED = 9223372036854771712;
@@ -41,11 +44,20 @@ final class MemoryBudget
     private static ?bool $forcedUploadHeadroom = null;
 
     /**
-     * @param int $fallback Budget for hosts that report no container limit
+     * @param int $fallback Budget for hosts that report neither a container limit nor free memory
      */
     public static function forImageProcessing(int $fallback): int
     {
-        $detectedBudget = self::calculate(self::containerLimit(), self::containerUsage(), $fallback);
+        $limit = self::containerLimit();
+        $usage = self::containerUsage();
+
+        if ($limit === null || $usage === null) {
+            // Uncontained host: the machine's free memory is the headroom.
+            $limit = self::systemAvailable();
+            $usage = $limit === null ? null : 0;
+        }
+
+        $detectedBudget = self::calculate($limit, $usage, $fallback);
 
         if (self::$forcedBudget !== null) {
             return max(0, min($detectedBudget, self::$forcedBudget));
@@ -147,6 +159,19 @@ final class MemoryBudget
         }
 
         return null;
+    }
+
+    /** Free memory on the machine, or null off Linux and where /proc is blocked. */
+    public static function systemAvailable(): ?int
+    {
+        return self::parseMemAvailable((string) @file_get_contents('/proc/meminfo'));
+    }
+
+    public static function parseMemAvailable(string $meminfo): ?int
+    {
+        return preg_match('/^MemAvailable:\s+(\d+) kB/m', $meminfo, $matches) === 1
+            ? (int) $matches[1] * 1024
+            : null;
     }
 
     /** Test seam: pin the budget, or null to resume detection. */

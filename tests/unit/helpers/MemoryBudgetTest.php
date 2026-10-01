@@ -19,7 +19,7 @@ class MemoryBudgetTest extends Unit
 {
     private const MB = 1024 * 1024;
 
-    private const FALLBACK = 256 * self::MB;
+    private const FALLBACK = 384 * self::MB;
 
     protected function _after(): void
     {
@@ -32,7 +32,7 @@ class MemoryBudgetTest extends Unit
     public function testFallbackWhenNoContainerLimit(): void
     {
         $this->assertSame(
-            64 * self::MB,
+            self::FALLBACK,
             MemoryBudget::calculate(null, 200 * self::MB, self::FALLBACK),
         );
     }
@@ -40,7 +40,7 @@ class MemoryBudgetTest extends Unit
     public function testFallbackWhenUsageUnavailable(): void
     {
         $this->assertSame(
-            64 * self::MB,
+            self::FALLBACK,
             MemoryBudget::calculate(512 * self::MB, null, self::FALLBACK),
         );
     }
@@ -49,7 +49,7 @@ class MemoryBudgetTest extends Unit
     {
         // 512MB limit, 112MB in use -> 400MB headroom -> 200MB budget
         $this->assertSame(
-            64 * self::MB,
+            200 * self::MB,
             MemoryBudget::calculate(512 * self::MB, 112 * self::MB, self::FALLBACK),
         );
     }
@@ -58,7 +58,7 @@ class MemoryBudgetTest extends Unit
     {
         // Servd shape: 800MB instance, 500MB already used by sibling workers and cache
         $this->assertSame(
-            64 * self::MB,
+            150 * self::MB,
             MemoryBudget::calculate(800 * self::MB, 500 * self::MB, self::FALLBACK),
         );
     }
@@ -66,9 +66,33 @@ class MemoryBudgetTest extends Unit
     public function testClampsToCeilingOnARoomyHost(): void
     {
         $this->assertSame(
-            64 * self::MB,
+            384 * self::MB,
             MemoryBudget::calculate(4096 * self::MB, 256 * self::MB, self::FALLBACK),
         );
+    }
+
+    public function testUncontainedHostGetsHalfOfAvailableMemory(): void
+    {
+        // forImageProcessing() passes MemAvailable as the limit with zero usage
+        $this->assertSame(
+            150 * self::MB,
+            MemoryBudget::calculate(300 * self::MB, 0, self::FALLBACK),
+        );
+    }
+
+    // -- parseMemAvailable() --
+
+    public function testParsesMemAvailableFromMeminfo(): void
+    {
+        $meminfo = "MemTotal:        8000000 kB\nMemFree:          100000 kB\nMemAvailable:    5874320 kB\n";
+
+        $this->assertSame(5874320 * 1024, MemoryBudget::parseMemAvailable($meminfo));
+    }
+
+    public function testMissingMemAvailableReadsAsNull(): void
+    {
+        $this->assertNull(MemoryBudget::parseMemAvailable(''));
+        $this->assertNull(MemoryBudget::parseMemAvailable("MemTotal: 8000000 kB\n"));
     }
 
     public function testThinHeadroomIsReportedHonestly(): void
@@ -144,16 +168,16 @@ class MemoryBudgetTest extends Unit
         $budget = MemoryBudget::forImageProcessing(self::FALLBACK);
 
         $this->assertGreaterThanOrEqual(0, $budget);
-        $this->assertLessThanOrEqual(64 * self::MB, $budget);
+        $this->assertLessThanOrEqual(384 * self::MB, $budget);
     }
 
     public function testForcedBudgetCannotBypassHardCeiling(): void
     {
         $detected = MemoryBudget::forImageProcessing(self::FALLBACK);
-        MemoryBudget::forceForTesting(256 * self::MB);
+        MemoryBudget::forceForTesting(512 * self::MB);
         $forced = MemoryBudget::forImageProcessing(self::FALLBACK);
 
-        $this->assertLessThanOrEqual(64 * self::MB, $forced);
+        $this->assertLessThanOrEqual(384 * self::MB, $forced);
         $this->assertLessThanOrEqual($detected, $forced);
     }
 

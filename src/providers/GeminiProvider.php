@@ -162,4 +162,10 @@ class GeminiProvider extends BaseAiProvider
     {
         return 15 * 1024 * 1024;
     }
+
+    /** GIF is absent from Gemini's documented list but accepted by the API. */
+    protected function getAcceptedMimeTypes(): array
+    {
+        return ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif', 'image/gif'];
+    }
 }

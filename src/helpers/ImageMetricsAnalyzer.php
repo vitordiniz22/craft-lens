@@ -162,8 +162,11 @@ class ImageMetricsAnalyzer
                     'assetMimeType' => $asset->mimeType,
                     // Separates a host out of room from a pathological image.
                     'imagickMemoryLimit' => Imagick::getResourceLimit(Imagick::RESOURCETYPE_MEMORY),
+                    'imagickAreaLimit' => Imagick::getResourceLimit(Imagick::RESOURCETYPE_AREA),
+                    'imagickVersion' => Imagick::getVersion()['versionString'],
                     'containerMemoryLimit' => MemoryBudget::containerLimit(),
                     'containerMemoryUsage' => MemoryBudget::containerUsage(),
+                    'systemMemoryAvailable' => MemoryBudget::systemAvailable(),
                 ],
             );
 

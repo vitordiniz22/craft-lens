@@ -1,5 +1,12 @@
 # Release Notes for Lens
 
+## 1.1.1 - 2026-10-01
+
+- Fixed images failing to resize before upload on servers whose ImageMagick build uses more memory per pixel. The image memory limit now follows the server's free memory, up to 384 MB, where it was previously fixed at 64 MB. ([#3](https://github.com/vitordiniz22/craft-lens/issues/3))
+- Images in a format the provider does not accept, such as AVIF, now fail with a clear message when they cannot be converted. Previously the original was sent and the provider returned an HTTP 400 error.
+- Raised the Claude upload limit from 3 MB to 7 MB to match Claude's current 10 MB limit for encoded images.
+- Image decode failures now log the ImageMagick version, its area limit, and the server's available memory.
+
 ## 1.1.0 - 2026-09-26
 
 - Added a Custom Instructions setting for site context and style guide rules. They are applied to every analysis, including translations. ([#2](https://github.com/vitordiniz22/craft-lens/issues/2))

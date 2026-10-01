@@ -141,6 +141,17 @@ class AnalysisException extends Exception
         );
     }
 
+    public static function unsupportedImageFormat(string $provider, int $assetId, string $mimeType): self
+    {
+        return new self(
+            message: "{$provider} does not accept {$mimeType} and asset {$assetId} could not be converted",
+            provider: $provider,
+            assetId: $assetId,
+            userMessage: "{$provider} does not accept {$mimeType} images, and Lens could not convert this one.",
+            errorCode: ErrorCode::ImageProcessingFailed,
+        );
+    }
+
     public static function fileTooLarge(
         string $providerName,
         int $assetId,

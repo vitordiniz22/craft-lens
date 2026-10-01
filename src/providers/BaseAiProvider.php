@@ -74,6 +74,14 @@ abstract class BaseAiProvider implements AiProviderInterface
     abstract protected function getMaxFileSizeBytes(): int;
 
     /**
+     * MIME types this provider reads. Checked only when the original file is
+     * sent, since normalized uploads are always JPEG or PNG.
+     *
+     * @return string[]
+     */
+    abstract protected function getAcceptedMimeTypes(): array;
+
+    /**
      * Build the provider-specific HTTP request specification.
      *
      * Returns an array describing the outgoing request and how to parse a
@@ -635,10 +643,13 @@ abstract class BaseAiProvider implements AiProviderInterface
             throw AnalysisException::assetNotReadable($asset->id);
         }
 
-        return [
-            $bytes,
-            ImagePreprocessor::detectMimeType($bytes, $result->mimeType),
-        ];
+        $mimeType = ImagePreprocessor::detectMimeType($bytes, $result->mimeType);
+
+        if (!in_array($mimeType, $this->getAcceptedMimeTypes(), true)) {
+            throw AnalysisException::unsupportedImageFormat($this->getDisplayName(), $asset->id, $mimeType);
+        }
+
+        return [$bytes, $mimeType];
     }
 
     private function logPreprocessingOutcome(Asset $asset, PreprocessResult $result): void
