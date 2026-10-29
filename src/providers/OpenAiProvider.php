@@ -96,7 +96,9 @@ class OpenAiProvider extends BaseAiProvider
         } else {
             $payload['max_completion_tokens'] = self::REASONING_MAX_TOKENS;
 
-            if (str_starts_with($settings->openaiModel, 'gpt-5.6-')) {
+            if ($settings->openaiModel === 'gpt-6.1-sol') {
+                $payload['reasoning_effort'] = 'low';
+            } elseif (str_starts_with($settings->openaiModel, 'gpt-5.6-') || str_starts_with($settings->openaiModel, 'gpt-6')) {
                 $payload['reasoning_effort'] = 'none';
             }
         }

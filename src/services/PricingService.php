@@ -34,6 +34,24 @@ class PricingService extends Component
      * thousand tokens, so the single-rate approximation keeps the table flat.
      */
     private const OPENAI_PRICING = [
+        'gpt-6.1-sol' => [
+            'input' => 2.00,
+            'output' => 10.00,
+            'estInputTokens' => 4362,
+            'estOutputTokens' => 1252,
+        ],
+        'gpt-6.1-terra' => [
+            'input' => 1.00,
+            'output' => 5.00,
+            'estInputTokens' => 4362,
+            'estOutputTokens' => 1214,
+        ],
+        'gpt-6-luna' => [
+            'input' => 0.10,
+            'output' => 0.50,
+            'estInputTokens' => 4362,
+            'estOutputTokens' => 1137,
+        ],
         'gpt-5.6-sol' => [
             'input' => 4.00,
             'output' => 20.00,

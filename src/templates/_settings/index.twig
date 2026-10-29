@@ -51,6 +51,10 @@
             name: 'settings[openaiModel]',
             value: settings.openaiModel,
             options: [
+                {optgroup: 'GPT-6'|t('lens')},
+                {label: 'GPT-6 Luna — $0.10/1M tokens'|t('lens'), value: 'gpt-6-luna'},
+                {label: 'GPT-6.1 Terra — $1.00/1M tokens'|t('lens'), value: 'gpt-6.1-terra'},
+                {label: 'GPT-6.1 Sol — $2.00/1M tokens'|t('lens'), value: 'gpt-6.1-sol'},
                 {optgroup: 'GPT-5.6'|t('lens')},
                 {label: 'GPT-5.6 Luna — $0.20/1M tokens (recommended)'|t('lens'), value: 'gpt-5.6-luna'},
                 {label: 'GPT-5.6 Terra — $2.00/1M tokens (balanced)'|t('lens'), value: 'gpt-5.6-terra'},
