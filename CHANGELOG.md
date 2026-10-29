@@ -1,5 +1,9 @@
 # Release Notes for Lens
 
+## 1.1.2 - 2026-10-29
+
+- Added the GPT-6.1 Sol, GPT-6.1 Terra, and GPT-6 Luna OpenAI models alongside the existing GPT-5.6 and GPT-5.4 models. New installs default to GPT-6 Luna; existing sites keep whatever model they are already set to.
+
 ## 1.1.1 - 2026-10-01
 
 - Fixed images failing to resize before upload on servers whose ImageMagick build uses more memory per pixel. The image memory limit now follows the server's free memory, up to 384 MB, where it was previously fixed at 64 MB. ([#3](https://github.com/vitordiniz22/craft-lens/issues/3))

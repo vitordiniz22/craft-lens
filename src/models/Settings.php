@@ -18,7 +18,7 @@ class Settings extends Model
     // API Configuration
     public string $aiProvider = 'openai';
     public string $openaiApiKey = '';
-    public string $openaiModel = 'gpt-5.6-luna';
+    public string $openaiModel = 'gpt-6-luna';
     public string $geminiApiKey = '';
     public string $geminiModel = 'gemini-3.8-flash';
 
